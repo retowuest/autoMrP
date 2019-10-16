@@ -1,11 +1,22 @@
 Package: autoMrP
 Type: Package
-Title: What the Package Does (Title Case)
-Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Title: Improving MrP Through Optimal Model Selection
+Version: 0.0.0.9000 
+Authors@R: c(
+    person("Wüest", "Reto", email = "wuest.reto@gmail.com",
+      role = c("aut", "cre")),
+    person("Leemann", "Lucas", email = "lleemann@gmail.com",
+      role = c("aut", "cre")),
+    person("Broniecki", "Philipp", email = "philippbroniecki@gmail.com",
+      role = c("aut", "cre")))
+Description: autoMrP improves over multilevel regression with post-stratification
+    (MrP) by combining a number of machine learning methods to choose the optimal
+    set of second-level predictors.
+Depends:
+    R (>= 3.6.1),
+    dplyr
+License: GPL-3
 Encoding: UTF-8
 LazyData: true
+RoxygenNote: 6.1.1
+VignetteBuilder: knitr
