@@ -1,7 +1,7 @@
 Package: autoMrP
 Type: Package
-Title: Improving MrP Through Optimal Model Selection
-Version: 0.0.0.9000 
+Title: Improving MrP With Ensemble Learning
+Version: 0.0.0.9000
 Authors@R: c(
     person("Wüest", "Reto", email = "wuest.reto@gmail.com",
       role = c("aut", "cre")),
@@ -9,9 +9,9 @@ Authors@R: c(
       role = c("aut", "cre")),
     person("Broniecki", "Philipp", email = "philippbroniecki@gmail.com",
       role = c("aut", "cre")))
-Description: autoMrP improves over multilevel regression with post-stratification
-    (MrP) by combining a number of machine learning methods to choose the optimal
-    set of second-level predictors.
+Description: autoMrP improves the prediction performance of multilevel
+    regression with post-stratification (MrP) by combining a number of machine
+    learning methods.
 Depends:
     R (>= 3.6.1),
     dplyr (>= 0.8.3)
