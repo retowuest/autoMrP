@@ -16,9 +16,9 @@
 #' @param census Census data. A data.frame containing the x column names.
 #' @param geo.unit Geographic unit. A character scalar indicating the column
 #'   name of the geographic unit at which outcomes should be aggregated.
-#' @param proportion Proportion of ideal types. A character vector indicating
-#'   the column name of the variable containing the proportions of the ideal
-#'   types in a geographic unit.
+#' @param n Bin size for ideal types. A character vector indicating the column
+#'   name of the variable containing the bin size for ideal types in a geographic
+#'   unit.
 #' @return
 #' @keywords MRP multilevel regression post-stratification machine learning
 #'   EBMA ensemble bayesian model averaging
@@ -64,13 +64,13 @@ auto_MrP <- function(y, L1.x, L2.x, survey, census, geo.unit,
                "' is not in your census data.", sep = ""))
   }
 
-  # Calculate proportions of ideal types if not provided in census data
-  if(proportion == "None") {
+  # Calculate bin size for ideal types if not provided in census data
+  if(n == "None") {
     census <- census %>%
-      group_by_(.dots = L1.x) %>%
-      summarise(n = n())
+      dplyr::group_by(.dots = L1.x) %>%
+      dplyr::summarise(n = dplyr::n())
   } else {
-    census$n <- census[[proportion]]
+    census$n <- census[[n]]
   }
 
   # Prepare data ---------------------------------------------------------------
