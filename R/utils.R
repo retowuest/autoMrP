@@ -46,4 +46,18 @@ ebma_folding <- function(data, geo.unit, n.ebma = NULL) {
 
 
 # Function to create CV folds
+cv_folding <- function(data, k.folds,
+                       cv.sampling = c("respondents", "units")) {
+  # Add row number to data frame
+  data <- data %>%
+    dplyr::mutate(index = row_number())
 
+  # Create folds
+  if (cv.sampling == "respondents") {
+    fold_indeces <- caret::createFolds(data$index, k = k.folds,
+                                       list = TRUE, returnTrain = FALSE)
+    lapply(fold_indeces, function(x) data[data$index %in% x, ])
+  } else {
+
+  }
+}
