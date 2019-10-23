@@ -1,12 +1,5 @@
 # Function to create EBMA hold-out fold
 ebma_folding <- function(data, geo.unit, n.ebma = NULL) {
-  # Error checks
-  if(is.null(n.ebma)) {
-    n.ebma <- round(data / 4, digits = 0)
-  } else if(!(is.numeric(n.ebma) & n.ebma == round(n.ebma, digits = 0))) {
-      stop("n.ebma must be an integer number.")
-    }
-
   # Add row number to data frame
   data <- data %>%
     dplyr::mutate(index = row_number())
