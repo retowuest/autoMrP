@@ -24,6 +24,9 @@
 #'   left unspecified (NULL), then n.ebma is set to 1/4 of the survey sample size.
 #' @param k.folds Number of folds. An integer-valued scalar indicating the
 #'   number of folds to be used for cross-validation. Defaults to the value of 5.
+#' @param cv.sampling Sampling method. A character-valued scalar indicating
+#'   whether sampling in the creation of cross-validation folds should be done
+#'   by respondents or geographic units. Default is by units.
 #' @return
 #' @keywords MRP multilevel regression post-stratification machine learning
 #'   EBMA ensemble bayesian model averaging
@@ -32,7 +35,7 @@
 
 auto_MrP <- function(y, L1.x, L2.x, survey, census, geo.unit,
                      bin.size = "None", n.ebma = NULL, k.folds = 5,
-                     set.seed = NULL) {
+                     cv.sampling = "units", set.seed = NULL) {
   # Set seed
   set.seed(set.seed)
 
@@ -81,6 +84,9 @@ auto_MrP <- function(y, L1.x, L2.x, survey, census, geo.unit,
   if(!(is.numeric(k.folds) & k.folds == round(k.folds, digits = 0))) {
     stop("k.folds must be an integer number.")
   }
+  if(!cv.sampling %in% c("respondents", "units")) {
+    stop("cv.sampling must take either the value 'respondents' or 'units'.")
+  }
 
   # ------------------------------- Prepare data -------------------------------
 
@@ -107,7 +113,8 @@ auto_MrP <- function(y, L1.x, L2.x, survey, census, geo.unit,
   cv_data <- ebma_folding_out$cv_data
 
   # K folds for cross-validation
-
+  cv_folds <- cv_folding(data = cv_data, k.folds = k.folds,
+                         cv.sampling = cv.sampling)
 
   # ------------------------ Run individual classifiers ------------------------
 
