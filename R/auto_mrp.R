@@ -8,7 +8,7 @@
 #'   the outcome variable.
 #' @param L1.x Individual-level covariates. A character vector of column names
 #'   corresponding to the individual-level variables used to predict the outcome
-#'   variable.
+#'   variable. Must include geographic unit.
 #' @param L2.x Context-level covariates. A character vector of column names
 #'   corresponding to the context-level variables used to predict the outcome
 #'   variable.
@@ -16,9 +16,14 @@
 #' @param census Census data. A data.frame containing the x column names.
 #' @param geo.unit Geographic unit. A character scalar indicating the column
 #'   name of the geographic unit at which outcomes should be aggregated.
-#' @param n Bin size for ideal types. A character vector indicating the column
-#'   name of the variable containing the bin size for ideal types in a geographic
-#'   unit.
+#' @param bin.size Bin size for ideal types. A character vector indicating the
+#'   column name of the variable in census containing the bin size for ideal
+#'   types in a geographic unit.
+#' @param n.ebma Size of EBMA hold-out fold. An integer-valued scalar indicating
+#'   the number of respondents to be contained in the EBMA hold-out fold. If
+#'   left unspecified (NULL), then n.ebma is set to 1/4 of the survey sample size.
+#' @param k.folds Number of folds. An integer-valued scalar indicating the
+#'   number of folds to be used for cross-validation. Defaults to the value of 5.
 #' @return
 #' @keywords MRP multilevel regression post-stratification machine learning
 #'   EBMA ensemble bayesian model averaging
@@ -26,7 +31,8 @@
 #' @export
 
 auto_MrP <- function(y, L1.x, L2.x, survey, census, geo.unit,
-                     proportion = "None", set.seed = NULL) {
+                     bin.size = "None", n.ebma = NULL, k.folds = 5,
+                     set.seed = NULL) {
   # Set seed
   set.seed(set.seed)
 
@@ -63,21 +69,47 @@ auto_MrP <- function(y, L1.x, L2.x, survey, census, geo.unit,
     stop(paste("The geographic unit '", geo.unit,
                "' is not in your census data.", sep = ""))
   }
+  if(!(geo.unit %in% L1.x)) {
+    stop(paste("The geographic unit '", geo.unit,
+               "' is not among your individual-level variables.", sep = ""))
+  }
+  if(is.null(n.ebma)) {
+    n.ebma <- round(data / 4, digits = 0)
+  } else if(!(is.numeric(n.ebma) & n.ebma == round(n.ebma, digits = 0))) {
+    stop("n.ebma must be an integer number.")
+  }
+  if(!(is.numeric(k.folds) & k.folds == round(k.folds, digits = 0))) {
+    stop("k.folds must be an integer number.")
+  }
 
-  # Calculate bin size for ideal types if not provided in census data
-  if(n == "None") {
+  # ------------------------------- Prepare data -------------------------------
+
+  # If not provided in census data, calculate bin size for each ideal type
+  if(bin.size == "None") {
     census <- census %>%
       dplyr::group_by(.dots = L1.x) %>%
       dplyr::summarise(n = dplyr::n())
   } else {
-    census$n <- census[[n]]
+    census$n <- census[[bin.size]]
   }
 
-  # Prepare data ---------------------------------------------------------------
+  # Scale context-level variables in survey and census data
+  survey[, L2.x] <- scale(survey[, L2.x], center = TRUE, scale = TRUE)
+  census[, L2.x] <- scale(census[, L2.x], center = TRUE, scale = TRUE)
 
-  # Create folds ---------------------------------------------------------------
+  # ------------------------------- Create folds -------------------------------
 
-  # Run individual classifiers -------------------------------------------------
+  # EBMA hold-out fold
+  ebma_folding_out <- ebma_folding(data = survey, geo.unit = geo.unit,
+                                   n.ebma = n.ebma)
+
+  ebma_fold <- ebma_folding_out$ebma_fold
+  cv_data <- ebma_folding_out$cv_data
+
+  # K folds for cross-validation
+
+
+  # ------------------------ Run individual classifiers ------------------------
 
   # Classifier: best subset
   best_subset_out <- best_subset(train.data = )
