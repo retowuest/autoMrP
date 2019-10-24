@@ -24,8 +24,8 @@ best_subset_classifier <- function(model, data.train,
   # Train model on training data
   out <- lme4::glmer(model, data = data.train,
                      family = get(model.family),
-                     glmerControl(optimizer = model.optimizer,
-                                  optCtrl = list(maxfun = n.iter)))
+                     lme4::glmerControl(optimizer = model.optimizer,
+                                        optCtrl = list(maxfun = n.iter)))
 
   # Function output
   return(out)
