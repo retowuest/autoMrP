@@ -31,7 +31,7 @@ ebma_folding <- function(data, geo.unit, n.ebma = NULL) {
   cv_data <- data %>%
     dplyr::filter(!(index %in% ebma_fold$index))
 
-  # Remove index
+  # Remove index variable
   ebma_fold <- ebma_fold %>%
     dplyr::select(-index)
 
@@ -70,6 +70,28 @@ cv_folding <- function(data, k.folds,
     out <- lapply(fold_indices, function(x) data %>%
                     dplyr::filter(get(geo.unit) %in% x))
   }
+
+  # Function output
+  return(out)
+}
+
+
+# Function to create model list for best subset classifier
+model_list <- function(y, L1.x, L2.x) {
+  # Individual-level fixed effects
+  L1_fe <- paste(paste("(1 | ", L1.x, ")", sep = ""), collapse = " + ")
+
+  # Empty model
+  all_models <- list(as.formula(paste(y, " ~ ", L1_fe, sep = "")))
+
+  # Remaining models
+  L2_list <- lapply(seq_along(L2.x), function(x) combn(L2.x, x))
+  L2_list <- lapply(L2_list, function(x) apply(x, 2, function(c)
+    as.formula(paste(y, " ~ ", paste(c, collapse = " + "), " + ", L1_fe, sep = "")))) %>%
+    unlist()
+
+  # Combine models in list
+  out <- c(all_models, L2_list)
 
   # Function output
   return(out)
