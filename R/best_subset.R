@@ -16,7 +16,8 @@
 #'   name of the geographic unit at which outcomes should be aggregated.
 #' @param cv.data Data for cross-validation. A list of k data.frames, one for
 #'   each fold used in k-fold cross-validation.
-#' @param verbose Verbose output.
+#' @param verbose Verbose output. A logical vector indicating whether or not
+#'   verbose output should be printed.
 #' @return
 #' @examples
 

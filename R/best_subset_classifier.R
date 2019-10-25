@@ -14,6 +14,8 @@
 #'   "bobyqa".
 #' @param n.iter Iterations. A integer-valued scalar specifying the maximum
 #'   number of function evaluations tried by the optimization method.
+#' @param verbose Verbose output. A logical vector indicating whether or not
+#'   verbose output should be printed.
 #' @return
 #' @examples
 
