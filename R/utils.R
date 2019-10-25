@@ -78,16 +78,16 @@ cv_folding <- function(data, k.folds,
 
 # Function to create model list for best subset classifier
 model_list <- function(y, L1.x, L2.x) {
-  # Individual-level fixed effects
-  L1_fe <- paste(paste("(1 | ", L1.x, ")", sep = ""), collapse = " + ")
+  # Individual-level random effects
+  L1_re <- paste(paste("(1 | ", L1.x, ")", sep = ""), collapse = " + ")
 
   # Empty model
-  all_models <- list(as.formula(paste(y, " ~ ", L1_fe, sep = "")))
+  all_models <- list(as.formula(paste(y, " ~ ", L1_re, sep = "")))
 
   # Remaining models
   L2_list <- lapply(seq_along(L2.x), function(x) combn(L2.x, x))
   L2_list <- lapply(L2_list, function(x) apply(x, 2, function(c)
-    as.formula(paste(y, " ~ ", paste(c, collapse = " + "), " + ", L1_fe, sep = "")))) %>%
+    as.formula(paste(y, " ~ ", paste(c, collapse = " + "), " + ", L1_re, sep = "")))) %>%
     unlist()
 
   # Combine models in list
