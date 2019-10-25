@@ -6,7 +6,7 @@ ebma_folding <- function(data, geo.unit, n.ebma = NULL) {
 
   # Split data by geographic unit into a list of data frames
   data_list <- data %>%
-    dplyr::group_split(get(geo.unit))
+    dplyr::group_split(.data[[geo.unit]])
 
   # Sample one respondent per geographic unit
   one_per_unit <- lapply(data_list, function(x) sample(x$index, size = 1)) %>%
@@ -68,7 +68,7 @@ cv_folding <- function(data, k.folds,
       caret::createFolds(k = k.folds, list = TRUE, returnTrain = FALSE)
 
     out <- lapply(fold_indices, function(x) data %>%
-                    dplyr::filter(get(geo.unit) %in% x))
+                    dplyr::filter(.data[[geo.unit]] %in% x))
   }
 
   # Function output
@@ -92,6 +92,45 @@ model_list <- function(y, L1.x, L2.x) {
 
   # Combine models in list
   out <- c(all_models, L2_list)
+
+  # Function output
+  return(out)
+}
+
+
+# Loss function
+loss_function <- function(pred, data.valid,
+                          unit = c("individual", "geo.unit"),
+                          measure = c("mse", "mae"),
+                          y, geo.unit) {
+  # Measure performance
+  if (unit == "individual" & measure == "mse") {
+    out <- mean((data.valid[[y]] - pred)^2)
+  } else if (unit == "individual" & measure == "mae") {
+    out <- mean(abs(data.valid[[y]] - pred))
+  } else if (unit == "geo.unit" & measure == "mse") {
+    data.valid <- data.valid %>%
+      dplyr::mutate(pred = pred)
+
+    out <- data.valid %>%
+      dplyr::group_by_at(geo.unit) %>%
+      dplyr::summarise_at(.vars = c(y, "pred"), mean) %>%
+      dplyr::mutate(sqe = (.data[[y]] - pred)^2) %>%
+      dplyr::pull(sqe)
+
+    out <- mean(out)
+  } else {
+    data.valid <- data.valid %>%
+      dplyr::mutate(pred = pred)
+
+    out <- data.valid %>%
+      dplyr::group_by_at(geo.unit) %>%
+      dplyr::summarise_at(.vars = c(y, "pred"), mean) %>%
+      dplyr::mutate(ae = abs(.data[[y]] - pred)) %>%
+      dplyr::pull(ae)
+
+    out <- mean(out)
+  }
 
   # Function output
   return(out)
