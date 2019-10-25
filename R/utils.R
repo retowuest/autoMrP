@@ -103,7 +103,6 @@ loss_function <- function(pred, data.valid,
                           unit = c("individual", "geo.unit"),
                           measure = c("mse", "mae"),
                           y, geo.unit) {
-  # Measure performance
   if (unit == "individual" & measure == "mse") {
     out <- mean((data.valid[[y]] - pred)^2)
   } else if (unit == "individual" & measure == "mae") {
