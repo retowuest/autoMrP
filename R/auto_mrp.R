@@ -119,10 +119,12 @@ auto_MrP <- function(y, L1.x, L2.x, survey, census, geo.unit,
   # ------------------------ Run individual classifiers ------------------------
 
   # Classifier 1: best subset
-  best_subset_out <- best_subset(train.data = cv_folds)
+  best_subset_out <- best_subset(train.data = cv_folds,
+                                 verbose = TRUE)
 
   # Classifier 2: lasso
-  lasso_out <- lasso(train.data = cv_folds)
+  lasso_out <- lasso(train.data = cv_folds,
+                     verbose = TRUE)
 
   # Classifier 3: PCA
 
