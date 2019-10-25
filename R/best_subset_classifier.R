@@ -20,12 +20,22 @@
 best_subset_classifier <- function(model, data.train,
                                    model.family = binomial(link = "probit"),
                                    model.optimizer = "bobyqa",
-                                   n.iter = 1000000) {
+                                   n.iter = 1000000,
+                                   verbose = c(TRUE, FALSE)) {
   # Train model on training data
-  out <- lme4::glmer(model, data = data.train,
-                     family = model.family,
-                     lme4::glmerControl(optimizer = model.optimizer,
-                                        optCtrl = list(maxfun = n.iter)))
+  if (verbose == "TRUE") {
+    out <- lme4::glmer(model, data = data.train,
+                       family = model.family,
+                       lme4::glmerControl(optimizer = model.optimizer,
+                                          optCtrl = list(maxfun = n.iter)))
+  } else {
+    out <- suppressMessages(
+      lme4::glmer(model, data = data.train,
+                  family = model.family,
+                  lme4::glmerControl(optimizer = model.optimizer,
+                                     optCtrl = list(maxfun = n.iter)))
+    )
+  }
 
   # Function output
   return(out)
