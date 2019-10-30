@@ -24,5 +24,17 @@
 lasso_classifier <- function(L2.fix, L1.re, data.train, lambda,
                              model.family = binomial(link = "probit"),
                              verbose = c(TRUE, FALSE)) {
+  # Train model on training data with lambda as tuning parameter
+  if (verbose == TRUE) {
+    out <- glmmLasso::glmmLasso(fix = L2.fix, rnd = L1.re,
+                                data = data.train, lambda = lambda,
+                                family = model.family,
+                                switch.NR = FALSE, final.re = TRUE,
+                                control = list(standarize = FALSE))
+  } else {
 
+  }
+
+  # Function output
+  return(out)
 }
