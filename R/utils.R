@@ -1,12 +1,12 @@
 # Function to create EBMA hold-out fold
-ebma_folding <- function(data, geo.unit, n.ebma = NULL) {
+ebma_folding <- function(data, L2.unit, ebma.size = NULL) {
   # Add row number to data frame
   data <- data %>%
     dplyr::mutate(index = row_number())
 
   # Split data by geographic unit into a list of data frames
   data_list <- data %>%
-    dplyr::group_split(.data[[geo.unit]])
+    dplyr::group_split(.data[[L2.unit]])
 
   # Sample one respondent per geographic unit
   one_per_unit <- lapply(data_list, function(x) sample(x$index, size = 1)) %>%
@@ -19,7 +19,7 @@ ebma_folding <- function(data, geo.unit, n.ebma = NULL) {
   data <- data %>%
     dplyr::filter(!(index %in% one_per_unit))
 
-  remainder <- sample(data$index, size = n.ebma - length(one_per_unit))
+  remainder <- sample(data$index, size = ebma.size - length(one_per_unit))
 
   ebma_remainder <- data %>%
     dplyr::filter(index %in% remainder)
