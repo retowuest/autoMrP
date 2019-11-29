@@ -3,7 +3,7 @@ library(magrittr)
 # Set seed
 set.seed(1234)
 
-# Load dta data files
+# Load Stata data files
 survey_data <- foreign::read.dta("./data/.tmp/survey_data.dta")
 census_data <- foreign::read.dta("./data/.tmp/census_data.dta")
 
