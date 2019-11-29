@@ -42,7 +42,8 @@ best_subset <- function(y, L1.x, L2.x, geo.unit = geo.unit,
       data_valid <- dplyr::bind_rows(cv.data[k])
 
       # Train mth model on kth training set
-      model_m <- best_subset_classifier(model = models[[m]], data.train = data_train,
+      model_m <- best_subset_classifier(model = models[[m]],
+                                        data.train = data_train,
                                         model.family = binomial(link = "probit"),
                                         model.optimizer = "bobyqa",
                                         n.iter = 1000000,
