@@ -46,7 +46,7 @@ ebma_folding <- function(data, L2.unit, ebma.size = NULL) {
 
 
 # Function to create CV folds
-cv_folding <- function(data, k.folds,
+cv_folding <- function(data, L2.unit, k.folds,
                        cv.sampling = c("respondents", "units")) {
 
   if (cv.sampling == "respondents") {
@@ -58,17 +58,21 @@ cv_folding <- function(data, k.folds,
     fold_indices <- caret::createFolds(data$index, k = k.folds,
                                        list = TRUE, returnTrain = FALSE)
 
-    out <- lapply(fold_indices, function(x) data %>%
-                    dplyr::filter(index %in% x) %>%
-                    dplyr::select(-index))
+    out <- lapply(fold_indices, function(x) {
+      data %>%
+        dplyr::filter(index %in% x) %>%
+        dplyr::select(-index)
+    })
   } else {
     # Create folds
-    fold_indices <- data[[geo.unit]] %>%
+    fold_indices <- data[[L2.unit]] %>%
       unique() %>%
       caret::createFolds(k = k.folds, list = TRUE, returnTrain = FALSE)
 
-    out <- lapply(fold_indices, function(x) data %>%
-                    dplyr::filter(.data[[geo.unit]] %in% x))
+    out <- lapply(fold_indices, function(x) {
+      data %>%
+        dplyr::filter(.data[[L2.unit]] %in% x)
+    })
   }
 
   # Function output
