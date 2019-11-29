@@ -12,32 +12,39 @@
 #' @param L2.x Context-level covariates. A character vector of column names
 #'   corresponding to the context-level variables used to predict the outcome
 #'   variable.
+#' @param L2.unit Geographic unit. A character scalar indicating the column
+#'   name of the geographic unit at which outcomes should be aggregated.
 #' @param survey Survey data. A data.frame containing the y and x column names.
 #' @param census Census data. A data.frame containing the x column names.
-#' @param geo.unit Geographic unit. A character scalar indicating the column
-#'   name of the geographic unit at which outcomes should be aggregated.
 #' @param bin.size Bin size for ideal types. A character vector indicating the
 #'   column name of the variable in census containing the bin size for ideal
 #'   types in a geographic unit.
-#' @param n.ebma Size of EBMA hold-out fold. An integer-valued scalar indicating
-#'   the number of respondents to be contained in the EBMA hold-out fold. If
-#'   left unspecified (NULL), then n.ebma is set to 1/4 of the survey sample size.
+#' @param ebma.size Size of EBMA hold-out fold. A rational number in the open
+#'   unit interval indicating the share of respondents to be contained in the
+#'   EBMA hold-out fold. If left unspecified (NULL), then ebma.size is set to
+#'   1/4 of the survey sample size.
 #' @param k.folds Number of folds. An integer-valued scalar indicating the
 #'   number of folds to be used for cross-validation. Defaults to the value of 5.
 #' @param cv.sampling Sampling method. A character-valued scalar indicating
 #'   whether sampling in the creation of cross-validation folds should be done
 #'   by respondents or geographic units. Default is by units.
+#' @param seed Seed. An integer-valued scalar to control random number
+#'   generation. If left unspecified (NULL), then seed is set to 12345.
 #' @return
 #' @keywords MRP multilevel regression post-stratification machine learning
 #'   EBMA ensemble bayesian model averaging
 #' @examples
 #' @export
 
-auto_MrP <- function(y, L1.x, L2.x, survey, census, geo.unit,
-                     bin.size = "None", n.ebma = NULL, k.folds = 5,
-                     cv.sampling = "units", set.seed = NULL) {
+auto_MrP <- function(y, L1.x, L2.x, L2.unit, survey, census,
+                     bin.size = "None", ebma.size = NULL, k.folds = 5,
+                     cv.sampling = "units", seed = NULL) {
   # Set seed
-  set.seed(set.seed)
+  if (is.null(seed)) {
+    set.seed(12345)
+  } else {
+    set.seed(seed)
+  }
 
   # Error and warning checks
   if (!all(L1.x %in% colnames(survey))) {
@@ -45,53 +52,60 @@ auto_MrP <- function(y, L1.x, L2.x, survey, census, geo.unit,
                L1.x[which(!(L1.x %in% colnames(survey)))],
                "' is/are not in your survey data.", sep = ""))
   }
-  if(!all(L1.x %in% colnames(census))) {
+
+  if (!all(L1.x %in% colnames(census))) {
     stop(paste("Individual-level variable(s) '",
                L1.x[which(!(L1.x %in% colnames(census)))],
                "' is/are not in your census data.", sep = ""))
   }
+
   if (!all(L2.x %in% colnames(survey))) {
-    stop(paste("Individual-level variable(s) '",
+    stop(paste("Context-level variable(s) '",
                L2.x[which(!(L2.x %in% colnames(survey)))],
                "' is/are not in your survey data.", sep = ""))
   }
-  if(!all(L2.x %in% colnames(census))) {
-    stop(paste("Individual-level variable(s) '",
+
+  if (!all(L2.x %in% colnames(census))) {
+    stop(paste("Context-level variable(s) '",
                L2.x[which(!(L2.x %in% colnames(census)))],
                "' is/are not in your census data.", sep = ""))
   }
-  if(!(y %in% colnames(survey))) {
+
+  if (!(y %in% colnames(survey))) {
     stop(paste("Outcome '", y,
                "' is not in your survey data.", sep = ""))
   }
-  if(!(geo.unit %in% colnames(survey))) {
-    stop(paste("The geographic unit '", geo.unit,
+
+  if (!(L2.unit %in% colnames(survey))) {
+    stop(paste("The geographic unit '", L2.unit,
                "' is not in your survey data.", sep = ""))
   }
-  if(!(geo.unit %in% colnames(census))) {
-    stop(paste("The geographic unit '", geo.unit,
+
+  if (!(L2.unit %in% colnames(census))) {
+    stop(paste("The geographic unit '", L2.unit,
                "' is not in your census data.", sep = ""))
   }
-  if(!(geo.unit %in% L1.x)) {
-    stop(paste("The geographic unit '", geo.unit,
-               "' is not among your individual-level variables.", sep = ""))
+
+  if (is.null(ebma.size)) {
+    ebma.size <- round(nrow(survey) / 4, digits = 0)
+  } else if (is.numeric(ebma.size) & ebma.size > 0 & ebma.size < 1) {
+    ebma.size <- round(nrow(survey) * ebma.size, digits = 0)
+  } else {
+    stop("ebma.size must be a rational number in the open unit interval.")
   }
-  if(is.null(n.ebma)) {
-    n.ebma <- round(data / 4, digits = 0)
-  } else if(!(is.numeric(n.ebma) & n.ebma == round(n.ebma, digits = 0))) {
-    stop("n.ebma must be an integer number.")
-  }
-  if(!(is.numeric(k.folds) & k.folds == round(k.folds, digits = 0))) {
+
+  if (!(is.numeric(k.folds) & k.folds == round(k.folds, digits = 0))) {
     stop("k.folds must be an integer number.")
   }
-  if(!cv.sampling %in% c("respondents", "units")) {
+
+  if (!cv.sampling %in% c("respondents", "units")) {
     stop("cv.sampling must take either the value 'respondents' or 'units'.")
   }
 
   # ------------------------------- Prepare data -------------------------------
 
   # If not provided in census data, calculate bin size for each ideal type
-  if(bin.size == "None") {
+  if (bin.size == "None") {
     census <- census %>%
       dplyr::group_by(.dots = L1.x) %>%
       dplyr::summarise(n = dplyr::n())
@@ -106,8 +120,8 @@ auto_MrP <- function(y, L1.x, L2.x, survey, census, geo.unit,
   # ------------------------------- Create folds -------------------------------
 
   # EBMA hold-out fold
-  ebma_folding_out <- ebma_folding(data = survey, geo.unit = geo.unit,
-                                   n.ebma = n.ebma)
+  ebma_folding_out <- ebma_folding(data = survey, L2.unit = L2.unit,
+                                   ebma.size = ebma.size)
 
   ebma_fold <- ebma_folding_out$ebma_fold
   cv_data <- ebma_folding_out$cv_data
