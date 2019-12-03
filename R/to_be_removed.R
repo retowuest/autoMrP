@@ -1,6 +1,9 @@
 # This file contains code used for testing
 # File should be removed after finishing package
 
+# Load packages
+library(magrittr)
+
 # Clean working environment
 rm(list = ls())
 
@@ -22,6 +25,9 @@ L2.x <- c("pvote", "religcon", "urban", "unemp", "hispanics", "white")
 
 # Define context-level unit
 L2.unit <- "stateid"
+
+# Define region variable which groups context-level units
+L2.re <- "region"
 
 # Define outcome variable
 y <- "y"
