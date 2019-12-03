@@ -14,6 +14,9 @@
 #'   variable.
 #' @param L2.unit Geographic unit. A character scalar indicating the column
 #'   name of the geographic unit at which outcomes should be aggregated.
+#' @param L2.re Geographic region. A character scalar indicating the column
+#'   name of the geographic region by which geographic units are grouped
+#'   (L2.unit must be nested within L2.re).
 #' @param survey Survey data. A data.frame containing the y and x column names.
 #' @param census Census data. A data.frame containing the x column names.
 #' @param bin.size Bin size for ideal types. A character vector indicating the
@@ -36,7 +39,7 @@
 #' @examples
 #' @export
 
-auto_MrP <- function(y, L1.x, L2.x, L2.unit, survey, census,
+auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.re, survey, census,
                      bin.size = "None", ebma.size = NULL, k.folds = 5,
                      cv.sampling = "units", seed = NULL) {
   # Set seed
@@ -84,6 +87,32 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, survey, census,
   if (!(L2.unit %in% colnames(census))) {
     stop(paste("The geographic unit '", L2.unit,
                "' is not in your census data.", sep = ""))
+  }
+
+  if (!(L2.re %in% colnames(survey))) {
+    stop(paste("The geographic region '", L2.re,
+               "' is not in your survey data.", sep = ""))
+  }
+
+  if (!(L2.re %in% colnames(census))) {
+    stop(paste("The geographic region '", L2.re,
+               "' is not in your census data.", sep = ""))
+  }
+
+  if (any(unlist(lapply(dplyr::group_split(survey, .data[[L2.unit]]),
+                        function(x) length(unique(x[[L2.re]])))) > 1)) {
+    stop(paste("The geographic unit(s) '",
+               which(unlist(lapply(dplyr::group_split(survey, .data[[L2.unit]]),
+                                   function(x) length(unique(x[[L2.re]])))) > 1),
+               "' is/are nested in multiple regions in your survey data."))
+  }
+
+  if (any(unlist(lapply(dplyr::group_split(census, .data[[L2.unit]]),
+                        function(x) length(unique(x[[L2.re]])))) > 1)) {
+    stop(paste("The geographic unit(s) '",
+               which(unlist(lapply(dplyr::group_split(census, .data[[L2.unit]]),
+                                   function(x) length(unique(x[[L2.re]])))) > 1),
+               "' is/are nested in multiple regions in your census data."))
   }
 
   if (is.null(ebma.size)) {
@@ -135,11 +164,11 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, survey, census,
 
   # ------------------------ Run individual classifiers ------------------------
 
-  # Classifier 1: best subset
-  best_subset_out <- best_subset(train.data = cv_folds,
+  # Classifier 1: Best Subset
+  best_subset_out <- best_subset(data = cv_folds,
                                  verbose = TRUE)
 
-  # Classifier 2: lasso
+  # Classifier 2: Lasso
   lasso_out <- lasso(train.data = cv_folds,
                      verbose = TRUE)
 

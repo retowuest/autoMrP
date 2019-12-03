@@ -12,19 +12,19 @@
 #' @param L2.x Context-level covariates. A character vector of column names
 #'   corresponding to the context-level variables used to predict the outcome
 #'   variable.
-#' @param geo.unit Geographic unit. A character scalar indicating the column
+#' @param L2.unit Geographic unit. A character scalar indicating the column
 #'   name of the geographic unit at which outcomes should be aggregated.
-#' @param cv.data Data for cross-validation. A list of k data.frames, one for
+#' @param data Data for cross-validation. A list of k data.frames, one for
 #'   each fold used in k-fold cross-validation.
 #' @param verbose Verbose output. A logical vector indicating whether or not
 #'   verbose output should be printed.
 #' @return
 #' @examples
 
-best_subset <- function(y, L1.x, L2.x, geo.unit = geo.unit,
-                        cv.data, verbose = FALSE) {
+best_subset <- function(y, L1.x, L2.x, L2.unit,
+                        data, verbose = FALSE) {
   # List of all models to be evaluated
-  models <- model_list(y = y, L1.x = L1.x, L2.x = L2.x)
+  models <- model_list(y = y, L1.x = L1.x, L2.x = L2.x, L2.unit = L2.unit)
 
   # Train and evaluate each model
   m_errors <- lapply(seq_along(models), function(m) {
@@ -56,7 +56,7 @@ best_subset <- function(y, L1.x, L2.x, geo.unit = geo.unit,
       # Evaluate predictions based on loss function
       perform_m <- loss_function(pred = pred_m, data.valid = data_valid,
                                  unit = "individual", measure = "mse",
-                                 y = y, geo.unit = geo.unit)
+                                 y = y, L2.unit = L2.unit)
     })
 
     # Mean over all k folds
