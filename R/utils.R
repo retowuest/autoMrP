@@ -120,19 +120,19 @@ model_list <- function(y, L1.x, L2.x, L2.unit, L2.re = NULL) {
 
 # Loss function
 loss_function <- function(pred, data.valid,
-                          unit = c("individual", "geo.unit"),
+                          unit = c("individual", "L2.unit"),
                           measure = c("mse", "mae"),
-                          y, geo.unit) {
+                          y, L2.unit) {
   if (unit == "individual" & measure == "mse") {
     out <- mean((data.valid[[y]] - pred)^2)
   } else if (unit == "individual" & measure == "mae") {
     out <- mean(abs(data.valid[[y]] - pred))
-  } else if (unit == "geo.unit" & measure == "mse") {
+  } else if (unit == "L2.unit" & measure == "mse") {
     data.valid <- data.valid %>%
       dplyr::mutate(pred = pred)
 
     out <- data.valid %>%
-      dplyr::group_by_at(geo.unit) %>%
+      dplyr::group_by_at(L2.unit) %>%
       dplyr::summarise_at(.vars = c(y, "pred"), mean) %>%
       dplyr::mutate(sqe = (.data[[y]] - pred)^2) %>%
       dplyr::pull(sqe)
@@ -143,7 +143,7 @@ loss_function <- function(pred, data.valid,
       dplyr::mutate(pred = pred)
 
     out <- data.valid %>%
-      dplyr::group_by_at(geo.unit) %>%
+      dplyr::group_by_at(L2.unit) %>%
       dplyr::summarise_at(.vars = c(y, "pred"), mean) %>%
       dplyr::mutate(ae = abs(.data[[y]] - pred)) %>%
       dplyr::pull(ae)
