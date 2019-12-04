@@ -9,7 +9,9 @@ ebma_folding <- function(data, L2.unit, ebma.size = NULL) {
     dplyr::group_split(.data[[L2.unit]])
 
   # Sample one respondent per geographic unit
-  one_per_unit <- lapply(data_list, function(x) sample(x$index, size = 1)) %>%
+  one_per_unit <- lapply(data_list, function(x) {
+    sample(x$index, size = 1)
+  }) %>%
     unlist()
 
   # Create EBMA hold-out fold
