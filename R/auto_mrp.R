@@ -167,7 +167,12 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.re = NULL, survey, census,
   # ------------------------ Run individual classifiers ------------------------
 
   # Classifier 1: Best Subset
-  best_subset_out <- best_subset(data = cv_folds,
+  best_subset_out <- best_subset(y = y,
+                                 L1.x = L1.x,
+                                 L2.x = L2.x,
+                                 L2.unit = L2.unit,
+                                 L2.re = L2.re,
+                                 data = cv_folds,
                                  verbose = TRUE)
 
   # Classifier 2: Lasso
