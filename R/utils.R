@@ -83,21 +83,35 @@ cv_folding <- function(data, L2.unit, k.folds,
 
 
 # Function to create model list for best subset classifier
-model_list <- function(y, L1.x, L2.x) {
+model_list <- function(y, L1.x, L2.x, L2.unit, L2.re = NULL) {
   # Individual-level random effects
   L1_re <- paste(paste("(1 | ", L1.x, ")", sep = ""), collapse = " + ")
 
+  # Geographic unit or Geographic unit-Geographic region random effects
+  if (is.null(L2.re)) {
+    L2_re <- paste("(1 | ", L2.unit, ")", sep = "")
+  } else {
+    L2_re <- paste(paste("(1 | ", L2.re, "/", L2.unit, ")", sep = ""),
+                   collapse = " + ")
+  }
+
+  # Combine all random effects
+  all_re <- paste(c(L1_re, L2_re), collapse = " + ")
+
   # Empty model
-  all_models <- list(as.formula(paste(y, " ~ ", L1_re, sep = "")))
+  empty_model <- list(as.formula(paste(y, " ~ ", all_re, sep = "")))
 
   # Remaining models
-  L2_list <- lapply(seq_along(L2.x), function(x) combn(L2.x, x))
-  L2_list <- lapply(L2_list, function(x) apply(x, 2, function(c)
-    as.formula(paste(y, " ~ ", paste(c, collapse = " + "), " + ", L1_re, sep = "")))) %>%
+  L2_list <- lapply(seq_along(L2.x), function(x) {combn(L2.x, x)})
+  L2_list <- lapply(L2_list, function(x) {
+    apply(x, 2, function(c) {
+      as.formula(paste(y, " ~ ", paste(c, collapse = " + "), " + ", all_re, sep = ""))
+    })
+  }) %>%
     unlist()
 
   # Combine models in list
-  out <- c(all_models, L2_list)
+  out <- c(empty_model, L2_list)
 
   # Function output
   return(out)
