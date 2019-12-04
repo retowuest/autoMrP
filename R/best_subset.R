@@ -14,6 +14,9 @@
 #'   variable.
 #' @param L2.unit Geographic unit. A character scalar indicating the column
 #'   name of the geographic unit at which outcomes should be aggregated.
+#' @param L2.re Geographic region. A character scalar indicating the column
+#'   name of the geographic region by which geographic units are grouped
+#'   (L2.unit must be nested within L2.re).
 #' @param data Data for cross-validation. A list of k data.frames, one for
 #'   each fold used in k-fold cross-validation.
 #' @param verbose Verbose output. A logical vector indicating whether or not
@@ -21,10 +24,14 @@
 #' @return
 #' @examples
 
-best_subset <- function(y, L1.x, L2.x, L2.unit,
+best_subset <- function(y, L1.x, L2.x, L2.unit, L2.re,
                         data, verbose = FALSE) {
   # List of all models to be evaluated
-  models <- model_list(y = y, L1.x = L1.x, L2.x = L2.x, L2.unit = L2.unit)
+  models <- model_list(y = y,
+                       L1.x = L1.x,
+                       L2.x = L2.x,
+                       L2.unit = L2.unit,
+                       L2.re = L2.re)
 
   # Train and evaluate each model
   m_errors <- lapply(seq_along(models), function(m) {
@@ -36,10 +43,10 @@ best_subset <- function(y, L1.x, L2.x, L2.unit,
     }
 
     # Loop over each fold
-    k_errors <- lapply(seq_along(cv.data), function(k) {
+    k_errors <- lapply(seq_along(data), function(k) {
       # Split data in training and validation sets
-      data_train <- dplyr::bind_rows(cv.data[-k])
-      data_valid <- dplyr::bind_rows(cv.data[k])
+      data_train <- dplyr::bind_rows(data[-k])
+      data_valid <- dplyr::bind_rows(data[k])
 
       # Train mth model on kth training set
       model_m <- best_subset_classifier(model = models[[m]],
