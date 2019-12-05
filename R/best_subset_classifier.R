@@ -31,12 +31,12 @@ best_subset_classifier <- function(model, data.train,
                        lme4::glmerControl(optimizer = model.optimizer,
                                           optCtrl = list(maxfun = n.iter)))
   } else {
-    out <- suppressMessages(
+    out <- suppressMessages(suppressWarnings(
       lme4::glmer(model, data = data.train,
                   family = model.family,
                   lme4::glmerControl(optimizer = model.optimizer,
                                      optCtrl = list(maxfun = n.iter)))
-    )
+    ))
   }
 
   # Function output
