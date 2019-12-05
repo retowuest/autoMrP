@@ -25,7 +25,7 @@ best_subset_classifier <- function(model, data.train,
                                    n.iter = 1000000,
                                    verbose = c(TRUE, FALSE)) {
   # Train model on training data
-  if (verbose == "TRUE") {
+  if (isTRUE(verbose)) {
     out <- lme4::glmer(model, data = data.train,
                        family = model.family,
                        lme4::glmerControl(optimizer = model.optimizer,
