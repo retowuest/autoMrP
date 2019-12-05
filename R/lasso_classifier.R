@@ -32,7 +32,13 @@ lasso_classifier <- function(L2.fix, L1.re, data.train, lambda,
                                 switch.NR = FALSE, final.re = TRUE,
                                 control = list(standarize = FALSE))
   } else {
-
+    out <- suppressMessages(suppressWarnings(
+      glmmLasso::glmmLasso(fix = L2.fix, rnd = L1.re,
+                           data = data.train, lambda = lambda,
+                           family = model.family,
+                           switch.NR = FALSE, final.re = TRUE,
+                           control = list(standarize = FALSE))
+    ))
   }
 
   # Function output
