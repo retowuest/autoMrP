@@ -4,8 +4,9 @@ library(magrittr)
 set.seed(1234)
 
 # Load Stata data files
-survey_data <- foreign::read.dta("./data/.tmp/survey_data.dta")
-census_data <- foreign::read.dta("./data/.tmp/census_data.dta")
+# (Directory of data: "Code/BH data analysis/Data")
+survey_data <- foreign::read.dta("./data/.tmp/file11.dta")
+census_data <- foreign::read.dta("./data/.tmp/census11.dta")
 
 # Select relevant variables
 survey_data <- survey_data %>%
