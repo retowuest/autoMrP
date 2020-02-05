@@ -241,6 +241,12 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, survey, census,
     census$n <- census[[bin.size]]
   }
 
+  # In census data, calculate bin proportion for each ideal type in a
+  # geographic unit
+  census <- census %>%
+    dplyr::group_by(.dots = L2.unit) %>%
+    dplyr::mutate(prop = n / sum(n))
+
   # Scale context-level variables in survey and census data
   survey[, L2.x] <- scale(survey[, L2.x], center = TRUE, scale = TRUE)
   census[, L2.x] <- scale(census[, L2.x], center = TRUE, scale = TRUE)
