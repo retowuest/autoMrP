@@ -14,9 +14,15 @@
 #'   variable.
 #' @param L2.unit Geographic unit. A character scalar indicating the column
 #'   name of the geographic unit at which outcomes should be aggregated.
-#' @param L2.re Geographic region. A character scalar indicating the column
+#' @param L2.reg Geographic region. A character scalar indicating the column
 #'   name of the geographic region by which geographic units are grouped
 #'   (L2.unit must be nested within L2.re).
+#' @param loss.unit Loss function unit. A character-valued scalar indicating
+#'   whether the loss should be evaluated at the level of individual respondents
+#'   or the level of geographic units. Default is at the individual level.
+#' @param loss.measure Loss function measure. A character-valued scalar
+#'   indicating whether the loss should be measured by the mean squared error
+#'   or the mean absolute error. Default is the MSE.
 #' @param data Data for cross-validation. A list of k data.frames, one for
 #'   each fold used in k-fold cross-validation.
 #' @param verbose Verbose output. A logical vector indicating whether or not
@@ -24,19 +30,20 @@
 #' @return
 #' @examples
 
-best_subset <- function(y, L1.x, L2.x, L2.unit, L2.re,
-                        data, verbose = FALSE) {
+best_subset <- function(y, L1.x, L2.x, L2.unit, L2.reg,
+                        loss.unit, loss.measure,
+                        data, verbose) {
   # List of all models to be evaluated
   models <- model_list(y = y,
                        L1.x = L1.x,
                        L2.x = L2.x,
                        L2.unit = L2.unit,
-                       L2.re = L2.re)
+                       L2.reg = L2.reg)
 
   # Train and evaluate each model
   m_errors <- lapply(seq_along(models), function(m) {
     # Print model m
-    if (verbose == TRUE) {
+    if (isTRUE(verbose == TRUE)) {
       M <- length(models)
       cat(paste("Best subset: Running model ", m,
                 " out of ", M, " models\n", sep = ""))
@@ -62,7 +69,8 @@ best_subset <- function(y, L1.x, L2.x, L2.unit, L2.re,
 
       # Evaluate predictions based on loss function
       perform_m <- loss_function(pred = pred_m, data.valid = data_valid,
-                                 unit = "individual", measure = "mse",
+                                 loss.unit = loss.unit,
+                                 loss.measure = loss.measure,
                                  y = y, L2.unit = L2.unit)
     })
 
