@@ -70,7 +70,7 @@ lasso.iterations.max <- NULL
 gb.interaction.set <- c(1, 2, 3)
 
 # Define set of learning rates for GB
-gb.shrinkage.set <- c(0.04, 0.01, 0.008, 0.005, 0.001)
+gb.shrinkage.set <- c(0.04, 0.01)
 
 # Define initial number of total trees
 gb.tree.start <- 50
@@ -79,13 +79,16 @@ gb.tree.start <- 50
 gb.tree.increase.set <- 50
 
 # Define increase in number of trees as vector for GB
-gb.tree.increase.set <- c(50, 50, 70, 70, 90)
+gb.tree.increase.set <- c(50, 100)
 
 # Define maximum number of trees as scalar for GB
-gb.trees.max.set <- 1001
+gb.trees.max.set <- 200
 
 # Define maximum number of trees as vector for GB
-gb.trees.max.set <- c(1001, 1001, 1051, 1051, 1101)
+gb.trees.max.set <- c(200, 400)
+
+# Define maximum number of iterations w/o improvement for GB
+gb.iterations.max <- NULL
 
 # Define minimum number of observations in terminal nodes for GB
 gb.n.minobsinnode <- 5
@@ -95,3 +98,25 @@ gb.L2.unit.include <- FALSE
 
 # Define whether L2.reg should be included in GB
 gb.L2.reg.include <- FALSE
+
+# Define number of draws from EBMA sample with equal obs/state
+Ndraws <- 100
+
+# Define tolerance values for EBMA tuning
+tol.values <- c(0.01, 0.005, 0.001)
+
+#_______________________________________________________
+# load functions
+
+# aux functions
+source("./utils.R")
+
+# classifiers
+source("./best_subset.R")
+source("./best_subset_classifier.R")
+source("./lasso.R")
+source("./lasso_classifier.R")
+source("./pca.R")
+source("./post_stratification.R")
+source("./ebma.R")
+

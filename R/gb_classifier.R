@@ -27,7 +27,8 @@ gb_classifier <- function(form, distribution, data.train,
                           n.trees, interaction.depth,
                           n.minobsinnode, shrinkage,
                           verbose = c(TRUE, FALSE)) {
-  # Train model on training data with lambda as tuning parameter
+  # Train model on training data with number of total trees, interaction depth,
+  # and learning rate as tuning parameters
   if (isTRUE(verbose == TRUE)) {
     out <- gbm::gbm(formula = form, distribution = distribution,
                     data = data.train, n.trees = n.trees,
@@ -43,6 +44,25 @@ gb_classifier <- function(form, distribution, data.train,
                n.minobsinnode = n.minobsinnode,
                shrinkage = shrinkage,
                train.fraction = 1, n.cores = 1)
+    ))
+  }
+
+  # Function output
+  return(out)
+}
+
+
+gb_classifier_update <- function(object, n.new.trees,
+                                 verbose = c(TRUE, FALSE)) {
+  # Train model on training data with number of total trees, interaction depth,
+  # and learning rate as tuning parameters
+  if (isTRUE(verbose == TRUE)) {
+    out <- gbm::gbm.more(object = object,
+                         n.new.trees = n.new.trees)
+  } else {
+    out <- suppressMessages(suppressWarnings(
+      gbm::gbm.more(object = object,
+                    n.new.trees = n.new.trees)
     ))
   }
 

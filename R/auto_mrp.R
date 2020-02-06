@@ -57,7 +57,7 @@
 #'   the model. Values between 0.001 and 0.1 usually work, but a smaller
 #'   learning rate typically requires more trees.
 #' @param gb.tree.start Initial total number of trees. An integer-valued scalar
-#'   specifying the initial number of total trees. Default is 2.
+#'   specifying the initial number of total trees. Default is 50.
 #' @param gb.tree.increase.set Increase in total number of trees. Either an
 #'   integer-valued scalar specifying by how many trees the total number of
 #'   trees is increased (until the maximum number of trees is reached) or an
@@ -68,6 +68,9 @@
 #'   scalar specifying the maximum number of trees or an integer-valued vector
 #'   of `length(gb.shrinkage.set)` with each value being associated with a
 #'   learning rate and a number of tree increase.
+#' @param gb.iterations.max Stopping rule. A numeric scalar specifying the
+#'   maximum number of iterations without performance improvement the GB
+#'   classifier runs before stopping. Default is NULL.
 #' @param gb.n.minobsinnode Minimum number of observations in the terminal nodes.
 #'   An integer-valued scalar specifying the minimum number of observations
 #'   that each terminal node of the trees must contain. Default is 5.
@@ -87,8 +90,9 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, survey, census,
                      loss.measure = "mse", lasso.lambda.set,
                      lasso.iterations.max = NULL, gb.L2.unit.include = FALSE,
                      gb.L2.reg.include = FALSE, gb.interaction.set,
-                     gb.shrinkage.set, gb.tree.start = 2, gb.tree.increase.set,
-                     gb.trees.max.set, gb.n.minobsinnode = 5,
+                     gb.shrinkage.set, gb.tree.start = 50,
+                     gb.tree.increase.set, gb.trees.max.set,
+                     gb.n.minobsinnode = 5,
                      seed = NULL, verbose = TRUE) {
   # Set seed
   if (is.null(seed)) {
@@ -337,6 +341,7 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, survey, census,
                tree.start = gb.tree.start,
                tree.increase.set = gb.tree.increase.set,
                trees.max.set = gb.trees.max.set,
+               iterations.max = gb.iterations.max,
                n.minobsinnode = gb.n.minobsinnode,
                data = cv_folds,
                verbose = verbose)
@@ -344,5 +349,35 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, survey, census,
   # Classifier 5: SVM
 
   # --------------------------- Post-stratification ----------------------------
+
+  ps_out <- post_stratification(
+    data = cv_folds,
+    census = census,
+    L1.x = L1.x,
+    L2.x = L2.x,
+    L2.unit = L2.unit,
+    L2.reg = L2.reg,
+    best.subset = best_subset_out,
+    pca = pca_out,
+    lasso = lasso_out,
+    verbose = verbose
+  )
+
+  # ----------------------------------- EBMA ------------------------------------
+
+  ebma.out <- ebma(
+    ebma.fold = ebma_fold,
+    L1.x = L1.x,
+    L2.x = L2.x,
+    L2.unit = L2.unit,
+    L2.reg = L2.reg,
+    post.strat = ps_out,
+    Ndraws = Ndraws,
+    tol.values = tol.values,
+    best.subset = best_subset_out,
+    pca = pca_out,
+    lasso = lasso_out,
+    verbose = verbose
+  )
 
 }

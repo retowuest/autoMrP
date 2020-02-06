@@ -79,8 +79,8 @@ best_subset <- function(y, L1.x, L2.x, L2.unit, L2.reg,
   })
 
   # Choose best-performing model
-  min.m <- which.min(m_errors)
-  out <- models[[min.m]]
+  min_m <- which.min(m_errors)
+  out <- models[[min_m]]
 
   # Function output
   return(out)
