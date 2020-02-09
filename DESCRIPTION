@@ -6,9 +6,9 @@ Authors@R: c(
     person("Wüest", "Reto", email = "wuest.reto@gmail.com",
       role = c("aut", "cre")),
     person("Leemann", "Lucas", email = "lleemann@gmail.com",
-      role = c("aut", "cre")),
+      role = c("aut")),
     person("Broniecki", "Philipp", email = "philippbroniecki@gmail.com",
-      role = c("aut", "cre")))
+      role = c("aut")))
 Description: autoMrP improves the prediction performance of multilevel
     regression with post-stratification (MrP) by combining a number of machine
     learning methods.
