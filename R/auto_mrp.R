@@ -402,6 +402,7 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, survey, census,
                    pca = pca_out,
                    lasso = lasso_out,
                    gb = gb_out,
+                   svm.out = svm_out,
                    verbose = verbose)
 
 }
