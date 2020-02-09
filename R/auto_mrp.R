@@ -102,8 +102,9 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, survey, census,
                      gb.L2.reg.include = FALSE, gb.interaction.set,
                      gb.shrinkage.set, gb.tree.start = 50,
                      gb.tree.increase.set, gb.trees.max.set,
-                     gb.n.minobsinnode = 5, svm.kernel, svm.error.fun,
-                     svm.gamma.set, svm.cost.set, ebma_n_draws, ebma_tol_values,
+                     gb.iterations.max = NULL, gb.n.minobsinnode = 5,
+                     svm.kernel, svm.error.fun, svm.gamma.set, svm.cost.set,
+                     ebma_n_draws, ebma_tol_values,
                      seed = NULL, verbose = TRUE) {
   # Set seed
   if (is.null(seed)) {
