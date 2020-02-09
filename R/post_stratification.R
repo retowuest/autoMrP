@@ -2,9 +2,11 @@
 
 post_stratification <- function(data, census, L1.x, L2.x, L2.unit, L2.reg,
                                 best.subset, pca, lasso, gb, n.minobsinnode,
-                                L2.unit.include, L2.reg.include, verbose){
+                                L2.unit.include, L2.reg.include, svm.out,
+                                kernel = "radial", verbose){
 
-  # argument is needed twice but might be re-set depending on call
+  # copy argument b/c it is needed twice but might be reset depending on call
+  # see lines: 59-63
   L2_unit <- L2.unit
 
   # bind together survey sample data
@@ -104,12 +106,14 @@ post_stratification <- function(data, census, L1.x, L2.x, L2.unit, L2.reg,
     dplyr::mutate(best_subset = predict(object = model_bs, newdata = census, allow.new.levels = TRUE, type = "response"),
                   pca = predict(object = model_pca, newdata = census, allow.new.levels = TRUE, type = "response"),
                   lasso = lasso_p,
-                  gb = gbm::predict.gbm(object = model_gb, newdata = census, n.trees = gb$n_trees, type = "response")) %>%
+                  gb = gbm::predict.gbm(object = model_gb, newdata = census, n.trees = gb$n_trees, type = "response"),
+                  svm = attr(predict(object = model_svm, newdata = census, probability = TRUE),"probabilities")[,"1"]) %>%
     dplyr::group_by(.dots = list(L2_unit)) %>%
     dplyr::summarize(best_subset = weighted.mean(x = best_subset, w = prop),
                      pca = weighted.mean(x = pca, w = prop),
                      lasso = weighted.mean(x = lasso, w = prop),
-                     gb = weighted.mean(x = gb, w = prop))
+                     gb = weighted.mean(x = gb, w = prop),
+                     svm = weighted.mean(x = svm, w = prop))
 
   # individual predictions for EBMA
   L1_preds <- dplyr::tibble(
@@ -117,7 +121,8 @@ post_stratification <- function(data, census, L1.x, L2.x, L2.unit, L2.reg,
     best_subest = predict(object = model_bs, type = "response"),
     pca = predict(object = model_pca, type = "response"),
     lasso = as.numeric(predict(object = model_l, type = "response")),
-    gb = predict(object = model_gb, n.trees = gb$n_trees, type = "response")
+    gb = gbm::predict.gbm(object = model_gb, n.trees = gb$n_trees, type = "response"),
+    svm = attr(predict(object = model_svm, newdata = data, probability = TRUE),"probabilities")[,"1"]
   )
 
   # Function output
@@ -126,5 +131,6 @@ post_stratification <- function(data, census, L1.x, L2.x, L2.unit, L2.reg,
     models = list(best_subset = model_bs,
                   pca = model_pca,
                   lasso = model_l,
-                  gb = model_gb)))
+                  gb = model_gb,
+                  svm = model_svm)))
 }
