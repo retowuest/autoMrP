@@ -82,8 +82,8 @@
 #'   all kernels except linear.
 #' @param svm.cost.set Cost parameter for SVM. This parameter specifies the cost
 #'   of constraints violation.
-#' @param ebma_n_draws
-#' @param ebma_tol_values
+#' @param ebma.n.draws
+#' @param ebma.tol.values
 #' @param seed Seed. An integer-valued scalar to control random number
 #'   generation. If left unspecified (NULL), then seed is set to 12345.
 #' @param verbose Verbose output. A logical argument indicating whether or not
