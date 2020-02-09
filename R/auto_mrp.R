@@ -82,6 +82,8 @@
 #'   all kernels except linear.
 #' @param svm.cost.set Cost parameter for SVM. This parameter specifies the cost
 #'   of constraints violation.
+#' @param ebma_n_draws
+#' @param ebma_tol_values
 #' @param seed Seed. An integer-valued scalar to control random number
 #'   generation. If left unspecified (NULL), then seed is set to 12345.
 #' @param verbose Verbose output. A logical argument indicating whether or not
@@ -101,7 +103,7 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, survey, census,
                      gb.shrinkage.set, gb.tree.start = 50,
                      gb.tree.increase.set, gb.trees.max.set,
                      gb.n.minobsinnode = 5, svm.kernel, svm.error.fun,
-                     svm.gamma.set, svm.cost.set,
+                     svm.gamma.set, svm.cost.set, ebma_n_draws, ebma_tol_values,
                      seed = NULL, verbose = TRUE) {
   # Set seed
   if (is.null(seed)) {
@@ -388,16 +390,16 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, survey, census,
                                 kernel = svm.kernel,
                                 verbose = verbose)
 
-  # ----------------------------------- EBMA ------------------------------------
+  # ----------------------------------- EBMA -----------------------------------
 
-  ebma.out <- ebma(ebma.fold = ebma_fold,
+  ebma_out <- ebma(ebma.fold = ebma_fold,
                    L1.x = L1.x,
                    L2.x = L2.x,
                    L2.unit = L2.unit,
                    L2.reg = L2.reg,
                    post.strat = ps_out,
-                   Ndraws = Ndraws,
-                   tol.values = tol.values,
+                   Ndraws = ebma_n_draws,
+                   tol.values = ebma_tol_values,
                    best.subset = best_subset_out,
                    pca = pca_out,
                    lasso = lasso_out,
@@ -405,4 +407,7 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, survey, census,
                    svm.out = svm_out,
                    verbose = verbose)
 
+  # ---------------------------------- Output ----------------------------------
+
+  return(ebma_out)
 }
