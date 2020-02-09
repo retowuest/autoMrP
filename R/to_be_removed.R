@@ -99,6 +99,18 @@ gb.L2.unit.include <- FALSE
 # Define whether L2.reg should be included in GB
 gb.L2.reg.include <- FALSE
 
+# Define kernel for SVM
+svm.kernel <- "radial"
+
+# Define error function for SVM
+svm.error.fun <- "MSE"   # // might need to be changed to NULL
+
+# Define gamma parameters for SVM
+svm.gamma.set <- c(0.3, 0.5, 0.55, 0.6, 0.65, 0.7, 0.8, 0.9, 1, 2, 3, 4)
+
+# Define cost parameters for SVM
+svm.cost.set <- c(1, 10)
+
 # Define number of draws from EBMA sample with equal obs/state
 Ndraws <- 100
 
@@ -117,6 +129,11 @@ source("./best_subset_classifier.R")
 source("./lasso.R")
 source("./lasso_classifier.R")
 source("./pca.R")
+source("./gb.R")
+source("./gb_classifier.R")
 source("./post_stratification.R")
 source("./ebma.R")
+source("./svm_classifier.R")
+source("./svm.R")
+
 
