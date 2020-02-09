@@ -74,6 +74,14 @@
 #' @param gb.n.minobsinnode Minimum number of observations in the terminal nodes.
 #'   An integer-valued scalar specifying the minimum number of observations
 #'   that each terminal node of the trees must contain. Default is 5.
+#' @param svm.kernel Kernel for SVM. A character string specifying the kernel to
+#'   be used for SVM. The possible types are linear, polynomial, radial, and
+#'   sigmoid. Default is radial.
+#' @param svm.error.fun
+#' @param svm.gamma.set Gamma parameter for SVM. This parameter is needed for
+#'   all kernels except linear.
+#' @param svm.cost.set Cost parameter for SVM. This parameter specifies the cost
+#'   of constraints violation.
 #' @param seed Seed. An integer-valued scalar to control random number
 #'   generation. If left unspecified (NULL), then seed is set to 12345.
 #' @param verbose Verbose output. A logical argument indicating whether or not
@@ -92,7 +100,8 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, survey, census,
                      gb.L2.reg.include = FALSE, gb.interaction.set,
                      gb.shrinkage.set, gb.tree.start = 50,
                      gb.tree.increase.set, gb.trees.max.set,
-                     gb.n.minobsinnode = 5,
+                     gb.n.minobsinnode = 5, svm.kernel, svm.error.fun,
+                     svm.gamma.set, svm.cost.set,
                      seed = NULL, verbose = TRUE) {
   # Set seed
   if (is.null(seed)) {
@@ -347,37 +356,52 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, survey, census,
                verbose = verbose)
 
   # Classifier 5: SVM
+  svm_out <- svm(y = y,
+                 L1.x = L1.x,
+                 L2.x = L2.x,
+                 L2.unit = L2.unit,
+                 L2.reg = L2.reg,
+                 kernel = svm.kernel,
+                 error.fun = svm.error.fun,
+                 gamma.set = svm.gamma.set,
+                 cost.set = svm.cost.set,
+                 k.folds = k.folds,
+                 data = cv_folds,
+                 verbose = verbose)
 
   # --------------------------- Post-stratification ----------------------------
 
-  ps_out <- post_stratification(
-    data = cv_folds,
-    census = census,
-    L1.x = L1.x,
-    L2.x = L2.x,
-    L2.unit = L2.unit,
-    L2.reg = L2.reg,
-    best.subset = best_subset_out,
-    pca = pca_out,
-    lasso = lasso_out,
-    verbose = verbose
-  )
+  ps_out <- post_stratification(data = cv_folds,
+                                census = census,
+                                L1.x = L1.x,
+                                L2.x = L2.x,
+                                L2.unit = L2.unit,
+                                L2.reg = L2.reg,
+                                best.subset = best_subset_out,
+                                pca = pca_out,
+                                lasso = lasso_out,
+                                gb = gb_out,
+                                n.minobsinnode = gb.n.minobsinnode,
+                                L2.unit.include = gb.L2.unit.include,
+                                L2.reg.include = gb.L2.reg.include,
+                                svm.out = svm_out,
+                                kernel = svm.kernel,
+                                verbose = verbose)
 
   # ----------------------------------- EBMA ------------------------------------
 
-  ebma.out <- ebma(
-    ebma.fold = ebma_fold,
-    L1.x = L1.x,
-    L2.x = L2.x,
-    L2.unit = L2.unit,
-    L2.reg = L2.reg,
-    post.strat = ps_out,
-    Ndraws = Ndraws,
-    tol.values = tol.values,
-    best.subset = best_subset_out,
-    pca = pca_out,
-    lasso = lasso_out,
-    verbose = verbose
-  )
+  ebma.out <- ebma(ebma.fold = ebma_fold,
+                   L1.x = L1.x,
+                   L2.x = L2.x,
+                   L2.unit = L2.unit,
+                   L2.reg = L2.reg,
+                   post.strat = ps_out,
+                   Ndraws = Ndraws,
+                   tol.values = tol.values,
+                   best.subset = best_subset_out,
+                   pca = pca_out,
+                   lasso = lasso_out,
+                   gb = gb_out,
+                   verbose = verbose)
 
 }
