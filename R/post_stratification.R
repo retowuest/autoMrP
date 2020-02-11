@@ -1,6 +1,6 @@
 #' Apply post-stratification to classifiers.
 
-post_stratification <- function(data, census, L1.x, L2.x, L2.unit, L2.reg,
+post_stratification <- function(data, census, y, L1.x, L2.x, L2.unit, L2.reg,
                                 best.subset, pca, lasso, gb, n.minobsinnode,
                                 L2.unit.include, L2.reg.include, svm.out,
                                 kernel = "radial", verbose){

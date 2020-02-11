@@ -376,6 +376,7 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, survey, census,
 
   ps_out <- post_stratification(data = cv_folds,
                                 census = census,
+                                y = y,
                                 L1.x = L1.x,
                                 L2.x = L2.x,
                                 L2.unit = L2.unit,
