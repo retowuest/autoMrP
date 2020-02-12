@@ -22,7 +22,7 @@
 #' @param proportion Proportion of state individuals of each ideal type.
 #'   A character vector containing the column name of teh variable in census
 #'   containing the propotion of individuals of a certain ideal type in a
-#'   certain state. Default is NULL. Note: Not needed if bin.size is provided. 
+#'   certain state. Default is NULL. Note: Not needed if bin.size is provided.
 #' @param bin.size Bin size for ideal types. A character vector indicating the
 #'   column name of the variable in census containing the bin size for ideal
 #'   types in a geographic unit. Default is NULL. Note: Not needed if proportion
@@ -113,8 +113,8 @@
 
 auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, survey, census,
                      proportion = NULL,
-                     bin.size = NULL, 
-                     uncertainty = FALSE, 
+                     bin.size = NULL,
+                     uncertainty = FALSE,
                      ebma.size = NULL,
                      scale = TRUE,
                      k.folds = 5,
@@ -289,7 +289,7 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, survey, census,
     census <- census %>%
       dplyr::group_by(.dots = c(L1.x, L2.unit)) %>%
       dplyr::summarise(n = dplyr::n())
-  } 
+  }
   if (!is.null(bin.size) & is.null(proportion)){
     census$n <- census[[bin.size]]
   }
@@ -299,7 +299,7 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, survey, census,
   if (is.null(proportion)){
     census <- census %>%
       dplyr::group_by(.dots = L2.unit) %>%
-      dplyr::mutate(prop = n / sum(n))  
+      dplyr::mutate(prop = n / sum(n))
   } else{
     census <- dplyr::rename(.data = census, prop = one_of(proportion))
   }
@@ -307,7 +307,7 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, survey, census,
   # Scale context-level variables in survey and census data
   if (scale){
     survey[, L2.x] <- scale(survey[, L2.x], center = TRUE, scale = TRUE)
-    census[, L2.x] <- scale(census[, L2.x], center = TRUE, scale = TRUE)  
+    census[, L2.x] <- scale(census[, L2.x], center = TRUE, scale = TRUE)
   }
 
   # Compute principal components for survey data
@@ -327,6 +327,9 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, survey, census,
   census <- census %>%
     dplyr::left_join(unique(dplyr::select(survey, all_of(L2.unit), all_of(pc_names))),
                      by = L2.unit)
+
+  # convert survey data to tibble
+  survey <- dplyr::as_tibble(x = survey)
 
   # ------------------------------- Create folds -------------------------------
 
@@ -417,40 +420,42 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, survey, census,
 
   # --------------------------- Post-stratification ----------------------------
 
-    ps_out <- post_stratification(data = cv_folds,
-                                census = census,
-                                y = y,
-                                L1.x = L1.x,
-                                L2.x = L2.x,
-                                L2.unit = L2.unit,
-                                L2.reg = L2.reg,
-                                best.subset = best_subset_out,
-                                pca = pca_out,
-                                lasso = lasso_out,
-                                gb = gb_out,
-                                n.minobsinnode = gb.n.minobsinnode,
-                                L2.unit.include = gb.L2.unit.include,
-                                L2.reg.include = gb.L2.reg.include,
-                                svm.out = svm_out,
-                                kernel = svm.kernel,
-                                verbose = verbose)
+  ps_out <- post_stratification(
+    data = cv_folds,
+    census = census,
+    y = y,
+    L1.x = L1.x,
+    L2.x = L2.x,
+    L2.unit = L2.unit,
+    L2.reg = L2.reg,
+    best.subset = best_subset_out,
+    pca = pca_out,
+    lasso = lasso_out,
+    gb = gb_out,
+    n.minobsinnode = gb.n.minobsinnode,
+    L2.unit.include = gb.L2.unit.include,
+    L2.reg.include = gb.L2.reg.include,
+    svm.out = svm_out,
+    kernel = svm.kernel,
+    verbose = verbose)
 
   # ----------------------------------- EBMA -----------------------------------
 
-  ebma_out <- ebma(ebma.fold = ebma_fold,
-                   L1.x = L1.x,
-                   L2.x = L2.x,
-                   L2.unit = L2.unit,
-                   L2.reg = L2.reg,
-                   post.strat = ps_out,
-                   Ndraws = ebma.n.draws,
-                   tol.values = ebma.tol.values,
-                   best.subset = best_subset_out,
-                   pca = pca_out,
-                   lasso = lasso_out,
-                   gb = gb_out,
-                   svm.out = svm_out,
-                   verbose = verbose)
+  ebma_out <- ebma(
+    ebma.fold = ebma_fold,
+    L1.x = L1.x,
+    L2.x = L2.x,
+    L2.unit = L2.unit,
+    L2.reg = L2.reg,
+    post.strat = ps_out,
+    Ndraws = ebma.n.draws,
+    tol.values = ebma.tol.values,
+    best.subset = best_subset_out,
+    pca = pca_out,
+    lasso = lasso_out,
+    gb = gb_out,
+    svm.out = svm_out,
+    verbose = verbose)
 
   # ---------------------------------- Output ----------------------------------
 

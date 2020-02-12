@@ -51,10 +51,13 @@ post_stratification <- function(data, census, y, L1.x, L2.x, L2.unit, L2.reg,
                               model.family = binomial(link = "probit"),
                               verbose = verbose)
   # temporary: predict census data outcome line by line for Lasso
-  lasso_p <- NA
-  for (idx.census in 1:nrow(census)){
-    lasso_p[idx.census] <- predict(model_l, newdata = data.frame(census[idx.census,]), type = "response")
-  }
+  #lasso_p <- NA
+  #for (idx.census in 1:nrow(census)){
+  #  lasso_p[idx.census] <- predict(model_l, newdata = data.frame(census[idx.census,]), type = "response")
+  #}
+  lasso.census <- census
+  lasso.census[,y] <- 1
+  lasso_p <- predict(model_l, newdata = data.frame(lasso.census), type = "response")
 
   # 4) boosting
   # Evaluate inclusion of L2.unit
@@ -99,6 +102,10 @@ post_stratification <- function(data, census, y, L1.x, L2.x, L2.unit, L2.reg,
     kernel = "radial",
     scale = FALSE,
     probability = TRUE)
+  
+  # convert factor DV back to numeric
+  data <- dplyr::mutate_at(.tbl = data, .vars = y, as.numeric)
+  data[,y] <- data[,y] - 1
 
   # post-stratification: 1) predict, 2) weighted mean by state
   L2_preds <- census %>%
@@ -114,16 +121,19 @@ post_stratification <- function(data, census, y, L1.x, L2.x, L2.unit, L2.reg,
                      lasso = weighted.mean(x = lasso, w = prop),
                      gb = weighted.mean(x = gb, w = prop),
                      svm = weighted.mean(x = svm, w = prop))
-
+  
+  
   # individual predictions for EBMA
   L1_preds <- dplyr::tibble(
-    y = data$y,
-    best_subest = predict(object = model_bs, type = "response"),
+    best_subset = predict(object = model_bs, type = "response"),
     pca = predict(object = model_pca, type = "response"),
     lasso = as.numeric(predict(object = model_l, type = "response")),
     gb = gbm::predict.gbm(object = model_gb, n.trees = gb$n_trees, type = "response"),
     svm = attr(predict(object = model_svm, newdata = data, probability = TRUE),"probabilities")[,"1"]
   )
+  L1_preds <- L1_preds %>%
+    dplyr::mutate(!!y := as.numeric(unlist(data[,y]))) %>%
+    dplyr::select(one_of(y), "best_subset", "pca", "lasso", "gb", "svm")
 
   # Function output
   return(ps = list(
