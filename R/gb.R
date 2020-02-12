@@ -66,7 +66,7 @@ gb <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                loss.unit, loss.measure,
                interaction.set, shrinkage.set,
                tree.start, tree.increase.set,
-               trees.max.set,i terations.max,
+               trees.max.set, iterations.max,
                n.minobsinnode, data, verbose) {
 
   # for debugging
