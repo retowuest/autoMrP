@@ -213,7 +213,7 @@ lasso <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                                   verbose = verbose)
 
       # Use trained model to make predictions for kth validation set
-      pred_l <- stats::predict(model_l, newdata = data_valid)
+      pred_l <- stats::predict(model_l, newdata = data.frame(data_valid))
 
       # Evaluate predictions based on loss function
       perform_l <- loss_function(pred = pred_l, data.valid = data_valid,
