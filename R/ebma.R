@@ -1,4 +1,4 @@
-ebma <- function(ebma.fold, L1.x, L2.x, L2.unit, L2.reg, post.strat,
+ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, post.strat,
                  Ndraws, tol.values, best.subset, pca, lasso, gb,
                  svm.out, verbose){
 
