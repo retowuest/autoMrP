@@ -1,5 +1,6 @@
-ebma <- function(ebma.fold, L1.x, L2.x, L2.unit, L2.reg, post.strat, Ndraws,
-                 tol.values, best.subset, pca, lasso, gb, svm.out, verbose){
+ebma <- function(ebma.fold, L1.x, L2.x, L2.unit, L2.reg, post.strat,
+                 Ndraws, tol.values, best.subset, pca, lasso, gb,
+                 svm.out, verbose){
 
   # models
   model_bs <- post.strat$models$best_subset

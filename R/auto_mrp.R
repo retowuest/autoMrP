@@ -22,6 +22,8 @@
 #' @param bin.size Bin size for ideal types. A character vector indicating the
 #'   column name of the variable in census containing the bin size for ideal
 #'   types in a geographic unit. Default is NULL.
+#' @param uncertainty Provide uncertainty estimates. A logical argument
+#'   indicating whether uncertainty is computed or not. Default is FALSE.
 #' @param ebma.size Size of EBMA hold-out fold. A rational number in the open
 #'   unit interval indicating the share of respondents to be contained in the
 #'   EBMA hold-out fold. If left unspecified (NULL), then ebma.size is set to
@@ -51,11 +53,12 @@
 #'   whether L2.reg is included in the GB models. Default is FALSE.
 #' @param gb.interaction.set Set of interaction depth values. An integer-valued
 #'   vector whose values define the maximum depth of each tree. Interaction
-#'   depth is used to tune the model.
+#'   depth is used to tune the model. Default is Default is c(1, 2, 3).
 #' @param gb.shrinkage.set Learning rate. A numeric vector whose values define
 #'   the learning rate or step-size reduction. Learning rate is used to tune
 #'   the model. Values between 0.001 and 0.1 usually work, but a smaller
-#'   learning rate typically requires more trees.
+#'   learning rate typically requires more trees. Default is
+#'   c(0.04, 0.01, 0.008, 0.005, 0.001).
 #' @param gb.tree.start Initial total number of trees. An integer-valued scalar
 #'   specifying the initial number of total trees. Default is 50.
 #' @param gb.tree.increase.set Increase in total number of trees. Either an
@@ -63,27 +66,33 @@
 #'   trees is increased (until the maximum number of trees is reached) or an
 #'   integer-valued vector of `length(gb.shrinkage.set)` with each value being
 #'   associated with a learning rate. Total number of trees is used to tune the
-#'   model.
+#'   model. Default is 50.
 #' @param gb.trees.max.set Maximum number of trees. Either an integer-valued
 #'   scalar specifying the maximum number of trees or an integer-valued vector
 #'   of `length(gb.shrinkage.set)` with each value being associated with a
-#'   learning rate and a number of tree increase.
+#'   learning rate and a number of tree increase. Default is 1000.
 #' @param gb.iterations.max Stopping rule. A numeric scalar specifying the
 #'   maximum number of iterations without performance improvement the GB
-#'   classifier runs before stopping. Default is NULL.
+#'   classifier runs before stopping. Default is 70.
 #' @param gb.n.minobsinnode Minimum number of observations in the terminal nodes.
 #'   An integer-valued scalar specifying the minimum number of observations
 #'   that each terminal node of the trees must contain. Default is 5.
 #' @param svm.kernel Kernel for SVM. A character string specifying the kernel to
 #'   be used for SVM. The possible types are linear, polynomial, radial, and
 #'   sigmoid. Default is radial.
-#' @param svm.error.fun
+#' @param svm.error.fun. Loss function. Defaults to misclassification error for
+#'   factor dependent variables and MSE for numeric dependent variables.
 #' @param svm.gamma.set Gamma parameter for SVM. This parameter is needed for
-#'   all kernels except linear.
+#'   all kernels except linear. Default is
+#'   c(0.3, 0.5, 0.55, 0.6, 0.65, 0.7, 0.8, 0.9, 1, 2, 3, 4).
 #' @param svm.cost.set Cost parameter for SVM. This parameter specifies the cost
-#'   of constraints violation.
-#' @param ebma.n.draws
-#' @param ebma.tol.values
+#'   of constraints violation. Default is c(1, 10).
+#' @param ebma.n.draws The number of bootstrapped samples drawn from the EBMA
+#'   fold and used for tuning EBMA. Integer value. Default is 100.
+#' @param ebma.tol.values Tolerance for improvements in the log-likelihood
+#'   before the EM algorithm will stop optimization. Numeric vector. Should range
+#'   at least from 0.01 to 0.001. Default is
+#'   c(0.01, 0.005, 0.001,0.0005, 0.0001, 0.00005, 0.00001).
 #' @param seed Seed. An integer-valued scalar to control random number
 #'   generation. If left unspecified (NULL), then seed is set to 12345.
 #' @param verbose Verbose output. A logical argument indicating whether or not
@@ -95,17 +104,32 @@
 #' @export
 
 auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, survey, census,
-                     bin.size = NULL, ebma.size = NULL, k.folds = 5,
-                     cv.sampling = "L2 units", loss.unit = "individual",
-                     loss.measure = "mse", lasso.lambda.set,
-                     lasso.iterations.max = NULL, gb.L2.unit.include = FALSE,
-                     gb.L2.reg.include = FALSE, gb.interaction.set,
-                     gb.shrinkage.set, gb.tree.start = 50,
-                     gb.tree.increase.set, gb.trees.max.set,
-                     gb.iterations.max = NULL, gb.n.minobsinnode = 5,
-                     svm.kernel, svm.error.fun, svm.gamma.set, svm.cost.set,
-                     ebma.n.draws, ebma.tol.values,
-                     seed = NULL, verbose = TRUE) {
+                     bin.size = NULL, uncertainty = FALSE, ebma.size = NULL,
+                     k.folds = 5,
+                     cv.sampling = "L2 units",
+                     loss.unit = "individual",
+                     loss.measure = "mse",
+                     lasso.lambda.set = data.frame(step_size = c(0.1, 0.3, 1),
+                                                 threshold = c(1, 10, 10000)),
+                     lasso.iterations.max = 70,
+                     gb.L2.unit.include = FALSE,
+                     gb.L2.reg.include = FALSE,
+                     gb.interaction.set = c(1, 2, 3),
+                     gb.shrinkage.set = c(0.04, 0.01, 0.008, 0.005, 0.001),
+                     gb.tree.start = 50,
+                     gb.tree.increase.set = 50,
+                     gb.trees.max.set = 1000,
+                     gb.iterations.max = 70,
+                     gb.n.minobsinnode = 5,
+                     svm.kernel = "radial",
+                     svm.error.fun = "MSE",
+                     svm.gamma.set = c(0.3, 0.5, 0.55, 0.6, 0.65, 0.7, 0.8, 0.9, 1, 2, 3, 4),
+                     svm.cost.set = c(1, 10),
+                     ebma.n.draws = 100,
+                     ebma.tol.values = c(0.01, 0.005, 0.001,
+                                         0.0005, 0.0001, 0.00005, 0.00001),
+                     seed = NULL,
+                     verbose = TRUE) {
   # Set seed
   if (is.null(seed)) {
     set.seed(12345)
@@ -282,7 +306,7 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, survey, census,
   pc_names <- colnames(pca_out$x)
 
   census <- census %>%
-    dplyr::left_join(unique(dplyr::select(survey, L2.unit, pc_names)),
+    dplyr::left_join(unique(dplyr::select(survey, all_of(L2.unit), all_of(pc_names))),
                      by = L2.unit)
 
   # ------------------------------- Create folds -------------------------------
@@ -374,7 +398,7 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, survey, census,
 
   # --------------------------- Post-stratification ----------------------------
 
-  ps_out <- post_stratification(data = cv_folds,
+    ps_out <- post_stratification(data = cv_folds,
                                 census = census,
                                 y = y,
                                 L1.x = L1.x,

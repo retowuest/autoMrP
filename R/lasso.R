@@ -27,10 +27,11 @@
 #'   that controls the shrinkage of fixed effects. Either a numeric vector of
 #'   lambda values or a data.frame with two columns, the first containing the
 #'   size by which lambda should increase and the second the upper threshold of
-#'   the interval of lambdas to which the step size applies.
+#'   the interval of lambdas to which the step size applies. Default is
+#'   data.frame(step_size = c(0.1, 0.3, 1), threshold = c(1, 10, 10000)).
 #' @param iterations.max Stopping rule. A numeric scalar specifying the
 #'   maximum number of iterations without performance improvement the
-#'   algorithm runs before stopping. Default is NULL.
+#'   algorithm runs before stopping. Default is 60
 #' @param data Data for cross-validation. A list of k data.frames, one for
 #'   each fold used in k-fold cross-validation.
 #' @param verbose Verbose output. A logical vector indicating whether or not
@@ -42,6 +43,7 @@ lasso <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                   loss.unit, loss.measure,
                   lambda.set, iterations.max,
                   data, verbose) {
+
   # Context-level fixed effects
   L2_fe <- paste(L2.x, collapse = " + ")
   L2_fe_form <- as.formula(paste(y, " ~ ", L2_fe, sep = ""))
