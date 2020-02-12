@@ -11,10 +11,10 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, post.strat,
 
   # training predictions
   train_preds <- post.strat$predictions$Level1 %>%
-    dplyr::select(-y)
+    dplyr::select(-one_of(y))
 
   # training set outcomes
-  train_y <- dplyr::select(.data = post.strat$predictions$Level1, y)
+  train_y <- dplyr::select(.data = post.strat$predictions$Level1, one_of(y))
 
   # container to store the MSE on the test folds
   mse_collector <- matrix(NA, Ndraws, length(tol.values))
