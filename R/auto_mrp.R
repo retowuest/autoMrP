@@ -28,6 +28,9 @@
 #'   unit interval indicating the share of respondents to be contained in the
 #'   EBMA hold-out fold. If left unspecified (NULL), then ebma.size is set to
 #'   1/3 of the survey sample size. Default is NULL.
+#' @param scale Whether to normalize conext level variables (compute standard
+#'   scores). A logical argument. Default is TRUE. Note that context level
+#'   variables should be normalized prior to calling auto_MrP if scale is FALSE.
 #' @param k.folds Number of folds. An integer-valued scalar indicating the
 #'   number of folds to be used for cross-validation. Defaults to the value of 5.
 #' @param cv.sampling Sampling method. A character-valued scalar indicating
@@ -105,6 +108,7 @@
 
 auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, survey, census,
                      bin.size = NULL, uncertainty = FALSE, ebma.size = NULL,
+                     scale = TRUE,
                      k.folds = 5,
                      cv.sampling = "L2 units",
                      loss.unit = "individual",
@@ -288,14 +292,16 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, survey, census,
     dplyr::mutate(prop = n / sum(n))
 
   # Scale context-level variables in survey and census data
-  survey[, L2.x] <- scale(survey[, L2.x], center = TRUE, scale = TRUE)
-  census[, L2.x] <- scale(census[, L2.x], center = TRUE, scale = TRUE)
+  if (scale){
+    survey[, L2.x] <- scale(survey[, L2.x], center = TRUE, scale = TRUE)
+    census[, L2.x] <- scale(census[, L2.x], center = TRUE, scale = TRUE)  
+  }
 
   # Compute principal components for survey data
   pca_out <- stats::prcomp(survey[, L2.x],
                            retx = TRUE,
                            center = TRUE,
-                           scale. = TRUE,
+                           scale. = FALSE,
                            tol = NULL)
 
   # Add PCs to survey data
