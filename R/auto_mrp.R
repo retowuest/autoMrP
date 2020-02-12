@@ -19,9 +19,14 @@
 #'   (`L2.unit` must be nested within `L2.reg`). Default is NULL.
 #' @param survey Survey data. A data.frame containing the y and x column names.
 #' @param census Census data. A data.frame containing the x column names.
+#' @param proportion Proportion of state individuals of each ideal type.
+#'   A character vector containing the column name of teh variable in census
+#'   containing the propotion of individuals of a certain ideal type in a
+#'   certain state. Default is NULL. Note: Not needed if bin.size is provided. 
 #' @param bin.size Bin size for ideal types. A character vector indicating the
 #'   column name of the variable in census containing the bin size for ideal
-#'   types in a geographic unit. Default is NULL.
+#'   types in a geographic unit. Default is NULL. Note: Not needed if proportion
+#'   is provided.
 #' @param uncertainty Provide uncertainty estimates. A logical argument
 #'   indicating whether uncertainty is computed or not. Default is FALSE.
 #' @param ebma.size Size of EBMA hold-out fold. A rational number in the open
@@ -107,7 +112,10 @@
 #' @export
 
 auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, survey, census,
-                     bin.size = NULL, uncertainty = FALSE, ebma.size = NULL,
+                     proportion = NULL,
+                     bin.size = NULL, 
+                     uncertainty = FALSE, 
+                     ebma.size = NULL,
                      scale = TRUE,
                      k.folds = 5,
                      cv.sampling = "L2 units",
@@ -277,19 +285,24 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, survey, census,
 
   # If not provided in census data, calculate bin size for each ideal type in
   # a geographic unit
-  if (is.null(bin.size)) {
+  if (is.null(bin.size) & is.null(proportion)) {
     census <- census %>%
       dplyr::group_by(.dots = c(L1.x, L2.unit)) %>%
       dplyr::summarise(n = dplyr::n())
-  } else {
+  } 
+  if (!is.null(bin.size) & is.null(proportion)){
     census$n <- census[[bin.size]]
   }
 
   # In census data, calculate bin proportion for each ideal type in a
   # geographic unit
-  census <- census %>%
-    dplyr::group_by(.dots = L2.unit) %>%
-    dplyr::mutate(prop = n / sum(n))
+  if (is.null(proportion)){
+    census <- census %>%
+      dplyr::group_by(.dots = L2.unit) %>%
+      dplyr::mutate(prop = n / sum(n))  
+  } else{
+    census <- dplyr::rename(census, prop = .dots(proportion))
+  }
 
   # Scale context-level variables in survey and census data
   if (scale){
