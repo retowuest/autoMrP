@@ -34,13 +34,10 @@ ebma <- function(ebma.fold, L1.x, L2.x, L2.unit, L2.reg, post.strat,
       # increase counter
       counter <- counter +1
 
-      # number of states in the sample
-      dplyr::n_groups(x = test)
-
       # sample with replacement equal obs/state
       test <- ebma.fold %>%
         dplyr::group_by(state) %>%
-        dplyr::mutate(n_L2 = dplyr::n_groups(test)) %>%
+        dplyr::mutate(n_L2 = dplyr::n_groups(ebma.fold)) %>%
         dplyr::sample_n(as.integer(nrow(ebma.fold) /  n_L2), replace = TRUE) %>%
         dplyr::ungroup() %>%
         dplyr::mutate_at(.vars = c( L1.x, L2.unit, L2.reg), .funs = as.factor)

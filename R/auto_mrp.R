@@ -36,6 +36,11 @@
 #' @param scale Whether to normalize conext level variables (compute standard
 #'   scores). A logical argument. Default is TRUE. Note that context level
 #'   variables should be normalized prior to calling auto_MrP if scale is FALSE.
+#' @param forward.selection Apply forward selection for Mulilevel model with
+#'   post-stratification instead of best subset selection. A logical argument
+#'   indicating whether to apply forward selection instead of best subset
+#'   selection or not. Default is FALSE. Note: With more than 8 context level
+#'   variables, forward selection is recommened.
 #' @param k.folds Number of folds. An integer-valued scalar indicating the
 #'   number of folds to be used for cross-validation. Defaults to the value of 5.
 #' @param cv.sampling Sampling method. A character-valued scalar indicating
@@ -117,6 +122,7 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, survey, census,
                      uncertainty = FALSE,
                      ebma.size = NULL,
                      scale = TRUE,
+                     forward.selection = FALSE,
                      k.folds = 5,
                      cv.sampling = "L2 units",
                      loss.unit = "individual",
@@ -443,6 +449,7 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, survey, census,
 
   ebma_out <- ebma(
     ebma.fold = ebma_fold,
+    y = y,
     L1.x = L1.x,
     L2.x = L2.x,
     L2.unit = L2.unit,
