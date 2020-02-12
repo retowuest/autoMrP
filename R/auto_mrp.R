@@ -94,7 +94,7 @@
 #'   at least from 0.01 to 0.001. Default is
 #'   c(0.01, 0.005, 0.001,0.0005, 0.0001, 0.00005, 0.00001).
 #' @param seed Seed. An integer-valued scalar to control random number
-#'   generation. If left unspecified (NULL), then seed is set to 12345.
+#'   generation. If left unspecified (NULL), then seed is set to 546213978.
 #' @param verbose Verbose output. A logical argument indicating whether or not
 #'   verbose output should be printed. Default is TRUE.
 #' @return
@@ -132,7 +132,7 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, survey, census,
                      verbose = TRUE) {
   # Set seed
   if (is.null(seed)) {
-    set.seed(12345)
+    set.seed(546213978)
   } else {
     set.seed(seed)
   }
