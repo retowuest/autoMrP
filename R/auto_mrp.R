@@ -20,7 +20,7 @@
 #' @param survey Survey data. A data.frame containing the y and x column names.
 #' @param census Census data. A data.frame containing the x column names.
 #' @param proportion Proportion of state individuals of each ideal type.
-#'   A character vector containing the column name of teh variable in census
+#'   A character vector containing the column name of the variable in census
 #'   containing the propotion of individuals of a certain ideal type in a
 #'   certain state. Default is NULL. Note: Not needed if bin.size is provided.
 #' @param bin.size Bin size for ideal types. A character vector indicating the
@@ -33,16 +33,25 @@
 #'   unit interval indicating the share of respondents to be contained in the
 #'   EBMA hold-out fold. If left unspecified (NULL), then ebma.size is set to
 #'   1/3 of the survey sample size. Default is NULL.
-#' @param scale Whether to normalize conext level variables (compute standard
-#'   scores). A logical argument. Default is TRUE. Note that context level
+#' @param scale Whether to normalize context level variables (compute standard
+#'   scores). A logical argument. Default is TRUE. Note that context-level
 #'   variables should be normalized prior to calling auto_MrP if scale is FALSE.
-#' @param forward.selection Apply forward selection for Mulilevel model with
-#'   post-stratification instead of best subset selection. A logical argument
-#'   indicating whether to apply forward selection instead of best subset
+#' @param forward.selection Apply forward selection for mulilevel model with
+#'   post-stratification classifier instead of best subset selection. A logical
+#'   argument indicating whether to apply forward selection instead of best subset
 #'   selection or not. Default is FALSE. Note: With more than 8 context level
 #'   variables, forward selection is recommened.
 #' @param k.folds Number of folds. An integer-valued scalar indicating the
 #'   number of folds to be used for cross-validation. Defaults to the value of 5.
+#' @param custom.folds User provides custom folds used for cross-validation and
+#'   ebma. A character vector referring to the column name in survey data that
+#'   contains the folds. The variable should contain integers referring to the
+#'   folds. If k.folds is 5, then 6 categories are needed where the last refers
+#'   to the ebma fold. Default is NULL.
+#' @param custom.PCs User provides survey and census data with principal
+#'   components already included. Logical argument indicating whether both
+#'   survey and census data contain columns named PC1...PCn where n is the
+#'   number of context-level variables.
 #' @param cv.sampling Sampling method. A character-valued scalar indicating
 #'   whether sampling in the creation of cross-validation folds should be done
 #'   by respondents or geographic units. Default is by geographic units.
@@ -124,6 +133,8 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, survey, census,
                      scale = TRUE,
                      forward.selection = FALSE,
                      k.folds = 5,
+                     custom.folds = NULL,
+                     custom.PCs = NULL,
                      cv.sampling = "L2 units",
                      loss.unit = "individual",
                      loss.measure = "mse",
@@ -221,6 +232,7 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, survey, census,
                                      function(x) length(unique(x[[L2.reg]])))) > 1),
                  "' is/are nested in multiple regions in your census data."))
     }
+
   }
 
   if (is.null(ebma.size)) {
@@ -287,6 +299,16 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, survey, census,
                "`length(gb.shrinkage.set)`.", sep = ""))
   }
 
+  if (!is.null(custom.folds)){
+    if(length(unique(survey[,custom.folds])) != k.folds +1){
+      stop("The custom folds variable must contain one more category than in k.folds.")
+    }
+    if(!is.double(survey[,custom.folds]) & !is.integer(survey[,custom.folds])){
+      stop("The variable that contains custom folds must of type integer or double.")
+    }
+  }
+
+
   # ------------------------------- Prepare data -------------------------------
 
   # If not provided in census data, calculate bin size for each ideal type in
@@ -310,29 +332,31 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, survey, census,
     census <- dplyr::rename(.data = census, prop = one_of(proportion))
   }
 
+  if (!custom.PCs){
+    # Compute principal components for survey data
+    pca_out <- stats::prcomp(survey[, L2.x],
+                             retx = TRUE,
+                             center = TRUE,
+                             scale. = TRUE,
+                             tol = NULL)
+
+    # Add PCs to survey data
+    survey <- survey %>%
+      dplyr::bind_cols(as.data.frame(pca_out$x))
+
+    # Add PCs to census data
+    pc_names <- colnames(pca_out$x)
+
+    census <- census %>%
+      dplyr::left_join(unique(dplyr::select(survey, all_of(L2.unit), all_of(pc_names))),
+                       by = L2.unit)
+  }
+
   # Scale context-level variables in survey and census data
   if (scale){
     survey[, L2.x] <- scale(survey[, L2.x], center = TRUE, scale = TRUE)
     census[, L2.x] <- scale(census[, L2.x], center = TRUE, scale = TRUE)
   }
-
-  # Compute principal components for survey data
-  pca_out <- stats::prcomp(survey[, L2.x],
-                           retx = TRUE,
-                           center = TRUE,
-                           scale. = FALSE,
-                           tol = NULL)
-
-  # Add PCs to survey data
-  survey <- survey %>%
-    dplyr::bind_cols(as.data.frame(pca_out$x))
-
-  # Add PCs to census data
-  pc_names <- colnames(pca_out$x)
-
-  census <- census %>%
-    dplyr::left_join(unique(dplyr::select(survey, all_of(L2.unit), all_of(pc_names))),
-                     by = L2.unit)
 
   # convert survey data to tibble
   survey <- dplyr::as_tibble(x = survey)
