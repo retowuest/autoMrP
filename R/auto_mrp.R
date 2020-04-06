@@ -421,73 +421,83 @@ auto_MrP <- function(y, L1.x, L2.x,
   # ------------------------ Run individual classifiers ------------------------
 
   # Classifier 1: Best Subset
-  best_subset_out <- best_subset(y = y,
-                                 L1.x = L1.x,
-                                 L2.x = L2.x,
-                                 L2.unit = L2.unit,
-                                 L2.reg = L2.reg,
-                                 loss.unit = loss.unit,
-                                 loss.measure = loss.measure,
-                                 data = cv_folds,
-                                 verbose = verbose)
+  if (isTRUE(best.subset)) {
+    best_subset_out <- best_subset(y = y,
+                                   L1.x = L1.x,
+                                   L2.x = L2.x,
+                                   L2.unit = L2.unit,
+                                   L2.reg = L2.reg,
+                                   loss.unit = loss.unit,
+                                   loss.measure = loss.measure,
+                                   data = cv_folds,
+                                   verbose = verbose)
+  }
 
   # Classifier 2: Lasso
-  lasso_out <- lasso(y = y,
-                     L1.x = L1.x,
-                     L2.x = L2.x,
-                     L2.unit = L2.unit,
-                     L2.reg = L2.reg,
-                     loss.unit = loss.unit,
-                     loss.measure = loss.measure,
-                     lambda.set = lasso.lambda.set,
-                     iterations.max = lasso.iterations.max,
-                     data = cv_folds,
-                     verbose = verbose)
+  if (isTRUE(lasso)) {
+    lasso_out <- lasso(y = y,
+                       L1.x = L1.x,
+                       L2.x = L2.x,
+                       L2.unit = L2.unit,
+                       L2.reg = L2.reg,
+                       loss.unit = loss.unit,
+                       loss.measure = loss.measure,
+                       lambda.set = lasso.lambda.set,
+                       iterations.max = lasso.iterations.max,
+                       data = cv_folds,
+                       verbose = verbose)
+  }
 
   # Classifier 3: PCA
-  pca_out <- pca(y = y,
-                 L1.x = L1.x,
-                 L2.x = pc_names,
-                 L2.unit = L2.unit,
-                 L2.reg = L2.reg,
-                 loss.unit = loss.unit,
-                 loss.measure = loss.measure,
-                 data = cv_folds,
-                 verbose = verbose)
+  if (isTRUE(pca)) {
+    pca_out <- pca(y = y,
+                   L1.x = L1.x,
+                   L2.x = pc_names,
+                   L2.unit = L2.unit,
+                   L2.reg = L2.reg,
+                   loss.unit = loss.unit,
+                   loss.measure = loss.measure,
+                   data = cv_folds,
+                   verbose = verbose)
+  }
 
   # Classifier 4: GB
-  gb_out <- gb(y = y,
-               L1.x = L1.x,
-               L2.x = L2.x,
-               L2.unit = L2.unit,
-               L2.reg = L2.reg,
-               L2.unit.include = gb.L2.unit.include,
-               L2.reg.include = gb.L2.reg.include,
-               loss.unit = loss.unit,
-               loss.measure = loss.measure,
-               interaction.set = gb.interaction.set,
-               shrinkage.set = gb.shrinkage.set,
-               tree.start = gb.tree.start,
-               tree.increase.set = gb.tree.increase.set,
-               trees.max.set = gb.trees.max.set,
-               iterations.max = gb.iterations.max,
-               n.minobsinnode = gb.n.minobsinnode,
-               data = cv_folds,
-               verbose = verbose)
-
-  # Classifier 5: SVM
-  svm_out <- svm(y = y,
+  if (isTRUE(gb)) {
+    gb_out <- gb(y = y,
                  L1.x = L1.x,
                  L2.x = L2.x,
                  L2.unit = L2.unit,
                  L2.reg = L2.reg,
-                 kernel = svm.kernel,
-                 error.fun = svm.error.fun,
-                 gamma.set = svm.gamma.set,
-                 cost.set = svm.cost.set,
-                 k.folds = k.folds,
+                 L2.unit.include = gb.L2.unit.include,
+                 L2.reg.include = gb.L2.reg.include,
+                 loss.unit = loss.unit,
+                 loss.measure = loss.measure,
+                 interaction.set = gb.interaction.set,
+                 shrinkage.set = gb.shrinkage.set,
+                 tree.start = gb.tree.start,
+                 tree.increase.set = gb.tree.increase.set,
+                 trees.max.set = gb.trees.max.set,
+                 iterations.max = gb.iterations.max,
+                 n.minobsinnode = gb.n.minobsinnode,
                  data = cv_folds,
                  verbose = verbose)
+  }
+
+  # Classifier 5: SVM
+  if (isTRUE(svm)) {
+    svm_out <- svm(y = y,
+                   L1.x = L1.x,
+                   L2.x = L2.x,
+                   L2.unit = L2.unit,
+                   L2.reg = L2.reg,
+                   kernel = svm.kernel,
+                   error.fun = svm.error.fun,
+                   gamma.set = svm.gamma.set,
+                   cost.set = svm.cost.set,
+                   k.folds = k.folds,
+                   data = cv_folds,
+                   verbose = verbose)
+  }
 
   # --------------------------- Post-stratification ----------------------------
 
