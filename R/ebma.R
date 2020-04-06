@@ -1,5 +1,6 @@
-ebma <- function(ebma.fold, L1.x, L2.x, L2.unit, L2.reg, post.strat, Ndraws,
-                 tol.values, best.subset, pca, lasso, gb, svm.out, verbose){
+ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, post.strat,
+                 Ndraws, tol.values, best.subset, pca, lasso, gb,
+                 svm.out, verbose){
 
   # models
   model_bs <- post.strat$models$best_subset
@@ -10,12 +11,10 @@ ebma <- function(ebma.fold, L1.x, L2.x, L2.unit, L2.reg, post.strat, Ndraws,
 
   # training predictions
   train_preds <- post.strat$predictions$Level1 %>%
-    dplyr::select(-y)
+    dplyr::select(-one_of(y))
 
   # training set outcomes
-  train_y <- post.strat$predictions$Level1$y
-  # convert factor to numeric
-  train_y <- as.numeric(train_y) -1
+  train_y <- dplyr::select(.data = post.strat$predictions$Level1, one_of(y))
 
   # container to store the MSE on the test folds
   mse_collector <- matrix(NA, Ndraws, length(tol.values))
@@ -37,9 +36,9 @@ ebma <- function(ebma.fold, L1.x, L2.x, L2.unit, L2.reg, post.strat, Ndraws,
 
       # sample with replacement equal obs/state
       test <- ebma.fold %>%
-        dplyr::as_tibble() %>%
         dplyr::group_by(state) %>%
-        dplyr::sample_n(as.integer(nrow(ebma.fold) / length(unique(ebma.fold[,L2.unit]))), replace = TRUE) %>%
+        dplyr::mutate(n_L2 = dplyr::n_groups(ebma.fold)) %>%
+        dplyr::sample_n(as.integer(nrow(ebma.fold) /  n_L2), replace = TRUE) %>%
         dplyr::ungroup() %>%
         dplyr::mutate_at(.vars = c( L1.x, L2.unit, L2.reg), .funs = as.factor)
 
@@ -53,15 +52,14 @@ ebma <- function(ebma.fold, L1.x, L2.x, L2.unit, L2.reg, post.strat, Ndraws,
       )
 
       # outcome on the test
-      test_y <- test$y
-      if(is.numeric(test_y) != is.numeric((train_y))) stop("Both test and train y must be numeric")
+      test_y <- dplyr::select(.data = test, one_of(y))
 
       # EBMA
       forecast.data <- EBMAforecast::makeForecastData(
         .predCalibration = data.frame(train_preds),
-        .outcomeCalibration = train_y,
+        .outcomeCalibration = as.numeric(unlist(train_y)),
         .predTest = data.frame(test_preds),
-        .outcomeTest = test_y)
+        .outcomeTest = as.numeric(unlist(test_y)))
 
       forecast.out <- EBMAforecast::calibrateEnsemble(
         forecast.data,
@@ -70,7 +68,7 @@ ebma <- function(ebma.fold, L1.x, L2.x, L2.unit, L2.reg, post.strat, Ndraws,
         tol = tol.values[idx.tol])
 
       # mse
-      mse_collector[idx.Ndraws, idx.tol] <- mean(( test_y - as.numeric( attributes(forecast.out)$predTest[,1,1]))^2)
+      mse_collector[idx.Ndraws, idx.tol] <- mean(( as.numeric(unlist(test_y)) - as.numeric( attributes(forecast.out)$predTest[,1,1]))^2)
 
       # model weights
       weights_box[idx.Ndraws, , idx.tol] <- attributes(forecast.out)$modelWeights
