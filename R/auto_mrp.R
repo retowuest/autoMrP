@@ -404,7 +404,18 @@ auto_MrP <- function(y, L1.x, L2.x,
                            k.folds = k.folds,
                            cv.sampling = cv.sampling)
   } else {
+    # EBMA hold-out fold
+    ebma_fold <- survey %>%
+      dplyr::filter_at(dplyr::vars(dplyr::one_of(custom.folds)),
+                       dplyr::any_vars(. == k.folds + 1))
 
+    # K folds for cross-validation
+    cv_data <- survey %>%
+      dplyr::filter_at(dplyr::vars(dplyr::one_of(custom.folds)),
+                       dplyr::any_vars(. != k.folds + 1))
+
+    cv_folds <- cv_data %>%
+      dplyr::group_split(.data[[custom.folds]])
   }
 
   # ------------------------ Run individual classifiers ------------------------
