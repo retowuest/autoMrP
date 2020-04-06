@@ -336,7 +336,6 @@ auto_MrP <- function(y, L1.x, L2.x,
     }
   }
 
-
   # ------------------------------- Prepare data -------------------------------
 
   # If not provided in census data, calculate bin size and bin proportion for
@@ -384,8 +383,9 @@ auto_MrP <- function(y, L1.x, L2.x,
     census[, L2.x] <- scale(census[, L2.x], center = TRUE, scale = TRUE)
   }
 
-  # Convert survey data to tibble
-  survey <- dplyr::as_tibble(x = survey)
+  # Convert survey and census data to tibble
+  survey <- tibble::as_tibble(x = survey)
+  census <- tibble::as_tibble(x = census)
 
   # ------------------------------- Create folds -------------------------------
 
