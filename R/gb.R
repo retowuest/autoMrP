@@ -31,11 +31,12 @@
 #'   whether L2.reg is included in the GB models. Default is FALSE.
 #' @param interaction.set Set of interaction depth values. An integer-valued
 #'   vector whose values define the maximum depth of each tree. Interaction
-#'   depth is used to tune the model.
+#'   depth is used to tune the model. Default is c(1, 2, 3).
 #' @param shrinkage.set Learning rate. A numeric vector whose values define
 #'   the learning rate or step-size reduction. Learning rate is used to tune
 #'   the model. Values between 0.001 and 0.1 usually work, but a smaller
-#'   learning rate typically requires more trees.
+#'   learning rate typically requires more trees. Default is
+#'   c(0.04, 0.01, 0.008, 0.005, 0.001).
 #' @param tree.start Initial total number of trees. An integer-valued scalar
 #'   specifying the initial number of total trees. Default is 50.
 #' @param tree.increase.set Increase in total number of trees. Either an
@@ -43,14 +44,14 @@
 #'   trees is increased (until the maximum number of trees is reached) or an
 #'   integer-valued vector of `length(shrinkage.set)` with each value being
 #'   associated with a learning rate. Total number of trees is used to tune the
-#'   model.
+#'   model. Default is 50.
 #' @param trees.max.set Maximum number of trees. Either an integer-valued
 #'   scalar specifying the maximum number of trees or an integer-valued vector
 #'   of `length(shrinkage.set)` with each value being associated with a
-#'   learning rate and a number of tree increase.
+#'   learning rate and a number of tree increase. Default is 1000.
 #' @param iterations.max Stopping rule. A numeric scalar specifying the
 #'   maximum number of iterations without performance improvement the GB
-#'   classifier runs before stopping. Default is NULL.
+#'   classifier runs before stopping. Default is 70.
 #' @param n.minobsinnode Minimum number of observations in the terminal nodes.
 #'   An integer-valued scalar specifying the minimum number of observations
 #'   that each terminal node of the trees must contain. Default is 5.
@@ -67,6 +68,10 @@ gb <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                tree.start, tree.increase.set,
                trees.max.set, iterations.max,
                n.minobsinnode, data, verbose) {
+
+  # for debugging
+  #browser()
+
   # Evaluate inclusion of L2.unit
   if (isTRUE(L2.unit.include == FALSE)) {
     L2.unit <- NULL
@@ -126,7 +131,7 @@ gb <- function(y, L1.x, L2.x, L2.unit, L2.reg,
           data_valid <- data_valid %>%
             dplyr::mutate_at(.vars = c(L1.x, L2.unit, L2.reg), as.factor)
 
-          # Train model using lambda on kth training set
+          # Train model using tuning parameters on kth training set
           model_l <- gb_classifier(form = form,
                                    distribution = "bernoulli",
                                    data.train = data_train,
@@ -137,9 +142,10 @@ gb <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                                    verbose = verbose)
 
           # Use trained model to make predictions for kth validation set
-          pred_l <- stats::predict(model_l, newdata = data_valid,
-                                   n.trees = model_l$n.trees,
-                                   type = "response")
+          pred_l <- gbm::predict.gbm(
+            model_l, newdata = data_valid,
+            n.trees = model_l$n.trees,
+            type = "response")
 
           # Evaluate predictions based on loss function
           perform_l <- loss_function(pred = pred_l, data.valid = data_valid,
@@ -206,9 +212,10 @@ gb <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                                             verbose = verbose)
 
             # Use trained model to make predictions for kth validation set
-            pred_l <- stats::predict(model_l, newdata = data_valid,
-                                     n.trees = model_l$n.trees,
-                                     type = "response")
+            pred_l <- gbm::predict.gbm(
+              model_l, newdata = data_valid,
+              n.trees = model_l$n.trees,
+              type = "response")
 
             # Evaluate predictions based on loss function
             perform_l <- loss_function(pred = pred_l, data.valid = data_valid,
@@ -228,6 +235,7 @@ gb <- function(y, L1.x, L2.x, L2.unit, L2.reg,
           # Check if current tuning parameters outperform tuning parameters
           # that were best so far
           if (current_error < best_error) {
+            #if(verbose) cat(paste("Improvement on previous model \n"), sep = "")
             best_error <- current_error
             out <- list(n_trees = n_trees,
                         depth = depth,
@@ -300,9 +308,10 @@ gb <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                                    verbose = verbose)
 
           # Use trained model to make predictions for kth validation set
-          pred_l <- stats::predict(model_l, newdata = data_valid,
-                                   n.trees = model_l$n.trees,
-                                   type = "response")
+          pred_l <- gbm::predict.gbm(
+            model_l, newdata = data_valid,
+            n.trees = model_l$n.trees,
+            type = "response")
 
           # Evaluate predictions based on loss function
           perform_l <- loss_function(pred = pred_l, data.valid = data_valid,
@@ -374,9 +383,10 @@ gb <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                                      verbose = verbose)
 
             # Use trained model to make predictions for kth validation set
-            pred_l <- stats::predict(model_l, newdata = data_valid,
-                                     n.trees = model_l$n.trees,
-                                     type = "response")
+            pred_l <- gbm::predict.gbm(
+              model_l, newdata = data_valid,
+              n.trees = model_l$n.trees,
+              type = "response")
 
             # Evaluate predictions based on loss function
             perform_l <- loss_function(pred = pred_l, data.valid = data_valid,
@@ -425,7 +435,7 @@ gb <- function(y, L1.x, L2.x, L2.unit, L2.reg,
 
   # Choose best-performing model
   tuning_grid <- expand.grid(d = seq_along(interaction.set),
-                             s = seq_along(shrinkage.set),
+                             s = shrinkage.set,
                              error = NA)
 
   for (i in 1:nrow(tuning_grid)) {

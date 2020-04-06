@@ -8,7 +8,7 @@
 #'   the outcome variable.
 #' @param L1.x Individual-level covariates. A character vector of column names
 #'   corresponding to the individual-level variables used to predict the outcome
-#'   variable. Must include geographic unit.
+#'   variable. Note that geographic unit is specified in argument `L2.unit`.
 #' @param L2.x Context-level covariates. A character vector of column names
 #'   corresponding to the context-level variables used to predict the outcome
 #'   variable.
@@ -17,17 +17,57 @@
 #' @param L2.reg Geographic region. A character scalar indicating the column
 #'   name of the geographic region by which geographic units are grouped
 #'   (`L2.unit` must be nested within `L2.reg`). Default is NULL.
-#' @param survey Survey data. A data.frame containing the y and x column names.
-#' @param census Census data. A data.frame containing the x column names.
-#' @param bin.size Bin size for ideal types. A character vector indicating the
+#' @param survey Survey data. A data.frame whose column names include `y`,
+#'    `L1.x`, `L2.x`, `L2.unit`, and, if specified, `L2.reg`.
+#' @param census Census data. A data.frame whose column names include `L1.x`,
+#'   `L2.x`, `L2.unit`, and, if specified, `L2.reg`.
+#' @param L2.x.scale Scale context-level covariates. A logical argument
+#'   specifying whether context-level covariates should be normalized. Default
+#'   is TRUE. Note that if L2.x.scale is FALSE, then context-level covariates
+#'   should be normalized prior to calling auto_MrP.
+#' @param bin.proportion Proportion of ideal types. A character scalar
+#'   indicating the column name of the variable in census containing the
+#'   propotion of individuals of an ideal type in a geographic unit. Default is
+#'   NULL. Note: Not needed if `bin.size` is provided.
+#' @param bin.size Bin size for ideal types. A character scalar indicating the
 #'   column name of the variable in census containing the bin size for ideal
-#'   types in a geographic unit. Default is NULL.
+#'   types in a geographic unit. Default is NULL. Note: Not needed if
+#'   `bin.proportion` is provided.
+#' @param uncertainty Uncertainty estimates. A logical argument indicating
+#'   whether uncertainty estimates should be computed. Default is FALSE.
+#' @param best.subset Best subset classifier. A logical argument indicating
+#'   whether best subset classifier should be used for prediction of the
+#'   outcome. Default is TRUE.
+#' @param lasso Lasso classifier. A logical argument indicating whether lasso
+#'   classifier should be used for prediction of the outcome. Default is TRUE.
+#' @param pca pca classifier. A logical argument indicating whether pca
+#'   classifier should be used for prediction of the outcome. Default is TRUE.
+#' @param gb gb classifier. A logical argument indicating whether gb classifier
+#'   should be used for prediction of the outcome. Default is TRUE.
+#' @param svm svm classifier. A logical argument indicating whether svm
+#'   classifier should be used for prediction of the outcome. Default is TRUE.
+#' @param mrp mrp classifier. A logical argument indicating whether standard
+#'   mrp classifier should be used for prediction of the outcome. Default is TRUE.
+#' @param forward.selection Apply forward selection for mulilevel model with
+#'   post-stratification classifier instead of best subset selection. A logical
+#'   argument indicating whether to apply forward selection instead of best subset
+#'   selection or not. Default is FALSE. Note: With more than 8 context level
+#'   variables, forward selection is recommended.
 #' @param ebma.size Size of EBMA hold-out fold. A rational number in the open
 #'   unit interval indicating the share of respondents to be contained in the
 #'   EBMA hold-out fold. If left unspecified (NULL), then ebma.size is set to
 #'   1/3 of the survey sample size. Default is NULL.
 #' @param k.folds Number of folds. An integer-valued scalar indicating the
 #'   number of folds to be used for cross-validation. Defaults to the value of 5.
+#' @param custom.folds Custom folds. A character scalar indicating the column
+#'   name of the variable in survey data that specifies the fold to which an
+#'   observation should be allocated. The variable should contain integers
+#'   running from 1 to k + 1, where k is the number of folds used in
+#'   cross-validation. Value k + 1 refers to the ebma fold. Default is NULL.
+#' @param custom.pc Custom pcs. A logical argument indicating whether both
+#'   `survey` and `census` contain the principal components of the context-level
+#'   variables. The columns containing the principal components should be named
+#'   PC1, ..., PCn, where n is the number of context-level variables.
 #' @param cv.sampling Sampling method. A character-valued scalar indicating
 #'   whether sampling in the creation of cross-validation folds should be done
 #'   by respondents or geographic units. Default is by geographic units.
@@ -51,11 +91,12 @@
 #'   whether L2.reg is included in the GB models. Default is FALSE.
 #' @param gb.interaction.set Set of interaction depth values. An integer-valued
 #'   vector whose values define the maximum depth of each tree. Interaction
-#'   depth is used to tune the model.
+#'   depth is used to tune the model. Default is Default is c(1, 2, 3).
 #' @param gb.shrinkage.set Learning rate. A numeric vector whose values define
 #'   the learning rate or step-size reduction. Learning rate is used to tune
 #'   the model. Values between 0.001 and 0.1 usually work, but a smaller
-#'   learning rate typically requires more trees.
+#'   learning rate typically requires more trees. Default is
+#'   c(0.04, 0.01, 0.008, 0.005, 0.001).
 #' @param gb.tree.start Initial total number of trees. An integer-valued scalar
 #'   specifying the initial number of total trees. Default is 50.
 #' @param gb.tree.increase.set Increase in total number of trees. Either an
@@ -63,29 +104,36 @@
 #'   trees is increased (until the maximum number of trees is reached) or an
 #'   integer-valued vector of `length(gb.shrinkage.set)` with each value being
 #'   associated with a learning rate. Total number of trees is used to tune the
-#'   model.
+#'   model. Default is 50.
 #' @param gb.trees.max.set Maximum number of trees. Either an integer-valued
 #'   scalar specifying the maximum number of trees or an integer-valued vector
 #'   of `length(gb.shrinkage.set)` with each value being associated with a
-#'   learning rate and a number of tree increase.
+#'   learning rate and a number of tree increase. Default is 1000.
 #' @param gb.iterations.max Stopping rule. A numeric scalar specifying the
 #'   maximum number of iterations without performance improvement the GB
-#'   classifier runs before stopping. Default is NULL.
+#'   classifier runs before stopping. Default is 70.
 #' @param gb.n.minobsinnode Minimum number of observations in the terminal nodes.
 #'   An integer-valued scalar specifying the minimum number of observations
 #'   that each terminal node of the trees must contain. Default is 5.
-#' @param svm.kernel Kernel for SVM. A character string specifying the kernel to
+#' @param svm.kernel Kernel for SVM. A character scalar specifying the kernel to
 #'   be used for SVM. The possible types are linear, polynomial, radial, and
 #'   sigmoid. Default is radial.
-#' @param svm.error.fun
+#' @param svm.error.fun. Loss function. Defaults to misclassification error for
+#'   factor dependent variables and MSE for numeric dependent variables.
 #' @param svm.gamma.set Gamma parameter for SVM. This parameter is needed for
-#'   all kernels except linear.
+#'   all kernels except linear. Default is
+#'   c(0.3, 0.5, 0.55, 0.6, 0.65, 0.7, 0.8, 0.9, 1, 2, 3, 4).
 #' @param svm.cost.set Cost parameter for SVM. This parameter specifies the cost
-#'   of constraints violation.
-#' @param ebma.n.draws
-#' @param ebma.tol.values
+#'   of constraints violation. Default is c(1, 10).
+#' @param ebma.n.draws Number of ebma samples. An integer-valued scalar
+#'   specifying the number of bootstrapped samples to be drawn from the ebma
+#'   fold and used for tuning ebma. Default is 100.
+#' @param ebma.tol.values Tolerance for ebma. A numeric vector containing the
+#'   tolerance values for improvements in the log-likelihood before the em
+#'   algorithm will stop optimization. Values should range at least from 0.01
+#'   to 0.001. Default is c(0.01, 0.005, 0.001, 0.0005, 0.0001, 0.00005, 0.00001).
 #' @param seed Seed. An integer-valued scalar to control random number
-#'   generation. If left unspecified (NULL), then seed is set to 12345.
+#'   generation. If left unspecified (NULL), then seed is set to 546213978.
 #' @param verbose Verbose output. A logical argument indicating whether or not
 #'   verbose output should be printed. Default is TRUE.
 #' @return
@@ -94,21 +142,52 @@
 #' @examples
 #' @export
 
-auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, survey, census,
-                     bin.size = NULL, ebma.size = NULL, k.folds = 5,
-                     cv.sampling = "L2 units", loss.unit = "individual",
-                     loss.measure = "mse", lasso.lambda.set,
-                     lasso.iterations.max = NULL, gb.L2.unit.include = FALSE,
-                     gb.L2.reg.include = FALSE, gb.interaction.set,
-                     gb.shrinkage.set, gb.tree.start = 50,
-                     gb.tree.increase.set, gb.trees.max.set,
-                     gb.iterations.max = NULL, gb.n.minobsinnode = 5,
-                     svm.kernel, svm.error.fun, svm.gamma.set, svm.cost.set,
-                     ebma.n.draws, ebma.tol.values,
-                     seed = NULL, verbose = TRUE) {
+auto_MrP <- function(y, L1.x, L2.x,
+                     L2.unit, L2.reg = NULL,
+                     survey, census,
+                     L2.x.scale = TRUE,
+                     bin.proportion = NULL,
+                     bin.size = NULL,
+                     uncertainty = FALSE,
+                     best.subset = TRUE,
+                     lasso = TRUE,
+                     pca = TRUE,
+                     gb = TRUE,
+                     svm = TRUE,
+                     mrp = FALSE,
+                     forward.selection = FALSE,
+                     ebma.size = NULL,
+                     k.folds = 5,
+                     custom.folds = NULL,
+                     custom.pc = NULL,
+                     cv.sampling = "L2 units",
+                     loss.unit = "individual",
+                     loss.measure = "mse",
+                     lasso.lambda.set = data.frame(step_size = c(0.1, 0.3, 1),
+                                                 threshold = c(1, 10, 10000)),
+                     lasso.iterations.max = 70,
+                     gb.L2.unit.include = FALSE,
+                     gb.L2.reg.include = FALSE,
+                     gb.interaction.set = c(1, 2, 3),
+                     gb.shrinkage.set = c(0.04, 0.01, 0.008, 0.005, 0.001),
+                     gb.tree.start = 50,
+                     gb.tree.increase.set = 50,
+                     gb.trees.max.set = 1000,
+                     gb.iterations.max = 70,
+                     gb.n.minobsinnode = 5,
+                     svm.kernel = "radial",
+                     svm.error.fun = "MSE",
+                     svm.gamma.set = c(0.3, 0.5, 0.55, 0.6, 0.65, 0.7, 0.8, 0.9, 1, 2, 3, 4),
+                     svm.cost.set = c(1, 10),
+                     ebma.n.draws = 100,
+                     ebma.tol.values = c(0.01, 0.005, 0.001,
+                                         0.0005, 0.0001, 0.00005, 0.00001),
+                     seed = NULL,
+                     verbose = TRUE) {
+
   # Set seed
   if (is.null(seed)) {
-    set.seed(12345)
+    set.seed(546213978)
   } else {
     set.seed(seed)
   }
@@ -245,61 +324,88 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, survey, census,
                "`length(gb.shrinkage.set)`.", sep = ""))
   }
 
-  # ------------------------------- Prepare data -------------------------------
+  if (!is.null(custom.folds)) {
+    if (!(is.double(survey %>% dplyr::select_at(.vars = custom.folds) %>% dplyr::pull()) |
+          is.integer(survey %>% dplyr::select_at(.vars = custom.folds) %>% dplyr::pull()))) {
+      stop("The variable specifying folds must of type integer or double.")
+    }
 
-  # If not provided in census data, calculate bin size for each ideal type in
-  # a geographic unit
-  if (is.null(bin.size)) {
-    census <- census %>%
-      dplyr::group_by(.dots = c(L1.x, L2.unit)) %>%
-      dplyr::summarise(n = dplyr::n())
-  } else {
-    census$n <- census[[bin.size]]
+    if (!all(survey %>% dplyr::select_at(.vars = custom.folds) %>%
+             dplyr::pull() %>% unique() %>% sort() == 1:(k.folds + 1))) {
+      stop("custom.folds must contain integers ranging from 1 to `k.folds` + 1.")
+    }
   }
 
-  # In census data, calculate bin proportion for each ideal type in a
-  # geographic unit
-  census <- census %>%
-    dplyr::group_by(.dots = L2.unit) %>%
-    dplyr::mutate(prop = n / sum(n))
+
+  # ------------------------------- Prepare data -------------------------------
+
+  # If not provided in census data, calculate bin size and bin proportion for
+  # each ideal type in a geographic unit
+  if (is.null(bin.proportion)) {
+    if (is.null(bin.size)) {
+      census <- census %>%
+        dplyr::group_by(.dots = c(L1.x, L2.unit)) %>%
+        dplyr::summarise(n = dplyr::n())
+    } else {
+      census$n <- census[[bin.size]]
+    }
+    census <- census %>%
+      dplyr::group_by(.dots = L2.unit) %>%
+      dplyr::mutate(prop = n / sum(n))
+  } else {
+    census <- census %>%
+      dplyr::rename(prop = one_of(proportion))
+  }
+
+  if (isFALSE(custom.pc)) {
+    # Compute principal components for survey data
+    pca_out <- stats::prcomp(survey[, L2.x],
+                             retx = TRUE,
+                             center = TRUE,
+                             scale. = TRUE,
+                             tol = NULL)
+
+    # Add PCs to survey data
+    survey <- survey %>%
+      dplyr::bind_cols(as.data.frame(pca_out$x))
+
+    # Add PCs to census data
+    pc_names <- colnames(pca_out$x)
+
+    census <- census %>%
+      dplyr::left_join(unique(survey %>% dplyr::select(all_of(L2.unit),
+                                                       all_of(pc_names))),
+                       by = L2.unit)
+  }
 
   # Scale context-level variables in survey and census data
-  survey[, L2.x] <- scale(survey[, L2.x], center = TRUE, scale = TRUE)
-  census[, L2.x] <- scale(census[, L2.x], center = TRUE, scale = TRUE)
+  if (isTRUE(L2.x.scale)) {
+    survey[, L2.x] <- scale(survey[, L2.x], center = TRUE, scale = TRUE)
+    census[, L2.x] <- scale(census[, L2.x], center = TRUE, scale = TRUE)
+  }
 
-  # Compute principal components for survey data
-  pca_out <- stats::prcomp(survey[, L2.x],
-                           retx = TRUE,
-                           center = TRUE,
-                           scale. = TRUE,
-                           tol = NULL)
-
-  # Add PCs to survey data
-  survey <- survey %>%
-    dplyr::bind_cols(as.data.frame(pca_out$x))
-
-  # Add PCs to census data
-  pc_names <- colnames(pca_out$x)
-
-  census <- census %>%
-    dplyr::left_join(unique(dplyr::select(survey, L2.unit, pc_names)),
-                     by = L2.unit)
+  # Convert survey data to tibble
+  survey <- dplyr::as_tibble(x = survey)
 
   # ------------------------------- Create folds -------------------------------
 
-  # EBMA hold-out fold
-  ebma_folding_out <- ebma_folding(data = survey,
-                                   L2.unit = L2.unit,
-                                   ebma.size = ebma.size)
+  if (is.null(custom.folds)) {
+    # EBMA hold-out fold
+    ebma_folding_out <- ebma_folding(data = survey,
+                                     L2.unit = L2.unit,
+                                     ebma.size = ebma.size)
 
-  ebma_fold <- ebma_folding_out$ebma_fold
-  cv_data <- ebma_folding_out$cv_data
+    ebma_fold <- ebma_folding_out$ebma_fold
+    cv_data <- ebma_folding_out$cv_data
 
-  # K folds for cross-validation
-  cv_folds <- cv_folding(data = cv_data,
-                         L2.unit = L2.unit,
-                         k.folds = k.folds,
-                         cv.sampling = cv.sampling)
+    # K folds for cross-validation
+    cv_folds <- cv_folding(data = cv_data,
+                           L2.unit = L2.unit,
+                           k.folds = k.folds,
+                           cv.sampling = cv.sampling)
+  } else {
+
+  }
 
   # ------------------------ Run individual classifiers ------------------------
 
@@ -374,39 +480,43 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, survey, census,
 
   # --------------------------- Post-stratification ----------------------------
 
-  ps_out <- post_stratification(data = cv_folds,
-                                census = census,
-                                L1.x = L1.x,
-                                L2.x = L2.x,
-                                L2.unit = L2.unit,
-                                L2.reg = L2.reg,
-                                best.subset = best_subset_out,
-                                pca = pca_out,
-                                lasso = lasso_out,
-                                gb = gb_out,
-                                n.minobsinnode = gb.n.minobsinnode,
-                                L2.unit.include = gb.L2.unit.include,
-                                L2.reg.include = gb.L2.reg.include,
-                                svm.out = svm_out,
-                                kernel = svm.kernel,
-                                verbose = verbose)
+  ps_out <- post_stratification(
+    data = cv_folds,
+    census = census,
+    y = y,
+    L1.x = L1.x,
+    L2.x = L2.x,
+    L2.unit = L2.unit,
+    L2.reg = L2.reg,
+    best.subset = best_subset_out,
+    pca = pca_out,
+    lasso = lasso_out,
+    gb = gb_out,
+    n.minobsinnode = gb.n.minobsinnode,
+    L2.unit.include = gb.L2.unit.include,
+    L2.reg.include = gb.L2.reg.include,
+    svm.out = svm_out,
+    kernel = svm.kernel,
+    verbose = verbose)
 
   # ----------------------------------- EBMA -----------------------------------
 
-  ebma_out <- ebma(ebma.fold = ebma_fold,
-                   L1.x = L1.x,
-                   L2.x = L2.x,
-                   L2.unit = L2.unit,
-                   L2.reg = L2.reg,
-                   post.strat = ps_out,
-                   Ndraws = ebma.n.draws,
-                   tol.values = ebma.tol.values,
-                   best.subset = best_subset_out,
-                   pca = pca_out,
-                   lasso = lasso_out,
-                   gb = gb_out,
-                   svm.out = svm_out,
-                   verbose = verbose)
+  ebma_out <- ebma(
+    ebma.fold = ebma_fold,
+    y = y,
+    L1.x = L1.x,
+    L2.x = L2.x,
+    L2.unit = L2.unit,
+    L2.reg = L2.reg,
+    post.strat = ps_out,
+    Ndraws = ebma.n.draws,
+    tol.values = ebma.tol.values,
+    best.subset = best_subset_out,
+    pca = pca_out,
+    lasso = lasso_out,
+    gb = gb_out,
+    svm.out = svm_out,
+    verbose = verbose)
 
   # ---------------------------------- Output ----------------------------------
 

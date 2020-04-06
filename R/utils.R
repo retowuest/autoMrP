@@ -2,7 +2,7 @@
 ebma_folding <- function(data, L2.unit, ebma.size) {
   # Add row number to data frame
   data <- data %>%
-    dplyr::mutate(index = row_number())
+    dplyr::mutate(index = dplyr::row_number())
 
   # Split data by geographic unit into a list of data frames
   data_list <- data %>%
