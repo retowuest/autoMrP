@@ -64,10 +64,10 @@
 #'   observation should be allocated. The variable should contain integers
 #'   running from 1 to k + 1, where k is the number of folds used in
 #'   cross-validation. Value k + 1 refers to the ebma fold. Default is NULL.
-#' @param custom.pc Custom pcs. A logical argument indicating whether both
-#'   `survey` and `census` contain the principal components of the context-level
-#'   variables. The columns containing the principal components should be named
-#'   PC1, ..., PCn, where n is the number of context-level variables.
+#' @param custom.pc Custom pcs. A character vector of column names corresponding
+#'   to the principal components of the context-level variables in `survey` and
+#'   `census`. Note that the columns containing the principal components in
+#'   `survey` and `census` must be named identically. Default is NULL.
 #' @param cv.sampling Sampling method. A character-valued scalar indicating
 #'   whether sampling in the creation of cross-validation folds should be done
 #'   by respondents or geographic units. Default is by geographic units.
@@ -354,10 +354,10 @@ auto_MrP <- function(y, L1.x, L2.x,
       dplyr::mutate(prop = n / sum(n))
   } else {
     census <- census %>%
-      dplyr::rename(prop = one_of(proportion))
+      dplyr::rename(prop = one_of(bin.proportion))
   }
 
-  if (isFALSE(custom.pc)) {
+  if (is.null(custom.pc)) {
     # Compute principal components for survey data
     pca_out <- stats::prcomp(survey[, L2.x],
                              retx = TRUE,

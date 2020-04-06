@@ -80,7 +80,7 @@ k.folds <- 5
 custom.folds <- "fold"
 
 # provide user controlled principal components
-custom.pc <- TRUE
+custom.pc <- c("PC1", "PC2", "PC3", "PC4", "PC5", "PC6")
 
 # Unit to be used in sampling to create CV folds
 cv.sampling <- "L2 units"
@@ -101,8 +101,8 @@ loss.measure <- "mse"
 lasso.lambda.set <- c(1, 2)
 
 # Define lambdas as data frame for Lasso
-lasso.lambda.set <- data.frame(step_size = c(2, 5),
-                               threshold = c(1, 5))
+#lasso.lambda.set <- data.frame(step_size = c(2, 5),
+#                               threshold = c(1, 5))
 
 # Define maximum number of iterations w/o improvement for Lasso
 lasso.iterations.max <- NULL
