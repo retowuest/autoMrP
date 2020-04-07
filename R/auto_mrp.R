@@ -382,6 +382,8 @@ auto_MrP <- function(y, L1.x, L2.x,
       dplyr::left_join(unique(survey %>% dplyr::select(all_of(L2.unit),
                                                        all_of(pc_names))),
                        by = L2.unit)
+  } else {
+    pc_names <- custom.pc
   }
 
   # Scale context-level variables in survey and census data
