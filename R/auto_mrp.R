@@ -40,14 +40,14 @@
 #'   outcome. Default is TRUE.
 #' @param lasso Lasso classifier. A logical argument indicating whether lasso
 #'   classifier should be used for prediction of the outcome. Default is TRUE.
-#' @param pca pca classifier. A logical argument indicating whether pca
+#' @param pca PCA classifier. A logical argument indicating whether PCA
 #'   classifier should be used for prediction of the outcome. Default is TRUE.
-#' @param gb gb classifier. A logical argument indicating whether gb classifier
+#' @param gb GB classifier. A logical argument indicating whether GB classifier
 #'   should be used for prediction of the outcome. Default is TRUE.
-#' @param svm svm classifier. A logical argument indicating whether svm
+#' @param svm SVM classifier. A logical argument indicating whether SVM
 #'   classifier should be used for prediction of the outcome. Default is TRUE.
-#' @param mrp mrp classifier. A logical argument indicating whether standard
-#'   mrp classifier should be used for prediction of the outcome. Default is TRUE.
+#' @param mrp MRP classifier. A logical argument indicating whether standard
+#'   MRP classifier should be used for prediction of the outcome. Default is TRUE.
 #' @param forward.selection Apply forward selection for mulilevel model with
 #'   post-stratification classifier instead of best subset selection. A logical
 #'   argument indicating whether to apply forward selection instead of best subset
@@ -63,7 +63,7 @@
 #'   name of the variable in survey data that specifies the fold to which an
 #'   observation should be allocated. The variable should contain integers
 #'   running from 1 to k + 1, where k is the number of folds used in
-#'   cross-validation. Value k + 1 refers to the ebma fold. Default is NULL.
+#'   cross-validation. Value k + 1 refers to the EBMA fold. Default is NULL.
 #' @param custom.pc Custom pcs. A character vector of column names corresponding
 #'   to the principal components of the context-level variables in `survey` and
 #'   `census`. Note that the columns containing the principal components in
@@ -125,6 +125,10 @@
 #'   c(0.3, 0.5, 0.55, 0.6, 0.65, 0.7, 0.8, 0.9, 1, 2, 3, 4).
 #' @param svm.cost.set Cost parameter for SVM. This parameter specifies the cost
 #'   of constraints violation. Default is c(1, 10).
+#' @param mrp.L2.x Context-level covariates for MRP. A character vector of
+#'   column names corresponding to the context-level variables to be used in the
+#'   standard MRP model. If left unspecified (NULL), then the standard MRP model
+#'   uses the variables specified in `L2.x`. Default is NULL.
 #' @param ebma.n.draws Number of ebma samples. An integer-valued scalar
 #'   specifying the number of bootstrapped samples to be drawn from the ebma
 #'   fold and used for tuning ebma. Default is 100.
@@ -134,6 +138,7 @@
 #'   to 0.001. Default is c(0.01, 0.005, 0.001, 0.0005, 0.0001, 0.00005, 0.00001).
 #' @param seed Seed. An integer-valued scalar to control random number
 #'   generation. If left unspecified (NULL), then seed is set to 546213978.
+#'   Default is NULL.
 #' @param verbose Verbose output. A logical argument indicating whether or not
 #'   verbose output should be printed. Default is TRUE.
 #' @return
@@ -179,6 +184,7 @@ auto_MrP <- function(y, L1.x, L2.x,
                      svm.error.fun = "MSE",
                      svm.gamma.set = c(0.3, 0.5, 0.55, 0.6, 0.65, 0.7, 0.8, 0.9, 1, 2, 3, 4),
                      svm.cost.set = c(1, 10),
+                     mrp.L2.x = NULL,
                      ebma.n.draws = 100,
                      ebma.tol.values = c(0.01, 0.005, 0.001,
                                          0.0005, 0.0001, 0.00005, 0.00001),
@@ -431,6 +437,8 @@ auto_MrP <- function(y, L1.x, L2.x,
                                    loss.measure = loss.measure,
                                    data = cv_folds,
                                    verbose = verbose)
+  } else {
+    best_subset_out <- NULL
   }
 
   # Classifier 2: Lasso
@@ -446,6 +454,8 @@ auto_MrP <- function(y, L1.x, L2.x,
                        iterations.max = lasso.iterations.max,
                        data = cv_folds,
                        verbose = verbose)
+  } else {
+    lasso_out <- NULL
   }
 
   # Classifier 3: PCA
@@ -459,6 +469,8 @@ auto_MrP <- function(y, L1.x, L2.x,
                    loss.measure = loss.measure,
                    data = cv_folds,
                    verbose = verbose)
+  } else {
+    pca_out <- NULL
   }
 
   # Classifier 4: GB
@@ -481,6 +493,8 @@ auto_MrP <- function(y, L1.x, L2.x,
                  n.minobsinnode = gb.n.minobsinnode,
                  data = cv_folds,
                  verbose = verbose)
+  } else {
+    gb_out <- NULL
   }
 
   # Classifier 5: SVM
@@ -497,28 +511,29 @@ auto_MrP <- function(y, L1.x, L2.x,
                    k.folds = k.folds,
                    data = cv_folds,
                    verbose = verbose)
+  } else {
+    svm_out <- NULL
   }
 
   # --------------------------- Post-stratification ----------------------------
 
-  ps_out <- post_stratification(
-    data = cv_folds,
-    census = census,
-    y = y,
-    L1.x = L1.x,
-    L2.x = L2.x,
-    L2.unit = L2.unit,
-    L2.reg = L2.reg,
-    best.subset = best_subset_out,
-    pca = pca_out,
-    lasso = lasso_out,
-    gb = gb_out,
-    n.minobsinnode = gb.n.minobsinnode,
-    L2.unit.include = gb.L2.unit.include,
-    L2.reg.include = gb.L2.reg.include,
-    svm.out = svm_out,
-    kernel = svm.kernel,
-    verbose = verbose)
+  ps_out <- post_stratification(y = y,
+                                L1.x = L1.x,
+                                L2.x = L2.x,
+                                L2.unit = L2.unit,
+                                L2.reg = L2.reg,
+                                best.subset = best_subset_out,
+                                lasso = lasso_out,
+                                pca = pca_out,
+                                gb = gb_out,
+                                svm = svm_out,
+                                n.minobsinnode = gb.n.minobsinnode,
+                                L2.unit.include = gb.L2.unit.include,
+                                L2.reg.include = gb.L2.reg.include,
+                                kernel = svm.kernel,
+                                data = cv_folds,
+                                census = census,
+                                verbose = verbose)
 
   # ----------------------------------- EBMA -----------------------------------
 

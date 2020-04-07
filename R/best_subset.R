@@ -33,6 +33,7 @@
 best_subset <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                         loss.unit, loss.measure,
                         data, verbose) {
+
   # List of all models to be evaluated
   models <- model_list(y = y,
                        L1.x = L1.x,

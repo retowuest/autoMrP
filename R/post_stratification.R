@@ -1,9 +1,10 @@
 #' Apply post-stratification to classifiers.
 
-post_stratification <- function(data, census, y, L1.x, L2.x, L2.unit, L2.reg,
-                                best.subset, pca, lasso, gb, n.minobsinnode,
-                                L2.unit.include, L2.reg.include, svm.out,
-                                kernel = "radial", verbose){
+post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
+                                best.subset, lasso, pca, gb, svm,
+                                n.minobsinnode, L2.unit.include,
+                                L2.reg.include, kernel, data, census,
+                                verbose){
 
   # copy argument b/c it is needed twice but might be reset depending on call
   # see lines: 59-63
@@ -102,7 +103,7 @@ post_stratification <- function(data, census, y, L1.x, L2.x, L2.unit, L2.reg,
     kernel = "radial",
     scale = FALSE,
     probability = TRUE)
-  
+
   # convert factor DV back to numeric
   data <- dplyr::mutate_at(.tbl = data, .vars = y, as.numeric)
   data[,y] <- data[,y] - 1
@@ -121,8 +122,8 @@ post_stratification <- function(data, census, y, L1.x, L2.x, L2.unit, L2.reg,
                      lasso = weighted.mean(x = lasso, w = prop),
                      gb = weighted.mean(x = gb, w = prop),
                      svm = weighted.mean(x = svm, w = prop))
-  
-  
+
+
   # individual predictions for EBMA
   L1_preds <- dplyr::tibble(
     best_subset = predict(object = model_bs, type = "response"),
