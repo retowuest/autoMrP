@@ -50,22 +50,22 @@ bin.size <- NULL
 uncertainty <- FALSE
 
 # Whether to include best subset classifier
-best.subset <- TRUE
+best.subset.include <- TRUE
 
 # Whether to include lasso classifier
-lasso <- TRUE
+lasso.include <- TRUE
 
 # Whether to include pca classifier
-pca <- TRUE
+pca.include <- TRUE
 
 # Whether to include gb classifier
-gb <- TRUE
+gb.include <- TRUE
 
 # Whether to include svm classifier
-svm <- TRUE
+svm.include <- TRUE
 
 # Whether to include mrp classifier
-mrp <- FALSE
+mrp.include <- FALSE
 
 # Whether to include forward selection
 forward.selection <- FALSE
@@ -152,6 +152,10 @@ svm.gamma.set <- c(0.3, 0.5, 0.55, 0.6, 0.65, 0.7, 0.8, 0.9, 1, 2, 3, 4)
 # Define cost parameters for SVM
 svm.cost.set <- c(1, 10)
 
+# Define context-level covariates for standard MRP
+#mrp.L2.x <- c("pvote", "religcon", "urban", "unemp", "white")
+mrp.L2.x <- c("L2.x1", "L2.x2", "L2.x3", "L2.x4", "L2.x6")
+
 # EBMA draws
 ebma.n.draws <- 100
 
@@ -163,19 +167,19 @@ ebma.tol.values <- c(0.01, 0.001)
 # load functions
 
 # aux functions
-source("./utils.R")
+source(here::here("R", "utils.R"))
 
 # classifiers
-source("./best_subset.R")
-source("./best_subset_classifier.R")
-source("./lasso.R")
-source("./lasso_classifier.R")
-source("./pca.R")
-source("./gb.R")
-source("./gb_classifier.R")
+source(here::here("R", "best_subset.R"))
+source(here::here("R", "best_subset_classifier.R"))
+source(here::here("R", "lasso.R"))
+source(here::here("R", "lasso_classifier.R"))
+source(here::here("R", "pca.R"))
+source(here::here("R", "gb.R"))
+source(here::here("R", "gb_classifier.R"))
+source(here::here("R", "svm_classifier.R"))
+source(here::here("R", "svm.R"))
 source("./post_stratification.R")
 source("./ebma.R")
-source("./svm_classifier.R")
-source("./svm.R")
 
 

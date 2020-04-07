@@ -154,12 +154,12 @@ auto_MrP <- function(y, L1.x, L2.x,
                      bin.proportion = NULL,
                      bin.size = NULL,
                      uncertainty = FALSE,
-                     best.subset = TRUE,
-                     lasso = TRUE,
-                     pca = TRUE,
-                     gb = TRUE,
-                     svm = TRUE,
-                     mrp = FALSE,
+                     best.subset.include = TRUE,
+                     lasso.include = TRUE,
+                     pca.include = TRUE,
+                     gb.include = TRUE,
+                     svm.include = TRUE,
+                     mrp.include = FALSE,
                      forward.selection = FALSE,
                      ebma.size = NULL,
                      k.folds = 5,
@@ -182,12 +182,13 @@ auto_MrP <- function(y, L1.x, L2.x,
                      gb.n.minobsinnode = 5,
                      svm.kernel = "radial",
                      svm.error.fun = "MSE",
-                     svm.gamma.set = c(0.3, 0.5, 0.55, 0.6, 0.65, 0.7, 0.8, 0.9, 1, 2, 3, 4),
+                     svm.gamma.set = c(0.3, 0.5, 0.55, 0.6, 0.65, 0.7, 0.8,
+                                       0.9, 1, 2, 3, 4),
                      svm.cost.set = c(1, 10),
                      mrp.L2.x = NULL,
                      ebma.n.draws = 100,
-                     ebma.tol.values = c(0.01, 0.005, 0.001,
-                                         0.0005, 0.0001, 0.00005, 0.00001),
+                     ebma.tol.values = c(0.01, 0.005, 0.001, 0.0005, 0.0001,
+                                         0.00005, 0.00001),
                      seed = NULL,
                      verbose = TRUE) {
 
@@ -427,7 +428,7 @@ auto_MrP <- function(y, L1.x, L2.x,
   # ------------------------ Run individual classifiers ------------------------
 
   # Classifier 1: Best Subset
-  if (isTRUE(best.subset)) {
+  if (isTRUE(best.subset.include)) {
     best_subset_out <- best_subset(y = y,
                                    L1.x = L1.x,
                                    L2.x = L2.x,
@@ -442,7 +443,7 @@ auto_MrP <- function(y, L1.x, L2.x,
   }
 
   # Classifier 2: Lasso
-  if (isTRUE(lasso)) {
+  if (isTRUE(lasso.include)) {
     lasso_out <- lasso(y = y,
                        L1.x = L1.x,
                        L2.x = L2.x,
@@ -459,7 +460,7 @@ auto_MrP <- function(y, L1.x, L2.x,
   }
 
   # Classifier 3: PCA
-  if (isTRUE(pca)) {
+  if (isTRUE(pca.include)) {
     pca_out <- pca(y = y,
                    L1.x = L1.x,
                    L2.x = pc_names,
@@ -474,7 +475,7 @@ auto_MrP <- function(y, L1.x, L2.x,
   }
 
   # Classifier 4: GB
-  if (isTRUE(gb)) {
+  if (isTRUE(gb.include)) {
     gb_out <- gb(y = y,
                  L1.x = L1.x,
                  L2.x = L2.x,
@@ -498,7 +499,7 @@ auto_MrP <- function(y, L1.x, L2.x,
   }
 
   # Classifier 5: SVM
-  if (isTRUE(svm)) {
+  if (isTRUE(svm.include)) {
     svm_out <- svm(y = y,
                    L1.x = L1.x,
                    L2.x = L2.x,
@@ -531,6 +532,7 @@ auto_MrP <- function(y, L1.x, L2.x,
                                 L2.unit.include = gb.L2.unit.include,
                                 L2.reg.include = gb.L2.reg.include,
                                 kernel = svm.kernel,
+                                L2.x.mrp = mrp.L2.x,
                                 data = cv_folds,
                                 census = census,
                                 verbose = verbose)
