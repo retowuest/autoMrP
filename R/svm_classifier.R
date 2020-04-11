@@ -35,8 +35,10 @@ svm_classifier <- function(method, form, data, kernel,
                            verbose = c(TRUE, FALSE)) {
   # Train and evaluate model using the supplied set of tuning parameters
   if (isTRUE(verbose == TRUE)) {
-    out <- e1071::tune(method = method, train.x = form,
-                       data = data, kernel = kernel,
+    out <- e1071::tune(method = method,
+                       train.x = form,
+                       data = data,
+                       kernel = kernel,
                        error.fun = error.fun,
                        probability = probability,
                        ranges = list(gamma = gamma.set,
@@ -45,8 +47,10 @@ svm_classifier <- function(method, form, data, kernel,
                                                          cross = cross))
   } else {
     out <- suppressMessages(suppressWarnings(
-      e1071::tune(method = method, train.x = form,
-                  data = data, kernel = kernel,
+      e1071::tune(method = method,
+                  train.x = form,
+                  data = data,
+                  kernel = kernel,
                   error.fun = error.fun,
                   probability = probability,
                   ranges = list(gamma = gamma.set,
