@@ -5,104 +5,158 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                                 pca.opt, gb.opt, svm.opt,
                                 mrp.include, n.minobsinnode,
                                 L2.unit.include, L2.reg.include,
-                                kernel, data, census, verbose){
+                                kernel, L2.x.mrp, data, census,
+                                verbose){
 
-  # Copy argument b/c it is needed twice but might be reset depending on call
+  # Copy L2.unit b/c it is needed twice but might be reset depending on call
   # See lines: 59-63
   L2_unit <- L2.unit
 
-  ## fit best model from each classifier
-  # 1) multilevel model with best subset
-  model_bs <- best_subset_classifier(
-    model = best.subset,
-    data.train = data,
-    model.family = binomial(link = "probit"),
-    model.optimizer = "bobyqa",
-    n.iter = 1000000,
-    verbose = verbose)
+  # ----- Fit optimal model and make prediction for individual classifiers -----
 
-  # 2) multilevel model with best subset of principal components
-  model_pca <- best_subset_classifier(
-    model = pca,
-    data.train = data,
-    model.family = binomial(link = "probit"),
-    model.optimizer = "bobyqa",
-    n.iter = 1000000,
-    verbose = verbose)
-
-  # 3) multilevel model with L1 regularization (lasso)
-  # Context-level fixed effects
-  L2_fe <- paste(L2.x, collapse = " + ")
-  L2_fe_form <- as.formula(paste(y, " ~ ", L2_fe, sep = ""))
-  # Individual-level random effects as named list
-  L1_re <- setNames(as.list(rep(c(~ 1), times = length(c(L1.x, L2.unit, L2.reg)))),
-                    c(L1.x, L2.unit, L2.reg))
-  model_l <- lasso_classifier(L2.fix = L2_fe_form,
-                              L1.re = L1_re,
-                              data.train = data,
-                              lambda = lasso,
-                              model.family = binomial(link = "probit"),
-                              verbose = verbose)
-  # temporary: predict census data outcome line by line for Lasso
-  #lasso_p <- NA
-  #for (idx.census in 1:nrow(census)){
-  #  lasso_p[idx.census] <- predict(model_l, newdata = data.frame(census[idx.census,]), type = "response")
-  #}
-  lasso.census <- census
-  lasso.census[,y] <- 1
-  lasso_p <- predict(model_l, newdata = data.frame(lasso.census), type = "response")
-
-  # 4) boosting
-  # Evaluate inclusion of L2.unit
-  if (isTRUE(L2.unit.include == FALSE)) {
-    L2.unit <- NULL
+  # Classifier 1: Best Subset
+  if (!is.null(best.subset.opt)) {
+    # Fit optimal model
+    best_subset_opt <- best_subset_classifier(model = best.subset.opt,
+                                              data.train = data,
+                                              model.family = binomial(link = "probit"),
+                                              model.optimizer = "bobyqa",
+                                              n.iter = 1000000,
+                                              verbose = verbose)
   }
 
-  # Evaluate inclusion of L2.reg
-  if (isTRUE(L2.reg.include == FALSE)) {
-    L2.reg <- NULL
+  # Classifier 2: Lasso
+  if (!is.null(lasso.opt)) {
+    # Context-level fixed effects
+    L2_fe <- paste(L2.x, collapse = " + ")
+    L2_fe_form <- as.formula(paste(y, " ~ ", L2_fe, sep = ""))
+
+    # Individual-level random effects as named list
+    L1_re <- setNames(as.list(rep(c(~ 1), times = length(c(L1.x, L2.unit, L2.reg)))),
+                      c(L1.x, L2.unit, L2.reg))
+
+    # Fit optimal model
+    lasso_opt <- lasso_classifier(L2.fix = L2_fe_form,
+                                  L1.re = L1_re,
+                                  data.train = data,
+                                  lambda = lasso.opt,
+                                  model.family = binomial(link = "probit"),
+                                  verbose = verbose)
+
+    # temporary: predict census data outcome line by line for Lasso
+    #lasso_p <- NA
+    #for (idx.census in 1:nrow(census)){
+    #  lasso_p[idx.census] <- predict(model_l, newdata = data.frame(census[idx.census,]), type = "response")
+    #}
+    lasso.census <- census
+    lasso.census[,y] <- 1
+    lasso_p <- predict(model_l, newdata = data.frame(lasso.census), type = "response")
   }
+
+  # Classifier 3: PCA
+  if (!is.null(pca.opt)) {
+    # Fit optimal model
+    pca_opt <- best_subset_classifier(model = pca.opt,
+                                      data.train = data,
+                                      model.family = binomial(link = "probit"),
+                                      model.optimizer = "bobyqa",
+                                      n.iter = 1000000,
+                                      verbose = verbose)
+  }
+
+  # Classifier 4: GB
+  if (!is.null(gb.opt)) {
+    # Evaluate inclusion of L2.unit
+    if (isTRUE(L2.unit.include == TRUE)) {
+      L2.unit.gb <- L2.unit
+    } else {
+      L2.unit.gb <- NULL
+    }
+
+    # Evaluate inclusion of L2.reg
+    if (isTRUE(L2.reg.include == TRUE)) {
+      L2.reg.gb <- L2.reg
+    } else {
+      L2.reg.gb <- NULL
+    }
+
+    # Create model formula
+    x <- paste(c(L1.x, L2.x, L2.unit.gb, L2.reg.gb), collapse = " + ")
+    form_gb <- as.formula(paste(y, " ~ ", x, sep = ""))
+
+    # Fit optimal model
+    gb_opt <- gb_classifier(form = form_gb,
+                            distribution = "bernoulli",
+                            data.train = data,
+                            n.trees = gb.opt$n_trees,
+                            interaction.depth = gb.opt$interaction_depth,
+                            n.minobsinnode = n.minobsinnode,
+                            shrinkage = gb.opt$shrinkage,
+                            verbose = verbose)
+  }
+
+  # Classifier 5: SVM
+  if (!is.null(svm.opt)) {
+    # Prepare data
+    data <- data %>%
+      dplyr::mutate_at(.vars = y, .funs = list(y_svm = ~as.factor(.)))
+
+    # Create model formula
+    x <- paste(c(L1.x, L2.x, L2.unit, L2.reg), collapse = " + ")
+    form_svm <- as.formula(paste("y_svm ~ ", x, sep = ""))
+
+    # Fit optimal model
+    if (isTRUE(verbose == TRUE)) {
+      svm_opt <- e1071::svm(formula = form_svm,
+                            data = data,
+                            scale = FALSE,
+                            type = "C-classification",
+                            kernel = kernel,
+                            gamma = svm.opt$gamma,
+                            cost = svm.opt$cost,
+                            probability = TRUE)
+    } else {
+      svm_opt <- suppressMessages(suppressWarnings(
+        e1071::svm(formula = form_svm,
+                   data = data,
+                   scale = FALSE,
+                   type = "C-classification",
+                   kernel = kernel,
+                   gamma = svm.opt$gamma,
+                   cost = svm.opt$cost,
+                   probability = TRUE)
+      ))
+    }
+  }
+
+  # Classifier 6: MRP
   # Create model formula
-  x <- paste(c(L1.x, L2.x, L2.unit, L2.reg), collapse = " + ")
-  form <- as.formula(paste(y, " ~ ", x, sep = ""))
-  # call boosting classifier
-  model_gb <- gb_classifier(
-    form = form,
-    distribution = "bernoulli",
-    data.train = data,
-    n.trees = gb$n_trees,
-    interaction.depth = gb$interaction_depth,
-    n.minobsinnode = n.minobsinnode,
-    shrinkage = gb$shrinkage,
-    verbose = verbose)
+  form_mrp <- as.formula(paste(y, " ~ ", paste(L2.x.mrp, collapse = " + "),
+                               sep = ""))
 
-  # 5) SVM
+  # Fit optimal model
+  if (isTRUE(mrp.include == TRUE)) {
+    if (isTRUE(verbose == TRUE)) {
+      mrp_opt <- lme4::glmer(formula = form_mrp,
+                             data = data,
+                             family = binomial(link = "probit"),
+                             lme4::glmerControl(optimizer = "bobyqa",
+                                                optCtrl = list(maxfun = 1000000)))
+    } else {
+      mrp_opt <- suppressMessages(suppressWarnings(
+        lme4::glmer(formula = form_mrp,
+                    data = data.train,
+                    family = binomial(link = "probit"),
+                    lme4::glmerControl(optimizer = "bobyqa",
+                                       optCtrl = list(maxfun = 1000000)))
+      ))
+    }
+  }
 
-  # Create model formula
-  x <- paste(c(L1.x, L2.x, L2.unit, L2.reg), collapse = " + ")
-  form <- as.formula(paste(y, " ~ ", x, sep = ""))
-
-  # Prepare data
-  data <- dplyr::mutate_at(.tbl = data, .vars = y, as.factor)
-
-  # estimate model with tuned set of parameters
-  model_svm <- e1071::svm(
-    formula = form,
-    data = data,
-    type = "C-classification",
-    cost = svm.out$cost,
-    gamma = svm.out$gamma,
-    kernel = "radial",
-    scale = FALSE,
-    probability = TRUE)
-
-  # convert factor DV back to numeric
-  data <- dplyr::mutate_at(.tbl = data, .vars = y, as.numeric)
-  data[,y] <- data[,y] - 1
+  # --------------------------- Post-stratification ----------------------------
 
   # post-stratification: 1) predict, 2) weighted mean by state
   L2_preds <- census %>%
-    dplyr::ungroup() %>%
     dplyr::mutate(best_subset = predict(object = model_bs, newdata = census, allow.new.levels = TRUE, type = "response"),
                   pca = predict(object = model_pca, newdata = census, allow.new.levels = TRUE, type = "response"),
                   lasso = lasso_p,
@@ -129,11 +183,10 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
     dplyr::select(one_of(y), "best_subset", "pca", "lasso", "gb", "svm")
 
   # Function output
-  return(ps = list(
-    predictions = list(Level1 = L1_preds, Level2 = L2_preds),
-    models = list(best_subset = model_bs,
-                  pca = model_pca,
-                  lasso = model_l,
-                  gb = model_gb,
-                  svm = model_svm)))
+  return(ps = list(predictions = list(Level1 = L1_preds, Level2 = L2_preds),
+                   models = list(best_subset = model_bs,
+                                 pca = model_pca,
+                                 lasso = model_l,
+                                 gb = model_gb,
+                                 svm = model_svm)))
 }
