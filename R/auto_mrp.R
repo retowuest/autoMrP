@@ -546,7 +546,7 @@ auto_MrP <- function(y, L1.x, L2.x,
                                 L2.reg.include = gb.L2.reg.include,
                                 kernel = svm.kernel,
                                 L2.x.mrp = mrp.L2.x,
-                                data = cv_folds,
+                                data = cv_data,
                                 census = census,
                                 verbose = verbose)
 

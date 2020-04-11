@@ -142,10 +142,9 @@ gb <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                                    verbose = verbose)
 
           # Use trained model to make predictions for kth validation set
-          pred_l <- gbm::predict.gbm(
-            model_l, newdata = data_valid,
-            n.trees = model_l$n.trees,
-            type = "response")
+          pred_l <- gbm::predict.gbm(model_l, newdata = data_valid,
+                                     n.trees = model_l$n.trees,
+                                     type = "response")
 
           # Evaluate predictions based on loss function
           perform_l <- loss_function(pred = pred_l, data.valid = data_valid,
@@ -212,10 +211,9 @@ gb <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                                             verbose = verbose)
 
             # Use trained model to make predictions for kth validation set
-            pred_l <- gbm::predict.gbm(
-              model_l, newdata = data_valid,
-              n.trees = model_l$n.trees,
-              type = "response")
+            pred_l <- gbm::predict.gbm(model_l, newdata = data_valid,
+                                       n.trees = model_l$n.trees,
+                                       type = "response")
 
             # Evaluate predictions based on loss function
             perform_l <- loss_function(pred = pred_l, data.valid = data_valid,
@@ -308,10 +306,9 @@ gb <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                                    verbose = verbose)
 
           # Use trained model to make predictions for kth validation set
-          pred_l <- gbm::predict.gbm(
-            model_l, newdata = data_valid,
-            n.trees = model_l$n.trees,
-            type = "response")
+          pred_l <- gbm::predict.gbm(model_l, newdata = data_valid,
+                                     n.trees = model_l$n.trees,
+                                     type = "response")
 
           # Evaluate predictions based on loss function
           perform_l <- loss_function(pred = pred_l, data.valid = data_valid,
@@ -383,10 +380,9 @@ gb <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                                      verbose = verbose)
 
             # Use trained model to make predictions for kth validation set
-            pred_l <- gbm::predict.gbm(
-              model_l, newdata = data_valid,
-              n.trees = model_l$n.trees,
-              type = "response")
+            pred_l <- gbm::predict.gbm(model_l, newdata = data_valid,
+                                       n.trees = model_l$n.trees,
+                                       type = "response")
 
             # Evaluate predictions based on loss function
             perform_l <- loss_function(pred = pred_l, data.valid = data_valid,
