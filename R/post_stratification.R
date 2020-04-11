@@ -1,23 +1,15 @@
 #' Apply post-stratification to classifiers.
 
 post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
-                                best.subset, lasso, pca, gb, svm,
-                                n.minobsinnode, L2.unit.include,
-                                L2.reg.include, kernel, data, census,
-                                verbose){
+                                best.subset.opt, lasso.opt,
+                                pca.opt, gb.opt, svm.opt,
+                                mrp.include, n.minobsinnode,
+                                L2.unit.include, L2.reg.include,
+                                kernel, data, census, verbose){
 
-  # copy argument b/c it is needed twice but might be reset depending on call
-  # see lines: 59-63
+  # Copy argument b/c it is needed twice but might be reset depending on call
+  # See lines: 59-63
   L2_unit <- L2.unit
-
-  # bind together survey sample data
-  data <- dplyr::bind_rows(data) %>%
-    dplyr::mutate_at(.vars = c(L1.x, L2.unit, L2.reg), .funs = as.factor)
-
-  # factors in census
-  census <- census %>%
-    dplyr::ungroup() %>%
-    dplyr::mutate_at(.vars = c(L1.x, L2.unit, L2.reg), .funs = as.factor)
 
   ## fit best model from each classifier
   # 1) multilevel model with best subset

@@ -345,6 +345,14 @@ auto_MrP <- function(y, L1.x, L2.x,
 
   # ------------------------------- Prepare data -------------------------------
 
+  # Coerce individual-level variables and geographic variables to factors in
+  # survey and census data
+  survey <- survey %>%
+    dplyr::mutate_at(.vars = c(L1.x, L2.unit, L2.reg), .funs = as.factor)
+
+  census <- census %>%
+    dplyr::mutate_at(.vars = c(L1.x, L2.unit, L2.reg), .funs = as.factor)
+
   # If not provided in census data, calculate bin size and bin proportion for
   # each ideal type in a geographic unit
   if (is.null(bin.proportion)) {
@@ -363,6 +371,8 @@ auto_MrP <- function(y, L1.x, L2.x,
       dplyr::rename(prop = one_of(bin.proportion))
   }
 
+  # If not provided in survey and census data, compute the principals components
+  # of the context-level variables
   if (is.null(custom.pc)) {
     # Compute principal components for survey data
     pca_out <- stats::prcomp(survey[, L2.x],
@@ -427,7 +437,7 @@ auto_MrP <- function(y, L1.x, L2.x,
       dplyr::group_split(.data[[custom.folds]])
   }
 
-  # ------------------------ Run individual classifiers ------------------------
+  # ---------------------- Optimal individual classifiers ----------------------
 
   # Classifier 1: Best Subset
   if (isTRUE(best.subset.include)) {
@@ -525,11 +535,12 @@ auto_MrP <- function(y, L1.x, L2.x,
                                 L2.x = L2.x,
                                 L2.unit = L2.unit,
                                 L2.reg = L2.reg,
-                                best.subset = best_subset_out,
-                                lasso = lasso_out,
-                                pca = pca_out,
-                                gb = gb_out,
-                                svm = svm_out,
+                                best.subset.opt = best_subset_out,
+                                lasso.opt = lasso_out,
+                                pca.opt = pca_out,
+                                gb.opt = gb_out,
+                                svm.opt = svm_out,
+                                mrp.include = mrp.include,
                                 n.minobsinnode = gb.n.minobsinnode,
                                 L2.unit.include = gb.L2.unit.include,
                                 L2.reg.include = gb.L2.reg.include,
