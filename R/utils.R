@@ -1,4 +1,41 @@
-# Function to create EBMA hold-out fold
+################################################################################
+#            Function to check if arguments to auto_MrP() are valid            #
+################################################################################
+
+error_checks <- function(y, L1.x) {
+  # Check if y is a character scalar
+  if (!(is.character(y) & length(y) == 1)) {
+    stop(paste("Outcome '", y,
+               "' must be a character scalar.", sep = ""))
+  }
+
+  # Check if y is in survey data
+  if (!(y %in% colnames(survey))) {
+    stop(paste("Outcome '", y,
+               "' is not in your survey data.", sep = ""))
+  }
+
+  # Check if L1.x is a character vector
+
+
+  if (!all(L1.x %in% colnames(survey))) {
+    stop(paste("Individual-level variable(s) '",
+               L1.x[which(!(L1.x %in% colnames(survey)))],
+               "' is/are not in your survey data.", sep = ""))
+  }
+
+  if (!all(L1.x %in% colnames(census))) {
+    stop(paste("Individual-level variable(s) '",
+               L1.x[which(!(L1.x %in% colnames(census)))],
+               "' is/are not in your census data.", sep = ""))
+  }
+}
+
+
+################################################################################
+#                    Function to create EBMA hold-out fold                     #
+################################################################################
+
 ebma_folding <- function(data, L2.unit, ebma.size) {
   # Add row number to data frame
   data <- data %>%
@@ -48,16 +85,19 @@ ebma_folding <- function(data, L2.unit, ebma.size) {
 }
 
 
-# Function to create CV folds
-cv_folding <- function(data, L2.unit, k.folds,
-                       cv.sampling = c("respondents", "L2 units")) {
+################################################################################
+#                         Function to create CV folds                          #
+################################################################################
 
-  if (cv.sampling == "respondents") {
+cv_folding <- function(data, L2.unit, k.folds,
+                       cv.sampling = c("individuals", "L2 units")) {
+
+  if (cv.sampling == "individuals") {
     # Add row number to data frame
     data <- data %>%
       dplyr::mutate(index = row_number())
 
-    # Randomize indices of respondents
+    # Randomize indices of individuals
     indices <- sample(data$index, size = length(data$index), replace = FALSE)
 
     # Define number of units per fold
@@ -112,12 +152,15 @@ cv_folding <- function(data, L2.unit, k.folds,
 }
 
 
-# Function to create model list for best subset classifier
+################################################################################
+#           Function to create model list for best subset classifier           #
+################################################################################
+
 model_list <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL) {
   # Individual-level random effects
   L1_re <- paste(paste("(1 | ", L1.x, ")", sep = ""), collapse = " + ")
 
-  # Geographic unit or Geographic unit-Geographic region random effects
+  # Geographic unit or geographic unit-geographic region random effects
   if (is.null(L2.reg)) {
     L2_re <- paste("(1 | ", L2.unit, ")", sep = "")
   } else {
@@ -148,7 +191,10 @@ model_list <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL) {
 }
 
 
-# Function to create model list for PCA classifier
+################################################################################
+#               Function to create model list for PCA classifier               #
+################################################################################
+
 model_list_pca <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL) {
   # Individual-level random effects
   L1_re <- paste(paste("(1 | ", L1.x, ")", sep = ""), collapse = " + ")
@@ -181,16 +227,19 @@ model_list_pca <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL) {
 }
 
 
-# Loss function
+################################################################################
+#                           Prediction loss function                           #
+################################################################################
+
 loss_function <- function(pred, data.valid,
-                          loss.unit = c("individual", "L2.units"),
-                          loss.measure = c("mse", "mae"),
+                          loss.unit = c("individuals", "L2 units"),
+                          loss.measure = c("MSE", "MAE"),
                           y, L2.unit) {
-  if (loss.unit == "individual" & loss.measure == "mse") {
+  if (loss.unit == "individuals" & loss.measure == "MSE") {
     out <- mean((data.valid[[y]] - pred)^2)
-  } else if (loss.unit == "individual" & loss.measure == "mae") {
+  } else if (loss.unit == "individuals" & loss.measure == "MAE") {
     out <- mean(abs(data.valid[[y]] - pred))
-  } else if (loss.unit == "L2.units" & loss.measure == "mse") {
+  } else if (loss.unit == "L2 units" & loss.measure == "MSE") {
     data.valid <- data.valid %>%
       dplyr::mutate(pred = pred)
 
