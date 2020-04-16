@@ -1,216 +1,237 @@
 #' Improve MrP through ensemble learning.
 #'
-#' \code{auto_MrP} improves the prediction performance of multilevel regression
-#' with post-stratification (MrP) by combining a number of machine learning
-#' methods through ensemble bayesian model averaging (EBMA).
+#' \code{auto_MrP()} improves the prediction performance of multilevel
+#' regression with post-stratification (MrP) by combining a number of machine
+#' learning methods through ensemble bayesian model averaging (EBMA).
 #'
 #' @param y Outcome variable. A character scalar containing the column name of
-#'   the outcome variable.
-#' @param L1.x Individual-level covariates. A character vector of column names
-#'   corresponding to the individual-level variables used to predict the outcome
-#'   variable. Note that geographic unit is specified in argument `L2.unit`.
-#' @param L2.x Context-level covariates. A character vector of column names
-#'   corresponding to the context-level variables used to predict the outcome
-#'   variable.
-#' @param L2.unit Geographic unit. A character scalar indicating the column
-#'   name of the geographic unit at which outcomes should be aggregated.
-#' @param L2.reg Geographic region. A character scalar indicating the column
-#'   name of the geographic region by which geographic units are grouped
-#'   (`L2.unit` must be nested within `L2.reg`). Default is NULL.
-#' @param survey Survey data. A data.frame whose column names include `y`,
-#'    `L1.x`, `L2.x`, `L2.unit`, and, if specified, `L2.reg`.
-#' @param census Census data. A data.frame whose column names include `L1.x`,
-#'   `L2.x`, `L2.unit`, and, if specified, `L2.reg`.
+#'   the outcome variable in \code{survey}.
+#' @param L1.x Individual-level covariates. A character vector containing the
+#'   column names of the individual-level variables in \code{survey} and
+#'   \code{census} used to predict outcome \code{y}. Note that geographic unit
+#'   is specified in argument \code{L2.unit}.
+#' @param L2.x Context-level covariates. A character vector containing the
+#'   column names of the context-level variables in \code{survey} and
+#'   \code{census} used to predict outcome \code{y}.
+#' @param L2.unit Geographic unit. A character scalar containing the column
+#'   name of the geographic unit in \code{survey} and \code{census} at which
+#'   outcomes should be aggregated.
+#' @param L2.reg Geographic region. A character scalar containing the column
+#'   name of the geographic region in \code{survey} and \code{census} by which
+#'   geographic units are grouped (\code{L2.unit} must be nested within
+#'   \code{L2.reg}). Default is \code{NULL}.
 #' @param L2.x.scale Scale context-level covariates. A logical argument
-#'   specifying whether context-level covariates should be normalized. Default
-#'   is TRUE. Note that if L2.x.scale is FALSE, then context-level covariates
-#'   should be normalized prior to calling auto_MrP.
+#'   indicating whether the context-level covariates should be normalized.
+#'   Default is \code{TRUE}. Note that if set to \code{FALSE}, then the
+#'   context-level covariates should be normalized prior to calling
+#'   \code{auto_MrP()}.
+#' @param pcs Principal components. A character vector containing the column
+#'   names of the principal components of the context-level variables in
+#'   \code{survey} and \code{census}. Default is \code{NULL}.
+#' @param folds EBMA and cross-validation folds. A character scalar containing
+#'   the column name of the variable in \code{survey} that specifies the fold
+#'   to which an observation is allocated. The variable should contain integers
+#'   running from \eqn{1} to \eqn{k + 1}, where \eqn{k} is the number of
+#'   cross-validation folds. Value \eqn{k + 1} refers to the EBMA fold. Default
+#'   is \code{NULL}. \emph{Note:} if \code{folds} is \code{NULL}, then
+#'   \code{ebma.size}, \code{k.folds}, and \code{cv.sampling} must be specified.
 #' @param bin.proportion Proportion of ideal types. A character scalar
-#'   indicating the column name of the variable in census containing the
-#'   propotion of individuals of an ideal type in a geographic unit. Default is
-#'   NULL. Note: Not needed if `bin.size` is provided.
-#' @param bin.size Bin size for ideal types. A character scalar indicating the
-#'   column name of the variable in census containing the bin size for ideal
-#'   types in a geographic unit. Default is NULL. Note: Not needed if
-#'   `bin.proportion` is provided.
-#' @param uncertainty Uncertainty estimates. A logical argument indicating
-#'   whether uncertainty estimates should be computed. Default is FALSE.
-#' @param best.subset Best subset classifier. A logical argument indicating
-#'   whether best subset classifier should be used for prediction of the
-#'   outcome. Default is TRUE.
-#' @param lasso Lasso classifier. A logical argument indicating whether lasso
-#'   classifier should be used for prediction of the outcome. Default is TRUE.
-#' @param pca PCA classifier. A logical argument indicating whether PCA
-#'   classifier should be used for prediction of the outcome. Default is TRUE.
-#' @param gb GB classifier. A logical argument indicating whether GB classifier
-#'   should be used for prediction of the outcome. Default is TRUE.
-#' @param svm SVM classifier. A logical argument indicating whether SVM
-#'   classifier should be used for prediction of the outcome. Default is TRUE.
-#' @param mrp MRP classifier. A logical argument indicating whether standard
-#'   MRP classifier should be used for prediction of the outcome. Default is TRUE.
-#' @param forward.selection Apply forward selection for mulilevel model with
-#'   post-stratification classifier instead of best subset selection. A logical
-#'   argument indicating whether to apply forward selection instead of best subset
-#'   selection or not. Default is FALSE. Note: With more than 8 context level
-#'   variables, forward selection is recommended.
-#' @param ebma.size Size of EBMA hold-out fold. A rational number in the open
-#'   unit interval indicating the share of respondents to be contained in the
-#'   EBMA hold-out fold. If left unspecified (NULL), then ebma.size is set to
-#'   1/3 of the survey sample size. Default is NULL.
-#' @param k.folds Number of folds. An integer-valued scalar indicating the
-#'   number of folds to be used for cross-validation. Defaults to the value of 5.
-#' @param custom.folds Custom folds. A character scalar indicating the column
-#'   name of the variable in survey data that specifies the fold to which an
-#'   observation should be allocated. The variable should contain integers
-#'   running from 1 to k + 1, where k is the number of folds used in
-#'   cross-validation. Value k + 1 refers to the EBMA fold. Default is NULL.
-#' @param custom.pc Custom pcs. A character vector of column names corresponding
-#'   to the principal components of the context-level variables in `survey` and
-#'   `census`. Note that the columns containing the principal components in
-#'   `survey` and `census` must be named identically. Default is NULL.
-#' @param cv.sampling Sampling method. A character-valued scalar indicating
-#'   whether sampling in the creation of cross-validation folds should be done
-#'   by respondents or geographic units. Default is by geographic units.
+#'   containing the column name of the variable in \code{census} that indicates
+#'   the proportion of individuals by ideal type and geographic unit. Default is
+#'   \code{NULL}. \emph{Note:} if \code{bin.proportion} is \code{NULL}, then
+#'   \code{bin.size} must be specified.
+#' @param bin.size Bin size of ideal types. A character scalar containing the
+#'   column name of the variable in \code{census} that indicates the bin size of
+#'   ideal types by geographic unit. Default is \code{NULL}. \emph{Note:}
+#'   ignored if \code{bin.proportion} is provided, but must be specified
+#'   otherwise.
+#' @param survey Survey data. A \code{data.frame} whose column names include
+#'   \code{y}, \code{L1.x}, \code{L2.x}, \code{L2.unit}, and, if specified,
+#'   \code{L2.reg}, \code{pcs}, and \code{folds}.
+#' @param census Census data. A \code{data.frame} whose column names include
+#'   \code{L1.x}, \code{L2.x}, \code{L2.unit}, if specified, \code{L2.reg} and
+#'   \code{pcs}, and either \code{bin.proportion} or \code{bin.size}.
+#' @param ebma.size EBMA fold size. A rational number in the open unit interval
+#'   indicating the share of respondents to be allocated to the EBMA fold.
+#'   Default is \eqn{1/3}. \emph{Note:} ignored if \code{folds} is provided, but
+#'   must be specified otherwise.
+#' @param k.folds Number of cross-validation folds. An integer-valued scalar
+#'   indicating the number of folds to be used in cross-validation. Default is
+#'   \eqn{5}. \emph{Note:} ignored if \code{folds} is provided, but must be
+#'   specified otherwise.
+#' @param cv.sampling Cross-validation sampling method. A character-valued
+#'   scalar indicating whether cross-validation folds should be created by
+#'   sampling individual respondents (\code{individuals}) or geographic units
+#'   (\code{L2 units}). Default is \code{L2 units}. \emph{Note:} ignored if
+#'   \code{folds} is provided, but must be specified otherwise.
 #' @param loss.unit Loss function unit. A character-valued scalar indicating
-#'   whether the loss should be evaluated at the level of individual respondents
-#'   or the level of geographic units. Default is at the individual level.
-#' @param loss.measure Loss function measure. A character-valued scalar
-#'   indicating whether the loss should be measured by the mean squared error
-#'   or the mean absolute error. Default is the MSE.
-#' @param lasso.lambda.set Set of tuning parameters. Lambda is the penalty
-#'   parameter that controls the shrinkage of fixed effects. Either a numeric
-#'   vector of lambda values or a data.frame with two columns, the first
-#'   containing the size by which lambda should increase and the second the
-#'   upper threshold of the interval of lambdas to which the step size applies.
-#' @param lasso.iterations.max Stopping rule. A numeric scalar specifying the
-#'   maximum number of iterations without performance improvement the
-#'   algorithm runs before stopping. Default is NULL.
-#' @param gb.L2.unit.include Include L2.unit in GB. A logical argument indicating
-#'   whether L2.unit is included in the GB models. Default is FALSE.
-#' @param gb.L2.reg.include Include L2.reg in GB. A logical argument indicating
-#'   whether L2.reg is included in the GB models. Default is FALSE.
-#' @param gb.interaction.set Set of interaction depth values. An integer-valued
-#'   vector whose values define the maximum depth of each tree. Interaction
-#'   depth is used to tune the model. Default is Default is c(1, 2, 3).
-#' @param gb.shrinkage.set Learning rate. A numeric vector whose values define
-#'   the learning rate or step-size reduction. Learning rate is used to tune
-#'   the model. Values between 0.001 and 0.1 usually work, but a smaller
-#'   learning rate typically requires more trees. Default is
-#'   c(0.04, 0.01, 0.008, 0.005, 0.001).
-#' @param gb.tree.start Initial total number of trees. An integer-valued scalar
-#'   specifying the initial number of total trees. Default is 50.
-#' @param gb.tree.increase.set Increase in total number of trees. Either an
+#'   whether performance loss should be evaluated at the level of individual
+#'   respondents (\code{individuals}) or geographic units (\code{L2 units}).
+#'   Default is \code{individuals}.
+#' @param loss.fun Loss function. A character-valued scalar indicating whether
+#'   prediction loss should be measured by the mean squared error (\code{MSE})
+#'   or the mean absolute error (\code{MAE}). Default is \code{MSE}.
+#' @param best.subset Best subset classifier. A logical argument indicating
+#'   whether the best subset classifier should be used for predicting outcome
+#'   \code{y}. Default is \code{TRUE}.
+#' @param lasso Lasso classifier. A logical argument indicating whether the
+#'   lasso classifier should be used for predicting outcome \code{y}. Default is
+#'   \code{TRUE}.
+#' @param pca PCA classifier. A logical argument indicating whether the PCA
+#'   classifier should be used for predicting outcome \code{y}. Default is
+#'   \code{TRUE}.
+#' @param gb GB classifier. A logical argument indicating whether the GB
+#'   classifier should be used for predicting outcome \code{y}. Default is
+#'   \code{TRUE}.
+#' @param svm SVM classifier. A logical argument indicating whether the SVM
+#'   classifier should be used for predicting outcome \code{y}. Default is
+#'   \code{TRUE}.
+#' @param mrp MRP classifier. A logical argument indicating whether the standard
+#'   MRP classifier should be used for predicting outcome \code{y}. Default is
+#'   \code{FALSE}.
+#' @param forward.selection Forward selection classifier. A logical argument
+#'   indicating whether to use forward selection rather than best subset
+#'   selection. Default is \code{FALSE}. \emph{Note:} forward selection is
+#'   recommended if there are more than \eqn{8} context-level variables.
+#' @param best.subset.L2.x Best subset context-level covariates. A character
+#'   vector containing the column names of the context-level variables in
+#'   \code{survey} and \code{census} to be used by the best subset classifier.
+#'   If \code{NULL}, then best subset uses the variables specified in
+#'   \code{L2.x}. Default is \code{NULL}.
+#' @param lasso.L2.x Lasso context-level covariates. A character vector
+#'   containing the column names of the context-level variables in
+#'   \code{survey} and \code{census} to be used by the lasso classifier. If
+#'   \code{NULL}, then lasso uses the variables specified in \code{L2.x}.
+#'   Default is \code{NULL}.
+#' @param gb.L2.x GB context-level covariates. A character vector containing the
+#'   column names of the context-level variables in \code{survey} and
+#'   \code{census} to be used by the GB classifier. If \code{NULL}, then GB uses
+#'   the variables specified in \code{L2.x}. Default is \code{NULL}.
+#' @param svm.L2.x SVM context-level covariates. A character vector containing
+#'   the column names of the context-level variables in \code{survey} and
+#'   \code{census} to be used by the SVM classifier. If \code{NULL}, then SVM
+#'   uses the variables specified in \code{L2.x}. Default is \code{NULL}.
+#' @param mrp.L2.x MRP context-level covariates. A character vector containing
+#'   the column names of the context-level variables in \code{survey} and
+#'   \code{census} to be used by the MRP classifier. If \code{NULL}, then MRP
+#'   uses the variables specified in \code{L2.x}. Default is \code{NULL}.
+#' @param gb.L2.unit GB L2.unit. A logical argument indicating whether L2.unit
+#'   should be included in the GB classifier. Default is \code{FALSE}.
+#' @param gb.L2.reg GB L2.reg. A logical argument indicating whether L2.reg
+#'   should be included in the GB classifier. Default is \code{TRUE}.
+#' @param lasso.lambda Lasso penalty parameter. A numeric \code{vector} or a
+#'   \code{list} of two numeric vectors of equal size, with the first vector
+#'   containing the step sizes by which the penalty parameter should increase
+#'   and the second vector containing the upper thresholds of the intervals to
+#'   which the step sizes apply. The penalty parameter controls the shrinkage of
+#'   the context-level variables in the lasso model. Default is
+#'   \code{list(c(0.1, 0.3, 1), c(1, 10, 10000))}.
+#' @param lasso.n.iter Lasso number of iterations without improvement. A numeric
+#'   scalar specifying the maximum number of iterations without performance
+#'   improvement the algorithm runs before stopping. Default is \eqn{70}.
+#' @param gb.interaction.depth GB interaction depth. An integer-valued vector
+#'   whose values specify the interaction depth of GB. The interaction depth
+#'   defines the maximum depth of each tree grown (i.e., the maximum level of
+#'   variable interactions). Default is \code{c(1, 2, 3)}.
+#' @param gb.shrinkage GB learning rate. A numeric vector whose values specify
+#'   the learning rate or step-size reduction of GB. Values between \eqn{0.001}
+#'   and \eqn{0.1} usually work, but a smaller learning rate typically requires
+#'   more trees. Default is \code{c(0.04, 0.01, 0.008, 0.005, 0.001)}.
+#' @param gb.n.trees.init GB initial total number of trees. An integer-valued
+#'   scalar specifying the initial number of total trees to fit by GB. Default
+#'   is \eqn{50}.
+#' @param gb.n.trees.increase GB increase in total number of trees. An
 #'   integer-valued scalar specifying by how many trees the total number of
-#'   trees is increased (until the maximum number of trees is reached) or an
-#'   integer-valued vector of `length(gb.shrinkage.set)` with each value being
-#'   associated with a learning rate. Total number of trees is used to tune the
-#'   model. Default is 50.
-#' @param gb.trees.max.set Maximum number of trees. Either an integer-valued
-#'   scalar specifying the maximum number of trees or an integer-valued vector
-#'   of `length(gb.shrinkage.set)` with each value being associated with a
-#'   learning rate and a number of tree increase. Default is 1000.
-#' @param gb.iterations.max Stopping rule. A numeric scalar specifying the
-#'   maximum number of iterations without performance improvement the GB
-#'   classifier runs before stopping. Default is 70.
-#' @param gb.n.minobsinnode Minimum number of observations in the terminal nodes.
-#'   An integer-valued scalar specifying the minimum number of observations
-#'   that each terminal node of the trees must contain. Default is 5.
-#' @param svm.kernel Kernel for SVM. A character scalar specifying the kernel to
-#'   be used for SVM. The possible types are linear, polynomial, radial, and
-#'   sigmoid. Default is radial.
-#' @param svm.error.fun. Loss function. Defaults to misclassification error for
-#'   factor dependent variables and MSE for numeric dependent variables.
-#' @param svm.gamma.set Gamma parameter for SVM. This parameter is needed for
-#'   all kernels except linear. Default is
-#'   c(0.3, 0.5, 0.55, 0.6, 0.65, 0.7, 0.8, 0.9, 1, 2, 3, 4).
-#' @param svm.cost.set Cost parameter for SVM. This parameter specifies the cost
-#'   of constraints violation. Default is c(1, 10).
-#' @param mrp.L2.x Context-level covariates for MRP. A character vector of
-#'   column names corresponding to the context-level variables to be used in the
-#'   standard MRP model. If left unspecified (NULL), then the standard MRP model
-#'   uses the variables specified in `L2.x`. Default is NULL.
-#' @param ebma.n.draws Number of ebma samples. An integer-valued scalar
-#'   specifying the number of bootstrapped samples to be drawn from the ebma
-#'   fold and used for tuning ebma. Default is 100.
-#' @param ebma.tol.values Tolerance for ebma. A numeric vector containing the
-#'   tolerance values for improvements in the log-likelihood before the em
-#'   algorithm will stop optimization. Values should range at least from 0.01
-#'   to 0.001. Default is c(0.01, 0.005, 0.001, 0.0005, 0.0001, 0.00005, 0.00001).
-#' @param seed Seed. An integer-valued scalar to control random number
-#'   generation. If left unspecified (NULL), then seed is set to 546213978.
-#'   Default is NULL.
+#'   trees to fit should be increased (until \code{gb.n.trees.max} is reached)
+#'   or an integer-valued vector of length \code{length(gb.shrinkage)} with each
+#'   of its values being associated with a learning rate in \code{gb.shrinkage}.
+#'   Default is \eqn{50}.
+#' @param gb.n.trees.max GB maximum number of trees. An integer-valued scalar
+#'   specifying the maximum number of trees to fit by GB or an integer-valued
+#'   vector of length \code{length(gb.shrinkage)} with each of its values being
+#'   associated with a learning rate and an increase in the total number of
+#'   trees. Default is \eqn{1000}.
+#' @param gb.n.iter GB number of iterations without improvement. A numeric
+#'   scalar specifying the maximum number of iterations without performance
+#'   improvement the algorithm runs before stopping. Default is \eqn{70}.
+#' @param gb.n.minobsinnode GB minimum number of observations in the terminal
+#'   nodes. An integer-valued scalar specifying the minimum number of
+#'   observations that each terminal node of the trees must contain. Default is
+#'   \eqn{5}.
+#' @param svm.kernel SVM kernel. A character-valued scalar specifying the kernel
+#'   to be used by SVM. The possible values are \code{linear}, \code{polynomial},
+#'   \code{radial}, and \code{sigmoid}. Default is \code{radial}.
+#' @param svm.loss.fun SVM loss function. If \code{NULL}, then SVM uses the
+#'   misclassification error to measure the loss of categorical predictions and
+#'   the mean squared error to measure the loss of numeric predictions. Default
+#'   is \code{NULL}.
+#' @param svm.gamma SVM kernel parameter. A numeric vector whose values specify
+#'   the gamma parameter in the SVM kernel. This parameter is needed for all
+#'   kernel types except linear. Default is
+#'   \eqn{c(0.3, 0.5, 0.55, 0.6, 0.65, 0.7, 0.8, 0.9, 1, 2, 3, 4)}.
+#' @param svm.cost SVM cost parameter. A numeric vector whose values specify the
+#'   cost of constraints violation in SVM. Default is \eqn{c(1, 10)}.
+#' @param ebma.n.draws EBMA number of samples. An integer-valued scalar
+#'   specifying the number of bootstrapped samples to be drawn from the EBMA
+#'   fold and used for tuning EBMA. Default is \eqn{100}.
+#' @param ebma.tol EBMA tolerance. A numeric vector containing the
+#'   tolerance values for improvements in the log-likelihood before the EM
+#'   algorithm stops optimization. Values should range at least from \eqn{0.01}
+#'   to \eqn{0.001}. Default is
+#'   \code{c(0.01, 0.005, 0.001, 0.0005, 0.0001, 0.00005, 0.00001)}.
+#' @param uncertainty Uncertainty estimates. A logical argument indicating
+#'   whether uncertainty estimates should be computed. Default is \code{FALSE}.
+#' @param seed Seed. Either \code{NULL} or an integer-valued scalar controlling
+#'   random number generation. If \code{NULL}, then the seed is set to
+#'   \eqn{546213978}. Default is \code{NULL}.
 #' @param verbose Verbose output. A logical argument indicating whether or not
-#'   verbose output should be printed. Default is TRUE.
+#'   verbose output should be printed. Default is \code{TRUE}.
 #' @return
 #' @keywords MRP multilevel regression post-stratification machine learning
 #'   EBMA ensemble bayesian model averaging
 #' @examples
 #' @export
 
-auto_MrP <- function(y, L1.x, L2.x,
-                     L2.unit, L2.reg = NULL,
-                     survey, census,
-                     L2.x.scale = TRUE,
-                     bin.proportion = NULL,
-                     bin.size = NULL,
-                     uncertainty = FALSE,
-                     best.subset.include = TRUE,
-                     lasso.include = TRUE,
-                     pca.include = TRUE,
-                     gb.include = TRUE,
-                     svm.include = TRUE,
-                     mrp.include = FALSE,
-                     forward.selection = FALSE,
-                     ebma.size = NULL,
-                     k.folds = 5,
-                     custom.folds = NULL,
-                     custom.pc = NULL,
-                     cv.sampling = "L2 units",
-                     loss.unit = "individual",
-                     loss.measure = "mse",
-                     lasso.lambda.set = data.frame(step_size = c(0.1, 0.3, 1),
-                                                 threshold = c(1, 10, 10000)),
-                     lasso.iterations.max = 70,
-                     gb.L2.unit.include = FALSE,
-                     gb.L2.reg.include = FALSE,
-                     gb.interaction.set = c(1, 2, 3),
-                     gb.shrinkage.set = c(0.04, 0.01, 0.008, 0.005, 0.001),
-                     gb.tree.start = 50,
-                     gb.tree.increase.set = 50,
-                     gb.trees.max.set = 1000,
-                     gb.iterations.max = 70,
-                     gb.n.minobsinnode = 5,
-                     svm.kernel = "radial",
-                     svm.error.fun = "MSE",
-                     svm.gamma.set = c(0.3, 0.5, 0.55, 0.6, 0.65, 0.7, 0.8,
-                                       0.9, 1, 2, 3, 4),
-                     svm.cost.set = c(1, 10),
-                     mrp.L2.x = NULL,
-                     ebma.n.draws = 100,
-                     ebma.tol.values = c(0.01, 0.005, 0.001, 0.0005, 0.0001,
-                                         0.00005, 0.00001),
-                     seed = NULL,
+auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
+                     pcs = NULL, folds = NULL, bin.proportion = NULL,
+                     bin.size = NULL, survey, census, ebma.size = NULL,
+                     k.folds = 5, cv.sampling = "L2 units",
+                     loss.unit = "individuals", loss.fun = "MSE",
+                     best.subset = TRUE, lasso = TRUE, pca = TRUE, gb = TRUE,
+                     svm = TRUE, mrp = FALSE, forward.selection = FALSE,
+                     best.subset.L2.x = NULL, lasso.L2.x = NULL,
+                     gb.L2.x = NULL, svm.L2.x = NULL, mrp.L2.x = NULL,
+                     gb.L2.unit = FALSE, gb.L2.reg = TRUE,
+                     lasso.lambda = list(c(0.1, 0.3, 1), c(1, 10, 10000)),
+                     lasso.n.iter = 70, gb.interaction.depth = c(1, 2, 3),
+                     gb.shrinkage = c(0.04, 0.01, 0.008, 0.005, 0.001),
+                     gb.n.trees.init = 50, gb.n.trees.increase = 50,
+                     gb.n.trees.max = 1000, gb.n.iter = 70,
+                     gb.n.minobsinnode = 5, svm.kernel = "radial",
+                     svm.loss.fun = NULL, svm.gamma = c(0.3, 0.5, 0.55, 0.6, 0.65,
+                                                        0.7, 0.8, 0.9, 1, 2, 3, 4),
+                     svm.cost = c(1, 10), ebma.n.draws = 100,
+                     ebma.tol = c(0.01, 0.005, 0.001, 0.0005, 0.0001, 0.00005,
+                                  0.00001), uncertainty = FALSE, seed = NULL,
                      verbose = TRUE) {
 
-  # Set seed
+  # ----------------------------------- Seed -----------------------------------
+
+  # Check seed argument and set seed
   if (is.null(seed)) {
     set.seed(546213978)
   } else {
-    set.seed(seed)
+    if (isTRUE(dplyr::near(seed, as.integer(seed)))) {
+      set.seed(seed)
+    } else {
+      stop("Seed must be either NULL or an integer-valued scalar.")
+    }
   }
 
-  # Error and warning checks
-  if (!all(L1.x %in% colnames(survey))) {
-    stop(paste("Individual-level variable(s) '",
-               L1.x[which(!(L1.x %in% colnames(survey)))],
-               "' is/are not in your survey data.", sep = ""))
-  }
+  # ------------------------------- Error checks -------------------------------
 
-  if (!all(L1.x %in% colnames(census))) {
-    stop(paste("Individual-level variable(s) '",
-               L1.x[which(!(L1.x %in% colnames(census)))],
-               "' is/are not in your census data.", sep = ""))
-  }
+  error_checks(y = y,
+               L1.x = L1.x)
 
   if (!all(L2.x %in% colnames(survey))) {
     stop(paste("Context-level variable(s) '",
@@ -222,11 +243,6 @@ auto_MrP <- function(y, L1.x, L2.x,
     stop(paste("Context-level variable(s) '",
                L2.x[which(!(L2.x %in% colnames(census)))],
                "' is/are not in your census data.", sep = ""))
-  }
-
-  if (!(y %in% colnames(survey))) {
-    stop(paste("Outcome '", y,
-               "' is not in your survey data.", sep = ""))
   }
 
   if (!(L2.unit %in% colnames(survey))) {
@@ -331,15 +347,15 @@ auto_MrP <- function(y, L1.x, L2.x,
                "`length(gb.shrinkage.set)`.", sep = ""))
   }
 
-  if (!is.null(custom.folds)) {
-    if (!(is.double(survey %>% dplyr::select_at(.vars = custom.folds) %>% dplyr::pull()) |
-          is.integer(survey %>% dplyr::select_at(.vars = custom.folds) %>% dplyr::pull()))) {
+  if (!is.null(folds)) {
+    if (!(is.double(survey %>% dplyr::select_at(.vars = folds) %>% dplyr::pull()) |
+          is.integer(survey %>% dplyr::select_at(.vars = folds) %>% dplyr::pull()))) {
       stop("The variable specifying folds must of type integer or double.")
     }
 
-    if (!all(survey %>% dplyr::select_at(.vars = custom.folds) %>%
+    if (!all(survey %>% dplyr::select_at(.vars = folds) %>%
              dplyr::pull() %>% unique() %>% sort() == 1:(k.folds + 1))) {
-      stop("custom.folds must contain integers ranging from 1 to `k.folds` + 1.")
+      stop("folds must contain integers ranging from 1 to `k.folds` + 1.")
     }
   }
 
@@ -373,7 +389,7 @@ auto_MrP <- function(y, L1.x, L2.x,
 
   # If not provided in survey and census data, compute the principals components
   # of the context-level variables
-  if (is.null(custom.pc)) {
+  if (is.null(pcs)) {
     # Compute principal components for survey data
     pca_out <- stats::prcomp(survey[, L2.x],
                              retx = TRUE,
@@ -393,7 +409,7 @@ auto_MrP <- function(y, L1.x, L2.x,
                                                        all_of(pc_names))),
                        by = L2.unit)
   } else {
-    pc_names <- custom.pc
+    pc_names <- pcs
   }
 
   # Scale context-level variables in survey and census data
@@ -408,7 +424,7 @@ auto_MrP <- function(y, L1.x, L2.x,
 
   # ------------------------------- Create folds -------------------------------
 
-  if (is.null(custom.folds)) {
+  if (is.null(folds)) {
     # EBMA hold-out fold
     ebma_folding_out <- ebma_folding(data = survey,
                                      L2.unit = L2.unit,
@@ -425,16 +441,16 @@ auto_MrP <- function(y, L1.x, L2.x,
   } else {
     # EBMA hold-out fold
     ebma_fold <- survey %>%
-      dplyr::filter_at(dplyr::vars(dplyr::one_of(custom.folds)),
+      dplyr::filter_at(dplyr::vars(dplyr::one_of(folds)),
                        dplyr::any_vars(. == k.folds + 1))
 
     # K folds for cross-validation
     cv_data <- survey %>%
-      dplyr::filter_at(dplyr::vars(dplyr::one_of(custom.folds)),
+      dplyr::filter_at(dplyr::vars(dplyr::one_of(folds)),
                        dplyr::any_vars(. != k.folds + 1))
 
     cv_folds <- cv_data %>%
-      dplyr::group_split(.data[[custom.folds]])
+      dplyr::group_split(.data[[folds]])
   }
 
   # ---------------------- Optimal individual classifiers ----------------------
@@ -569,7 +585,7 @@ auto_MrP <- function(y, L1.x, L2.x,
     svm.out = svm_out,
     verbose = verbose)
 
-  # ---------------------------------- Output ----------------------------------
+  # ----------------------------- Function output ------------------------------
 
   return(ebma_out)
 }
