@@ -17,6 +17,9 @@ load(here::here("data", "census_paper_i11.RData"))
 #survey <- survey_sample
 #census <- census_data
 
+# Set seed (NULL defaults to 12345)
+seed <- NULL
+
 # Define outcome variable
 #y <- "y"
 y <- "YES"
@@ -84,9 +87,6 @@ custom.pc <- c("PC1", "PC2", "PC3", "PC4", "PC5", "PC6")
 
 # Unit to be used in sampling to create CV folds
 cv.sampling <- "L2 units"
-
-# Set seed (NULL defaults to 12345)
-seed <- NULL
 
 # Set verbose option
 verbose <- TRUE
