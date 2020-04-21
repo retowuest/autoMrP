@@ -42,6 +42,12 @@ L2.reg <- "region"
 # Whether to scale context level variables (defaults to TRUE)
 L2.x.scale <- FALSE
 
+# provide user controlled principal components
+pcs <- c("PC1", "PC2", "PC3", "PC4", "PC5", "PC6")
+
+# provide user controlled fold assignment
+folds <- "fold"
+
 # Define column in census containing proportion
 bin.proportion <- "proportion"
 
@@ -49,53 +55,62 @@ bin.proportion <- "proportion"
 #bin.size <- "n"
 bin.size <- NULL
 
-# Whether to obtain bootstrapped prediction uncertainty
-uncertainty <- FALSE
-
-# Whether to include best subset classifier
-best.subset.include <- TRUE
-
-# Whether to include lasso classifier
-lasso.include <- TRUE
-
-# Whether to include pca classifier
-pca.include <- TRUE
-
-# Whether to include gb classifier
-gb.include <- TRUE
-
-# Whether to include svm classifier
-svm.include <- TRUE
-
-# Whether to include mrp classifier
-mrp.include <- FALSE
-
-# Whether to include forward selection
-forward.selection <- FALSE
-
-# Define fraction of EBMA size (NULL defaults to 1/3)
-ebma.size <- NULL
+# Define fraction of EBMA size (defaults to 1/3)
+ebma.size <- 1/3
 
 # Define number of folds
 k.folds <- 5
 
-# provide user controlled fold assignment
-custom.folds <- "fold"
-
-# provide user controlled principal components
-custom.pc <- c("PC1", "PC2", "PC3", "PC4", "PC5", "PC6")
-
 # Unit to be used in sampling to create CV folds
 cv.sampling <- "L2 units"
-
-# Set verbose option
-verbose <- TRUE
 
 # Define unit for loss function
 loss.unit <- "individual"
 
 # Define measure for loss function
-loss.measure <- "mse"
+loss.fun <- "MSE"
+
+# Whether to include best subset classifier
+best.subset <- TRUE
+
+# Whether to include lasso classifier
+lasso <- TRUE
+
+# Whether to include pca classifier
+pca <- TRUE
+
+# Whether to include gb classifier
+gb <- TRUE
+
+# Whether to include svm classifier
+svm <- TRUE
+
+# Whether to include mrp classifier
+mrp <- FALSE
+
+# Whether to include forward selection
+forward.select <- FALSE
+
+# Define best subset context-level covariates
+best.subset.L2.x <- NULL
+
+# Define lasso context-level covariates
+lasso.L2.x <- NULL
+
+# Define gb context-level covariates
+gb.L2.x <- NULL
+
+# Define svm context-level covariates
+svm.L2.x <- NULL
+
+# Define mrp context-level covariates
+mrp.L2.x <- NULL
+
+# Define whether L2.unit should be inlcuded in GB
+gb.L2.unit <- FALSE
+
+# Define whether L2.reg should be included in GB
+gb.L2.reg <- TRUE
 
 # Define lambdas as vector for Lasso
 lasso.lambda.set <- c(1, 2)
@@ -134,12 +149,6 @@ gb.iterations.max <- 70
 # Define minimum number of observations in terminal nodes for GB
 gb.n.minobsinnode <- 5
 
-# Define whether L2.unit should be inlcuded in GB
-gb.L2.unit.include <- FALSE
-
-# Define whether L2.reg should be included in GB
-gb.L2.reg.include <- TRUE
-
 # Define kernel for SVM
 svm.kernel <- "radial"
 
@@ -161,6 +170,12 @@ ebma.n.draws <- 100
 
 # tolerance values for ebma tuning
 ebma.tol.values <- c(0.01, 0.001)
+
+# Whether to obtain bootstrapped prediction uncertainty
+uncertainty <- FALSE
+
+# Set verbose option
+verbose <- TRUE
 
 
 #_______________________________________________________

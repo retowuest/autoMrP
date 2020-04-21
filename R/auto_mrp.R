@@ -51,7 +51,7 @@
 #' @param census Census data. A \code{data.frame} whose column names include
 #'   \code{L1.x}, \code{L2.x}, \code{L2.unit}, if specified, \code{L2.reg} and
 #'   \code{pcs}, and either \code{bin.proportion} or \code{bin.size}.
-#' @param ebma.size EBMA fold size. A rational number in the open unit interval
+#' @param ebma.size EBMA fold size. A number in the open unit interval
 #'   indicating the share of respondents to be allocated to the EBMA fold.
 #'   Default is \eqn{1/3}. \emph{Note:} ignored if \code{folds} is provided, but
 #'   must be specified otherwise.
@@ -89,43 +89,46 @@
 #' @param mrp MRP classifier. A logical argument indicating whether the standard
 #'   MRP classifier should be used for predicting outcome \code{y}. Default is
 #'   \code{FALSE}.
-#' @param forward.selection Forward selection classifier. A logical argument
+#' @param forward.select Forward selection classifier. A logical argument
 #'   indicating whether to use forward selection rather than best subset
 #'   selection. Default is \code{FALSE}. \emph{Note:} forward selection is
 #'   recommended if there are more than \eqn{8} context-level variables.
 #' @param best.subset.L2.x Best subset context-level covariates. A character
 #'   vector containing the column names of the context-level variables in
 #'   \code{survey} and \code{census} to be used by the best subset classifier.
-#'   If \code{NULL}, then best subset uses the variables specified in
-#'   \code{L2.x}. Default is \code{NULL}.
+#'   If \code{NULL} and \code{best.subset} is set to \code{TRUE}, then best
+#'   subset uses the variables specified in \code{L2.x}. Default is \code{NULL}.
 #' @param lasso.L2.x Lasso context-level covariates. A character vector
 #'   containing the column names of the context-level variables in
 #'   \code{survey} and \code{census} to be used by the lasso classifier. If
-#'   \code{NULL}, then lasso uses the variables specified in \code{L2.x}.
-#'   Default is \code{NULL}.
+#'   \code{NULL} and \code{lasso} is set to \code{TRUE}, then lasso uses the
+#'   variables specified in \code{L2.x}. Default is \code{NULL}.
 #' @param gb.L2.x GB context-level covariates. A character vector containing the
 #'   column names of the context-level variables in \code{survey} and
-#'   \code{census} to be used by the GB classifier. If \code{NULL}, then GB uses
-#'   the variables specified in \code{L2.x}. Default is \code{NULL}.
+#'   \code{census} to be used by the GB classifier. If \code{NULL} and \code{gb}
+#'   is set to \code{TRUE}, then GB uses the variables specified in \code{L2.x}.
+#'   Default is \code{NULL}.
 #' @param svm.L2.x SVM context-level covariates. A character vector containing
 #'   the column names of the context-level variables in \code{survey} and
-#'   \code{census} to be used by the SVM classifier. If \code{NULL}, then SVM
-#'   uses the variables specified in \code{L2.x}. Default is \code{NULL}.
+#'   \code{census} to be used by the SVM classifier. If \code{NULL} and
+#'   \code{svm} is set to \code{TRUE}, then SVM uses the variables specified in
+#'   \code{L2.x}. Default is \code{NULL}.
 #' @param mrp.L2.x MRP context-level covariates. A character vector containing
 #'   the column names of the context-level variables in \code{survey} and
-#'   \code{census} to be used by the MRP classifier. If \code{NULL}, then MRP
-#'   uses the variables specified in \code{L2.x}. Default is \code{NULL}.
+#'   \code{census} to be used by the MRP classifier. If \code{NULL} and
+#'   \code{mrp} is set to \code{TRUE}, then MRP uses the variables specified in
+#'   \code{L2.x}. Default is \code{NULL}.
 #' @param gb.L2.unit GB L2.unit. A logical argument indicating whether L2.unit
 #'   should be included in the GB classifier. Default is \code{FALSE}.
 #' @param gb.L2.reg GB L2.reg. A logical argument indicating whether L2.reg
-#'   should be included in the GB classifier. Default is \code{TRUE}.
-#' @param lasso.lambda Lasso penalty parameter. A numeric \code{vector} or a
-#'   \code{list} of two numeric vectors of equal size, with the first vector
-#'   containing the step sizes by which the penalty parameter should increase
-#'   and the second vector containing the upper thresholds of the intervals to
-#'   which the step sizes apply. The penalty parameter controls the shrinkage of
-#'   the context-level variables in the lasso model. Default is
-#'   \code{list(c(0.1, 0.3, 1), c(1, 10, 10000))}.
+#'   should be included in the GB classifier. Default is \code{FALSE}.
+#' @param lasso.lambda Lasso penalty parameter. A numeric \code{vector} of
+#'   non-negative values or a \code{list} of two numeric vectors of equal size,
+#'   with the first vector containing the step sizes by which the penalty
+#'   parameter should increase and the second vector containing the upper
+#'   thresholds of the intervals to which the step sizes apply. The penalty
+#'   parameter controls the shrinkage of the context-level variables in the
+#'   lasso model. Default is \code{list(c(0.1, 0.3, 1), c(1, 10, 10000))}.
 #' @param lasso.n.iter Lasso number of iterations without improvement. A numeric
 #'   scalar specifying the maximum number of iterations without performance
 #'   improvement the algorithm runs before stopping. Default is \eqn{70}.
@@ -194,14 +197,14 @@
 
 auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
                      pcs = NULL, folds = NULL, bin.proportion = NULL,
-                     bin.size = NULL, survey, census, ebma.size = NULL,
+                     bin.size = NULL, survey, census, ebma.size = 1/3,
                      k.folds = 5, cv.sampling = "L2 units",
                      loss.unit = "individuals", loss.fun = "MSE",
                      best.subset = TRUE, lasso = TRUE, pca = TRUE, gb = TRUE,
-                     svm = TRUE, mrp = FALSE, forward.selection = FALSE,
+                     svm = TRUE, mrp = FALSE, forward.select = FALSE,
                      best.subset.L2.x = NULL, lasso.L2.x = NULL,
                      gb.L2.x = NULL, svm.L2.x = NULL, mrp.L2.x = NULL,
-                     gb.L2.unit = FALSE, gb.L2.reg = TRUE,
+                     gb.L2.unit = FALSE, gb.L2.reg = FALSE,
                      lasso.lambda = list(c(0.1, 0.3, 1), c(1, 10, 10000)),
                      lasso.n.iter = 70, gb.interaction.depth = c(1, 2, 3),
                      gb.shrinkage = c(0.04, 0.01, 0.008, 0.005, 0.001),
@@ -231,57 +234,38 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
   # ------------------------------- Error checks -------------------------------
 
   error_checks(y = y,
-               L1.x = L1.x)
+               L1.x = L1.x,
+               L2.x = L2.x,
+               L2.unit = L2.unit,
+               L2.reg = L2.reg,
+               L2.x.scale = L2.x.scale,
+               pcs = pcs,
+               folds = folds,
+               bin.proportion = bin.proportion,
+               bin.size = bin.size,
+               survey = survey,
+               census = census,
+               ebma.size = ebma.size,
+               k.folds = k.folds,
+               cv.sampling = cv.sampling,
+               loss.unit = loss.unit,
+               loss.fun = loss.fun,
+               best.subset = best.subset,
+               lasso = lasso,
+               pca = pca,
+               gb = gb,
+               svm = svm,
+               mrp = mrp,
+               forward.select = forward.select,
+               best.subset.L2.x = best.subset.L2.x,
+               lasso.L2.x = lasso.L2.x,
+               gb.L2.x = gb.L2.x,
+               svm.L2.x = svm.L2.x,
+               mrp.L2.x = mrp.L2.x,
+               gb.L2.unit = gb.L2.unit,
+               gb.L2.reg = gb.L2.reg,
+               lasso.lambda = lasso.lambda)
 
-  if (!all(L2.x %in% colnames(survey))) {
-    stop(paste("Context-level variable(s) '",
-               L2.x[which(!(L2.x %in% colnames(survey)))],
-               "' is/are not in your survey data.", sep = ""))
-  }
-
-  if (!all(L2.x %in% colnames(census))) {
-    stop(paste("Context-level variable(s) '",
-               L2.x[which(!(L2.x %in% colnames(census)))],
-               "' is/are not in your census data.", sep = ""))
-  }
-
-  if (!(L2.unit %in% colnames(survey))) {
-    stop(paste("The geographic unit '", L2.unit,
-               "' is not in your survey data.", sep = ""))
-  }
-
-  if (!(L2.unit %in% colnames(census))) {
-    stop(paste("The geographic unit '", L2.unit,
-               "' is not in your census data.", sep = ""))
-  }
-
-  if (!is.null(L2.reg)) {
-    if (!(L2.reg %in% colnames(survey))) {
-      stop(paste("The geographic region '", L2.reg,
-                 "' is not in your survey data.", sep = ""))
-    }
-
-    if (!(L2.reg %in% colnames(census))) {
-      stop(paste("The geographic region '", L2.reg,
-                 "' is not in your census data.", sep = ""))
-    }
-
-    if (any(unlist(lapply(dplyr::group_split(survey, .data[[L2.unit]]),
-                          function(x) length(unique(x[[L2.reg]])))) > 1)) {
-      stop(paste("The geographic unit(s) '",
-                 which(unlist(lapply(dplyr::group_split(survey, .data[[L2.unit]]),
-                                     function(x) length(unique(x[[L2.reg]])))) > 1),
-                 "' is/are nested in multiple regions in your survey data."))
-    }
-
-    if (any(unlist(lapply(dplyr::group_split(census, .data[[L2.unit]]),
-                          function(x) length(unique(x[[L2.reg]])))) > 1)) {
-      stop(paste("The geographic unit(s) '",
-                 which(unlist(lapply(dplyr::group_split(census, .data[[L2.unit]]),
-                                     function(x) length(unique(x[[L2.reg]])))) > 1),
-                 "' is/are nested in multiple regions in your census data."))
-    }
-  }
 
   if (is.null(ebma.size)) {
     ebma.size <- round(nrow(survey) / 3, digits = 0)
@@ -289,22 +273,6 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
     ebma.size <- round(nrow(survey) * ebma.size, digits = 0)
   } else {
     stop("ebma.size must be a rational number in the open unit interval.")
-  }
-
-  if (!((is.integer(k.folds) | all(as.integer(k.folds) == k.folds)) &
-        length(k.folds) == 1)) {
-    stop("k.folds must be an integer number.")
-  }
-
-  if (!cv.sampling %in% c("respondents", "L2 units")) {
-    stop("cv.sampling must take either the value 'respondents' or 'L2 units'.")
-  }
-
-  if (!(is.vector(lasso.lambda.set) | is.data.frame(lasso.lambda.set))) {
-    stop(paste("lasso.lambda.set must be either a numeric vector or a data.frame ",
-               "with two columns, one for step size increase and the other ",
-               "for the upper threshold of the interval of lambdas to which ",
-               "the step size applies", sep = ""))
   }
 
   if (!(is.null(lasso.iterations.max) | (is.numeric(lasso.iterations.max) &
@@ -345,18 +313,6 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
              length(gb.trees.max.set) != length(gb.shrinkage.set)) {
     stop(paste("gb.trees.max.set must be either a scalar or a vector of size ",
                "`length(gb.shrinkage.set)`.", sep = ""))
-  }
-
-  if (!is.null(folds)) {
-    if (!(is.double(survey %>% dplyr::select_at(.vars = folds) %>% dplyr::pull()) |
-          is.integer(survey %>% dplyr::select_at(.vars = folds) %>% dplyr::pull()))) {
-      stop("The variable specifying folds must of type integer or double.")
-    }
-
-    if (!all(survey %>% dplyr::select_at(.vars = folds) %>%
-             dplyr::pull() %>% unique() %>% sort() == 1:(k.folds + 1))) {
-      stop("folds must contain integers ranging from 1 to `k.folds` + 1.")
-    }
   }
 
   # ------------------------------- Prepare data -------------------------------

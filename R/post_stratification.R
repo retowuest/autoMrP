@@ -131,8 +131,25 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
 
   # Classifier 6: MRP
   # Create model formula
-  form_mrp <- as.formula(paste(y, " ~ ", paste(L2.x.mrp, collapse = " + "),
-                               sep = ""))
+  # Individual-level random effects
+  L1_re <- paste(paste("(1 | ", L1.x, ")", sep = ""), collapse = " + ")
+
+  # Geographic unit or geographic unit-geographic region random effects
+  if (is.null(L2.reg)) {
+    L2_re <- paste("(1 | ", L2.unit, ")", sep = "")
+  } else {
+    L2_re <- paste(paste("(1 | ", L2.reg, "/", L2.unit, ")", sep = ""),
+                   collapse = " + ")
+  }
+
+  # Combine all random effects
+  all_re <- paste(c(L1_re, L2_re), collapse = " + ")
+
+  # Context-level fixed effects
+  L2_fe <- paste(L2.x.mrp, collapse = " + ")
+
+  # Empty model
+  form_mrp <- as.formula(paste(y, " ~ ", L2_fe, " + ", all_re, sep = ""))
 
   # Fit optimal model
   if (isTRUE(mrp.include == TRUE)) {
