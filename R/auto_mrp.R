@@ -414,90 +414,90 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
   # ---------------------- Optimal individual classifiers ----------------------
 
   # Classifier 1: Best Subset
-  if (isTRUE(best.subset.include)) {
-    best_subset_out <- best_subset(y = y,
-                                   L1.x = L1.x,
-                                   L2.x = L2.x,
-                                   L2.unit = L2.unit,
-                                   L2.reg = L2.reg,
-                                   loss.unit = loss.unit,
-                                   loss.measure = loss.measure,
-                                   data = cv_folds,
-                                   verbose = verbose)
+  if (isTRUE(best.subset)) {
+    best_subset_out <- run_best_subset(y = y,
+                                       L1.x = L1.x,
+                                       L2.x = L2.x,
+                                       L2.unit = L2.unit,
+                                       L2.reg = L2.reg,
+                                       loss.unit = loss.unit,
+                                       loss.measure = loss.measure,
+                                       data = cv_folds,
+                                       verbose = verbose)
   } else {
     best_subset_out <- NULL
   }
 
   # Classifier 2: Lasso
-  if (isTRUE(lasso.include)) {
-    lasso_out <- lasso(y = y,
-                       L1.x = L1.x,
-                       L2.x = L2.x,
-                       L2.unit = L2.unit,
-                       L2.reg = L2.reg,
-                       loss.unit = loss.unit,
-                       loss.measure = loss.measure,
-                       lambda.set = lasso.lambda.set,
-                       iterations.max = lasso.iterations.max,
-                       data = cv_folds,
-                       verbose = verbose)
+  if (isTRUE(lasso)) {
+    lasso_out <- run_lasso(y = y,
+                           L1.x = L1.x,
+                           L2.x = L2.x,
+                           L2.unit = L2.unit,
+                           L2.reg = L2.reg,
+                           loss.unit = loss.unit,
+                           loss.measure = loss.measure,
+                           lambda.set = lasso.lambda.set,
+                           iterations.max = lasso.iterations.max,
+                           data = cv_folds,
+                           verbose = verbose)
   } else {
     lasso_out <- NULL
   }
 
   # Classifier 3: PCA
-  if (isTRUE(pca.include)) {
-    pca_out <- pca(y = y,
-                   L1.x = L1.x,
-                   L2.x = pc_names,
-                   L2.unit = L2.unit,
-                   L2.reg = L2.reg,
-                   loss.unit = loss.unit,
-                   loss.measure = loss.measure,
-                   data = cv_folds,
-                   verbose = verbose)
+  if (isTRUE(pca)) {
+    pca_out <- run_pca(y = y,
+                       L1.x = L1.x,
+                       L2.x = pc_names,
+                       L2.unit = L2.unit,
+                       L2.reg = L2.reg,
+                       loss.unit = loss.unit,
+                       loss.measure = loss.measure,
+                       data = cv_folds,
+                       verbose = verbose)
   } else {
     pca_out <- NULL
   }
 
   # Classifier 4: GB
-  if (isTRUE(gb.include)) {
-    gb_out <- gb(y = y,
-                 L1.x = L1.x,
-                 L2.x = L2.x,
-                 L2.unit = L2.unit,
-                 L2.reg = L2.reg,
-                 L2.unit.include = gb.L2.unit.include,
-                 L2.reg.include = gb.L2.reg.include,
-                 loss.unit = loss.unit,
-                 loss.measure = loss.measure,
-                 interaction.set = gb.interaction.set,
-                 shrinkage.set = gb.shrinkage.set,
-                 tree.start = gb.tree.start,
-                 tree.increase.set = gb.tree.increase.set,
-                 trees.max.set = gb.trees.max.set,
-                 iterations.max = gb.iterations.max,
-                 n.minobsinnode = gb.n.minobsinnode,
-                 data = cv_folds,
-                 verbose = verbose)
+  if (isTRUE(gb)) {
+    gb_out <- run_gb(y = y,
+                     L1.x = L1.x,
+                     L2.x = L2.x,
+                     L2.unit = L2.unit,
+                     L2.reg = L2.reg,
+                     L2.unit.include = gb.L2.unit.include,
+                     L2.reg.include = gb.L2.reg.include,
+                     loss.unit = loss.unit,
+                     loss.measure = loss.measure,
+                     interaction.set = gb.interaction.set,
+                     shrinkage.set = gb.shrinkage.set,
+                     tree.start = gb.tree.start,
+                     tree.increase.set = gb.tree.increase.set,
+                     trees.max.set = gb.trees.max.set,
+                     iterations.max = gb.iterations.max,
+                     n.minobsinnode = gb.n.minobsinnode,
+                     data = cv_folds,
+                     verbose = verbose)
   } else {
     gb_out <- NULL
   }
 
   # Classifier 5: SVM
-  if (isTRUE(svm.include)) {
-    svm_out <- svm(y = y,
-                   L1.x = L1.x,
-                   L2.x = L2.x,
-                   L2.unit = L2.unit,
-                   L2.reg = L2.reg,
-                   kernel = svm.kernel,
-                   error.fun = svm.error.fun,
-                   gamma.set = svm.gamma.set,
-                   cost.set = svm.cost.set,
-                   k.folds = k.folds,
-                   data = cv_folds,
-                   verbose = verbose)
+  if (isTRUE(svm)) {
+    svm_out <- run_svm(y = y,
+                       L1.x = L1.x,
+                       L2.x = L2.x,
+                       L2.unit = L2.unit,
+                       L2.reg = L2.reg,
+                       kernel = svm.kernel,
+                       error.fun = svm.error.fun,
+                       gamma.set = svm.gamma.set,
+                       cost.set = svm.cost.set,
+                       k.folds = k.folds,
+                       data = cv_folds,
+                       verbose = verbose)
   } else {
     svm_out <- NULL
   }
@@ -526,22 +526,21 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
 
   # ----------------------------------- EBMA -----------------------------------
 
-  ebma_out <- ebma(
-    ebma.fold = ebma_fold,
-    y = y,
-    L1.x = L1.x,
-    L2.x = L2.x,
-    L2.unit = L2.unit,
-    L2.reg = L2.reg,
-    post.strat = ps_out,
-    Ndraws = ebma.n.draws,
-    tol.values = ebma.tol.values,
-    best.subset = best_subset_out,
-    pca = pca_out,
-    lasso = lasso_out,
-    gb = gb_out,
-    svm.out = svm_out,
-    verbose = verbose)
+  ebma_out <- ebma(ebma.fold = ebma_fold,
+                   y = y,
+                   L1.x = L1.x,
+                   L2.x = L2.x,
+                   L2.unit = L2.unit,
+                   L2.reg = L2.reg,
+                   post.strat = ps_out,
+                   Ndraws = ebma.n.draws,
+                   tol.values = ebma.tol.values,
+                   best.subset = best_subset_out,
+                   pca = pca_out,
+                   lasso = lasso_out,
+                   gb = gb_out,
+                   svm.out = svm_out,
+                   verbose = verbose)
 
   # ----------------------------- Function output ------------------------------
 
