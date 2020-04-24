@@ -103,6 +103,12 @@
 #'   \code{survey} and \code{census} to be used by the lasso classifier. If
 #'   \code{NULL} and \code{lasso} is set to \code{TRUE}, then lasso uses the
 #'   variables specified in \code{L2.x}. Default is \code{NULL}.
+#' @param pca.L2.x PCA context-level covariates. A character vector containing
+#'   the column names of the context-level variables in \code{survey} and
+#'   \code{census} whose principal components are to be used by the PCA
+#'   classifier. If \code{NULL} and \code{pca} is set to \code{TRUE}, then PCA
+#'   uses the principal components of the variables specified in \code{L2.x}.
+#'   Default is \code{NULL}.
 #' @param gb.L2.x GB context-level covariates. A character vector containing the
 #'   column names of the context-level variables in \code{survey} and
 #'   \code{census} to be used by the GB classifier. If \code{NULL} and \code{gb}
@@ -204,8 +210,8 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
                      best.subset = TRUE, lasso = TRUE, pca = TRUE, gb = TRUE,
                      svm = TRUE, mrp = FALSE, forward.select = FALSE,
                      best.subset.L2.x = NULL, lasso.L2.x = NULL,
-                     gb.L2.x = NULL, svm.L2.x = NULL, mrp.L2.x = NULL,
-                     gb.L2.unit = FALSE, gb.L2.reg = FALSE,
+                     pca.L2.x = NULL, gb.L2.x = NULL, svm.L2.x = NULL,
+                     mrp.L2.x = NULL, gb.L2.unit = FALSE, gb.L2.reg = FALSE,
                      lasso.lambda = list(c(0.1, 0.3, 1), c(1, 10, 10000)),
                      lasso.n.iter = 70, gb.interaction.depth = c(1, 2, 3),
                      gb.shrinkage = c(0.04, 0.01, 0.008, 0.005, 0.001),
@@ -337,11 +343,18 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
       dplyr::rename(prop = one_of(bin.proportion))
   }
 
-  # If not provided in survey and census data, compute the principals components
-  # of the context-level variables
+  # If not provided in survey and census data, compute the principal components
+  # of context-level variables
   if (is.null(pcs)) {
+
+    # Determine context-level covariates whose principal components are to be
+    # computed
+    if (is.null(pca.L2.x)) {
+      pca.L2.x <- L2.x
+    }
+
     # Compute principal components for survey data
-    pca_out <- stats::prcomp(survey[, L2.x],
+    pca_out <- stats::prcomp(survey[, pca.L2.x],
                              retx = TRUE,
                              center = TRUE,
                              scale. = TRUE,
