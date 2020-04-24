@@ -891,13 +891,13 @@ model_list_pca <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL) {
 
 loss_function <- function(pred, data.valid,
                           loss.unit = c("individuals", "L2 units"),
-                          loss.measure = c("MSE", "MAE"),
+                          loss.fun = c("MSE", "MAE"),
                           y, L2.unit) {
-  if (loss.unit == "individuals" & loss.measure == "MSE") {
+  if (loss.unit == "individuals" & loss.fun == "MSE") {
     out <- mean((data.valid[[y]] - pred)^2)
-  } else if (loss.unit == "individuals" & loss.measure == "MAE") {
+  } else if (loss.unit == "individuals" & loss.fun == "MAE") {
     out <- mean(abs(data.valid[[y]] - pred))
-  } else if (loss.unit == "L2 units" & loss.measure == "MSE") {
+  } else if (loss.unit == "L2 units" & loss.fun == "MSE") {
     data.valid <- data.valid %>%
       dplyr::mutate(pred = pred)
 
