@@ -124,10 +124,12 @@
 #'   \code{census} to be used by the MRP classifier. If \code{NULL} and
 #'   \code{mrp} is set to \code{TRUE}, then MRP uses the variables specified in
 #'   \code{L2.x}. Default is \code{NULL}.
-#' @param gb.L2.unit GB L2.unit. A logical argument indicating whether L2.unit
-#'   should be included in the GB classifier. Default is \code{FALSE}.
-#' @param gb.L2.reg GB L2.reg. A logical argument indicating whether L2.reg
-#'   should be included in the GB classifier. Default is \code{FALSE}.
+#' @param gb.L2.unit GB L2.unit. A logical argument indicating whether
+#'   \code{L2.unit} should be included in the GB classifier. Default is
+#'   \code{FALSE}.
+#' @param gb.L2.reg GB L2.reg. A logical argument indicating whether
+#'   \code{L2.reg} should be included in the GB classifier. Default is
+#'   \code{FALSE}.
 #' @param lasso.lambda Lasso penalty parameter. A numeric \code{vector} of
 #'   non-negative values or a \code{list} of two numeric vectors of equal size,
 #'   with the first vector containing the step sizes by which the penalty
@@ -443,14 +445,14 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
   }
 
   # Classifier 2: Lasso
-
-  # Determine context-level covariates
-  if (is.null(lasso.L2.x)) {
-    lasso.L2.x <- L2.x
-  }
-
-  # Run classifier
   if (isTRUE(lasso)) {
+
+    # Determine context-level covariates
+    if (is.null(lasso.L2.x)) {
+      lasso.L2.x <- L2.x
+    }
+
+    # Run classifier
     lasso_out <- run_lasso(y = y,
                            L1.x = L1.x,
                            L2.x = lasso.L2.x,
@@ -482,21 +484,33 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
   }
 
   # Classifier 4: GB
-
-  # Determine context-level covariates
-  if (is.null(gb.L2.x)) {
-    gb.L2.x <- L2.x
-  }
-
-  # Run classifier
   if (isTRUE(gb)) {
+
+    # Determine context-level covariates
+    if (is.null(gb.L2.x)) {
+      gb.L2.x <- L2.x
+    }
+
+    # Evaluate inclusion of L2.unit in GB
+    if (isTRUE(gb.L2.unit)) {
+      gb.L2.unit <- L2.unit
+    } else {
+      gb.L2.unit <- NULL
+    }
+
+    # Evaluate inclusion of L2.reg in GB
+    if (isTRUE(gb.L2.reg)) {
+      gb.L2.reg <- L2.reg
+    } else {
+      gb.L2.reg <- NULL
+    }
+
+    # Run classifier
     gb_out <- run_gb(y = y,
                      L1.x = L1.x,
                      L2.x = gb.L2.x,
-                     L2.unit = L2.unit,
-                     L2.reg = L2.reg,
-                     L2.unit.include = gb.L2.unit,
-                     L2.reg.include = gb.L2.reg,
+                     L2.unit = gb.L2.unit,
+                     L2.reg = gb.L2.reg,
                      loss.unit = loss.unit,
                      loss.fun = loss.fun,
                      interaction.depth = gb.interaction.depth,
@@ -513,14 +527,14 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
   }
 
   # Classifier 5: SVM
-
-  # Determine context-level covariates
-  if (is.null(svm.L2.x)) {
-    svm.L2.x <- L2.x
-  }
-
-  # Run classifier
   if (isTRUE(svm)) {
+
+    # Determine context-level covariates
+    if (is.null(svm.L2.x)) {
+      svm.L2.x <- L2.x
+    }
+
+    # Run classifier
     svm_out <- run_svm(y = y,
                        L1.x = L1.x,
                        L2.x = svm.L2.x,
@@ -554,7 +568,7 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
                                 L2.unit.include = gb.L2.unit,
                                 L2.reg.include = gb.L2.reg,
                                 kernel = svm.kernel,
-                                L2.x.mrp = mrp.L2.x,
+                                mrp.L2.x = mrp.L2.x,
                                 data = cv_data,
                                 census = census,
                                 verbose = verbose)
