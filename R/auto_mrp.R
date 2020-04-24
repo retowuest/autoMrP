@@ -129,9 +129,10 @@
 #'   thresholds of the intervals to which the step sizes apply. The penalty
 #'   parameter controls the shrinkage of the context-level variables in the
 #'   lasso model. Default is \code{list(c(0.1, 0.3, 1), c(1, 10, 10000))}.
-#' @param lasso.n.iter Lasso number of iterations without improvement. A numeric
-#'   scalar specifying the maximum number of iterations without performance
-#'   improvement the algorithm runs before stopping. Default is \eqn{70}.
+#' @param lasso.n.iter Lasso number of iterations without improvement. Either
+#'   \code{NULL} or an integer-valued scalar specifying the maximum number of
+#'   iterations without performance improvement the algorithm runs before
+#'   stopping. Default is \eqn{70}.
 #' @param gb.interaction.depth GB interaction depth. An integer-valued vector
 #'   whose values specify the interaction depth of GB. The interaction depth
 #'   defines the maximum depth of each tree grown (i.e., the maximum level of
@@ -264,7 +265,8 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
                mrp.L2.x = mrp.L2.x,
                gb.L2.unit = gb.L2.unit,
                gb.L2.reg = gb.L2.reg,
-               lasso.lambda = lasso.lambda)
+               lasso.lambda = lasso.lambda,
+               lasso.n.iter = lasso.n.iter)
 
 
   if (is.null(ebma.size)) {
