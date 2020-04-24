@@ -7,7 +7,8 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                          ebma.size, k.folds, cv.sampling, loss.unit, loss.fun,
                          best.subset, lasso, pca, gb, svm, mrp, forward.select,
                          best.subset.L2.x, lasso.L2.x, gb.L2.x, svm.L2.x,
-                         mrp.L2.x, gb.L2.unit, gb.L2.reg, lasso.lambda) {
+                         mrp.L2.x, gb.L2.unit, gb.L2.reg, lasso.lambda,
+                         lasso.n.iter) {
 
   # Check if y is a character scalar
   if (!(is.character(y) & length(y) == 1)) {
@@ -399,13 +400,39 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
 
       # Check if lasso.lambda is a list
       if (is.list(lasso.lambda)) {
-        if (length(lasso.lambda) != 2) {
-
+        # Check if lasso.lambda is a list of two numeric vectors of equal size
+        if (!(length(lasso.lambda) == 2 &
+              all(sapply(lasso.lambda, function(x) {is.numeric(x)})) &
+              length(unique(sapply(lasso.lambda, function(x) {length(x)}))) == 1)) {
+          stop(paste("If provided as a list, argument 'lasso.lambda' must be a",
+                     " list of two numeric vectors of equal size, with the",
+                     " first vector containing the step sizes by which the",
+                     " penalty parameter should increase and the second vector",
+                     " containing the upper thresholds of the intervals to",
+                     " which the step sizes apply.",
+                     sep = ""))
         } else {
-
+          # Check if step sizes do not exceed upper thresholds of intervals to
+          # which they should be applied
+          if (any(lasso.lambda[[1]] > lasso.lambda[[2]])) {
+            stop(paste("If argument 'lasso.lambda' is specified as a list of",
+                       " two vectors, the value in the first vector indicating",
+                       " the step size cannot exceed the corresponding value",
+                       " in the second vector indicating the upper threshold",
+                       " of the interval to which the step size should apply.",
+                       sep = ""))
+          } else {
+            # Check if lasso.lambda contains only non-negative values
+            if (min(unlist(lasso.lambda)) < 0) {
+              stop(paste("The argument 'lasso.lambda' can only take",
+                         " non-negative values.", sep = ""))
+            }
+          }
         }
       } else {
+        # Check if lasso.lambda is a numeric vector
         if (is.numeric(lasso.lambda)) {
+          # Check if lasso.lambda contains only non-negative values
           if (min(lasso.lambda) < 0) {
             stop(paste("The argument 'lasso.lambda' can only take",
                        " non-negative values.", sep = ""))
@@ -419,6 +446,20 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                      " thresholds of the intervals to which the step sizes apply.",
                      sep = ""))
         }
+      }
+
+      # Check if lasso.n.iter is NULL
+      if (is.null(lasso.n.iter)) {
+
+      }
+
+      # Check if lasso.n.iter is an integer-valued scalar
+      if (!(dplyr::near(lasso.n.iter, as.integer(lasso.n.iter)) &
+            length(lasso.n.iter) == 1)) {
+        stop(paste("The argument 'lasso.n.iter', specifying the number of folds to",
+                   " be used in cross-validation, must be an integer-valued",
+                   " scalar.",
+                   sep = ""))
       }
     } else {
       # Check if lasso.L2.x is NULL
