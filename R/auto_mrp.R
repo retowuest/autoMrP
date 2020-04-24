@@ -544,7 +544,6 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
                        loss.fun = svm.loss.fun,
                        gamma = svm.gamma,
                        cost = svm.cost,
-                       k.folds = k.folds,
                        data = cv_folds,
                        verbose = verbose)
   } else {
