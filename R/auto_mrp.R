@@ -52,7 +52,7 @@
 #'   \code{L1.x}, \code{L2.x}, \code{L2.unit}, if specified, \code{L2.reg} and
 #'   \code{pcs}, and either \code{bin.proportion} or \code{bin.size}.
 #' @param ebma.size EBMA fold size. A number in the open unit interval
-#'   indicating the share of respondents to be allocated to the EBMA fold.
+#'   indicating the proportion of respondents to be allocated to the EBMA fold.
 #'   Default is \eqn{1/3}. \emph{Note:} ignored if \code{folds} is provided, but
 #'   must be specified otherwise.
 #' @param k.folds Number of cross-validation folds. An integer-valued scalar
@@ -269,14 +269,6 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
                lasso.n.iter = lasso.n.iter)
 
 
-  if (is.null(ebma.size)) {
-    ebma.size <- round(nrow(survey) / 3, digits = 0)
-  } else if (is.numeric(ebma.size) & ebma.size > 0 & ebma.size < 1) {
-    ebma.size <- round(nrow(survey) * ebma.size, digits = 0)
-  } else {
-    stop("ebma.size must be a rational number in the open unit interval.")
-  }
-
   if (!(is.null(lasso.iterations.max) | (is.numeric(lasso.iterations.max) &
                                          length(lasso.iterations.max) == 1))) {
     stop("lasso.iterations.max must be either a numeric scalar or NULL.")
@@ -384,6 +376,8 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
 
   if (is.null(folds)) {
     # EBMA hold-out fold
+    ebma.size <- round(nrow(survey) * ebma.size, digits = 0)
+
     ebma_folding_out <- ebma_folding(data = survey,
                                      L2.unit = L2.unit,
                                      ebma.size = ebma.size)
@@ -415,13 +409,20 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
 
   # Classifier 1: Best Subset
   if (isTRUE(best.subset)) {
+
+    # Determine context-level covariates
+    if (is.null(best.subset.L2.x)) {
+      best.subset.L2.x <- L2.x
+    }
+
+    # Run classifier
     best_subset_out <- run_best_subset(y = y,
                                        L1.x = L1.x,
-                                       L2.x = L2.x,
+                                       L2.x = best.subset.L2.x,
                                        L2.unit = L2.unit,
                                        L2.reg = L2.reg,
                                        loss.unit = loss.unit,
-                                       loss.measure = loss.measure,
+                                       loss.fun = loss.fun,
                                        data = cv_folds,
                                        verbose = verbose)
   } else {
@@ -429,14 +430,21 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
   }
 
   # Classifier 2: Lasso
+
+  # Determine context-level covariates
+  if (is.null(lasso.L2.x)) {
+    lasso.L2.x <- L2.x
+  }
+
+  # Run classifier
   if (isTRUE(lasso)) {
     lasso_out <- run_lasso(y = y,
                            L1.x = L1.x,
-                           L2.x = L2.x,
+                           L2.x = lasso.L2.x,
                            L2.unit = L2.unit,
                            L2.reg = L2.reg,
                            loss.unit = loss.unit,
-                           loss.measure = loss.measure,
+                           loss.fun = loss.fun,
                            lambda.set = lasso.lambda.set,
                            iterations.max = lasso.iterations.max,
                            data = cv_folds,
@@ -453,7 +461,7 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
                        L2.unit = L2.unit,
                        L2.reg = L2.reg,
                        loss.unit = loss.unit,
-                       loss.measure = loss.measure,
+                       loss.fun = loss.fun,
                        data = cv_folds,
                        verbose = verbose)
   } else {
@@ -461,16 +469,23 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
   }
 
   # Classifier 4: GB
+
+  # Determine context-level covariates
+  if (is.null(gb.L2.x)) {
+    gb.L2.x <- L2.x
+  }
+
+  # Run classifier
   if (isTRUE(gb)) {
     gb_out <- run_gb(y = y,
                      L1.x = L1.x,
-                     L2.x = L2.x,
+                     L2.x = gb.L2.x,
                      L2.unit = L2.unit,
                      L2.reg = L2.reg,
                      L2.unit.include = gb.L2.unit.include,
                      L2.reg.include = gb.L2.reg.include,
                      loss.unit = loss.unit,
-                     loss.measure = loss.measure,
+                     loss.fun = loss.fun,
                      interaction.set = gb.interaction.set,
                      shrinkage.set = gb.shrinkage.set,
                      tree.start = gb.tree.start,
@@ -485,10 +500,17 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
   }
 
   # Classifier 5: SVM
+
+  # Determine context-level covariates
+  if (is.null(svm.L2.x)) {
+    svm.L2.x <- L2.x
+  }
+
+  # Run classifier
   if (isTRUE(svm)) {
     svm_out <- run_svm(y = y,
                        L1.x = L1.x,
-                       L2.x = L2.x,
+                       L2.x = svm.L2.x,
                        L2.unit = L2.unit,
                        L2.reg = L2.reg,
                        kernel = svm.kernel,
