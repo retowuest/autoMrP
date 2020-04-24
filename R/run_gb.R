@@ -13,76 +13,63 @@
 #' @param L2.x Context-level covariates. A character vector containing the
 #'   column names of the context-level variables in \code{survey} and
 #'   \code{census} used to predict outcome \code{y}.
-#'
-#' @param L2.unit Geographic unit. A character scalar indicating the column
-#'   name of the geographic unit at which outcomes should be aggregated.
-#' @param L2.reg Geographic region. A character scalar indicating the column
-#'   name of the geographic region by which geographic units are grouped
-#'   (L2.unit must be nested within L2.re).
+#' @param L2.unit Geographic unit. A character scalar containing the column
+#'   name of the geographic unit in \code{survey} and \code{census} at which
+#'   outcomes should be aggregated.
+#' @param L2.reg Geographic region. A character scalar containing the column
+#'   name of the geographic region in \code{survey} and \code{census} by which
+#'   geographic units are grouped (\code{L2.unit} must be nested within
+#'   \code{L2.reg}). Default is \code{NULL}.
 #' @param loss.unit Loss function unit. A character-valued scalar indicating
-#'   whether the loss should be evaluated at the level of individual respondents
-#'   or the level of geographic units. Default is at the individual level.
-#' @param loss.measure Loss function measure. A character-valued scalar
-#'   indicating whether the loss should be measured by the mean squared error
-#'   or the mean absolute error. Default is the MSE.
-#' @param data Data for cross-validation. A list of k data.frames, one for
-#'   each fold used in k-fold cross-validation.
-#' @param L2.unit.include Include L2.unit in GB. A logical argument indicating
-#'   whether L2.unit is included in the GB models. Default is FALSE.
-#' @param L2.reg.include Include L2.reg in GB. A logical argument indicating
-#'   whether L2.reg is included in the GB models. Default is FALSE.
-#' @param interaction.set Set of interaction depth values. An integer-valued
-#'   vector whose values define the maximum depth of each tree. Interaction
-#'   depth is used to tune the model. Default is c(1, 2, 3).
-#' @param shrinkage.set Learning rate. A numeric vector whose values define
-#'   the learning rate or step-size reduction. Learning rate is used to tune
-#'   the model. Values between 0.001 and 0.1 usually work, but a smaller
-#'   learning rate typically requires more trees. Default is
-#'   c(0.04, 0.01, 0.008, 0.005, 0.001).
-#' @param tree.start Initial total number of trees. An integer-valued scalar
-#'   specifying the initial number of total trees. Default is 50.
-#' @param tree.increase.set Increase in total number of trees. Either an
+#'   whether performance loss should be evaluated at the level of individual
+#'   respondents (\code{individuals}) or geographic units (\code{L2 units}).
+#'   Default is \code{individuals}.
+#' @param loss.fun Loss function. A character-valued scalar indicating whether
+#'   prediction loss should be measured by the mean squared error (\code{MSE})
+#'   or the mean absolute error (\code{MAE}). Default is \code{MSE}.
+#' @param interaction.depth GB interaction depth. An integer-valued vector
+#'   whose values specify the interaction depth of GB. The interaction depth
+#'   defines the maximum depth of each tree grown (i.e., the maximum level of
+#'   variable interactions). Default is \code{c(1, 2, 3)}.
+#' @param shrinkage GB learning rate. A numeric vector whose values specify the
+#'   learning rate or step-size reduction of GB. Values between \eqn{0.001}
+#'   and \eqn{0.1} usually work, but a smaller learning rate typically requires
+#'   more trees. Default is \code{c(0.04, 0.01, 0.008, 0.005, 0.001)}.
+#' @param n.trees.init GB initial total number of trees. An integer-valued
+#'   scalar specifying the initial number of total trees to fit by GB. Default
+#'   is \eqn{50}.
+#' @param n.trees.increase GB increase in total number of trees. An
 #'   integer-valued scalar specifying by how many trees the total number of
-#'   trees is increased (until the maximum number of trees is reached) or an
-#'   integer-valued vector of `length(shrinkage.set)` with each value being
-#'   associated with a learning rate. Total number of trees is used to tune the
-#'   model. Default is 50.
-#' @param trees.max.set Maximum number of trees. Either an integer-valued
-#'   scalar specifying the maximum number of trees or an integer-valued vector
-#'   of `length(shrinkage.set)` with each value being associated with a
-#'   learning rate and a number of tree increase. Default is 1000.
-#' @param iterations.max Stopping rule. A numeric scalar specifying the
-#'   maximum number of iterations without performance improvement the GB
-#'   classifier runs before stopping. Default is 70.
-#' @param n.minobsinnode Minimum number of observations in the terminal nodes.
-#'   An integer-valued scalar specifying the minimum number of observations
-#'   that each terminal node of the trees must contain. Default is 5.
-#' @param verbose Verbose output. A logical vector indicating whether or not
-#'   verbose output should be printed.
+#'   trees to fit should be increased (until \code{n.trees.max} is reached)
+#'   or an integer-valued vector of length \code{length(shrinkage)} with each
+#'   of its values being associated with a learning rate in \code{shrinkage}.
+#'   Default is \eqn{50}.
+#' @param n.trees.max GB maximum number of trees. An integer-valued scalar
+#'   specifying the maximum number of trees to fit by GB or an integer-valued
+#'   vector of length \code{length(shrinkage)} with each of its values being
+#'   associated with a learning rate and an increase in the total number of
+#'   trees. Default is \eqn{1000}.
+#' @param n.iter GB number of iterations without improvement. A numeric scalar
+#'   specifying the maximum number of iterations without performance
+#'   improvement the algorithm runs before stopping. Default is \eqn{70}.
+#' @param n.minobsinnode GB minimum number of observations in the terminal
+#'   nodes. An integer-valued scalar specifying the minimum number of
+#'   observations that each terminal node of the trees must contain. Default is
+#'   \eqn{5}.
+#' @param data Data for cross-validation. A \code{list} of \eqn{k}
+#'   \code{data.frames}, one for each fold to be used in \eqn{k}-fold
+#'   cross-validation.
+#' @param verbose Verbose output. A logical argument indicating whether or not
+#'   verbose output should be printed. Default is \code{TRUE}.
 #' @return
 #' @examples
 
 gb <- function(y, L1.x, L2.x, L2.unit, L2.reg,
-               L2.unit.include = c(TRUE, FALSE),
-               L2.reg.include = c(TRUE, FALSE),
-               loss.unit, loss.measure,
-               interaction.set, shrinkage.set,
-               tree.start, tree.increase.set,
-               trees.max.set, iterations.max,
+               loss.unit, loss.fun,
+               interaction.depth, shrinkage,
+               n.trees.init, n.trees.increase,
+               n.trees.max, n.iter,
                n.minobsinnode, data, verbose) {
-
-  # for debugging
-  #browser()
-
-  # Evaluate inclusion of L2.unit
-  if (isTRUE(L2.unit.include == FALSE)) {
-    L2.unit <- NULL
-  }
-
-  # Evaluate inclusion of L2.reg
-  if (isTRUE(L2.reg.include == FALSE)) {
-    L2.reg <- NULL
-  }
 
   # Create model formula
   x <- paste(c(L1.x, L2.x, L2.unit, L2.reg), collapse = " + ")
@@ -97,23 +84,24 @@ gb <- function(y, L1.x, L2.x, L2.unit, L2.reg,
   iteration_no <- 0
 
   # Loop over interaction depth
-  out_d <- lapply(seq_along(interaction.set), function(d) {
+  out_d <- lapply(seq_along(interaction.depth), function(d) {
     # Set interaction depth
-    depth <- interaction.set[d]
+    depth <- interaction.depth[d]
 
-    if (length(tree.increase.set) == 1 & length(trees.max.set) == 1) {
+    if (length(n.trees.increase) == 1 & length(n.trees.max) == 1) {
       # Loop over learning rate
-      out_s <- lapply(seq_along(shrinkage.set), function(s, n_trees = tree.start) {
+      out_s <- lapply(seq_along(shrinkage),
+                      function(s, n_trees = n.trees.init) {
         # Set learning rate
-        shrinkage <- shrinkage.set[s]
+        shrinkage_value <- shrinkage[s]
 
         # Update counter for iterations
         iteration_no <- iteration_no + 1
 
         # Print tuning parameters
-        if (isTRUE(verbose == TRUE)) {
+        if (isTRUE(verbose)) {
           cat(paste("GB: Running interaction depth ", depth,
-                    ", learning rate ", shrinkage,
+                    ", learning rate ", shrinkage_value,
                     ", and number of total trees ", n_trees, "\n",
                     "    (model no. ", iteration_no,
                     " -- no improvement evaluation)\n", sep = ""))
@@ -140,7 +128,7 @@ gb <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                                    n.trees = n_trees,
                                    interaction.depth = depth,
                                    n.minobsinnode = n.minobsinnode,
-                                   shrinkage = shrinkage,
+                                   shrinkage = shrinkage_value,
                                    verbose = verbose)
 
           # Use trained model to make predictions for kth validation set
@@ -149,10 +137,12 @@ gb <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                                      type = "response")
 
           # Evaluate predictions based on loss function
-          perform_l <- loss_function(pred = pred_l, data.valid = data_valid,
+          perform_l <- loss_function(pred = pred_l,
+                                     data.valid = data_valid,
                                      loss.unit = loss.unit,
-                                     loss.measure = loss.measure,
-                                     y = y, L2.unit = L2.unit)
+                                     loss.fun = loss.fun,
+                                     y = y,
+                                     L2.unit = L2.unit)
 
           # Function output
           return(list(perform_l = perform_l,
@@ -163,11 +153,11 @@ gb <- function(y, L1.x, L2.x, L2.unit, L2.reg,
         best_error <- mean(unlist(lapply(seq_along(k_errors),
                                          function(x) {k_errors[[x]]["perform_l"]})))
 
-        # Initialize list of tuning parameters associated with currently best
-        # error
+        # Initialize list of tuning parameters associated with the currently
+        # best error
         out <- list(n_trees = n_trees,
                     depth = depth,
-                    shrinkage = shrinkage,
+                    shrinkage = shrinkage_value,
                     error = best_error,
                     models = lapply(seq_along(k_errors),
                                     function(x) {k_errors[[x]]["model_l"]}))
@@ -176,17 +166,17 @@ gb <- function(y, L1.x, L2.x, L2.unit, L2.reg,
         iter_since_improv <- 0
 
         # Loop over number of total trees
-        while (n_trees < trees.max.set) {
+        while (n_trees < n.trees.max) {
           # Set number of total trees
-          n_trees <- n_trees + tree.increase.set
+          n_trees <- n_trees + n.trees.increase
 
           # Update counter for iterations
           iteration_no <- iteration_no + 1
 
           # Print tuning parameters
-          if (isTRUE(verbose == TRUE)) {
+          if (isTRUE(verbose)) {
             cat(paste("GB: Running interaction depth ", depth,
-                      ", learning rate ", shrinkage,
+                      ", learning rate ", shrinkage_value,
                       ", and number of total trees ", n_trees, "\n",
                       "    (model no. ", iteration_no,
                       " -- iterations w/o improvement: ",
@@ -209,7 +199,7 @@ gb <- function(y, L1.x, L2.x, L2.unit, L2.reg,
 
             # Train model using lambda on kth training set
             model_l <- gb_classifier_update(object = out$models[[k]]$model_l,
-                                            n.new.trees = tree.increase.set,
+                                            n.new.trees = n.trees.increase,
                                             verbose = verbose)
 
             # Use trained model to make predictions for kth validation set
@@ -218,10 +208,12 @@ gb <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                                        type = "response")
 
             # Evaluate predictions based on loss function
-            perform_l <- loss_function(pred = pred_l, data.valid = data_valid,
+            perform_l <- loss_function(pred = pred_l,
+                                       data.valid = data_valid,
                                        loss.unit = loss.unit,
-                                       loss.measure = loss.measure,
-                                       y = y, L2.unit = L2.unit)
+                                       loss.fun = loss.fun,
+                                       y = y,
+                                       L2.unit = L2.unit)
 
             # Function output
             return(list(perform_l = perform_l,
@@ -239,7 +231,7 @@ gb <- function(y, L1.x, L2.x, L2.unit, L2.reg,
             best_error <- current_error
             out <- list(n_trees = n_trees,
                         depth = depth,
-                        shrinkage = shrinkage,
+                        shrinkage = shrinkage_value,
                         error = best_error,
                         models = lapply(seq_along(k_errors),
                                         function(x) {k_errors[[x]]["model_l"]}))
@@ -250,8 +242,8 @@ gb <- function(y, L1.x, L2.x, L2.unit, L2.reg,
 
           # Break loop if maximum number of iterations without performance
           # improvement is reached
-          if (!is.null(iterations.max)) {
-            if (iter_since_improv > iterations.max) {
+          if (!is.null(n.iter)) {
+            if (iter_since_improv > n.iter) {
               break
             }
           }
@@ -261,23 +253,24 @@ gb <- function(y, L1.x, L2.x, L2.unit, L2.reg,
       # Function output
       return(out_s)
     } else {
-      # Combine learning rate, tree increase, and trees max in tuning set
-      tuning_set <- dplyr::bind_cols(shrinkage.set = shrinkage.set,
-                                     tree.increase.set = tree.increase.set,
-                                     trees.max.set = trees.max.set)
+      # Combine shrinkage, n.trees.increase, and n.trees.max in tuning set
+      tuning_set <- dplyr::bind_cols(shrinkage = shrinkage,
+                                     n.trees.increase = n.trees.increase,
+                                     n.trees.max = n.trees.max)
 
       # Loop over tuning set
-      out_s <- lapply(seq_along(tuning_set$shrinkage.set), function(s, n_trees = tree.start) {
+      out_s <- lapply(seq_along(tuning_set$shrinkage),
+                      function(s, n_trees = n.trees.init) {
         # Set learning rate
-        shrinkage <- tuning_set$shrinkage.set[s]
+        shrinkage_value <- tuning_set$shrinkage[s]
 
         # Update counter for iterations
         iteration_no <- iteration_no + 1
 
         # Print tuning parameters
-        if (isTRUE(verbose == TRUE)) {
+        if (isTRUE(verbose)) {
           cat(paste("GB: Running interaction depth ", depth,
-                    ", learning rate ", shrinkage,
+                    ", learning rate ", shrinkage_value,
                     ", and number of total trees ", n_trees, "\n",
                     "    (model no. ", iteration_no,
                     " -- no improvement evaluation)\n", sep = ""))
@@ -304,7 +297,7 @@ gb <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                                    n.trees = n_trees,
                                    interaction.depth = depth,
                                    n.minobsinnode = n.minobsinnode,
-                                   shrinkage = shrinkage,
+                                   shrinkage = shrinkage_value,
                                    verbose = verbose)
 
           # Use trained model to make predictions for kth validation set
@@ -313,10 +306,12 @@ gb <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                                      type = "response")
 
           # Evaluate predictions based on loss function
-          perform_l <- loss_function(pred = pred_l, data.valid = data_valid,
+          perform_l <- loss_function(pred = pred_l,
+                                     data.valid = data_valid,
                                      loss.unit = loss.unit,
-                                     loss.measure = loss.measure,
-                                     y = y, L2.unit = L2.unit)
+                                     loss.fun = loss.fun,
+                                     y = y,
+                                     L2.unit = L2.unit)
 
           # Function output
           return(list(perform_l = perform_l,
@@ -327,11 +322,11 @@ gb <- function(y, L1.x, L2.x, L2.unit, L2.reg,
         best_error <- mean(unlist(lapply(seq_along(k_errors),
                                          function(x) {k_errors[[x]]["perform_l"]})))
 
-        # Initialize list of tuning parameters associated with currently best
-        # error
+        # Initialize list of tuning parameters associated with the currently
+        # best error
         out <- list(n_trees = n_trees,
                     depth = depth,
-                    shrinkage = shrinkage,
+                    shrinkage = shrinkage_value,
                     error = best_error,
                     models = lapply(seq_along(k_errors),
                                     function(x) {k_errors[[x]]["model_l"]}))
@@ -340,17 +335,17 @@ gb <- function(y, L1.x, L2.x, L2.unit, L2.reg,
         iter_since_improv <- 0
 
         # Loop over number of total trees
-        while (n_trees < tuning_set$trees.max.set[s]) {
+        while (n_trees < tuning_set$n.trees.max[s]) {
           # Set number of total trees
-          n_trees <- n_trees + tuning_set$tree.increase.set[s]
+          n_trees <- n_trees + tuning_set$n.trees.increase[s]
 
           # Update counter for iterations
           iteration_no <- iteration_no + 1
 
           # Print tuning parameters
-          if (isTRUE(verbose == TRUE)) {
+          if (isTRUE(verbose)) {
             cat(paste("GB: Running interaction depth ", depth,
-                      ", learning rate ", shrinkage,
+                      ", learning rate ", shrinkage_value,
                       ", and number of total trees ", n_trees, "\n",
                       "    (model no. ", iteration_no,
                       " -- iterations w/o improvement: ",
@@ -378,7 +373,7 @@ gb <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                                      n.trees = n_trees,
                                      interaction.depth = depth,
                                      n.minobsinnode = n.minobsinnode,
-                                     shrinkage = shrinkage,
+                                     shrinkage = shrinkage_value,
                                      verbose = verbose)
 
             # Use trained model to make predictions for kth validation set
@@ -387,10 +382,12 @@ gb <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                                        type = "response")
 
             # Evaluate predictions based on loss function
-            perform_l <- loss_function(pred = pred_l, data.valid = data_valid,
+            perform_l <- loss_function(pred = pred_l,
+                                       data.valid = data_valid,
                                        loss.unit = loss.unit,
-                                       loss.measure = loss.measure,
-                                       y = y, L2.unit = L2.unit)
+                                       loss.fun = loss.fun,
+                                       y = y,
+                                       L2.unit = L2.unit)
 
             # Function output
             return(list(perform_l = perform_l,
@@ -407,7 +404,7 @@ gb <- function(y, L1.x, L2.x, L2.unit, L2.reg,
             best_error <- current_error
             out <- list(n_trees = n_trees,
                         depth = depth,
-                        shrinkage = shrinkage,
+                        shrinkage = shrinkage_value,
                         error = best_error,
                         models = lapply(seq_along(k_errors),
                                         function(x) {k_errors[[x]]["model_l"]}))
@@ -418,8 +415,8 @@ gb <- function(y, L1.x, L2.x, L2.unit, L2.reg,
 
           # Break loop if maximum number of iterations without performance
           # improvement is reached
-          if (!is.null(iterations.max)) {
-            if (iter_since_improv > iterations.max) {
+          if (!is.null(n.iter)) {
+            if (iter_since_improv > n.iter) {
               break
             }
           }
@@ -432,8 +429,8 @@ gb <- function(y, L1.x, L2.x, L2.unit, L2.reg,
   })
 
   # Choose best-performing model
-  tuning_grid <- expand.grid(d = seq_along(interaction.set),
-                             s = shrinkage.set,
+  tuning_grid <- expand.grid(d = seq_along(interaction.depth),
+                             s = shrinkage,
                              error = NA)
 
   for (i in 1:nrow(tuning_grid)) {
