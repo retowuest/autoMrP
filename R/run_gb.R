@@ -1,17 +1,19 @@
 #' Apply gradient boosting classifier to MrP.
 #'
-#' \code{gb} is a wrapper function that applies the gradient boosting classifier
-#' to data provided by the user, evaluates prediction performance, and chooses
-#' the best-performing model.
+#' \code{run_gb} is a wrapper function that applies the gradient boosting
+#' classifier to data provided by the user, evaluates prediction performance,
+#' and chooses the best-performing model.
 #'
 #' @param y Outcome variable. A character scalar containing the column name of
-#'   the outcome variable.
-#' @param L1.x Individual-level covariates. A character vector of column names
-#'   corresponding to the individual-level variables used to predict the outcome
-#'   variable. Must include geographic unit.
-#' @param L2.x Context-level covariates. A character vector of column names
-#'   corresponding to the context-level variables used to predict the outcome
-#'   variable.
+#'   the outcome variable in \code{survey}.
+#' @param L1.x Individual-level covariates. A character vector containing the
+#'   column names of the individual-level variables in \code{survey} and
+#'   \code{census} used to predict outcome \code{y}. Note that geographic unit
+#'   is specified in argument \code{L2.unit}.
+#' @param L2.x Context-level covariates. A character vector containing the
+#'   column names of the context-level variables in \code{survey} and
+#'   \code{census} used to predict outcome \code{y}.
+#'
 #' @param L2.unit Geographic unit. A character scalar indicating the column
 #'   name of the geographic unit at which outcomes should be aggregated.
 #' @param L2.reg Geographic region. A character scalar indicating the column
