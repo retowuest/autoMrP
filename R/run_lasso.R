@@ -62,7 +62,7 @@ lasso <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                     c(L1.x, L2.unit, L2.reg))
 
   # Train and evaluate each model
-  if (is.vector(lambda)) {
+  if (!is.list(lambda)) {
     # Add value of 0 to lambda if not already included
     if (!0 %in% lambda) {
       lambda <- c(0, lambda)
@@ -97,7 +97,7 @@ lasso <- function(y, L1.x, L2.x, L2.unit, L2.reg,
       model_l <- lasso_classifier(L2.fix = L2_fe_form,
                                   L1.re = L1_re,
                                   data.train = data_train,
-                                  lambda = as.numeric(lambda_value),
+                                  lambda = lambda_value,
                                   model.family = binomial(link = "probit"),
                                   verbose = verbose)
 
@@ -221,7 +221,7 @@ lasso <- function(y, L1.x, L2.x, L2.unit, L2.reg,
       model_l <- lasso_classifier(L2.fix = L2_fe_form,
                                   L1.re = L1_re,
                                   data.train = data_train,
-                                  lambda = lambda_value,
+                                  lambda = as.numeric(lambda_value),
                                   model.family = binomial(link = "probit"),
                                   verbose = verbose)
 
@@ -245,11 +245,11 @@ lasso <- function(y, L1.x, L2.x, L2.unit, L2.reg,
     iter_since_improv <- 0
 
     # Loop over lambda values in lambda
-    while(lambda_value < dplyr::last(lambda[, 2])) {
+    while(lambda_value < dplyr::last(lambda[[3]])) {
       # Set lambda value
-      lambda_value <- round(lambda_value, digits = 10)
-      lambda_value <- lambda_value +
-        lambda[, 1][which(lambda_value < lambda[, 2])[1]]
+      lambda_value <- round(as.numeric(lambda_value), digits = 10)
+      lambda_value <- as.numeric(lambda_value) +
+        lambda[[2]][which(lambda_value < lambda[[3]])[1]]
 
       # Update counter for lambda
       lambda_no <- lambda_no + 1
@@ -279,7 +279,7 @@ lasso <- function(y, L1.x, L2.x, L2.unit, L2.reg,
         model_l <- lasso_classifier(L2.fix = L2_fe_form,
                                     L1.re = L1_re,
                                     data.train = data_train,
-                                    lambda = lambda_value,
+                                    lambda = as.numeric(lambda_value),
                                     model.family = binomial(link = "probit"),
                                     verbose = verbose)
 
