@@ -47,6 +47,7 @@
 #' @examples
 
 lasso <- function(y, L1.x, L2.x, L2.unit, L2.reg,
+                  n.iter = NULL,
                   loss.unit, loss.fun,
                   lambda, iterations.max,
                   data, verbose) {
@@ -96,7 +97,7 @@ lasso <- function(y, L1.x, L2.x, L2.unit, L2.reg,
       model_l <- lasso_classifier(L2.fix = L2_fe_form,
                                   L1.re = L1_re,
                                   data.train = data_train,
-                                  lambda = lambda_value,
+                                  lambda = as.numeric(lambda_value),
                                   model.family = binomial(link = "probit"),
                                   verbose = verbose)
 
@@ -307,8 +308,8 @@ lasso <- function(y, L1.x, L2.x, L2.unit, L2.reg,
 
       # Break loop if maximum number of iterations without performance
       # improvement is reached
-      if (!is.null(iterations.max)) {
-        if (iter_since_improv > iterations.max) {
+      if (!is.null(n.iter)) {
+        if (iter_since_improv > n.iter) {
           break
         }
       }
