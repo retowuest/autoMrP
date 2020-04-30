@@ -11,7 +11,6 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
   #browser()
 
   # Copy L2.unit b/c it is needed twice but might be reset depending on call
-  # See lines: 59-63
   L2_unit <- L2.unit
 
   # model container for EBMA
