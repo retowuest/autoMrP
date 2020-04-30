@@ -10,6 +10,7 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                          mrp.L2.x, gb.L2.unit, gb.L2.reg, lasso.lambda,
                          lasso.n.iter) {
 
+
   # Check if y is a character scalar
   if (!(is.character(y) & length(y) == 1)) {
     stop(paste("The argument 'y', specifying the outcome variable, must be a",
@@ -315,7 +316,7 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
   }
 
   # Check if loss.fun is either "MSE" or "MAE"
-  if (!loss.fun %in% c("individuals", "L2 units")) {
+  if (!loss.fun %in% c("MSE", "MAE")) {
     stop(paste("The argument 'loss.fun', specifying the loss function used",
                " to measure prediction performance, must be either",
                " 'MSE' or 'MAE'.", sep = ""))

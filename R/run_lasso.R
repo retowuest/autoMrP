@@ -245,11 +245,11 @@ lasso <- function(y, L1.x, L2.x, L2.unit, L2.reg,
     iter_since_improv <- 0
 
     # Loop over lambda values in lambda
-    while(lambda_value < dplyr::last(lambda[[3]])) {
+    while(lambda_value < dplyr::last(lambda[[2]])) {
       # Set lambda value
       lambda_value <- round(as.numeric(lambda_value), digits = 10)
       lambda_value <- as.numeric(lambda_value) +
-        lambda[[2]][which(lambda_value < lambda[[3]])[1]]
+        lambda[[1]][which(lambda_value < lambda[[2]])[1]]
 
       # Update counter for lambda
       lambda_no <- lambda_no + 1
