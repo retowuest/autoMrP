@@ -470,15 +470,16 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
 
   # Classifier 3: PCA
   if (isTRUE(pca)) {
-    pca_out <- run_pca(y = y,
-                       L1.x = L1.x,
-                       L2.x = pc_names,
-                       L2.unit = L2.unit,
-                       L2.reg = L2.reg,
-                       loss.unit = loss.unit,
-                       loss.fun = loss.fun,
-                       data = cv_folds,
-                       verbose = verbose)
+    pca_out <- run_pca(
+      y = y,
+      L1.x = L1.x,
+      L2.x = pc_names,
+      L2.unit = L2.unit,
+      L2.reg = L2.reg,
+      loss.unit = loss.unit,
+      loss.fun = loss.fun,
+      data = cv_folds,
+      verbose = verbose)
   } else {
     pca_out <- NULL
   }
@@ -552,43 +553,47 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
 
   # --------------------------- Post-stratification ----------------------------
 
-  ps_out <- post_stratification(y = y,
-                                L1.x = L1.x,
-                                L2.x = L2.x,
-                                L2.unit = L2.unit,
-                                L2.reg = L2.reg,
-                                best.subset.opt = best_subset_out,
-                                lasso.opt = lasso_out,
-                                pca.opt = pca_out,
-                                gb.opt = gb_out,
-                                svm.opt = svm_out,
-                                mrp.include = mrp.include,
-                                n.minobsinnode = gb.n.minobsinnode,
-                                L2.unit.include = gb.L2.unit,
-                                L2.reg.include = gb.L2.reg,
-                                kernel = svm.kernel,
-                                mrp.L2.x = mrp.L2.x,
-                                data = cv_data,
-                                census = census,
-                                verbose = verbose)
+  ps_out <- post_stratification(
+    y = y,
+    L1.x = L1.x,
+    L2.x = L2.x,
+    L2.unit = L2.unit,
+    L2.reg = L2.reg,
+    best.subset.opt = best_subset_out,
+    lasso.opt = lasso_out,
+    pca.opt = pca_out,
+    gb.opt = gb_out,
+    svm.opt = svm_out,
+    mrp.include = mrp.include,
+    n.minobsinnode = gb.n.minobsinnode,
+    L2.unit.include = gb.L2.unit,
+    L2.reg.include = gb.L2.reg,
+    kernel = svm.kernel,
+    mrp.L2.x = mrp.L2.x,
+    data = cv_data,
+    census = census,
+    verbose = verbose
+    )
 
   # ----------------------------------- EBMA -----------------------------------
 
-  ebma_out <- ebma(ebma.fold = ebma_fold,
-                   y = y,
-                   L1.x = L1.x,
-                   L2.x = L2.x,
-                   L2.unit = L2.unit,
-                   L2.reg = L2.reg,
-                   post.strat = ps_out,
-                   n.draws = ebma.n.draws,
-                   tol = ebma.tol,
-                   best.subset.opt = best_subset_out,
-                   pca.opt = pca_out,
-                   lasso.opt = lasso_out,
-                   gb.opt = gb_out,
-                   svm.opt = svm_out,
-                   verbose = verbose)
+  ebma_out <- ebma(
+    ebma.fold = ebma_fold,
+    y = y,
+    L1.x = L1.x,
+    L2.x = L2.x,
+    L2.unit = L2.unit,
+    L2.reg = L2.reg,
+    post.strat = ps_out,
+    n.draws = ebma.n.draws,
+    tol = ebma.tol,
+    best.subset.opt = best_subset_out,
+    pca.opt = pca_out,
+    lasso.opt = lasso_out,
+    gb.opt = gb_out,
+    svm.opt = svm_out,
+    verbose = verbose
+    )
 
   # ----------------------------- Function output ------------------------------
 
