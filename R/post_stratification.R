@@ -5,7 +5,7 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                                 pca.opt, gb.opt, svm.opt,
                                 mrp.include, n.minobsinnode,
                                 L2.unit.include, L2.reg.include,
-                                kernel, L2.x.mrp, data, census,
+                                kernel, mrp.L2.x, data, census,
                                 verbose){
 
   # Copy L2.unit b/c it is needed twice but might be reset depending on call
@@ -43,14 +43,9 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                                   model.family = binomial(link = "probit"),
                                   verbose = verbose)
 
-    # temporary: predict census data outcome line by line for Lasso
-    #lasso_p <- NA
-    #for (idx.census in 1:nrow(census)){
-    #  lasso_p[idx.census] <- predict(model_l, newdata = data.frame(census[idx.census,]), type = "response")
-    #}
     lasso.census <- census
     lasso.census[,y] <- 1
-    lasso_p <- predict(model_l, newdata = data.frame(lasso.census), type = "response")
+    lasso_p <- predict(lasso_opt, newdata = data.frame(lasso.census), type = "response")
   }
 
   # Classifier 3: PCA
@@ -146,7 +141,7 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
   all_re <- paste(c(L1_re, L2_re), collapse = " + ")
 
   # Context-level fixed effects
-  L2_fe <- paste(L2.x.mrp, collapse = " + ")
+  L2_fe <- paste(mrp.L2.x, collapse = " + ")
 
   # Empty model
   form_mrp <- as.formula(paste(y, " ~ ", L2_fe, " + ", all_re, sep = ""))
