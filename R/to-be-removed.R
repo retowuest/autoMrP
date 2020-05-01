@@ -194,7 +194,7 @@ source(here::here("R", "run_gb.R"))
 source(here::here("R", "gb_classifier.R"))
 source(here::here("R", "svm_classifier.R"))
 source(here::here("R", "run_svm.R"))
-source("./post_stratification.R")
-source("./ebma.R")
+source(here::here("R", "post_stratification.R"))
+source(here::here("R", "ebma.R"))
 
 
