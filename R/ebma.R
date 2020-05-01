@@ -131,7 +131,7 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, post.strat,
     return(L2_preds)
 
   } else{
-   cat("\n Skipping EBMA (only 1 classifier selected)")
+   cat("\n Skipping EBMA (only 1 classifier selected) \n")
 
     # function output
     return(post.strat$predictions$Level2)
