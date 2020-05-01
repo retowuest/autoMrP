@@ -8,6 +8,7 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, post.strat,
   model_lasso <- post.strat$models$lasso
   model_gb <- post.strat$models$gb
   model_svm <- post.strat$models$svm
+  model_mrp <- post.strat$models$mrp
 
   # training predictions
   train_preds <- post.strat$predictions$Level1 %>%
@@ -58,6 +59,9 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, post.strat,
         } else{NA},
         svm = if(!is.null(model_svm)){
           as.numeric(attr(predict(object = model_svm, newdata = test, probability = TRUE),"probabilities")[,"1"])
+        } else{NA},
+        mrp = if(!is.null(model_mrp)){
+          predict(object = model_mrp, newdata = test, type = "response", allow.new.levels = TRUE)
         } else{NA}
       )
       # remove NA's
@@ -99,8 +103,12 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, post.strat,
   weights_mat <- matrix(data = NA, nrow = n.draws, ncol = ncol(train_preds))
 
   # model weights; rows = observations, columns = model weights, layers = tolerance values
-  for (idx.tol in 1:length(best_tolerance)){
-    weights_mat[idx.tol, ] <- weights_box[idx.tol, ,][ ,best_tolerance[idx.tol]]
+  if (length(tol)>1){
+    for (idx.tol in 1:length(best_tolerance)){
+      weights_mat[idx.tol, ] <- weights_box[idx.tol, ,][ ,best_tolerance[idx.tol]]
+    }
+  } else{
+    weights_mat <- weights_box[, , 1]
   }
 
   # average model weights
