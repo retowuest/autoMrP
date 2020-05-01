@@ -294,7 +294,11 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
   all_re <- paste(c(L1_re, L2_re), collapse = " + ")
 
   # Context-level fixed effects
-  L2_fe <- paste(mrp.L2.x, collapse = " + ")
+  if(mrp.L2.x != "empty") {
+    L2_fe <- paste(mrp.L2.x, collapse = " + ")
+  } else{
+      L2_fe <- ""
+    }
 
   # std MrP formula
   form_mrp <- as.formula(paste(y, " ~ ", L2_fe, " + ", all_re, sep = ""))

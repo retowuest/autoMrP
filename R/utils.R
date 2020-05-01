@@ -651,21 +651,25 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
         }
 
         # Check if mrp.L2.x is in survey data
-        if (!all(mrp.L2.x %in% colnames(survey))) {
-          stop(cat(paste("Context-level variable '",
-                         mrp.L2.x[which(!(mrp.L2.x %in% colnames(survey)))],
-                         "', specified in argument 'mrp.L2.x' to be used by the",
-                         " standard MRP classifier, is not in your survey data.",
-                         sep = ""), sep = ""))
+        if (mrp.L2.x != "empty"){
+          if (!all(mrp.L2.x %in% colnames(survey))) {
+            stop(cat(paste("Context-level variable '",
+                           mrp.L2.x[which(!(mrp.L2.x %in% colnames(survey)))],
+                           "', specified in argument 'mrp.L2.x' to be used by the",
+                           " standard MRP classifier, is not in your survey data.",
+                           sep = ""), sep = ""))
+          }
         }
 
         # Check if mrp.L2.x is in census data
-        if (!all(mrp.L2.x %in% colnames(census))) {
-          stop(cat(paste("Context-level variable '",
-                         mrp.L2.x[which(!(mrp.L2.x %in% colnames(census)))],
-                         "', specified in argument 'mrp.L2.x' to be used by the",
-                         " standard MRP classifier, is not in your census data.",
-                         sep = ""), sep = ""))
+        if (mrp.L2.x != "empty"){
+          if (!all(mrp.L2.x %in% colnames(census))) {
+            stop(cat(paste("Context-level variable '",
+                           mrp.L2.x[which(!(mrp.L2.x %in% colnames(census)))],
+                           "', specified in argument 'mrp.L2.x' to be used by the",
+                           " standard MRP classifier, is not in your census data.",
+                           sep = ""), sep = ""))
+          }
         }
       }
     } else {

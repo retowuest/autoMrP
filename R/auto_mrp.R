@@ -121,9 +121,10 @@
 #'   \code{L2.x}. Default is \code{NULL}.
 #' @param mrp.L2.x MRP context-level covariates. A character vector containing
 #'   the column names of the context-level variables in \code{survey} and
-#'   \code{census} to be used by the MRP classifier. If \code{NULL} and
-#'   \code{mrp} is set to \code{TRUE}, then MRP uses the variables specified in
-#'   \code{L2.x}. Default is \code{NULL}.
+#'   \code{census} to be used by the MRP classifier. The character vector
+#'   \emph{empty} if no context-level variables should be used by the MRP
+#'   classifier. If \code{NULL} and \code{mrp} is set to \code{TRUE}, then MRP
+#'   uses the variables specified in \code{L2.x}. Default is \code{NULL}.
 #' @param gb.L2.unit GB L2.unit. A logical argument indicating whether
 #'   \code{L2.unit} should be included in the GB classifier. Default is
 #'   \code{FALSE}.
