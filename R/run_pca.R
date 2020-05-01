@@ -35,9 +35,9 @@
 #' @return
 #' @examples
 
-pca <- function(y, L1.x, L2.x, L2.unit, L2.reg,
-                loss.unit, loss.fun,
-                data, verbose) {
+run_pca <- function(y, L1.x, L2.x, L2.unit, L2.reg,
+                    loss.unit, loss.fun,
+                    data, verbose) {
 
   # List of all models to be evaluated
   models <- model_list_pca(y = y,

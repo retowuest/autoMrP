@@ -64,12 +64,12 @@
 #' @return
 #' @examples
 
-gb <- function(y, L1.x, L2.x, L2.unit, L2.reg,
-               loss.unit, loss.fun,
-               interaction.depth, shrinkage,
-               n.trees.init, n.trees.increase,
-               n.trees.max, n.iter,
-               n.minobsinnode, data, verbose) {
+run_gb <- function(y, L1.x, L2.x, L2.unit, L2.reg,
+                   loss.unit, loss.fun,
+                   interaction.depth, shrinkage,
+                   n.trees.init, n.trees.increase,
+                   n.trees.max, n.iter,
+                   n.minobsinnode, data, verbose) {
 
   # Create model formula
   x <- paste(c(L1.x, L2.x, L2.unit, L2.reg), collapse = " + ")

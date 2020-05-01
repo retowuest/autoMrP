@@ -46,11 +46,11 @@
 #' @return
 #' @examples
 
-lasso <- function(y, L1.x, L2.x, L2.unit, L2.reg,
-                  n.iter = NULL,
-                  loss.unit, loss.fun,
-                  lambda, iterations.max,
-                  data, verbose) {
+run_lasso <- function(y, L1.x, L2.x, L2.unit, L2.reg,
+                      n.iter = NULL,
+                      loss.unit, loss.fun,
+                      lambda, iterations.max,
+                      data, verbose) {
 
   # Context-level fixed effects
   L2_fe <- paste(L2.x, collapse = " + ")

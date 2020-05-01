@@ -48,10 +48,10 @@
 #' @return
 #' @examples
 
-svm <- function(y, L1.x, L2.x, L2.unit, L2.reg,
-                kernel = "radial", loss.fun,
-                gamma, cost,
-                data, verbose) {
+run_svm <- function(y, L1.x, L2.x, L2.unit, L2.reg,
+                    kernel = "radial", loss.fun,
+                    gamma, cost,
+                    data, verbose) {
 
   # Create model formula
   x <- paste(c(L1.x, L2.x, L2.unit, L2.reg), collapse = " + ")
