@@ -128,12 +128,12 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, post.strat,
     )
 
     # function output
-    return(L2_preds)
+    return(list(ebma = L2_preds, classifiers = post.strat$predictions$Level2))
 
   } else{
    cat("\n Skipping EBMA (only 1 classifier selected) \n")
 
     # function output
-    return(post.strat$predictions$Level2)
+    return(list(ebma = "EBMA step skipped (only 1 classifier run)", classifiers = post.strat$predictions$Level2))
   }
 }
