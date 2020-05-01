@@ -185,15 +185,15 @@ verbose <- TRUE
 source(here::here("R", "utils.R"))
 
 # classifiers
-source(here::here("R", "best_subset.R"))
+source(here::here("R", "run_best_subset.R"))
 source(here::here("R", "best_subset_classifier.R"))
-source(here::here("R", "lasso.R"))
+source(here::here("R", "run_lasso.R"))
 source(here::here("R", "lasso_classifier.R"))
-source(here::here("R", "pca.R"))
-source(here::here("R", "gb.R"))
+source(here::here("R", "run_pca.R"))
+source(here::here("R", "run_gb.R"))
 source(here::here("R", "gb_classifier.R"))
 source(here::here("R", "svm_classifier.R"))
-source(here::here("R", "svm.R"))
+source(here::here("R", "run_svm.R"))
 source("./post_stratification.R")
 source("./ebma.R")
 
