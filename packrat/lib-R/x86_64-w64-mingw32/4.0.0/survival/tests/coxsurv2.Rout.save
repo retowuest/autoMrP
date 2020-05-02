@@ -1,0 +1,85 @@
+
+R Under development (unstable) (2020-03-30 r78112) -- "Unsuffered Consequences"
+Copyright (C) 2020 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> library(survival)
+> #
+> # Check that the survival curves from a Cox model with beta=0 
+> #  match ordinary survival
+> #
+> #  Aalen
+> surv1 <- survfit(Surv(time,status) ~ sex, data=lung, stype=2)
+> fit1 <- coxph(Surv(time, status) ~ age + strata(sex), data=lung, iter=0,
++               ties='breslow')
+> fit1$var <- 0*fit1$var   #sneaky, causes the extra term in the Cox variance
+>                          # calculation to be zero
+> surv2 <- survfit(fit1, stype=2)
+> surv3 <- survfit(fit1)
+> 
+> arglist <- c('n', 'time', 'n.risk','n.event', 'n.censor', 'surv', 'strata',
++              'std.err', 'upper', 'lower')
+> all.equal(unclass(surv1)[arglist], unclass(surv2)[arglist])
+[1] TRUE
+> all.equal(unclass(surv1)[arglist], unclass(surv3)[arglist])
+[1] TRUE
+> 
+> 
+> # Efron method
+> surv1 <- survfit(Surv(time,status) ~ sex, data=lung, stype=2, ctype=2)
+> surv2 <- survfit(fit1, ctype=2)
+> all.equal(unclass(surv1)[arglist], unclass(surv2)[arglist])
+[1] TRUE
+> 
+> # Kaplan-Meier
+> surv1 <- survfit(Surv(time,status) ~ sex, data=lung)
+> surv2 <- survfit(fit1, stype=1)
+> all.equal(unclass(surv1)[arglist], unclass(surv2)[arglist])
+[1] TRUE
+> 
+> 
+> # Now add some random weights
+> rwt <- runif(nrow(lung), .5, 3)
+> surv1 <- survfit(Surv(time,status) ~ sex, data=lung, stype=2, weight=rwt,
++                  robust=FALSE)
+> fit1 <- coxph(Surv(time, status) ~ age + strata(sex), data=lung, iter=0,
++               ties='breslow', weight=rwt, robust=FALSE)
+> fit1$var <- 0*fit1$var   #sneaky
+> surv2 <- survfit(fit1, stype=2, ctype=1)
+> surv3 <- survfit(fit1)
+> 
+> all.equal(unclass(surv1)[arglist], unclass(surv2)[arglist])
+[1] TRUE
+> all.equal(unclass(surv1)[arglist], unclass(surv3)[arglist])
+[1] TRUE
+> 
+> 
+> # Efron method
+> surv1 <- survfit(Surv(time,status) ~ sex, data=lung, stype=2, ctype=2,
++                  weight=rwt, robust=FALSE)
+> surv2 <- survfit(fit1, ctype=2, robust=FALSE)
+> all.equal(unclass(surv1)[arglist], unclass(surv2)[arglist])
+[1] TRUE
+> 
+> # Kaplan-Meier
+> surv1 <- survfit(Surv(time,status) ~ sex, data=lung, weight=rwt, robust=FALSE)
+> surv2 <- survfit(fit1, stype=1, robust=FALSE)
+> all.equal(unclass(surv1)[arglist], unclass(surv2)[arglist])
+[1] TRUE
+> 
+> 
+> proc.time()
+   user  system elapsed 
+  0.866   0.075   0.935 

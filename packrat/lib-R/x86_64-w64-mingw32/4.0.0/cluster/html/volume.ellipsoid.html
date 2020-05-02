@@ -1,0 +1,83 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><title>R: Compute the Volume (of an Ellipsoid)</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" type="text/css" href="R.css" />
+</head><body>
+
+<table width="100%" summary="page for volume.ellipsoid {cluster}"><tr><td>volume.ellipsoid {cluster}</td><td style="text-align: right;">R Documentation</td></tr></table>
+
+<h2>Compute the Volume (of an Ellipsoid)</h2>
+
+<h3>Description</h3>
+
+<p>Compute the volume of geometric <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> object.
+This is a generic function and has a method for <code>ellipsoid</code> objects
+(typically resulting from <code><a href="ellipsoidhull.html">ellipsoidhull</a>()</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre>
+volume(object, ...)
+## S3 method for class 'ellipsoid'
+volume(object, log = FALSE, ...)
+</pre>
+
+
+<h3>Arguments</h3>
+
+<table summary="R argblock">
+<tr valign="top"><td><code>object</code></td>
+<td>
+<p>an <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> object the volume of which is wanted; for the
+<code>ellipsoid</code> method, an object of that class (see
+<code><a href="ellipsoidhull.html">ellipsoidhull</a></code> or the example below).</p>
+</td></tr>
+<tr valign="top"><td><code>log</code></td>
+<td>
+<p><code><a href="../../base/html/logical.html">logical</a></code> indicating if the volume should be
+returned in log scale.  Maybe needed in largish dimensions.</p>
+</td></tr>
+<tr valign="top"><td><code>...</code></td>
+<td>
+<p>potential further arguments of methods, e.g. <code>log</code>.</p>
+</td></tr>
+</table>
+
+
+<h3>Value</h3>
+
+<p>a number, the volume <i>V</i> (or <i>\log(V)</i> if <code>log = TRUE</code>) of
+the given <code>object</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Martin Maechler (2002, extracting from former <code><a href="clusplot.partition.html">clusplot</a></code> code);
+Keefe Murphy (2019) provided code for dimensions <i>d &gt; 2</i>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code><a href="ellipsoidhull.html">ellipsoidhull</a></code> for spanning ellipsoid computation.</p>
+
+
+<h3>Examples</h3>
+
+<pre>
+## example(ellipsoidhull) # which defines 'ellipsoid' object &lt;namefoo&gt;
+
+myEl &lt;- structure(list(cov = rbind(c(3,1),1:2), loc = c(0,0), d2 = 10),
+                   class = "ellipsoid")
+volume(myEl)# i.e. "area" here (d = 2)
+myEl # also mentions the "volume"
+
+set.seed(1)
+d5 &lt;- matrix(rt(500, df=3), 100,5)
+e5 &lt;- ellipsoidhull(d5)
+</pre>
+
+<hr /><div style="text-align: center;">[Package <em>cluster</em> version 2.1.0 <a href="00Index.html">Index</a>]</div>
+</body></html>

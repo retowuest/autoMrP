@@ -1,0 +1,120 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><title>R: An ensemble forecasting data object</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" type="text/css" href="R.css" />
+</head><body>
+
+<table width="100%" summary="page for ForecastData-class {EBMAforecast}"><tr><td>ForecastData-class {EBMAforecast}</td><td style="text-align: right;">R Documentation</td></tr></table>
+
+<h2>An ensemble forecasting data object</h2>
+
+<h3>Description</h3>
+
+<p>Objects of class <code>ForecastData</code> are used in the <code>calibrateEnsemble</code> function. Datasets should be converted into an object of class <code>ForecastData</code> using the <code>makeForecastData</code> function. Individual slots of the <code>ForecastData</code> object can be accessed and changed using the <code>get</code> and <code>set</code> functions respectively. Missing observations in the prediction calibration set are allowed.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre>
+setPredCalibration(object) &lt;- value
+
+## S4 replacement method for signature 'ForecastData'
+setPredCalibration(object) &lt;- value
+
+setPredTest(object) &lt;- value
+
+## S4 replacement method for signature 'ForecastData'
+setPredTest(object) &lt;- value
+
+setOutcomeCalibration(object) &lt;- value
+
+## S4 replacement method for signature 'ForecastData'
+setOutcomeCalibration(object) &lt;- value
+
+setOutcomeTest(object) &lt;- value
+
+## S4 replacement method for signature 'ForecastData'
+setOutcomeTest(object) &lt;- value
+
+setModelNames(object) &lt;- value
+
+## S4 replacement method for signature 'ForecastData'
+setModelNames(object) &lt;- value
+</pre>
+
+
+<h3>Arguments</h3>
+
+<table summary="R argblock">
+<tr valign="top"><td><code>object</code></td>
+<td>
+<p>used for validity checks (internal)</p>
+</td></tr>
+<tr valign="top"><td><code>value</code></td>
+<td>
+<p>used for validity checks (internal) #hack but no idea how to get the warning to go away otherwise</p>
+</td></tr>
+</table>
+
+
+<h3>Details</h3>
+
+<p>A data object of the class 'ForecastData' has the following slots: 
+@slot predCalibration An array containing the predictions of all component models for the observations in the calibration period.
+@slot predTest An array containing the predictions of all component models for all the observations in the test period.
+@slot outcomeCalibration A vector containing the true values of the dependent variable for all observations in the calibration period. 
+@slot outcomeTest A vector containing the true values of the dependent variable for all observations in the test period.
+@slot modelNames A character vector containing the names of all component models.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Michael D. Ward &lt;<a href="mailto:michael.d.ward@duke.edu">michael.d.ward@duke.edu</a>&gt; and Jacob M. Montgomery &lt;<a href="mailto:jacob.montgomery@wustl.edu">jacob.montgomery@wustl.edu</a>&gt; and Florian M. Hollenbach &lt;<a href="mailto:florian.hollenbach@tamu.edu">florian.hollenbach@tamu.edu</a>&gt;
+</p>
+
+
+<h3>References</h3>
+
+<p>Montgomery, Jacob M., Florian M. Hollenbach and Michael D. Ward. (2015). Calibrating ensemble forecasting models with sparse data in the social sciences.   <em>International Journal of Forecasting</em>. In Press.
+</p>
+<p>Montgomery, Jacob M., Florian M. Hollenbach and Michael D. Ward. (2012). Improving Predictions Using Ensemble Bayesian Model Averaging. <em>Political Analysis</em>. <b>20</b>: 271-291.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>ensembleBMA
+</p>
+
+
+<h3>Examples</h3>
+
+<pre>
+## Not run:  data(calibrationSample)
+
+data(testSample) 
+this.ForecastData &lt;- makeForecastData(.predCalibration=calibrationSample[,c("LMER", "SAE", "GLM")],
+.outcomeCalibration=calibrationSample[,"Insurgency"],.predTest=testSample[,c("LMER", "SAE", "GLM")],
+.outcomeTest=testSample[,"Insurgency"], .modelNames=c("LMER", "SAE", "GLM"))
+
+### to acces individual slots in the ForecastData object
+getPredCalibration(this.ForecastData)
+getOutcomeCalibration(this.ForecastData)
+getPredTest(this.ForecastData)
+getOutcomeTest(this.ForecastData)
+getModelNames(this.ForecastData)
+
+### to assign individual slots, use set functions
+
+setPredCalibration(this.ForecastData)&lt;-calibrationSample[,c("LMER", "SAE", "GLM")]
+setOutcomeCalibration(this.ForecastData)&lt;-calibrationSample[,"Insurgency"]
+setPredTest(this.ForecastData)&lt;-testSample[,c("LMER", "SAE", "GLM")]
+setOutcomeTest(this.ForecastData)&lt;-testSample[,"Insurgency"]
+setModelNames(this.ForecastData)&lt;-c("LMER", "SAE", "GLM")
+
+## End(Not run)
+</pre>
+
+<hr /><div style="text-align: center;">[Package <em>EBMAforecast</em> version 0.52 <a href="00Index.html">Index</a>]</div>
+</body></html>

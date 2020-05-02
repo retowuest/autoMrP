@@ -1,0 +1,87 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><title>R: GB classifier</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" type="text/css" href="R.css" />
+</head><body>
+
+<table width="100%" summary="page for gb_classifier {autoMrP}"><tr><td>gb_classifier {autoMrP}</td><td style="text-align: right;">R Documentation</td></tr></table>
+
+<h2>GB classifier</h2>
+
+<h3>Description</h3>
+
+<p><code>gb_classifier</code> applies gradient boosting classification to a data set.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre>
+gb_classifier(
+  form,
+  distribution,
+  data.train,
+  n.trees,
+  interaction.depth,
+  n.minobsinnode,
+  shrinkage,
+  verbose = c(TRUE, FALSE)
+)
+</pre>
+
+
+<h3>Arguments</h3>
+
+<table summary="R argblock">
+<tr valign="top"><td><code>form</code></td>
+<td>
+<p>Model formula. A two-sided linear formula describing
+the model to be fit, with the outcome on the LHS and the covariates
+separated by + operators on the RHS.</p>
+</td></tr>
+<tr valign="top"><td><code>distribution</code></td>
+<td>
+<p>Model distribution. A character string specifying the
+name of the distribution to be used.</p>
+</td></tr>
+<tr valign="top"><td><code>data.train</code></td>
+<td>
+<p>Training data. A data.frame containing the training data
+used to train the model.</p>
+</td></tr>
+<tr valign="top"><td><code>n.trees</code></td>
+<td>
+<p>Total number of trees. An integer-valued scalar specifying
+the total number of trees to be fit.</p>
+</td></tr>
+<tr valign="top"><td><code>interaction.depth</code></td>
+<td>
+<p>Interaction depth. An integer-valued scalar
+specifying the maximum depth of each tree.</p>
+</td></tr>
+<tr valign="top"><td><code>n.minobsinnode</code></td>
+<td>
+<p>Minimum number of observations in terminal nodes. An
+integer-valued scalar specifying the minimum number of observations in the
+terminal nodes of the trees.</p>
+</td></tr>
+<tr valign="top"><td><code>shrinkage</code></td>
+<td>
+<p>Learning rate. A numeric scalar specifying the shrinkage or
+learning rate applied to each tree in the expansion.</p>
+</td></tr>
+<tr valign="top"><td><code>verbose</code></td>
+<td>
+<p>Verbose output. A logical vector indicating whether or not
+verbose output should be printed.</p>
+</td></tr>
+</table>
+
+
+<h3>Examples</h3>
+
+<pre>
+#not_yet
+</pre>
+
+<hr /><div style="text-align: center;">[Package <em>autoMrP</em> version 0.0.0.9000 <a href="00Index.html">Index</a>]</div>
+</body></html>

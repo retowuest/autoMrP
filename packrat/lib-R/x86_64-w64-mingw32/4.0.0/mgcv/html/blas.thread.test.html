@@ -1,0 +1,52 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><title>R: BLAS thread safety</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" type="text/css" href="R.css" />
+</head><body>
+
+<table width="100%" summary="page for blas.thread.test {mgcv}"><tr><td>blas.thread.test {mgcv}</td><td style="text-align: right;">R Documentation</td></tr></table>
+
+<h2>BLAS thread safety</h2>
+
+<h3>Description</h3>
+
+<p>Most BLAS implementations are thread safe, but some verions of OpenBLAS, for example are not. This routne is a diagnostic helper function, which you will never need if you don't set <code>nthreads&gt;1</code>, and even then are unlikely to need.   
+</p>
+
+
+<h3>Usage</h3>
+
+<pre>
+blas.thread.test(n=1000,nt=4)
+</pre>
+
+
+<h3>Arguments</h3>
+
+<table summary="R argblock">
+<tr valign="top"><td><code>n</code></td>
+<td>
+<p>Number of iterations to run of parallel BLAS calling code.</p>
+</td></tr>
+<tr valign="top"><td><code>nt</code></td>
+<td>
+<p>Number of parallel threads to use</p>
+</td></tr>
+</table>
+
+
+<h3>Details</h3>
+
+<p>While single threaded OpenBLAS 0.2.20 was thread safe, versions 0.3.0-0.3.6 are not, and from version 0.3.7 thread safety of the single threaded OpenBLAS requires making it with the option <code>USE_LOCKING=1</code>. The reference BLAS is thread safe, as are MKL and ATLAS. This routine repeatedly calls the BLAS from multi-threaded code and is sufficient to detect the problem in single threaded OpenBLAS 0.3.x.
+</p>
+<p>A multi-threaded BLAS is often no faster than a single-threaded BLAS, while judicious use of threading in the code calling the BLAS can still deliver a modest speed improvement. For this reason it is often better to use a single threaded BLAS and the codenthreads options to <code><a href="bam.html">bam</a></code> or <code><a href="gam.html">gam</a></code>. For <code>bam(...,discrete=TRUE)</code> using several threads can be a substantial benefit, especially with the reference BLAS.
+</p>
+<p>The MKL BLAS is mutlithreaded by default. Under linux seting evironment variable <code>MKL_NUM_THREADS=1</code> before starting R gives single threaded operation. 
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p> Simon N. Wood <a href="mailto:simon.wood@r-project.org">simon.wood@r-project.org</a></p>
+
+<hr /><div style="text-align: center;">[Package <em>mgcv</em> version 1.8-31 <a href="00Index.html">Index</a>]</div>
+</body></html>

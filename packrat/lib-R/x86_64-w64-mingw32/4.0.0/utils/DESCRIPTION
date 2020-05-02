@@ -1,0 +1,11 @@
+Package: utils
+Version: 4.0.0
+Priority: base
+Title: The R Utils Package
+Author: R Core Team and contributors worldwide
+Maintainer: R Core Team <R-core@r-project.org>
+Description: R utility functions.
+License: Part of R 4.0.0
+Suggests: methods, xml2, commonmark
+NeedsCompilation: yes
+Built: R 4.0.0; x86_64-w64-mingw32; 2020-04-24 08:10:07 UTC; windows

@@ -1,0 +1,102 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><title>R: Deletion and rank one Cholesky factor update</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" type="text/css" href="R.css" />
+</head><body>
+
+<table width="100%" summary="page for choldrop {mgcv}"><tr><td>choldrop {mgcv}</td><td style="text-align: right;">R Documentation</td></tr></table>
+
+<h2>Deletion and rank one Cholesky factor update</h2>
+
+<h3>Description</h3>
+
+<p>Given a Cholesky factor, <code>R</code>, of a matrix, <code>A</code>, <code>choldrop</code> finds the Cholesky factor of <code>A[-k,-k]</code>,
+where <code>k</code> is an integer. <code>cholup</code> finds the factor of <i>A+uu'</i> (update) or <i>A-uu'</i> (downdate).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre>
+choldrop(R,k)
+cholup(R,u,up)
+</pre>
+
+
+<h3>Arguments</h3>
+
+<table summary="R argblock">
+<tr valign="top"><td><code>R</code></td>
+<td>
+<p>Cholesky factor of a matrix, <code>A</code>.</p>
+</td></tr>
+<tr valign="top"><td><code>k</code></td>
+<td>
+<p>row and column of <code>A</code> to drop.</p>
+</td></tr>
+<tr valign="top"><td><code>u</code></td>
+<td>
+<p>vector defining rank one update.</p>
+</td></tr>
+<tr valign="top"><td><code>up</code></td>
+<td>
+<p>if <code>TRUE</code> compute update, otherwise downdate.</p>
+</td></tr>
+</table>
+
+
+<h3>Details</h3>
+
+<p>First consider <code>choldrop</code>. If <code>R</code> is upper triangular then <code>t(R[,-k])%*%R[,-k] == A[-k,-k]</code>, but <code>R[,-k]</code> has elements on the first sub-diagonal, from its kth column onwards. To get from this to a triangular Cholesky factor of <code>A[-k,-k]</code> we can apply a sequence of Givens rotations from the left to eliminate the sub-diagonal elements. The routine does this. If <code>R</code> is a lower triangular factor then Givens rotations from the right are needed to remove the extra elements. If <code>n</code> is the dimension of <code>R</code> then the update has <i>O(n^2)</i> computational cost.
+</p>
+<p><code>cholup</code> (which assumes <code>R</code> is upper triangular) updates based on the observation that <i>R'R + uu' = [u,R'][u,R']' =  [u,R']Q'Q[u,R']'</i>, and therefore we can construct <i>Q</i> so that <i>Q[u,R']'=[0,R1']'</i>, where <i>R1</i> is the modified factor. <i>Q</i> is constructed from a sequence of Givens rotations in order to zero the elements of <i>u</i>. Downdating is similar except that hyperbolic rotations have to be used in place of Givens rotations &mdash; see Golub and van Loan (2013, section 6.5.4) for details. Downdating only works if  <i>A-uu'</i> is positive definite. Again the computational cost is <i>O(n^2)</i>.
+</p>
+<p>Note that the updates are vector oriented, and are hence not susceptible to speed up by use of an optimized BLAS. The updates are set up to be relatively Cache friendly, in that in the upper triangular case successive Givens rotations are stored for sequential application column-wise, rather than being applied row-wise as soon as they are computed. Even so, the upper triangular update is slightly slower than the lower triangular update. 
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p> Simon N. Wood <a href="mailto:simon.wood@r-project.org">simon.wood@r-project.org</a></p>
+
+
+<h3>References</h3>
+
+<p>Golub GH and CF Van Loan (2013) Matrix Computations (4th edition) Johns Hopkins
+</p>
+
+
+<h3>Examples</h3>
+
+<pre>
+  require(mgcv)
+  set.seed(0)
+  n &lt;- 6
+  A &lt;- crossprod(matrix(runif(n*n),n,n))
+  R0 &lt;- chol(A)
+  k &lt;- 3
+  Rd &lt;- choldrop(R0,k)
+  range(Rd-chol(A[-k,-k]))
+  Rd;chol(A[-k,-k])
+  
+  ## same but using lower triangular factor A = LL'
+  L &lt;- t(R0)
+  Ld &lt;- choldrop(L,k)
+  range(Ld-t(chol(A[-k,-k])))
+  Ld;t(chol(A[-k,-k]))
+
+  ## Rank one update example
+  u &lt;- runif(n)
+  R &lt;- cholup(R0,u,TRUE)
+  Ru &lt;- chol(A+u %*% t(u)) ## direct for comparison
+  R;Ru
+  range(R-Ru)
+
+  ## Downdate - just going back from R to R0
+  Rd &lt;-  cholup(R,u,FALSE)
+  R0;Rd
+  range(R-Ru)
+  
+</pre>
+
+<hr /><div style="text-align: center;">[Package <em>mgcv</em> version 1.8-31 <a href="00Index.html">Index</a>]</div>
+</body></html>

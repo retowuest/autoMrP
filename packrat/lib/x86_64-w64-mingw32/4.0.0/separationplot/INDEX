@@ -1,0 +1,5 @@
+separationplot          Generate a Separation Plot
+separationplot-package
+                        Separation Plot Package
+sp.categorical          Separation plots for variables with more than
+                        two outcome levels

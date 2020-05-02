@@ -1,0 +1,68 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><title>R: Level 5 fractional factorial designs</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" type="text/css" href="R.css" />
+</head><body>
+
+<table width="100%" summary="page for FFdes {mgcv}"><tr><td>FFdes {mgcv}</td><td style="text-align: right;">R Documentation</td></tr></table>
+
+<h2>Level 5 fractional factorial designs</h2>
+
+<h3>Description</h3>
+
+<p>Computes level 5 fractional factorial designs for up to 120 factors
+using the agorithm of Sanchez and Sanchez (2005), and optionally central composite designs.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre>
+FFdes(size=5,ccd=FALSE)
+</pre>
+
+
+<h3>Arguments</h3>
+
+<table summary="R argblock">
+<tr valign="top"><td><code>size</code></td>
+<td>
+<p>number of factors up to 120.</p>
+</td></tr>
+<tr valign="top"><td><code>ccd</code></td>
+<td>
+<p>if <code>TRUE</code>, adds points along each axis at the same distance from the origin as the points in the
+fractional factorial design, to create the outer points of a central composite design. Add central points to complete.</p>
+</td></tr>
+</table>
+
+
+<h3>Details</h3>
+
+<p>Basically a translation of the code provided in the appendix of Sanchez and Sanchez (2005). 
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p> Simon N. Wood <a href="mailto:simon.wood@r-project.org">simon.wood@r-project.org</a></p>
+
+
+<h3>References</h3>
+
+<p>Sanchez, S. M. &amp; Sanchez, P. J. (2005) Very large fractional factorial and central composite designs.
+ACM Transactions on Modeling and Computer Simulation. 15: 362-377
+</p>
+
+
+<h3>Examples</h3>
+
+<pre>
+  require(mgcv)
+  plot(rbind(0,FFdes(2,TRUE)),xlab="x",ylab="y",
+       col=c(2,1,1,1,1,4,4,4,4),pch=19,main="CCD")
+  FFdes(5)
+  FFdes(5,TRUE)
+</pre>
+
+<hr /><div style="text-align: center;">[Package <em>mgcv</em> version 1.8-31 <a href="00Index.html">Index</a>]</div>
+</body></html>

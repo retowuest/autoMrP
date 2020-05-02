@@ -1,0 +1,100 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><title>R: Summary Function</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" type="text/css" href="R.css" />
+</head><body>
+
+<table width="100%" summary="page for summary,FDatFitLogit-method {EBMAforecast}"><tr><td>summary,FDatFitLogit-method {EBMAforecast}</td><td style="text-align: right;">R Documentation</td></tr></table>
+
+<h2>Summary Function</h2>
+
+<h3>Description</h3>
+
+<p>This function summarizes the Ensemble models that have been fit previously by the user.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre>
+## S4 method for signature 'FDatFitLogit'
+summary(object, period = "calibration",
+  fitStatistics = c("brier", "auc", "perCorrect", "pre"), threshold = 0.5,
+  baseModel = 0, showCoefs = TRUE, ...)
+</pre>
+
+
+<h3>Arguments</h3>
+
+<table summary="R argblock">
+<tr valign="top"><td><code>object</code></td>
+<td>
+<p>An object of the subclass &quot;FDatFitLogit&quot; or &quot;FDatFitNormal&quot;</p>
+</td></tr>
+<tr valign="top"><td><code>period</code></td>
+<td>
+<p>The period for which the summary should be provided, either &quot;calibration&quot; or &quot;test&quot;.</p>
+</td></tr>
+<tr valign="top"><td><code>fitStatistics</code></td>
+<td>
+<p>A vector naming statistics that should be calculated.  Possible values for objects in the &quot;FDatFitLogit&quot; subclass include &quot;auc&quot;, &quot;brier&quot;, &quot;percCorrect&quot;, &quot;pre&quot;. Possible values for objects in the &quot;FDatFitNormal&quot; subclass include &quot;rmse&quot; and &quot;mae.&quot;  Additional metrics will be made available in a future release of this package.</p>
+</td></tr>
+<tr valign="top"><td><code>threshold</code></td>
+<td>
+<p>The threshold used to calculate when a &quot;positive&quot; prediction is made for a model.  Not used for objects of the &quot;FDatFitNormal&quot; subclass.</p>
+</td></tr>
+<tr valign="top"><td><code>baseModel</code></td>
+<td>
+<p>A vector containing predictions used to calculate proportional reduction of error (&quot;pre&quot;). Not used for objects of the &quot;FDatFitNormal&quot; subclass.</p>
+</td></tr>
+<tr valign="top"><td><code>showCoefs</code></td>
+<td>
+<p>A logical indicating whether model coefficients from the ensemble should be shown.</p>
+</td></tr>
+<tr valign="top"><td><code>...</code></td>
+<td>
+<p>Not implemented</p>
+</td></tr>
+</table>
+
+
+<h3>Value</h3>
+
+<p>A data object of the class 'SummaryForecastData' with the following slots:
+</p>
+<table summary="R valueblock">
+<tr valign="top"><td><code>summaryData</code></td>
+<td>
+<p>Under the default, the function produces a matrix containing one row for each model plus one row for the EBMA forecast.  The first column is always the model weights assigned to the component models.  The second and third columns display the model parameters for the transformation of the component models.  The remaining columns are the requested fit statistics for all models, as calculated by the <code>copareModels</code> function.  If <code>showCoefs=FALSE</code>, then the model parameters will not be shown.</p>
+</td></tr>
+</table>
+
+
+<h3>Author(s)</h3>
+
+<p>Michael D. Ward &lt;<a href="mailto:michael.d.ward@duke.edu">michael.d.ward@duke.edu</a>&gt; and Jacob M. Montgomery &lt;<a href="mailto:jacob.montgomery@wustl.edu">jacob.montgomery@wustl.edu</a>&gt; and Florian M. Hollenbach &lt;<a href="mailto:florian.hollenbach@tamu.edu">florian.hollenbach@tamu.edu</a>&gt;
+</p>
+
+
+<h3>Examples</h3>
+
+<pre>
+## Not run:  data(calibrationSample)
+
+data(testSample) 
+
+this.ForecastData &lt;- makeForecastData(.predCalibration=calibrationSample[,c("LMER", "SAE", "GLM")],
+.outcomeCalibration=calibrationSample[,"Insurgency"],.predTest=testSample[,c("LMER", "SAE", "GLM")],
+.outcomeTest=testSample[,"Insurgency"], .modelNames=c("LMER", "SAE", "GLM"))
+
+this.ensemble &lt;- calibrateEnsemble(this.ForecastData, model="logit", tol=0.001,exp=3)
+
+summary(this.ensemble, period="calibration") 
+
+summary(this.ensemble, period="test",showCoefs=FALSE)
+
+## End(Not run)
+
+</pre>
+
+<hr /><div style="text-align: center;">[Package <em>EBMAforecast</em> version 0.52 <a href="00Index.html">Index</a>]</div>
+</body></html>

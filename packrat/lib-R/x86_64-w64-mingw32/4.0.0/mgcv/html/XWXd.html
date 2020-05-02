@@ -1,0 +1,129 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><title>R: Internal functions for discretized model matrix handling</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" type="text/css" href="R.css" />
+</head><body>
+
+<table width="100%" summary="page for XWXd {mgcv}"><tr><td>XWXd {mgcv}</td><td style="text-align: right;">R Documentation</td></tr></table>
+
+<h2>Internal functions for discretized model matrix handling</h2>
+
+<h3>Description</h3>
+
+<p>Routines for computing with discretized model matrices as described in Wood et al. (2017) and Li and Wood (2019).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre>
+XWXd(X,w,k,ks,ts,dt,v,qc,nthreads=1,drop=NULL,ar.stop=-1,ar.row=-1,ar.w=-1,
+     lt=NULL,rt=NULL)
+XWyd(X,w,y,k,ks,ts,dt,v,qc,drop=NULL,ar.stop=-1,ar.row=-1,ar.w=-1,lt=NULL)
+Xbd(X,beta,k,ks,ts,dt,v,qc,drop=NULL,lt=NULL)
+diagXVXd(X,V,k,ks,ts,dt,v,qc,drop=NULL,nthreads=1,lt=NULL,rt=NULL)
+</pre>
+
+
+<h3>Arguments</h3>
+
+<table summary="R argblock">
+<tr valign="top"><td><code>X</code></td>
+<td>
+<p>A list of the matrices containing the unique rows of model matrices for terms of a full model matrix, or the model matrices of the terms margins.
+if term subsetting arguments <code>lt</code> and <code>rt</code> are non-NULL then this requires an <code>"lpip"</code> attribute: see details.</p>
+</td></tr>
+<tr valign="top"><td><code>w</code></td>
+<td>
+<p>An n-vector of weights</p>
+</td></tr>
+<tr valign="top"><td><code>y</code></td>
+<td>
+<p>n-vector of data.</p>
+</td></tr>
+<tr valign="top"><td><code>beta</code></td>
+<td>
+<p>coefficient vector.</p>
+</td></tr>
+<tr valign="top"><td><code>k</code></td>
+<td>
+<p>A matrix whose columns are index n-vectors each selecting the rows of an X[[i]] required to create the full matrix.</p>
+</td></tr>
+<tr valign="top"><td><code>ks</code></td>
+<td>
+<p>The ith term has index vectors <code>ks[i,1]:(ks[i,2]-1)</code>. The corresponing full model matrices are summed over.</p>
+</td></tr> 
+<tr valign="top"><td><code>ts</code></td>
+<td>
+<p>The element of <code>X</code> at which each model term starts.</p>
+</td></tr>
+<tr valign="top"><td><code>dt</code></td>
+<td>
+<p>How many elements of <code>X</code> contribute to each term.</p>
+</td></tr>
+<tr valign="top"><td><code>v</code></td>
+<td>
+<p><code>v[[i]]</code> is Householder vector for ith term, if <code>qc[i]&gt;0</code>.</p>
+</td></tr>
+<tr valign="top"><td><code>qc</code></td>
+<td>
+<p>if <code>qc[i]&gt;0</code> then term has a constraint.</p>
+</td></tr>
+<tr valign="top"><td><code>nthreads</code></td>
+<td>
+<p>number of threads to use</p>
+</td></tr>
+<tr valign="top"><td><code>drop</code></td>
+<td>
+<p>list of columns of model matrix/parameters to drop</p>
+</td></tr>
+<tr valign="top"><td><code>ar.stop</code></td>
+<td>
+<p>Negative to ignore. Otherwise sum rows <code>(ar.stop[i-1]+1):ar.stop[i]</code> of the rows selected by <code>ar.row</code> and weighted by <code>ar.w</code> to get ith row of model matrix to use.</p>
+</td></tr>
+<tr valign="top"><td><code>ar.row</code></td>
+<td>
+<p>extract these rows...</p>
+</td></tr>
+<tr valign="top"><td><code>ar.w</code></td>
+<td>
+<p>weight by these weights, and sum up according to <code>ar.stop</code>. Used to implement AR models.</p>
+</td></tr>
+<tr valign="top"><td><code>lt</code></td>
+<td>
+<p>use only columns of X corresponding to these model matrix terms (for left hand <code>X</code> in <code>XWXd</code>).</p>
+</td></tr>
+<tr valign="top"><td><code>rt</code></td>
+<td>
+<p>as <code>lt</code> for right hand <code>X</code>.</p>
+</td></tr>
+<tr valign="top"><td><code>V</code></td>
+<td>
+<p>Coefficient covariance matrix.</p>
+</td></tr>
+</table>
+
+
+<h3>Details</h3>
+
+<p>These functions are really intended to be internal, but are exported so that they can be used in the initialization code of families without problem. They are primarily used by <code><a href="bam.html">bam</a></code> to implement the methods given in the references. <code>XWXd</code> produces <i>X'WX</i>, <code>XWy</code> produces <i>X'Wy</i>, <code>Xbd</code> produces <i>Xb</i> and <i>diagXVXd</i> produces the diagonal of <i>XVX'</i>.
+</p>
+<p>The <code>"lpip"</code> attribute of <code>X</code> is a list of the coefficient indices for each term. Required if subsetting via <code>lt</code> and <code>rt</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p> Simon N. Wood <a href="mailto:simon.wood@r-project.org">simon.wood@r-project.org</a></p>
+
+
+<h3>References</h3>
+
+<p>Wood, S.N., Li, Z., Shaddick, G. &amp; Augustin N.H. (2017) Generalized additive models for gigadata: modelling the UK black smoke network daily data. Journal of the American Statistical Association. 112(519):1199-1210
+<a href="http://dx.doi.org/10.1080/01621459.2016.1195744">http://dx.doi.org/10.1080/01621459.2016.1195744</a>
+</p>
+<p>Li, Z &amp; S.N. Wood (2019) Faster model matrix crossproducts for large generalized linear models with discretized covariates. Statistics and Computing.
+<a href="https://doi.org/10.1007/s11222-019-09864-2">https://doi.org/10.1007/s11222-019-09864-2</a>
+</p>
+
+<hr /><div style="text-align: center;">[Package <em>mgcv</em> version 1.8-31 <a href="00Index.html">Index</a>]</div>
+</body></html>

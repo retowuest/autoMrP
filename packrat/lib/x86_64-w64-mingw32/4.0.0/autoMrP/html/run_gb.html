@@ -1,0 +1,160 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><title>R: Apply gradient boosting classifier to MrP.</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" type="text/css" href="R.css" />
+</head><body>
+
+<table width="100%" summary="page for run_gb {autoMrP}"><tr><td>run_gb {autoMrP}</td><td style="text-align: right;">R Documentation</td></tr></table>
+
+<h2>Apply gradient boosting classifier to MrP.</h2>
+
+<h3>Description</h3>
+
+<p><code>run_gb</code> is a wrapper function that applies the gradient boosting
+classifier to data provided by the user, evaluates prediction performance,
+and chooses the best-performing model.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre>
+run_gb(
+  y,
+  L1.x,
+  L2.x,
+  L2.unit,
+  L2.reg,
+  loss.unit,
+  loss.fun,
+  interaction.depth,
+  shrinkage,
+  n.trees.init,
+  n.trees.increase,
+  n.trees.max,
+  n.iter,
+  n.minobsinnode,
+  data,
+  verbose
+)
+</pre>
+
+
+<h3>Arguments</h3>
+
+<table summary="R argblock">
+<tr valign="top"><td><code>y</code></td>
+<td>
+<p>Outcome variable. A character scalar containing the column name of
+the outcome variable in <code>survey</code>.</p>
+</td></tr>
+<tr valign="top"><td><code>L1.x</code></td>
+<td>
+<p>Individual-level covariates. A character vector containing the
+column names of the individual-level variables in <code>survey</code> and
+<code>census</code> used to predict outcome <code>y</code>. Note that geographic unit
+is specified in argument <code>L2.unit</code>.</p>
+</td></tr>
+<tr valign="top"><td><code>L2.x</code></td>
+<td>
+<p>Context-level covariates. A character vector containing the
+column names of the context-level variables in <code>survey</code> and
+<code>census</code> used to predict outcome <code>y</code>.</p>
+</td></tr>
+<tr valign="top"><td><code>L2.unit</code></td>
+<td>
+<p>Geographic unit. A character scalar containing the column
+name of the geographic unit in <code>survey</code> and <code>census</code> at which
+outcomes should be aggregated.</p>
+</td></tr>
+<tr valign="top"><td><code>L2.reg</code></td>
+<td>
+<p>Geographic region. A character scalar containing the column
+name of the geographic region in <code>survey</code> and <code>census</code> by which
+geographic units are grouped (<code>L2.unit</code> must be nested within
+<code>L2.reg</code>). Default is <code>NULL</code>.</p>
+</td></tr>
+<tr valign="top"><td><code>loss.unit</code></td>
+<td>
+<p>Loss function unit. A character-valued scalar indicating
+whether performance loss should be evaluated at the level of individual
+respondents (<code>individuals</code>) or geographic units (<code>L2 units</code>).
+Default is <code>individuals</code>.</p>
+</td></tr>
+<tr valign="top"><td><code>loss.fun</code></td>
+<td>
+<p>Loss function. A character-valued scalar indicating whether
+prediction loss should be measured by the mean squared error (<code>MSE</code>)
+or the mean absolute error (<code>MAE</code>). Default is <code>MSE</code>.</p>
+</td></tr>
+<tr valign="top"><td><code>interaction.depth</code></td>
+<td>
+<p>GB interaction depth. An integer-valued vector
+whose values specify the interaction depth of GB. The interaction depth
+defines the maximum depth of each tree grown (i.e., the maximum level of
+variable interactions). Default is <code>c(1, 2, 3)</code>.</p>
+</td></tr>
+<tr valign="top"><td><code>shrinkage</code></td>
+<td>
+<p>GB learning rate. A numeric vector whose values specify the
+learning rate or step-size reduction of GB. Values between <i>0.001</i>
+and <i>0.1</i> usually work, but a smaller learning rate typically requires
+more trees. Default is <code>c(0.04, 0.01, 0.008, 0.005, 0.001)</code>.</p>
+</td></tr>
+<tr valign="top"><td><code>n.trees.init</code></td>
+<td>
+<p>GB initial total number of trees. An integer-valued
+scalar specifying the initial number of total trees to fit by GB. Default
+is <i>50</i>.</p>
+</td></tr>
+<tr valign="top"><td><code>n.trees.increase</code></td>
+<td>
+<p>GB increase in total number of trees. An
+integer-valued scalar specifying by how many trees the total number of
+trees to fit should be increased (until <code>n.trees.max</code> is reached)
+or an integer-valued vector of length <code>length(shrinkage)</code> with each
+of its values being associated with a learning rate in <code>shrinkage</code>.
+Default is <i>50</i>.</p>
+</td></tr>
+<tr valign="top"><td><code>n.trees.max</code></td>
+<td>
+<p>GB maximum number of trees. An integer-valued scalar
+specifying the maximum number of trees to fit by GB or an integer-valued
+vector of length <code>length(shrinkage)</code> with each of its values being
+associated with a learning rate and an increase in the total number of
+trees. Default is <i>1000</i>.</p>
+</td></tr>
+<tr valign="top"><td><code>n.iter</code></td>
+<td>
+<p>GB number of iterations without improvement. A numeric scalar
+specifying the maximum number of iterations without performance
+improvement the algorithm runs before stopping. Default is <i>70</i>.</p>
+</td></tr>
+<tr valign="top"><td><code>n.minobsinnode</code></td>
+<td>
+<p>GB minimum number of observations in the terminal
+nodes. An integer-valued scalar specifying the minimum number of
+observations that each terminal node of the trees must contain. Default is
+<i>5</i>.</p>
+</td></tr>
+<tr valign="top"><td><code>data</code></td>
+<td>
+<p>Data for cross-validation. A <code>list</code> of <i>k</i>
+<code>data.frames</code>, one for each fold to be used in <i>k</i>-fold
+cross-validation.</p>
+</td></tr>
+<tr valign="top"><td><code>verbose</code></td>
+<td>
+<p>Verbose output. A logical argument indicating whether or not
+verbose output should be printed. Default is <code>TRUE</code>.</p>
+</td></tr>
+</table>
+
+
+<h3>Examples</h3>
+
+<pre>
+#not_yet
+</pre>
+
+<hr /><div style="text-align: center;">[Package <em>autoMrP</em> version 0.0.0.9000 <a href="00Index.html">Index</a>]</div>
+</body></html>

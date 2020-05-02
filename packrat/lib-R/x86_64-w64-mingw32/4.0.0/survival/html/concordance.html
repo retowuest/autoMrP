@@ -1,0 +1,247 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><title>R: Compute the concordance statistic for data or a model</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" type="text/css" href="R.css" />
+</head><body>
+
+<table width="100%" summary="page for concordance {survival}"><tr><td>concordance {survival}</td><td style="text-align: right;">R Documentation</td></tr></table>
+
+<h2>Compute the concordance statistic for data or a model</h2>
+
+<h3>Description</h3>
+
+<p>The concordance statistic compute the agreement between an observed
+response and a predictor.  It is closely related to Kendall's tau-a and
+tau-b, Goodman's gamma, and Somers' d, all of which can also be
+calculated from the results of this function.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre>
+concordance(object, ...)
+## S3 method for class 'formula'
+concordance(object, data, weights, subset, na.action,
+  cluster, ymin, ymax, timewt= c("n", "S", "S/G", "n/G", "n/G2", "I"),
+  influence=0, ranks = FALSE, reverse=FALSE, timefix=TRUE, keepstrata=10, ...)
+## S3 method for class 'lm'
+concordance(object, ..., newdata, cluster, ymin, ymax,
+  influence=0, ranks=FALSE, timefix=TRUE, keepstrata=10)
+## S3 method for class 'coxph'
+concordance(object, ..., newdata, cluster, ymin, ymax,
+  timewt= c("n", "S", "S/G", "n/G", "n/G2", "I"), influence=0,
+  ranks=FALSE, timefix=FALSE, keepstrata=10)
+## S3 method for class 'survreg'
+concordance(object, ..., newdata, cluster, ymin, ymax,
+  timewt= c("n", "S", "S/G", "n/G", "n/G2", "I"), influence=0,
+  ranks=FALSE, timefix=FALSE, keepstrata=10)
+</pre>
+
+
+<h3>Arguments</h3>
+
+<table summary="R argblock">
+<tr valign="top"><td><code>object</code></td>
+<td>
+<p>a fitted model or a formula.  The formula should be of
+the form <code>y ~x</code>  or <code>y ~ x + strata(z)</code> with a single
+numeric or survival response and a single predictor.
+Counts of concordant, discordant and tied pairs 
+are computed separately per stratum, and then added.
+</p>
+</td></tr>
+<tr valign="top"><td><code>data</code></td>
+<td>
+
+<p>a data.frame in which to interpret the variables named in 
+the <code>formula</code>, or in the <code>subset</code> and the <code>weights</code>
+argument. Only applicable if <code>object</code> is a formula.
+</p>
+</td></tr>
+<tr valign="top"><td><code>weights</code></td>
+<td>
+
+<p>optional vector of case weights.
+Only applicable if <code>object</code> is a formula.
+</p>
+</td></tr>
+<tr valign="top"><td><code>subset</code></td>
+<td>
+
+<p>expression indicating which subset of the rows of data should be used in 
+the fit.   Only applicable if <code>object</code> is a formula.
+</p>
+</td></tr>
+<tr valign="top"><td><code>na.action</code></td>
+<td>
+
+<p>a missing-data filter function.  This is applied to the model.frame
+after any subset argument has been used.  Default is
+<code>options()\$na.action</code>. Only applicable if <code>object</code> is a formula.
+</p>
+</td></tr>
+<tr valign="top"><td><code>...</code></td>
+<td>
+<p>multiple fitted models are allowed.  Only applicable if
+<code>object</code> is a model object.</p>
+</td></tr>
+<tr valign="top"><td><code>newdata</code></td>
+<td>
+<p>optional, a new data frame in which to evaluate (but
+not refit) the models</p>
+</td></tr>
+<tr valign="top"><td><code>cluster</code></td>
+<td>
+<p>optional grouping vector for calculating the robust
+variance</p>
+</td></tr>
+<tr valign="top"><td><code>ymin, ymax</code></td>
+<td>
+<p>compute the concordance over the restricted range
+ymin &lt;= y &lt;= ymax.  (For survival data this is a time range.)
+</p>
+</td></tr>
+<tr valign="top"><td><code>timewt</code></td>
+<td>
+<p>the weighting to be applied.  The overall statistic is a
+weighted mean over event times.
+</p>
+</td></tr>
+<tr valign="top"><td><code>influence</code></td>
+<td>
+<p>1= return the dfbeta vector, 2= return the full
+influence matrix, 3 = return both
+</p>
+</td></tr>
+<tr valign="top"><td><code>ranks</code></td>
+<td>
+<p>if TRUE, return a data frame containing the
+individual ranks that make up the overall score.  
+</p>
+</td></tr>
+<tr valign="top"><td><code>reverse</code></td>
+<td>
+<p>if TRUE then assume that larger <code>x</code> values predict
+smaller response values <code>y</code>; a proportional hazards model is
+the common example of this. </p>
+</td></tr>
+<tr valign="top"><td><code>timefix</code></td>
+<td>
+<p>if the response is a Surv object, correct for possible
+rounding error; otherwise this argument has no effect.  See the
+vignette on tied times for more explanation.  For the coxph and
+survreg methods this issue will have already been addressed in the
+parent routine, so should not be revisited.
+</p>
+</td></tr>
+<tr valign="top"><td><code>keepstrata</code></td>
+<td>
+<p>either TRUE, FALSE, or an integer value.
+Computations are always done within stratum, then added. If the
+total number of strata greater than <code>keepstrata</code>, or
+<code>keepstrata=FALSE</code>, those subtotals are not kept in the output.
+</p>
+</td></tr>
+</table>
+
+
+<h3>Details</h3>
+
+<p>At each event time, compute the rank of the subject who had the
+event as compared to all others with a longer survival, where the
+rank is value between 0 and 1.  The concordance is a weighted mean
+of these values, determined by the <code>timewt</code> option.
+For uncensored data each unique response value is compared to all
+those which are larger.
+</p>
+<p>Using the default value for <code>timewt</code>, this gives the area
+under the receiver operating curve (AUC) for a binary response,
+Harrell's c-statistic when the response is a survival time,
+and (d+1)/2 when y is continuous, where d is Somers' d.
+</p>
+<p>When the number of strata is very large, such as in a conditional
+logistic regression for instance (<code>clogit</code> function), a much
+faster computation is available when the individual strata results
+are not retained.  In the more general case the <code>keepstrata = 10</code>
+default simply keeps the printout managable.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class <code>concordance</code> containing the following
+components:
+</p>
+<table summary="R valueblock">
+<tr valign="top"><td><code>concordance</code></td>
+<td>
+<p>the estimated concordance value or values</p>
+</td></tr>
+<tr valign="top"><td><code>count</code></td>
+<td>
+<p>a vector containing the number of concordant pairs,
+discordant, tied on x but not y, tied on y but not x, and tied on
+both x and y</p>
+</td></tr>
+<tr valign="top"><td><code>n</code></td>
+<td>
+<p>the number of observations</p>
+</td></tr>
+<tr valign="top"><td><code>var</code></td>
+<td>
+<p>a vector containing the estimated variance of the
+concordance based on the infinitesimal jackknife (IJ) method.
+If there are multiple models it contains the estimtated
+variance/covariance matrix.</p>
+</td></tr>
+<tr valign="top"><td><code>cvar</code></td>
+<td>
+<p>a vector containing the estimated variance(s) of the
+concordance values, based on the variance formula for the associated
+score test from a proportional hazards model.  (This was the primary
+variance used in the <code>survConcordance</code> function.)</p>
+</td></tr>
+<tr valign="top"><td><code>dfbeta</code></td>
+<td>
+<p>optional, the vector of leverage estimates for the
+concordance</p>
+</td></tr>
+<tr valign="top"><td><code>influence</code></td>
+<td>
+<p>optional, the matrix of leverage values for each of
+the counts, one row per observation</p>
+</td></tr>
+<tr valign="top"><td><code>ranks</code></td>
+<td>
+<p>optional, a data frame containing the Somers' d rank
+at each event time, along with the time weight, case weight of the
+observation with an event, and variance (contribution to the
+proportional hazards model information matrix).
+A weighted mean of the ranks equals Somer's d.</p>
+</td></tr>
+</table>
+
+
+<h3>Author(s)</h3>
+
+<p>Terry Therneau</p>
+
+
+<h3>See Also</h3>
+
+<p><code><a href="coxph.html">coxph</a></code></p>
+
+
+<h3>Examples</h3>
+
+<pre>
+fit1 &lt;- coxph(Surv(ptime, pstat) ~ age + sex + mspike, mgus2)
+concordance(fit1, timewt="n") 
+
+# logistic regression
+fit2 &lt;- glm(pstat ~ age + sex + mspike, binomial, data= mgus2)
+concordance(fit2)  # equal to the AUC
+</pre>
+
+<hr /><div style="text-align: center;">[Package <em>survival</em> version 3.1-12 <a href="00Index.html">Index</a>]</div>
+</body></html>

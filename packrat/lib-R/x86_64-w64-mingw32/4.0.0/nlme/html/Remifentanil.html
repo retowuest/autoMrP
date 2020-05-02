@@ -1,0 +1,129 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><title>R: Pharmacokinetics of Remifentanil</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" type="text/css" href="R.css" />
+</head><body>
+
+<table width="100%" summary="page for Remifentanil {nlme}"><tr><td>Remifentanil {nlme}</td><td style="text-align: right;">R Documentation</td></tr></table>
+
+<h2>Pharmacokinetics of Remifentanil</h2>
+
+<h3>Description</h3>
+
+<p>Intravenous infusion of remifentanil (a strong analgesic) in different
+rates over varying time periods was applied to a total of 65 patients.
+Concentration measurements of remifentanil were taken along with several
+covariates resulting in the <code>Remifentanil</code> data frame with 2107 rows
+and 12 columns.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre>
+data("Remifentanil", package = "nlme")
+</pre>
+
+
+<h3>Format</h3>
+
+<p>This data frame (of class <code>"<a href="groupedData.html">groupedData</a>"</code>, specifically
+<code>"nfnGroupedData"</code>) contains the following columns:
+</p>
+
+<dl>
+<dt><code>ID</code>:</dt><dd><p>numerical (patient) IDs.</p>
+</dd>
+<dt><code>Subject</code>:</dt><dd><p>an <code><a href="../../base/html/factor.html">ordered</a></code> factor with 65 levels (of the
+<code>ID</code>s): <code>30</code> &lt; <code>21</code> &lt; <code>25</code> &lt; <code>23</code> &lt;
+<code>29</code> &lt; ... ... &lt; <code>36</code> &lt; <code>6</code> &lt; <code>5</code> &lt; <code>10</code> &lt; <code>9</code>.</p>
+</dd>
+<dt><code>Time</code>:</dt><dd><p>time from beginning of infusion in minutes (<code><a href="../../base/html/numeric.html">numeric</a></code>).</p>
+</dd>
+<dt><code>conc</code>:</dt><dd><p>remifentanil concentration in [ng / ml] (numeric).</p>
+</dd>
+<dt><code>Rate</code>:</dt><dd><p>infusion rate in [µg / min].</p>
+</dd>
+<dt><code>Amt</code>:</dt><dd><p>amount of remifentanil given in the current time interval in [µg].</p>
+</dd>
+<dt><code>Age</code>:</dt><dd><p>age of the patient in years.</p>
+</dd>
+<dt><code>Sex</code>:</dt><dd><p>gender of the patient, a <code><a href="../../base/html/factor.html">factor</a></code> with levels
+<code>Female</code> and <code>Male</code>.</p>
+</dd>
+<dt><code>Ht</code>:</dt><dd><p>height of the patient in cm.</p>
+</dd>
+<dt><code>Wt</code>:</dt><dd><p>weight of the patient in kg.</p>
+</dd>
+<dt><code>BSA</code>:</dt><dd><p>body surface area (DuBois and DuBois 1916): <i>
+	BSA := Wt^0.425      *  Ht^0.725      *  0.007184</i>.</p>
+</dd>
+<dt><code>LBM</code>:</dt><dd><p>lean body mass (James 1976), with slightly different
+formula for
+men <i>LBM_m := 1.1  Wt - 128 (Wt/Ht)^2</i>, and
+women <i>LBM_f := 1.07 Wt - 148 (Wt/Ht)^2</i>.</p>
+</dd>
+</dl>
+
+
+
+<h3>Author(s)</h3>
+
+<p>of this help page: Niels Hagenbuch and Martin Maechler, SfS ETH Zurich.</p>
+
+
+<h3>Source</h3>
+
+<p>Pinheiro, J. C. and Bates, D. M. (2000).
+<em>Mixed-Effects Models in S and S-PLUS</em>, Springer, New York.
+</p>
+
+
+<h3>References</h3>
+
+<p>Minto CF, Schnider TW, Egan TD, Youngs E, Lemmens HJM, Gambus PL, Billard
+V, Hoke JF, Moore KHP, Hermann DJ, Muir KT, Mandema JW, Shafer SL (1997).
+Influence of age and gender on the pharmacokinetics and pharmacodynamics
+of remifentanil: I. Model development.
+<em>Anesthesiology</em> <b>86</b> 1, 10&ndash;23.
+<a href="https://anesthesiology.pubs.asahq.org/article.aspx?articleid=2028700">https://anesthesiology.pubs.asahq.org/article.aspx?articleid=2028700</a>
+</p>
+<p>Charles F. Minto, Thomas W. Schnider and Steven L. Shafer (1997).
+Pharmacokinetics and Pharmacodynamics of Remifentanil: II. Model Application.
+<em>Anesthesiology</em> <b>86</b> 1, 24&ndash;33.
+<a href="https://anesthesiology.pubs.asahq.org/article.aspx?articleid=2028898">https://anesthesiology.pubs.asahq.org/article.aspx?articleid=2028898</a>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre>
+plot(Remifentanil, type = "l", lwd = 2) # shows the 65 patients' remi profiles
+
+## The same on  log-log  scale  (*more* sensible for modeling ?):
+plot(Remifentanil, type = "l", lwd = 2, scales = list(log=TRUE))
+
+str(Remifentanil)
+summary(Remifentanil)
+
+plot(xtabs(~Subject, Remifentanil))
+summary(unclass(table(Remifentanil$Subject)))
+## between 20 and 54 measurements per patient (median: 24; mean: 32.42)
+
+## Only first measurement of each patient :
+dim(Remi.1 &lt;- Remifentanil[!duplicated(Remifentanil[,"ID"]),]) #  65 x 12
+
+LBMfn &lt;- function(Wt, Ht, Sex) ifelse(Sex == "Female",
+                                        1.07 * Wt - 148*(Wt/Ht)^2,
+                                        1.1  * Wt - 128*(Wt/Ht)^2)
+with(Remi.1,
+    stopifnot(all.equal(BSA, Wt^{0.425} * Ht^{0.725} * 0.007184, tol = 1.5e-5),
+              all.equal(LBM, LBMfn(Wt, Ht, Sex),                 tol = 7e-7)
+))
+
+## Rate: typically  3 µg / kg body weight, but :
+sunflowerplot(Rate ~ Wt, Remifentanil)
+abline(0,3, lty=2, col=adjustcolor("black", 0.5))
+</pre>
+
+<hr /><div style="text-align: center;">[Package <em>nlme</em> version 3.1-147 <a href="00Index.html">Index</a>]</div>
+</body></html>

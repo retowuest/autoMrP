@@ -1,0 +1,183 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><title>R: GAM Integrated Nested Laplace Approximation Newton Enhanced</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" type="text/css" href="R.css" />
+</head><body>
+
+<table width="100%" summary="page for ginla {mgcv}"><tr><td>ginla {mgcv}</td><td style="text-align: right;">R Documentation</td></tr></table>
+
+<h2>GAM Integrated Nested Laplace Approximation Newton Enhanced</h2>
+
+<h3>Description</h3>
+
+<p>Apply Integrated Nested Laplace Approximation (INLA, Rue et al. 2009) to models estimable by <code><a href="gam.html">gam</a></code> or <code><a href="bam.html">bam</a></code>, using the INLA variant described in Wood (2019). Produces marginal posterior densities for each coefficient, selected coefficients or linear transformations of the coefficient vector. 
+</p>
+
+
+<h3>Usage</h3>
+
+<pre>
+ginla(G,A=NULL,nk=16,nb=100,J=1,interactive=FALSE,int=0,approx=0)
+</pre>
+
+
+<h3>Arguments</h3>
+
+<table summary="R argblock">
+<tr valign="top"><td><code>G</code></td>
+<td>
+<p>A pre-fit gam object, as produced by <code>gam(...,fit=FALSE)</code> or <code>bam(...,discrete=TRUE,fit=FALSE)</code>.</p>
+</td></tr>
+<tr valign="top"><td><code>A</code></td>
+<td>
+<p>Either a matrix of transforms of the coefficients that are of interest, or an array of indices of the parameters of interest. If <code>NULL</code> then distributions are produced for all coefficients.</p>
+</td></tr>
+<tr valign="top"><td><code>nk</code></td>
+<td>
+<p>Number of values of each coefficient at which to evaluate its log marginal posterior density. These points are then spline interpolated.</p>
+</td></tr>
+<tr valign="top"><td><code>nb</code></td>
+<td>
+<p>Number of points at which to evaluate posterior density of coefficients for returning as a gridded function.</p>
+</td></tr>
+<tr valign="top"><td><code>J</code></td>
+<td>
+<p>How many determinant updating steps to take in the log determinant approximation step. Not recommended to increase this. </p>
+</td></tr>
+<tr valign="top"><td><code>interactive</code></td>
+<td>
+<p>If this is <code>&gt;0</code> or <code>TRUE</code> then every approximate posterior is plotted in red, overlaid on the simple Gaussian approximate posterior. If <code>2</code> then waits for user to press return between each plot. Useful for judging whether anything is gained by using INLA approach. </p>
+</td></tr>
+<tr valign="top"><td><code>int</code></td>
+<td>
+<p>0 to skip integration and just use the posterior modal smoothing parameter. &gt;0 for integration using the CCD approach proposed in Rue et al. (2009).</p>
+</td></tr>
+<tr valign="top"><td><code>approx</code></td>
+<td>
+<p>0 for full approximation; 1 to update Hessian, but use approximate modes; 2 as 1 and assume constant Hessian. See details.</p>
+</td></tr>
+</table>
+
+
+<h3>Details</h3>
+
+<p>Let <i>b</i>, <i>h</i> and <i>y</i> denote the model coefficients, hyperparameters/smoothing parameters and response data, respectively. In principle, INLA employs Laplace approximations for <i>p(b_i|h,y)</i> and <i>p(h|y)</i> and then obtains the marginal posterior distribution <i>p(b_i|y)</i> by intergrating the approximations to <i>p(b_i|h,y)p(h|y)</i> w.r.t <i>h</i> (marginals for the hyperparameters can also be produced). In practice the Laplace approximation for <i>p(b_i|h,y)</i> is too expensive to compute for each <i>b_i</i> and must itself be approximated. To this end, there are two quantities that have to be computed: the posterior mode <i>b*|b_i</i> and the determinant of the Hessian of the joint log density <i>log p(b,h,y)</i> w.r.t. <i>b</i> at the mode. Rue et al. (2009) originally approximated the posterior conditional mode by the conditional mode implied by a simple Gaussian approximation to the posterior <i>p(b|y)</i>. They then approximated the log determinant of the Hessian as a function of <i>b_i</i> using a first order Taylor expansion, which is cheap to compute for the sparse model representaiton that they use, but not when using the dense low rank basis expansions used by <code><a href="gam.html">gam</a></code>. They also offer a more expensive alternative approximation based on computing the log determiannt with respect only to those elements of <i>b</i> with sufficiently high correlation with <i>b_i</i> according to the simple Gaussian posterior approximation: efficiency again seems to rest on sparsity. Wood (2018) suggests computing the required posterior modes exactly, and basing the log determinant approximation on a BFGS update of the Hessian at the unconditional model. The latter is efficient with or without sparsity, whereas the former is a &lsquo;for free&rsquo; improvement. Both steps are efficient because it is cheap to obtain the Cholesky factor of <i>H[-i,-i]</i> from that of <i>H</i> - see <code><a href="chol.down.html">choldrop</a></code>. This is the approach taken by this routine.
+</p>
+<p>The <code>approx</code> argument allows two further approximations to speed up computations. For <code>approx==1</code> the exact posterior conditional modes are not used, but instead the conditional modes implied by the simple Gaussian posterior approximation. For <code>approx==2</code> the same approximation is used for the modes and the Hessian is assumed constant. The latter is quite fast as no log joint density gradient evaluations are required.  
+</p>
+<p>Note that for many models the INLA estimates are very close to the usual Gaussian approximation to the posterior, the <code>interactive</code> argument is useful for investigating this issue.
+</p>
+<p><code><a href="bam.html">bam</a></code> models are only supported with the <code>disrete=TRUE</code> option. The <code>discrete=FALSE</code> approach would be too inefficient. AR1 models are not supported (related arguments are simply ignored). 
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with elements <code>beta</code> and <code>density</code>, both of which are matrices. Each row relates to one coefficient (or linear coefficient combination) of interest. Both matrices have <code>nb</code> columns. If <code>int!=0</code> then a further element <code>reml</code> gives the integration weights used in the CCD integration, with the central point weight given first.  
+</p>
+
+
+<h3>WARNINGS</h3>
+
+<p>This routine is still somewhat experimental, so details are liable to change. Also currently not all steps are optimally efficient.
+</p>
+<p>The routine is written for relatively expert users.
+</p>
+<p><code>ginla</code> is not designed to deal with rank deficient models.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p> Simon N. Wood <a href="mailto:simon.wood@r-project.org">simon.wood@r-project.org</a></p>
+
+
+<h3>References</h3>
+
+<p>Rue, H, Martino, S. &amp; Chopin, N. (2009) Approximate Bayesian inference for latent Gaussian models by using integrated nested Laplace approximations (with discussion). Journal of the Royal Statistical Society, Series B.  71: 319-392.
+</p>
+<p>Wood (2019) Simplified Integrated Laplace Approximation. In press Biometrika. 
+</p>
+
+
+<h3>Examples</h3>
+
+<pre>
+  require(mgcv); require(MASS)
+
+  ## example using a scale location model for the motorcycle data. A simple plotting
+  ## routine is produced first...
+
+  plot.inla &lt;- function(x,inla,k=1,levels=c(.025,.1,.5,.9,.975),
+               lcol = c(2,4,4,4,2),lwd = c(1,1,2,1,1),lty=c(1,1,1,1,1),
+	       xlab="x",ylab="y",cex.lab=1.5) {
+    ## a simple effect plotter, when distributions of function values of
+    ## 1D smooths have been computed
+    require(splines)
+    p &lt;- length(x) 
+    betaq &lt;- matrix(0,length(levels),p) ## storage for beta quantiles 
+    for (i in 1:p) { ## work through x and betas
+      j &lt;- i + k - 1
+      p &lt;- cumsum(inla$density[j,])*(inla$beta[j,2]-inla$beta[j,1])
+      ## getting quantiles of function values...
+      betaq[,i] &lt;- approx(p,y=inla$beta[j,],levels)$y
+    }
+    xg &lt;- seq(min(x),max(x),length=200)
+    ylim &lt;- range(betaq)
+    ylim &lt;- 1.1*(ylim-mean(ylim))+mean(ylim)
+    for (j in 1:length(levels)) { ## plot the quantiles
+      din &lt;- interpSpline(x,betaq[j,])
+      if (j==1) {
+        plot(xg,predict(din,xg)$y,ylim=ylim,type="l",col=lcol[j],
+             xlab=xlab,ylab=ylab,lwd=lwd[j],cex.lab=1.5,lty=lty[j])
+      } else lines(xg,predict(din,xg)$y,col=lcol[j],lwd=lwd[j],lty=lty[j])
+    }
+  } ## plot.inla
+
+  ## set up the model with a `gam' call...
+
+  G &lt;- gam(list(accel~s(times,k=20,bs="ad"),~s(times)),
+            data=mcycle,family=gaulss(),fit=FALSE)
+  b &lt;- gam(G=G,method="REML") ## regular GAM fit for comparison
+
+  ## Now use ginla to get posteriors of estimated effect values
+  ## at evenly spaced times. Create A matrix for this...
+  
+  rat &lt;- range(mcycle$times)
+  pd0 &lt;- data.frame(times=seq(rat[1],rat[2],length=20))
+  X0 &lt;- predict(b,newdata=pd0,type="lpmatrix")
+  X0[,21:30] &lt;- 0
+  pd1 &lt;- data.frame(times=seq(rat[1],rat[2],length=10))
+  X1 &lt;- predict(b,newdata=pd1,type="lpmatrix")
+  X1[,1:20] &lt;- 0
+  A &lt;- rbind(X0,X1) ## A maps coefs to required function values
+
+  ## call ginla. Set int to 1 for integrated version.
+  ## Set interactive = 1 or 2 to plot marginal posterior distributions
+  ## (red) and simple Gaussian approximation (black).
+ 
+  inla &lt;- ginla(G,A,int=0)
+
+  par(mfrow=c(1,2),mar=c(5,5,1,1))
+  fv &lt;- predict(b,se=TRUE) ## usual Gaussian approximation, for comparison
+
+  ## plot inla mean smooth effect...
+  plot.inla(pd0$times,inla,k=1,xlab="time",ylab=expression(f[1](time))) 
+
+  ## overlay simple Gaussian equivalent (in grey) ...
+  points(mcycle$times,mcycle$accel,col="grey")
+  lines(mcycle$times,fv$fit[,1],col="grey",lwd=2)
+  lines(mcycle$times,fv$fit[,1]+2*fv$se.fit[,1],lty=2,col="grey",lwd=2)
+  lines(mcycle$times,fv$fit[,1]-2*fv$se.fit[,1],lty=2,col="grey",lwd=2)
+
+  ## same for log sd smooth...
+  plot.inla(pd1$times,inla,k=21,xlab="time",ylab=expression(f[2](time)))
+  lines(mcycle$times,fv$fit[,2],col="grey",lwd=2)
+  lines(mcycle$times,fv$fit[,2]+2*fv$se.fit[,2],col="grey",lty=2,lwd=2)
+  lines(mcycle$times,fv$fit[,2]-2*fv$se.fit[,2],col="grey",lty=2,lwd=2)
+
+  ## ... notice some real differences for the log sd smooth, especially
+  ## at the lower and upper ends of the time interval.
+</pre>
+
+<hr /><div style="text-align: center;">[Package <em>mgcv</em> version 1.8-31 <a href="00Index.html">Index</a>]</div>
+</body></html>

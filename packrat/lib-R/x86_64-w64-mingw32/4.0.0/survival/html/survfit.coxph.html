@@ -1,0 +1,262 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><title>R: Compute a Survival Curve from a Cox model</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" type="text/css" href="R.css" />
+</head><body>
+
+<table width="100%" summary="page for survfit.coxph {survival}"><tr><td>survfit.coxph {survival}</td><td style="text-align: right;">R Documentation</td></tr></table>
+
+<h2>
+Compute a Survival Curve from a Cox model
+</h2>
+
+<h3>Description</h3>
+
+<p>Computes the predicted survivor function for a Cox proportional 
+hazards model. 
+</p>
+
+
+<h3>Usage</h3>
+
+<pre>
+## S3 method for class 'coxph'
+survfit(formula, newdata, 
+        se.fit=TRUE, conf.int=.95, individual=FALSE, stype=2, ctype,
+        conf.type=c("log","log-log","plain","none", "logit", "arcsin"),
+        censor=TRUE, start.time, id, influence=FALSE,
+        na.action=na.pass, type, ...)
+</pre>
+
+
+<h3>Arguments</h3>
+
+<table summary="R argblock">
+<tr valign="top"><td><code>formula</code></td>
+<td>
+
+<p>A <code>coxph</code> object. 
+</p>
+</td></tr>
+<tr valign="top"><td><code>newdata</code></td>
+<td>
+
+<p>a data frame with the same variable names as those that appear 
+in the <code>coxph</code> formula.  It is also valid to use a vector, if
+the data frame would consist of a single row.
+</p>
+<p>The curve(s) produced will be representative of a cohort whose 
+covariates correspond to the values in <code>newdata</code>. 
+Default is the mean of the covariates used in the 
+<code>coxph</code> fit. 
+</p>
+</td></tr>
+<tr valign="top"><td><code>se.fit</code></td>
+<td>
+
+<p>a logical value indicating whether standard errors should be 
+computed.  Default is <code>TRUE</code>. 
+</p>
+</td></tr>
+<tr valign="top"><td><code>conf.int</code></td>
+<td>
+
+<p>the level for a two-sided confidence interval on the survival curve(s). 
+Default is 0.95. 
+</p>
+</td></tr>
+<tr valign="top"><td><code>individual</code></td>
+<td>
+<p>depricated argument, replaced by the general
+<code>id</code></p>
+</td></tr>
+<tr valign="top"><td><code>stype</code></td>
+<td>
+<p>computation of the survival curve, 1=direct, 2=
+exponenial of the cumulative hazard.</p>
+</td></tr>
+<tr valign="top"><td><code>ctype</code></td>
+<td>
+<p>whether the cumulative hazard computation should have a
+correction for ties, 1=no, 2=yes.</p>
+</td></tr>
+<tr valign="top"><td><code>conf.type</code></td>
+<td>
+
+<p>One of <code>"none"</code>, <code>"plain"</code>, <code>"log"</code> (the default),
+<code>"log-log"</code> or <code>"logit"</code>.  Only
+enough of the string to uniquely identify it is necessary.
+The first option causes confidence intervals not to be
+generated.  The second causes the standard intervals
+<code>curve +- k *se(curve)</code>, where k is determined from
+<code>conf.int</code>.  The log option calculates intervals based on the
+cumulative hazard or log(survival). The log-log option uses
+the log hazard or log(-log(survival)), and the logit
+log(survival/(1-survival)).
+</p>
+</td></tr>
+<tr valign="top"><td><code>censor</code></td>
+<td>
+<p>if FALSE time points at which there are no events (only
+censoring) are not included in the result.</p>
+</td></tr>
+<tr valign="top"><td><code>id</code></td>
+<td>
+<p>optional variable name of subject identifiers.  If this is
+present, it will be search for in the <code>newdata</code> data frame.
+Each group of rows in <code>newdata</code> with the same subject id represents
+the covariate path through time of a single subject, and the result
+will contain one curve per subject.  If the <code>coxph</code> fit had
+strata then that must also be specified in <code>newdata</code>.
+If <code>newid</code> is not present, then each
+individual row of <code>newdata</code> is presumed to represent a distinct
+subject.</p>
+</td></tr>
+<tr valign="top"><td><code>start.time</code></td>
+<td>
+<p>optional starting time, a single numeric value.
+If present the returned curve contains survival after
+<code>start.time</code> conditional on surviving to <code>start.time</code>.
+</p>
+</td></tr>
+<tr valign="top"><td><code>influence</code></td>
+<td>
+<p>option to return the influence values</p>
+</td></tr>
+<tr valign="top"><td><code>na.action</code></td>
+<td>
+<p>the na.action to be used on the newdata argument</p>
+</td></tr>
+<tr valign="top"><td><code>type</code></td>
+<td>
+<p>older argument that encompassed <code>stype</code> and
+<code>ctype</code>, now depricated</p>
+</td></tr>
+<tr valign="top"><td><code>...</code></td>
+<td>
+<p>for future methods</p>
+</td></tr>
+</table>
+
+
+<h3>Details</h3>
+
+<p>This routine produces survival curves based on a <code>coxph</code>
+model fit.  The <code>ctype</code> option found in
+<code>survfit.formula</code> is not present, it instead follows from the
+choice of the <code>ties</code> option in the <code>coxph</code> call.  Likewise
+the choice between a model based and robust variance estimate for the
+curve will mirror the choice made in the <code>coxph</code> call.
+The <code>cluster</code> and <code>influence</code> options are only relevant for
+the robust variance.  A <code>id</code> statment in the original call causes
+subjects that have multiple lines in the original data to be correctly
+identified.  (This calculation needs both the original data and the
+new data.)
+</p>
+<p>If the <code>newdata</code> argument is missing, then a curve is produced
+for a single &quot;pseudo&quot; subject with
+covariate values equal to the means of the data set.
+The resulting curve(s) almost never make sense, but 
+The default remains due to an unwarranted attachment to the option shown by
+some users and by other packages.  Two particularly egregious examples
+are factor variables and interactions.  Suppose one were studying
+interspecies transmission of a virus, and the data set has a factor
+variable with levels (&quot;pig&quot;, &quot;chicken&quot;) and about equal numbers of
+observations for each.  The &ldquo;mean&rdquo; covariate level will be 0.5 &ndash;
+is this a flying pig?  As to interactions assume data with sex coded as 0/1,
+ages ranging from 50 to 80, and a model with age*sex.  The &ldquo;mean&rdquo;
+value for the age:sex interaction term will be about 30, a value
+that does not occur in the data.
+Users are strongly advised to use the newdata argument. 
+</p>
+<p>When the original model contains time-dependent covariates, then the
+path of that covariate through time needs to be specified in order to
+obtain a predicted curve. This requires <code>newdata</code> to contain
+multiple lines for each hypothetical subject which gives the covariate
+values, time interval, and strata for each line (a subject can change
+strata), along with an <code>id</code> variable
+which demarks which rows belong to each subject.
+The time interval must have the same (start, stop, status)
+variables as the original model: although the status variable is not
+used and thus can be set to a dummy value of 0 or 1, it is necessary for
+the response to be recognized as a <code>Surv</code> object.
+Last, although predictions with a time-dependent covariate path can be
+useful, it is very easy to create a prediction that is senseless.  Users
+are encouraged to seek out a text that discusses the issue in detail.
+</p>
+<p>When a model contains strata but no time-dependent covariates the user
+of this routine has a choice.
+If newdata argument does not contain strata variables then the returned
+object will be a matrix of survival curves with one row for each strata
+in the model and one column for each row in newdata.
+(This is the historical behavior of the routine.)
+If newdata does contain strata variables, then the result will contain
+one curve per row of newdata, based on the indicated stratum of the
+original model.  In the rare case of a model with strata by covariate
+interactions the strata variable must be included in newdata, the
+routine does not allow it to be omitted (predictions become too confusing).
+(Note that the model Surv(time, status) ~ age*strata(sex) expands internally to
+strata(sex) + age:sex; the sex variable is needed for the second term
+of the model.)
+</p>
+<p>See <code><a href="survfit.html">survfit</a></code> for more details about the counts (number of
+events, number at risk, etc.)
+</p>
+
+
+<h3>Value</h3>
+
+<p>an object of class <code>"survfit"</code>.  
+See <code>survfit.object</code> for 
+details. Methods defined for survfit objects are  
+<code>print</code>, <code>plot</code>, 
+<code>lines</code>, and <code>points</code>. 
+</p>
+
+
+<h3>Notes</h3>
+
+<p>If the following pair of lines is used inside of another function then
+the <code>model=TRUE</code> argument must be added to the coxph call:
+<code>fit &lt;- coxph(...); survfit(fit)</code>.
+This is a consequence of the non-standard evaluation process used by the
+<code>model.frame</code> function when a formula is involved.
+</p>
+
+
+<h3>References</h3>
+
+<p>Fleming, T. H. and Harrington, D. P. (1984).  Nonparametric estimation of the 
+survival distribution in censored data.  <em>Comm. in Statistics</em>  
+<b>13</b>, 2469-86. 
+</p>
+<p>Kalbfleisch, J. D. and Prentice, R. L. (1980).
+<em>The Statistical Analysis of Failure Time Data.</em>
+New York:Wiley. 
+</p>
+<p>Link, C. L. (1984). Confidence intervals for the survival 
+function using Cox's proportional hazards model with  
+covariates.  <em>Biometrics</em>  
+<b>40</b>, 601-610.
+</p>
+<p>Therneau T and Grambsch P (2000), Modeling Survival Data: Extending the
+Cox Model, Springer-Verlag.
+</p>
+<p>Tsiatis, A. (1981). A large sample study of the estimate 
+for the integrated hazard function in Cox's regression 
+model for survival data. <em>Annals of Statistics</em>  
+<b>9</b>, 93-108. 
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code><a href="print.survfit.html">print.survfit</a></code>,  
+<code><a href="plot.survfit.html">plot.survfit</a></code>,  
+<code><a href="lines.survfit.html">lines.survfit</a></code>,   
+<code><a href="coxph.html">coxph</a></code>,  
+<code><a href="Surv.html">Surv</a></code>,  
+<code><a href="strata.html">strata</a></code>.   
+</p>
+
+<hr /><div style="text-align: center;">[Package <em>survival</em> version 3.1-12 <a href="00Index.html">Index</a>]</div>
+</body></html>

@@ -1,0 +1,88 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><title>R: Compute the concordance</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" type="text/css" href="R.css" />
+</head><body>
+
+<table width="100%" summary="page for concordancefit {survival}"><tr><td>concordancefit {survival}</td><td style="text-align: right;">R Documentation</td></tr></table>
+
+<h2>Compute the concordance</h2>
+
+<h3>Description</h3>
+
+<p>This is the working routine behind the <code>concordance</code> function.  It
+is not meant to be called by users, but is available for other packages
+to use.  Input arguments, for instance, are assumed to all be the
+correct length and type, and missing values are not allowed: the calling
+routine is responsible for these things.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre>
+concordancefit(y, x, strata, weights, ymin = NULL, ymax = NULL,
+ timewt = c("n", "S", "S/G", "n/G", "n/G2", "I"), cluster, influence =0,
+ ranks = FALSE, reverse = FALSE, timefix = TRUE, keepstrata=10)
+</pre>
+
+
+<h3>Arguments</h3>
+
+<table summary="R argblock">
+<tr valign="top"><td><code>y</code></td>
+<td>
+<p>the response.  It can be numeric, factor, or a Surv object</p>
+</td></tr>
+<tr valign="top"><td><code>x</code></td>
+<td>
+<p>the predictor, a numeric vector</p>
+</td></tr>
+<tr valign="top"><td><code>strata</code></td>
+<td>
+<p>optional numeric vector that stratifies the data</p>
+</td></tr>
+<tr valign="top"><td><code>weights</code></td>
+<td>
+<p>options vector of case weights</p>
+</td></tr>
+<tr valign="top"><td><code>ymin, ymax</code></td>
+<td>
+<p>restrict the comparison to response values in this
+range</p>
+</td></tr>
+<tr valign="top"><td><code>timewt</code></td>
+<td>
+<p>the time weighting to be used</p>
+</td></tr>
+<tr valign="top"><td><code>cluster, influence,ranks, reverse, timefix</code></td>
+<td>
+<p>see the help for the
+<code>concordance</code> function</p>
+</td></tr>
+<tr valign="top"><td><code>keepstrata</code></td>
+<td>
+<p>either TRUE, FALSE, or an integer value.
+Computations are always done within stratum, then added. If the
+total number of strata greater than <code>keepstrata</code>, or
+<code>keepstrata=FALSE</code>, those subtotals are not kept in the output.
+</p>
+</td></tr>
+</table>
+
+
+<h3>Value</h3>
+
+<p>a list containing the results</p>
+
+
+<h3>Author(s)</h3>
+
+<p> Terry Therneau</p>
+
+
+<h3>See Also</h3>
+
+ <p><code><a href="concordance.html">concordance</a></code></p>
+
+<hr /><div style="text-align: center;">[Package <em>survival</em> version 3.1-12 <a href="00Index.html">Index</a>]</div>
+</body></html>

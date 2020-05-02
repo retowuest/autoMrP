@@ -1,0 +1,26 @@
+Package: autoMrP
+Type: Package
+Title: Improving MrP With Ensemble Learning
+Version: 0.0.0.9000
+Authors@R: c(
+    person("Wüest", "Reto", email = "wuest.reto@gmail.com",
+      role = c("aut", "cre")),
+    person("Leemann", "Lucas", email = "leemann@ipz.uzh.ch",
+      role = c("aut")),
+    person("Broniecki", "Philipp", email = "philippbroniecki@gmail.com",
+      role = c("aut")))
+Description: autoMrP improves the prediction performance of multilevel
+    regression with post-stratification (MrP) by combining a number of machine
+    learning methods.
+Depends: R (>= 3.6.1), knitr
+Imports: dplyr (>= 0.8.3)
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.1.0
+VignetteBuilder: knitr
+Author: Wüest Reto [aut, cre],
+  Leemann Lucas [aut],
+  Broniecki Philipp [aut]
+Maintainer: Wüest Reto <wuest.reto@gmail.com>
+Built: R 4.0.0; ; 2020-05-02 17:55:59 UTC; windows

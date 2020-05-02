@@ -1,0 +1,43 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><title>R: Calibration sample data</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" type="text/css" href="R.css" />
+</head><body>
+
+<table width="100%" summary="page for calibrationSample {EBMAforecast}"><tr><td>calibrationSample {EBMAforecast}</td><td style="text-align: right;">R Documentation</td></tr></table>
+
+<h2>Calibration sample data</h2>
+
+<h3>Description</h3>
+
+<p>This includes the calibration sample data for the insurgency forecasting example in Montgomery, Hollenbach and Ward (2012). It provides the predictions for the three models included in the Ensemble model, as well as the true values of the dependent variable for insurgency in 29 Asian countries. The calibration sample ranges from January 2008 to December 2009.
+</p>
+
+
+<h3>Details</h3>
+
+<p>The variables included in the dataset are:
+</p>
+
+<ul>
+<li><p><code>LMER</code> The calibration sample predictions of the LMER model from the insurgency prediction example in Montgomery et. al. (2012). The LMER model is a generalized linear mixed effects model using the logistic link function. It includes two random effects terms and several other covariates.
+</p>
+</li>
+<li><p><code>SAE</code> The calibration sample prediction of the SAE model from the insurgency prediction example in Montgomery et. al. (2012). This is a model developed as part of the ICEWS project and was designed by <em>Strategic Analysis Enterprises</em>. It is a simple generalized linear model with 27 independent variables. 
+</p>
+</li>
+<li><p><code>GLM</code> The calibration sample prediction of the GLM model from the insurgency prediction example in Montgomery et. al. (2012). This is a crude logistic model with only four independent variables. 
+</p>
+</li>
+<li><p><code>Insurgency</code> The true values of the dependent variable in the calibration sample from the insurgency prediction example in Montgomery et. al. (2012). This is a binary variable indicating the actual ocurrence of insurgency for each observation in the calibration sample.
+</p>
+</li></ul>
+
+
+
+<h3>References</h3>
+
+<p>Montgomery, Jacob M., Florian M. Hollenbach and Michael D. Ward. (2012). Improving Predictions Using Ensemble Bayesian Model Averaging. <em>Political Analysis</em>. <em>Political Analysis</em>. <b>20</b>: 271-291.
+</p>
+
+<hr /><div style="text-align: center;">[Package <em>EBMAforecast</em> version 0.52 <a href="00Index.html">Index</a>]</div>
+</body></html>

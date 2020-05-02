@@ -1,0 +1,121 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><title>R: Function for comparing multiple models based on predictive...</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" type="text/css" href="R.css" />
+</head><body>
+
+<table width="100%" summary="page for compareModels {EBMAforecast}"><tr><td>compareModels {EBMAforecast}</td><td style="text-align: right;">R Documentation</td></tr></table>
+
+<h2>Function for comparing multiple models based on predictive performance</h2>
+
+<h3>Description</h3>
+
+<p>This function produces statistics to compare the predictive performance of the different models component models, as well as for the EBMA model itself, for either the calibration or the test period. It currently calculates the area under the ROC (<code>auc</code>), the <code>brier</code> score, the percent of observations predicted correctly (<code>percCorrect</code>), as well as the proportional reduction in error compared to some baseline model (<code>pre</code>) for binary models. For models with normally distributed outcomes the <code>CompareModels</code> function can be used to calculate the root mean squared error (<code>rmse</code>) as well as the mean absolute error (<code>mae</code>).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre>
+compareModels(.forecastData, .period = "calibration",
+  .fitStatistics = c("brier", "auc", "perCorrect", "pre"), .threshold = 0.5,
+  .baseModel = 0, ...)
+</pre>
+
+
+<h3>Arguments</h3>
+
+<table summary="R argblock">
+<tr valign="top"><td><code>.forecastData</code></td>
+<td>
+<p>An object of class 'ForecastData'.</p>
+</td></tr>
+<tr valign="top"><td><code>.period</code></td>
+<td>
+<p>Can take value of &quot;calibration&quot; or &quot;test&quot; and indicates the period for which the test statistics should be calculated.</p>
+</td></tr>
+<tr valign="top"><td><code>.fitStatistics</code></td>
+<td>
+<p>A vector naming statistics that should be calculated.  Possible values include &quot;auc&quot;, &quot;brier&quot;, &quot;percCorrect&quot;, &quot;pre&quot; for logit models and &quot;mae&quot;,&quot;rsme&quot; for normal models.</p>
+</td></tr>
+<tr valign="top"><td><code>.threshold</code></td>
+<td>
+<p>The threshold used to calculate when a &quot;positive&quot; prediction is made by the model for binary dependent variables.</p>
+</td></tr>
+<tr valign="top"><td><code>.baseModel</code></td>
+<td>
+<p>Vector containing predictions used to calculate proportional reduction of error (&quot;pre&quot;).</p>
+</td></tr>
+<tr valign="top"><td><code>...</code></td>
+<td>
+<p>Not implemented</p>
+</td></tr>
+</table>
+
+
+<h3>Value</h3>
+
+<p>A data object of the class 'CompareModels' with the following slots:
+</p>
+<table summary="R valueblock">
+<tr valign="top"><td><code>fitStatistics</code></td>
+<td>
+<p>The output of the fit statistics for each model.</p>
+</td></tr>
+<tr valign="top"><td><code>period</code></td>
+<td>
+<p>The period, &quot;calibration&quot; or &quot;test&quot;, for which the statistics were calculated.</p>
+</td></tr>
+<tr valign="top"><td><code>threshold</code></td>
+<td>
+<p>The threshold used to calculate when a &quot;positive&quot; prediction is made by the model.</p>
+</td></tr>
+<tr valign="top"><td><code>baseModel</code></td>
+<td>
+<p>Vector containing predictions used to calculate proportional reduction of error (&quot;pre&quot;).</p>
+</td></tr>
+</table>
+
+
+<h3>Author(s)</h3>
+
+<p>Michael D. Ward &lt;<a href="mailto:michael.d.ward@duke.edu">michael.d.ward@duke.edu</a>&gt; and Jacob M. Montgomery &lt;<a href="mailto:jacob.montgomery@wustl.edu">jacob.montgomery@wustl.edu</a>&gt; and Florian M. Hollenbach &lt;<a href="mailto:florian.hollenbach@tamu.edu">florian.hollenbach@tamu.edu</a>&gt;
+</p>
+
+
+<h3>References</h3>
+
+<p>Montgomery, Jacob M., Florian M. Hollenbach and Michael D. Ward. (2015). Calibrating ensemble forecasting models with sparse data in the social sciences.   <em>International Journal of Forecasting</em>. In Press.
+</p>
+<p>Montgomery, Jacob M., Florian M. Hollenbach and Michael D. Ward. (2012). Improving Predictions Using Ensemble Bayesian Model Averaging. <em>Political Analysis</em>. <b>20</b>: 271-291.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>ensembleBMA, other functions
+</p>
+
+
+<h3>Examples</h3>
+
+<pre>
+## Not run: data(calibrationSample)
+
+data(testSample) 
+
+this.ForecastData &lt;- makeForecastData(.predCalibration=calibrationSample[,c("LMER", "SAE", "GLM")],
+.outcomeCalibration=calibrationSample[,"Insurgency"],.predTest=testSample[,c("LMER", "SAE", "GLM")],
+.outcomeTest=testSample[,"Insurgency"], .modelNames=c("LMER", "SAE", "GLM"))
+
+this.ensemble &lt;- calibrateEnsemble(this.ForecastData, model="logit", tol=0.001, exp=3)
+
+compareModels(this.ensemble,"calibration")
+
+compareModels(this.ensemble,"test") 
+
+## End(Not run)
+
+</pre>
+
+<hr /><div style="text-align: center;">[Package <em>EBMAforecast</em> version 0.52 <a href="00Index.html">Index</a>]</div>
+</body></html>
