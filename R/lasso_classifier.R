@@ -1,6 +1,6 @@
 #' Lasso classifier
 #'
-#' \text{lasso_classifier} applies lasso classification to a data set.
+#' \code{lasso_classifier} applies lasso classification to a data set.
 #'
 #' @param L2.fix Fixed effects. A two-sided linear formula describing
 #'   the fixed effects part of the model, with the outcome on the LHS and
@@ -16,7 +16,7 @@
 #' @param verbose Verbose output. A logical vector indicating whether or not
 #'   verbose output should be printed.
 #' @return
-#' @examples
+#' @examples #not_yet
 
 lasso_classifier <- function(L2.fix, L1.re, data.train,
                              lambda, model.family,

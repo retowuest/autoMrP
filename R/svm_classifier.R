@@ -1,6 +1,6 @@
 #' SVM classifier
 #'
-#' \text{svm_classifier} applies support vector machine classification to a
+#' \code{svm_classifier} applies support vector machine classification to a
 #' data set.
 #'
 #' @param method Function. A character string specifying the name of the
@@ -13,7 +13,7 @@
 #' @param kernel Kernel for SVM. A character string specifying the kernel to
 #'   be used for SVM. The possible types are linear, polynomial, radial, and
 #'   sigmoid. Default is radial.
-#' @param error.fun
+#' @param error.fun IS_MISSING
 #' @param probability Probability predictions. A logical argument indicating
 #'   whether the model should allow for probability predictions
 #' @param gamma.set Gamma parameter for SVM. This parameter is needed for all
@@ -26,7 +26,7 @@
 #' @param verbose Verbose output. A logical vector indicating whether or not
 #'   verbose output should be printed.
 #' @return
-#' @examples
+#' @examples #not_yet
 
 svm_classifier <- function(method, form, data, kernel,
                            error.fun, probability,

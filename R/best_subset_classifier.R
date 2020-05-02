@@ -1,6 +1,6 @@
 #' Best subset classifier
 #'
-#' \text{best_subset_classifier} applies best subset classification to a data
+#' \code{best_subset_classifier} applies best subset classification to a data
 #' set.
 #'
 #' @param model Multilevel model. A model formula describing the multilevel
@@ -17,7 +17,7 @@
 #' @param verbose Verbose output. A logical vector indicating whether or not
 #'   verbose output should be printed.
 #' @return
-#' @examples
+#' @examples #not_yet
 
 best_subset_classifier <- function(model, data.train,
                                    model.family, model.optimizer,
