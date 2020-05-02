@@ -13,7 +13,10 @@
 #' @param kernel Kernel for SVM. A character string specifying the kernel to
 #'   be used for SVM. The possible types are linear, polynomial, radial, and
 #'   sigmoid. Default is radial.
-#' @param error.fun IS_MISSING
+#' @param error.fun function returning the error measure to be minimized. It
+#' takes two arguments: a vector of true values and a vector of predicted values.
+#' If NULL, the misclassification error is used for categorical predictions and
+#' the mean squared error for numeric predictions.
 #' @param probability Probability predictions. A logical argument indicating
 #'   whether the model should allow for probability predictions
 #' @param gamma.set Gamma parameter for SVM. This parameter is needed for all
