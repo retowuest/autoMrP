@@ -33,7 +33,10 @@ train and evaluate the model.}
 be used for SVM. The possible types are linear, polynomial, radial, and
 sigmoid. Default is radial.}
 
-\item{error.fun}{IS_MISSING}
+\item{error.fun}{function returning the error measure to be minimized. It
+takes two arguments: a vector of true values and a vector of predicted values.
+If NULL, the misclassification error is used for categorical predictions and
+the mean squared error for numeric predictions.}
 
 \item{probability}{Probability predictions. A logical argument indicating
 whether the model should allow for probability predictions}
