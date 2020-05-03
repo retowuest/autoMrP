@@ -1,10 +1,10 @@
 auto.snapshot: TRUE
-use.cache: TRUE
+use.cache: FALSE
 print.banner.on.startup: auto
 vcs.ignore.lib: TRUE
 vcs.ignore.src: TRUE
 external.packages: 
-local.repos: 
+local.repos: C:/mrp/packages
 load.external.packages.on.startup: TRUE
 ignored.packages: 
 ignored.directories:

@@ -129,8 +129,8 @@ Requires: magrittr, rlang
 
 Package: rlang
 Source: CRAN
-Version: 0.4.5
-Hash: 99d62d0aaf54a9938784f4485efa9933
+Version: 0.4.6
+Hash: 961439fc46343c94eb50973664feee76
 
 Package: stringi
 Source: CRAN
