@@ -1,4 +1,17 @@
 #' Apply post-stratification to classifiers.
+#'
+#' @param y Outcome variable. A character scalar containing the column name of
+#'   the outcome variable in \code{survey}.
+#' @param L1.x Individual-level covariates. A character vector containing the
+#'   column names of the individual-level variables in \code{survey} and
+#'   \code{census} used to predict outcome \code{y}. Note that geographic unit
+#'   is specified in argument \code{L2.unit}.
+#' @param L2.x Context-level covariates. A character vector containing the
+#'   column names of the context-level variables in \code{survey} and
+#'   \code{census} used to predict outcome \code{y}.
+#' @param L2.unit Geographic unit. A character scalar containing the column
+#'   name of the geographic unit in \code{survey} and \code{census} at which
+#'   outcomes should be aggregated.
 
 post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                                 best.subset.opt, lasso.opt,
