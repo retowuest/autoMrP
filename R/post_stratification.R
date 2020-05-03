@@ -291,33 +291,33 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
   }
 
   # Classifier 6: MRP
-  # Create model formula
-  # Individual-level random effects
-  L1_re <- paste(paste("(1 | ", L1.x, ")", sep = ""), collapse = " + ")
+  # Fit model
+  if (isTRUE(mrp.include == TRUE)) {
 
-  # Geographic unit or geographic unit-geographic region random effects
-  if (is.null(L2.reg)) {
-    L2_re <- paste("(1 | ", L2.unit, ")", sep = "")
-  } else {
-    L2_re <- paste(paste("(1 | ", L2.reg, "/", L2.unit, ")", sep = ""),
-                   collapse = " + ")
-  }
+    # Create model formula
+    # Individual-level random effects
+    L1_re <- paste(paste("(1 | ", L1.x, ")", sep = ""), collapse = " + ")
 
-  # Combine all random effects
-  all_re <- paste(c(L1_re, L2_re), collapse = " + ")
+    # Geographic unit or geographic unit-geographic region random effects
+    if (is.null(L2.reg)) {
+      L2_re <- paste("(1 | ", L2.unit, ")", sep = "")
+    } else {
+      L2_re <- paste(paste("(1 | ", L2.reg, "/", L2.unit, ")", sep = ""),
+                     collapse = " + ")
+    }
 
-  # Context-level fixed effects
-  if(mrp.L2.x != "empty") {
-    L2_fe <- paste(mrp.L2.x, collapse = " + ")
-  } else{
+    # Combine all random effects
+    all_re <- paste(c(L1_re, L2_re), collapse = " + ")
+
+    # Context-level fixed effects
+    if(mrp.L2.x != "empty") {
+      L2_fe <- paste(mrp.L2.x, collapse = " + ")
+    } else{
       L2_fe <- ""
     }
 
-  # std MrP formula
-  form_mrp <- as.formula(paste(y, " ~ ", L2_fe, " + ", all_re, sep = ""))
-
-  # Fit model
-  if (isTRUE(mrp.include == TRUE)) {
+    # std MrP formula
+    form_mrp <- as.formula(paste(y, " ~ ", L2_fe, " + ", all_re, sep = ""))
     if (isTRUE(verbose == TRUE)) {
 
       # fit model for EBMA
