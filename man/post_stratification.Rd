@@ -27,6 +27,23 @@ post_stratification(
   verbose
 )
 }
+\arguments{
+\item{y}{Outcome variable. A character scalar containing the column name of
+the outcome variable in \code{survey}.}
+
+\item{L1.x}{Individual-level covariates. A character vector containing the
+column names of the individual-level variables in \code{survey} and
+\code{census} used to predict outcome \code{y}. Note that geographic unit
+is specified in argument \code{L2.unit}.}
+
+\item{L2.x}{Context-level covariates. A character vector containing the
+column names of the context-level variables in \code{survey} and
+\code{census} used to predict outcome \code{y}.}
+
+\item{L2.unit}{Geographic unit. A character scalar containing the column
+name of the geographic unit in \code{survey} and \code{census} at which
+outcomes should be aggregated.}
+}
 \description{
 Apply post-stratification to classifiers.
 }
