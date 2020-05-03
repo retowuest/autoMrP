@@ -1,9 +1,0 @@
-Package: datasets
-Version: 4.0.0
-Priority: base
-Title: The R Datasets Package
-Author: R Core Team and contributors worldwide
-Maintainer: R Core Team <R-core@r-project.org>
-Description: Base R datasets.
-License: Part of R 4.0.0
-Built: R 4.0.0; ; 2020-04-24 08:12:02 UTC; windows
