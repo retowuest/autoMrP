@@ -13,7 +13,7 @@ Description: autoMrP improves the prediction performance of multilevel
     regression with post-stratification (MrP) by combining a number of machine
     learning methods.
 Depends:
-    R (>= 3.6.1), knitr
+    R (>= 3.6.1), knitr, EBMAforecast, gbm, lme4, glmmlasso, e1071
 Imports:
     dplyr (>= 0.8.3)
 License: GPL-3
