@@ -350,7 +350,6 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
   # If not provided in survey and census data, compute the principal components
   # of context-level variables
   if (is.null(pcs)) {
-
     # Determine context-level covariates whose principal components are to be
     # computed
     if (is.null(pca.L2.x)) {
@@ -408,7 +407,6 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
                            k.folds = k.folds,
                            cv.sampling = cv.sampling)
   } else {
-
     # If svm is TRUE, print warning that SVM classifier does not rely on
     # user-specified folds
     if (isTRUE(svm)) {
@@ -435,7 +433,6 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
 
   # Classifier 1: Best Subset
   if (isTRUE(best.subset)) {
-
     # Determine context-level covariates
     if (is.null(best.subset.L2.x)) {
       best.subset.L2.x <- L2.x
@@ -457,7 +454,6 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
 
   # Classifier 2: Lasso
   if (isTRUE(lasso)) {
-
     # Determine context-level covariates
     if (is.null(lasso.L2.x)) {
       lasso.L2.x <- L2.x
@@ -497,7 +493,6 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
 
   # Classifier 4: GB
   if (isTRUE(gb)) {
-
     # Determine context-level covariates
     if (is.null(gb.L2.x)) {
       gb.L2.x <- L2.x
@@ -540,7 +535,6 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
 
   # Classifier 5: SVM
   if (isTRUE(svm)) {
-
     # Determine context-level covariates
     if (is.null(svm.L2.x)) {
       svm.L2.x <- L2.x
