@@ -27,7 +27,7 @@ survey <- autoMrP::survey
 
 ### The Standard MrP Model
 
-We  include the three individual level variables L1x1, L1x2 and L1x3 as well as the context-level variables L2.x1 and L2.x2. In addition, we include context-level random effects for states nested in regions.
+We include the three individual level variables L1x1, L1x2 and L1x3 as well as the context-level variables L2.x1 and L2.x2. In addition, we include context-level random effects for states nested in regions.
 
 ```R
 mrp_model <- autoMrP::auto_MrP(
@@ -52,7 +52,7 @@ mrp_model <- autoMrP::auto_MrP(
 
 ### Better Predictions Through Machine Learning
 
-In this example, we accept the default settings for the tuning parameters and combine predictions from four classifiers (best subset, lasso, pca, gb, svm) via EBMA to one overall prediction. The classifiers make use of all six context-level variables in the data. In addition, we include the standard MrP model with the context-level variables that we used in the previous example in EBMA. To exclude the standard MrP model from EBMA, we would need to set the argument 'mrp = FALSE'. Running this example will take some time (~20 minutes).
+In this example, we accept the default settings for the tuning parameters and combine predictions from four classifiers (best subset, lasso, pca, gb, svm) via EBMA to one overall prediction. The classifiers make use of all six context-level variables in the data. In addition, we include the standard MrP model with the context-level variables that we used in the previous example in EBMA. To exclude the standard MrP model from EBMA, we would need to set the argument `mrp = FALSE`. Running this example will take some time (~20 minutes).
 
 Note, that because we want the standard MrP model to use only two context-level variables while we want our classifiers to use all six context-level variables, we specify the variables to be used for the standard MrP model in the argument `mrp.L2.x = c("L2.x1", "L2.x2")`.
 
