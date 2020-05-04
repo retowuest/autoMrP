@@ -9,7 +9,7 @@ packageurl <- "https://cran.r-project.org/src/contrib/Archive/EBMAforecast/EBMAf
 install.packages(packageurl, repos=NULL, type="source")
 ```
 
-Note that EBMAforecast depends on the [separationplot](https://cran.r-project.org/package=separationplot), [plyr](https://cran.r-project.org/package=plyr), [Hmisc](https://cran.r-project.org/package=Hmisc) and [abind](https://cran.r-project.org/package=abind) packages.
+Note that EBMAforecast depends on the [separationplot](https://cran.r-project.org/package=separationplot), [plyr](https://cran.r-project.org/package=plyr), [Hmisc](https://cran.r-project.org/package=Hmisc) and [abind](https://cran.r-project.org/package=abind) packages. These are available on cran and can be installed via `install.packages("")`.
 
 Step 2) To install autoMrP from GitHub run:
 
