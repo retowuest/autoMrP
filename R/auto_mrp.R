@@ -200,7 +200,7 @@
 #'   random number generation. If \code{NULL}, then the seed is set to
 #'   \eqn{546213978}. Default is \code{NULL}.
 #' @param verbose Verbose output. A logical argument indicating whether or not
-#'   verbose output should be printed. Default is \code{TRUE}.
+#'   verbose output should be printed. Default is \code{FALSE}.
 #' @return
 #' @keywords MRP multilevel regression post-stratification machine learning
 #'   EBMA ensemble bayesian model averaging
@@ -228,7 +228,7 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
                      svm.cost = c(1, 10), ebma.n.draws = 100,
                      ebma.tol = c(0.01, 0.005, 0.001, 0.0005, 0.0001, 0.00005,
                                   0.00001), uncertainty = FALSE, seed = NULL,
-                     verbose = TRUE) {
+                     verbose = FALSE) {
 
   # ----------------------------------- Seed -----------------------------------
 
