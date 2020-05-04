@@ -61,7 +61,7 @@ auto_MrP(
 \item{y}{Outcome variable.
 
   A character scalar containing the column name of
-  the outcome variable in \code{survey} `survey`.}
+  the outcome variable in \code{survey}.}
 
 \item{L1.x}{Individual-level covariates. A character vector containing the
 column names of the individual-level variables in \code{survey} and
@@ -309,7 +309,7 @@ verbose output should be printed. Default is \code{FALSE}.}
 
 }
 \description{
-\code{auto_MrP()} `auto_MrP()` improves the prediction performance of multilevel
+\code{auto_MrP()} improves the prediction performance of multilevel
 regression with post-stratification (MrP) by combining a number of machine
 learning methods through ensemble bayesian model averaging (EBMA).
 }
