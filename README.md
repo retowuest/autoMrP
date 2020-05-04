@@ -52,7 +52,7 @@ mrp_model <- autoMrP::auto_MrP(
 )
 ```
 
-### Better Predictions Trough EBMA
+### Better Predictions Trough Machine Learning
 
 In this example, we accept the default settings for the tuning parameters and comibine predictions from four classifiers (best subset, lasso, pca, gb, svm) via EBMA to one overall prediction. The classifiers make use of all six context-level variables in the data. In addition, we include the standard MrP model with the context-level variables that we used in the previous example in EBMA. To exclude the standard MrP model from EBMA, we would need to set the argument 'mrp = FALSE'. Running this example will take some time (~20 minutes).
 
