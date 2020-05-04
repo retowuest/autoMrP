@@ -5,7 +5,7 @@ autoMrP improves the prediction performance of multilevel regression with post-s
 Step 1) autoMrP depends on EBMAforecast which is currently unavailable on cran. To install EBMAforecast run the following code.
 
 ```R
-devtools::install_github("https://github.com/cran/EBMAforecast")
+devtools::install_github("cran/EBMAforecast")
 ```
 
 Step 2) To install autoMrP from GitHub run:
