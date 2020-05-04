@@ -5,7 +5,7 @@ Version: 0.0.0.9000
 Authors@R: c(
     person("Wüest", "Reto", email = "wuest.reto@gmail.com",
       role = c("aut", "cre")),
-    person("Leemann", "Lucas", email = "lleemann@gmail.com",
+    person("Leemann", "Lucas", email = "leemann@ipz.uzh.ch",
       role = c("aut")),
     person("Broniecki", "Philipp", email = "philippbroniecki@gmail.com",
       role = c("aut")))
@@ -13,7 +13,7 @@ Description: autoMrP improves the prediction performance of multilevel
     regression with post-stratification (MrP) by combining a number of machine
     learning methods.
 Depends:
-    R (>= 3.6.1)
+    R (>= 3.6.1), knitr
 Imports:
     dplyr (>= 0.8.3)
 License: GPL-3

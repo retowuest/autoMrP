@@ -2,7 +2,7 @@
 \alias{hello}
 \title{Hello, World!}
 \usage{
-hello()
+2+2
 }
 \description{
 Prints 'Hello, world!'.
