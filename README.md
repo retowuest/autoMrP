@@ -2,7 +2,7 @@
 autoMrP improves the prediction performance of multilevel regression with post-stratification (MrP) by combining a number of machine learning methods through ensemble bayesian model averaging (EBMA).
 
 ## Installation
-Step 1) autoMrP depends on EBMAforecast which is currently only available on the cran archieve. To install EBMAforecast run the following code.
+Step 1) autoMrP depends on EBMAforecast which is currently only available on the cran archive. To install EBMAforecast run the following code.
 
 ```R
 packageurl <- "https://cran.r-project.org/src/contrib/Archive/EBMAforecast/EBMAforecast_0.52.tar.gz"
@@ -52,9 +52,9 @@ mrp_model <- autoMrP::auto_MrP(
 )
 ```
 
-### Better Predictions Trough Machine Learning
+### Better Predictions Through Machine Learning
 
-In this example, we accept the default settings for the tuning parameters and comibine predictions from four classifiers (best subset, lasso, pca, gb, svm) via EBMA to one overall prediction. The classifiers make use of all six context-level variables in the data. In addition, we include the standard MrP model with the context-level variables that we used in the previous example in EBMA. To exclude the standard MrP model from EBMA, we would need to set the argument 'mrp = FALSE'. Running this example will take some time (~20 minutes).
+In this example, we accept the default settings for the tuning parameters and combine predictions from four classifiers (best subset, lasso, pca, gb, svm) via EBMA to one overall prediction. The classifiers make use of all six context-level variables in the data. In addition, we include the standard MrP model with the context-level variables that we used in the previous example in EBMA. To exclude the standard MrP model from EBMA, we would need to set the argument 'mrp = FALSE'. Running this example will take some time (~20 minutes).
 
 ```R
 out <- autoMrP::auto_MrP(
