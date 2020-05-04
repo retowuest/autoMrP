@@ -1,6 +1,6 @@
 #' GB classifier
 #'
-#' \text{gb_classifier} applies gradient boosting classification to a data set.
+#' \code{gb_classifier} applies gradient boosting classification to a data set.
 #'
 #' @param form Model formula. A two-sided linear formula describing
 #'   the model to be fit, with the outcome on the LHS and the covariates
@@ -21,7 +21,7 @@
 #' @param verbose Verbose output. A logical vector indicating whether or not
 #'   verbose output should be printed.
 #' @return
-#' @examples
+#' @examples #not_yet
 
 gb_classifier <- function(form, distribution, data.train,
                           n.trees, interaction.depth,

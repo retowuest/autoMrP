@@ -33,7 +33,7 @@
 #' @param verbose Verbose output. A logical argument indicating whether or not
 #'   verbose output should be printed. Default is \code{TRUE}.
 #' @return
-#' @examples
+#' @examples #not_yet
 
 run_pca <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                     loss.unit, loss.fun,

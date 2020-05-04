@@ -1,4 +1,17 @@
 #' Apply post-stratification to classifiers.
+#'
+#' @param y Outcome variable. A character scalar containing the column name of
+#'   the outcome variable in \code{survey}.
+#' @param L1.x Individual-level covariates. A character vector containing the
+#'   column names of the individual-level variables in \code{survey} and
+#'   \code{census} used to predict outcome \code{y}. Note that geographic unit
+#'   is specified in argument \code{L2.unit}.
+#' @param L2.x Context-level covariates. A character vector containing the
+#'   column names of the context-level variables in \code{survey} and
+#'   \code{census} used to predict outcome \code{y}.
+#' @param L2.unit Geographic unit. A character scalar containing the column
+#'   name of the geographic unit in \code{survey} and \code{census} at which
+#'   outcomes should be aggregated.
 
 post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                                 best.subset.opt, lasso.opt,
@@ -278,33 +291,35 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
   }
 
   # Classifier 6: MRP
-  # Create model formula
-  # Individual-level random effects
-  L1_re <- paste(paste("(1 | ", L1.x, ")", sep = ""), collapse = " + ")
-
-  # Geographic unit or geographic unit-geographic region random effects
-  if (is.null(L2.reg)) {
-    L2_re <- paste("(1 | ", L2.unit, ")", sep = "")
-  } else {
-    L2_re <- paste(paste("(1 | ", L2.reg, "/", L2.unit, ")", sep = ""),
-                   collapse = " + ")
-  }
-
-  # Combine all random effects
-  all_re <- paste(c(L1_re, L2_re), collapse = " + ")
-
-  # Context-level fixed effects
-  if(mrp.L2.x != "empty") {
-    L2_fe <- paste(mrp.L2.x, collapse = " + ")
-  } else{
-      L2_fe <- ""
-    }
-
-  # std MrP formula
-  form_mrp <- as.formula(paste(y, " ~ ", L2_fe, " + ", all_re, sep = ""))
-
   # Fit model
   if (isTRUE(mrp.include == TRUE)) {
+
+    # Create model formula
+    # Individual-level random effects
+    L1_re <- paste(paste("(1 | ", L1.x, ")", sep = ""), collapse = " + ")
+
+    # Geographic unit or geographic unit-geographic region random effects
+    if (is.null(L2.reg)) {
+      L2_re <- paste("(1 | ", L2.unit, ")", sep = "")
+    } else {
+      L2_re <- paste(paste("(1 | ", L2.reg, "/", L2.unit, ")", sep = ""),
+                     collapse = " + ")
+    }
+
+    # Combine all random effects
+    all_re <- paste(c(L1_re, L2_re), collapse = " + ")
+
+    # Context-level fixed effects
+    if(!is.null(mrp.L2.x)){
+      if(mrp.L2.x != "empty") {
+        L2_fe <- paste(mrp.L2.x, collapse = " + ")
+      } else{
+        L2_fe <- ""
+      }
+    }
+
+    # std MrP formula
+    form_mrp <- as.formula(paste(y, " ~ ", L2_fe, " + ", all_re, sep = ""))
     if (isTRUE(verbose == TRUE)) {
 
       # fit model for EBMA
