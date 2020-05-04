@@ -75,11 +75,13 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, post.strat,
         test_y <- dplyr::select(.data = test, one_of(y))
 
         # EBMA
-        forecast.data <- EBMAforecast::makeForecastData(
-          .predCalibration = data.frame(train_preds),
-          .outcomeCalibration = as.numeric(unlist(train_y)),
-          .predTest = data.frame(test_preds),
-          .outcomeTest = as.numeric(unlist(test_y)))
+        forecast.data <- suppressWarnings(
+          EBMAforecast::makeForecastData(
+            .predCalibration = data.frame(train_preds),
+            .outcomeCalibration = as.numeric(unlist(train_y)),
+            .predTest = data.frame(test_preds),
+            .outcomeTest = as.numeric(unlist(test_y)))
+        )
 
         forecast.out <- EBMAforecast::calibrateEnsemble(
           forecast.data,
