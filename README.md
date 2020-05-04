@@ -77,3 +77,5 @@ out <- autoMrP::auto_MrP(
   mrp.L2.x = c("L2.x1", "L2.x4")
 )
 ```
+
+During parameter tuning, models may not converge for certain parameter values and cause warning messages.
