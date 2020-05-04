@@ -11,7 +11,7 @@ install.packages(packageurl, repos=NULL, type="source")
 
 Note that EBMAforecast depends on the [separationplot](https://cran.r-project.org/package=separationplot), [plyr](https://cran.r-project.org/package=plyr), [Hmisc](https://cran.r-project.org/package=Hmisc) and [abind](https://cran.r-project.org/package=abind) packages.
 
-Step 2) To install autoMrP from GitHub run
+Step 2) To install autoMrP from GitHub run:
 
 ```R
 devtools::install_github("retowuest/autoMrP", dependencies = FALSE)
@@ -21,7 +21,7 @@ devtools::install_github("retowuest/autoMrP", dependencies = FALSE)
 
 autoMrP can be used to improve forecasts by combining predictions from various classifiers and it can be used to estimate the standard MrP model. We run through both applications.
 
-For this example, we use the data that is included in package (see `?autoMrP::survey` and `?autoMrP::census`).
+For this example, we use the data that is included in the package (see `?autoMrP::survey` and `?autoMrP::census`).
 
 ```Running
 census <- autoMrP::census
