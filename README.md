@@ -21,9 +21,16 @@ devtools::install_github("retowuest/autoMrP", dependencies = FALSE)
 
 autoMrP can be used to improve forecasts by combining predictions from various classifiers and it can be used to estimate the standard MrP model. We run through both applications.
 
+For this example, we use the data that is included in package (see `?autoMrP::survey` and `?autoMrP::census`).
+
+```Running
+census <- autoMrP::census
+survey <- autoMrP::survey
+```
+
 ### The Standard MrP Model
 
-For this example, we use the data that is included in package (see `?autoMrP::survey` and `?autoMrP::census`). We  include the three individual level variables L1x1, L1x2 and L1x3 as well as the context-level variables L2.x1 and L2.x4. In addition, we include context-level random effects for states nested in regions.
+We  include the three individual level variables L1x1, L1x2 and L1x3 as well as the context-level variables L2.x1 and L2.x4. In addition, we include context-level random effects for states nested in regions.
 
 ```R
 mrp_model <- autoMrP::auto_MrP(
@@ -70,5 +77,4 @@ out <- autoMrP::auto_MrP(
   mrp = TRUE,
   mrp.L2.x = c("L2.x1", "L2.x4")
 )
-out
 ```
