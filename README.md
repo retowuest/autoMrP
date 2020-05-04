@@ -61,7 +61,6 @@ out <- autoMrP::auto_MrP(
   L2.unit = "state",
   L2.reg = "region",
   L2.x.scale = TRUE,
-  pcs = c("PC1", "PC2", "PC3", "PC4", "PC5", "PC6"),
   survey = survey,
   census = census,
   bin.proportion = "proportion",
