@@ -54,12 +54,14 @@ auto_MrP(
   ebma.tol = c(0.01, 0.005, 0.001, 5e-04, 1e-04, 5e-05, 1e-05),
   uncertainty = FALSE,
   seed = NULL,
-  verbose = TRUE
+  verbose = FALSE
 )
 }
 \arguments{
-\item{y}{Outcome variable. A character scalar containing the column name of
-the outcome variable in \code{survey}.}
+\item{y}{Outcome variable.
+
+  A character scalar containing the column name of
+  the outcome variable in \code{survey}.}
 
 \item{L1.x}{Individual-level covariates. A character vector containing the
 column names of the individual-level variables in \code{survey} and
@@ -301,7 +303,7 @@ random number generation. If \code{NULL}, then the seed is set to
 \eqn{546213978}. Default is \code{NULL}.}
 
 \item{verbose}{Verbose output. A logical argument indicating whether or not
-verbose output should be printed. Default is \code{TRUE}.}
+verbose output should be printed. Default is \code{FALSE}.}
 }
 \value{
 
