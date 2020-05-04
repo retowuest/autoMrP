@@ -407,6 +407,15 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
                            k.folds = k.folds,
                            cv.sampling = cv.sampling)
   } else {
+
+    # If svm is TRUE, print warning that SVM classifier does not rely on
+    # user-specified folds
+    if (isTRUE(svm)) {
+    warning(paste("Currently the SVM classifier does not use the user-supplied",
+                  " folds. This will be added in the next version of the",
+                  " package.", sep = ""))
+    }
+
     # EBMA hold-out fold
     ebma_fold <- survey %>%
       dplyr::filter_at(dplyr::vars(dplyr::one_of(folds)),
