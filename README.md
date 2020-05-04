@@ -27,13 +27,13 @@ survey <- autoMrP::survey
 
 ### The Standard MrP Model
 
-We  include the three individual level variables L1x1, L1x2 and L1x3 as well as the context-level variables L2.x1 and L2.x4. In addition, we include context-level random effects for states nested in regions.
+We  include the three individual level variables L1x1, L1x2 and L1x3 as well as the context-level variables L2.x1 and L2.x2. In addition, we include context-level random effects for states nested in regions.
 
 ```R
 mrp_model <- autoMrP::auto_MrP(
   y = "YES",
   L1.x = c("L1x1", "L1x2", "L1x3"),
-  L2.x = c("L2.x1", "L2.x4"),
+  L2.x = c("L2.x1", "L2.x2"),
   L2.unit = "state",
   L2.reg = "region",
   L2.x.scale = TRUE,
@@ -48,6 +48,7 @@ mrp_model <- autoMrP::auto_MrP(
   mrp = TRUE
 )
 ```
+
 
 ### Better Predictions Through Machine Learning
 
@@ -70,7 +71,7 @@ out <- autoMrP::auto_MrP(
   gb = TRUE,
   svm = TRUE,
   mrp = TRUE,
-  mrp.L2.x = c("L2.x1", "L2.x4")
+  mrp.L2.x = c("L2.x1", "L2.x2")
 )
 ```
 
