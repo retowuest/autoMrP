@@ -310,11 +310,13 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
     all_re <- paste(c(L1_re, L2_re), collapse = " + ")
 
     # Context-level fixed effects
-    if(!is.null(mrp.L2.x)){
-      if(mrp.L2.x != "empty") {
-        L2_fe <- paste(mrp.L2.x, collapse = " + ")
-      } else{
+    if(is.null(mrp.L2.x)){
+      L2_fe <- paste(L2.x, collapse = " + ")
+    } else{
+      if(mrp.L2.x == "empty"){
         L2_fe <- ""
+      } else {
+        L2_fe <- paste(mrp.L2.x, collapse = " + ")
       }
     }
 
