@@ -14,5 +14,5 @@ Note that EBMAforecast depends on the stats, graphics, separationplot, plyr, met
 Step 2) To install autoMrP from GitHub run
 
 ```R
-devtools::install_github("retowuest/autoMrP")
+devtools::install_github("retowuest/autoMrP", dependencies = FALSE)
 ```
