@@ -20,7 +20,7 @@ autoMrP can be used to improve forecasts by combining predictions from various c
 
 For this example, we use the data that is included in the package (see `?autoMrP::survey` and `?autoMrP::census`).
 
-```Running
+```R
 census <- autoMrP::census
 survey <- autoMrP::survey
 ```
