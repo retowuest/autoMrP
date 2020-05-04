@@ -243,6 +243,7 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
 
   # ------------------------------- Error checks -------------------------------
 
+  # Call to function doing the error checks
   error_checks(y = y,
                L1.x = L1.x,
                L2.x = L2.x,
