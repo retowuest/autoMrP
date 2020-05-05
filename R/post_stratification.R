@@ -9,9 +9,57 @@
 #' @param L2.x Context-level covariates. A character vector containing the
 #'   column names of the context-level variables in \code{survey} and
 #'   \code{census} used to predict outcome \code{y}.
-#' @param L2.unit Geographic unit. A character scalar containing the column
-#'   name of the geographic unit in \code{survey} and \code{census} at which
-#'   outcomes should be aggregated.
+#' @param L2.unit Geographic unit. A character scalar containing the column name
+#'   of the geographic unit in \code{survey} and \code{census} at which outcomes
+#'   should be aggregated.
+#' @param L2.reg Geographic region. A character scalar containing the column
+#'   name of the geographic region in \code{survey} and \code{census} by which
+#'   geographic units are grouped (\code{L2.unit} must be nested within
+#'   \code{L2.reg}). Default is \code{NULL}.
+#' @param best.subset.opt Optimal tuning parameters from best subset selection
+#'   classifier. A list returned by \code{run_best_subset()}.
+#' @param lasso.opt Optimal tuning parameters from lasso classifier A list
+#'   returned by \code{run_lasso()}.
+#' @param pca.opt Optimal tuning parameters from best subset selection with
+#'   principal components classifier A list returned by \code{run_pca()}.
+#' @param gb.opt Optimal tuning parameters from gradient tree boosting
+#'   classifier A list returned by \code{run_gb()}.
+#' @param svm.opt Optimal tuning parameters from support vector machine
+#'   classifier A list returned by \code{run_svm()}.
+#' @param mrp.include Whether to run MRP classifier. A logical argument
+#'   indicating whether the standard MRP classifier should be used for
+#'   predicting outcome \code{y}. Passed from \code{autoMrP()} argument
+#'   \code{mrp}.
+#' @param n.minobsinnode GB minimum number of observations in the terminal
+#'   nodes. An integer-valued scalar specifying the minimum number of
+#'   observations that each terminal node of the trees must contain. Passed from
+#'   \code{autoMrP()} argument \code{gb.n.minobsinnode}.
+#' @param L2.unit.include GB L2.unit. A logical argument indicating whether
+#'   \code{L2.unit} should be included in the GB classifier. Passed from
+#'   \code{autoMrP()} argument \code{gb.L2.unit}.
+#' @param L2.reg.include A logical argument indicating whether \code{L2.reg}
+#'   should be included in the GB classifier. Passed from \code{autoMrP()}
+#'   argument \code{GB L2.reg}.
+#' @param kernel SVM kernel. A character-valued scalar specifying the kernel to
+#'   be used by SVM. The possible values are \code{linear}, \code{polynomial},
+#'   \code{radial}, and \code{sigmoid}. Passed from \code{autoMrP()} argument
+#'   \code{svm.kernel}.
+#' @param mrp.L2.x MRP context-level covariates. A character vector containing
+#'   the column names of the context-level variables in \code{survey} and
+#'   \code{census} to be used by the MRP classifier. The character vector
+#'   \emph{empty} if no context-level variables should be used by the MRP
+#'   classifier. If \code{NULL} and \code{mrp} is set to \code{TRUE}, then MRP
+#'   uses the variables specified in \code{L2.x}. Passed from \code{autoMrP()}
+#'   argument \code{mrp.L2.x}.
+#' @param data A data.frame containing the survey data used in classifier
+#'   training.
+#' @param ebma.fold A data.frame containing the data not used in classifier
+#'   training.
+#' @param census A data.frame containing census information used for
+#'   post-stratification.
+#' @param verbose Verbose output. A logical argument indicating whether or not
+#'   verbose output should be printed. Passed from \code{autoMrP()} argument
+#'   \code{verbose}.
 
 post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                                 best.subset.opt, lasso.opt,

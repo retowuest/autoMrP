@@ -51,6 +51,17 @@ gb_classifier <- function(form, distribution, data.train,
   return(out)
 }
 
+#' GB classifier update
+#'
+#' \code{gb_classifier_update()} grows additional trees in gradient tree
+#' boosting ensemble.
+#'
+#' @param object Gradient tree boosting output. A gbm object.
+#' @param n.new.trees Number of additional trees to grow. A numeric scalar.
+#' @param verbose Verbose output. A logical vector indicating whether or not
+#'   verbose output should be printed.
+#' @return
+#' @examples #not_yet
 
 gb_classifier_update <- function(object, n.new.trees,
                                  verbose = c(TRUE, FALSE)) {
