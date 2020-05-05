@@ -1127,6 +1127,21 @@ model_list_pca <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL) {
 #'
 #' \code{loss_function()} estimates the loss based on a loss function.
 #'
+#' @param pred Predictions of outcome. A numeric vector of outcome predictions.
+#' @param data.valid Test data set. A tibble of data that was not used for
+#'   prediction.
+#' @param loss.unit Loss function unit. A character-valued scalar indicating
+#'   whether performance loss should be evaluated at the level of individual
+#'   respondents (\code{individuals}) or geographic units (\code{L2 units}).
+#'   Default is \code{individuals}.
+#' @param loss.fun Loss function. A character-valued scalar indicating whether
+#'   prediction loss should be measured by the mean squared error (\code{MSE})
+#'   or the mean absolute error (\code{MAE}). Default is \code{MSE}.
+#' @param y Outcome variable. A character vector containing the column names of
+#'   the outcome variable.
+#' @param L2.unit Geographic unit. A character scalar containing the column name
+#'   of the geographic unit in \code{survey} and \code{census} at which outcomes
+#'   should be aggregated.
 
 loss_function <- function(pred, data.valid,
                           loss.unit = c("individuals", "L2 units"),
