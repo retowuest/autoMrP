@@ -14,7 +14,7 @@
 #'   \item{L1x3}{Gender-race combination (six categories: 1 = white male; 2 = black male; 3 = hispanic male; 4 = white female; 5 = black female; 6 = hispanic female)}
 #'   \item{state}{The state that the respondent is from}
 #'   \item{L2.unit}{An aditional  variable indicating the state that the respondent is from}
-#'   \item{region}{Region in the U.S. that the respondent is from: 1 = Northeast; 2 = Midwest; 3 = South; 4 = West}
+#'   \item{region}{Region in the U.S. that the respondent is from (four categories: 1 = Northeast; 2 = Midwest; 3 = South; 4 = West)}
 #'   \item{L2.x1}{The share of votes for the Republican candidate in the previous presidential election}
 #'   \item{L2.x2}{The percentage of Evangelical Protestant or Mormon respondents}
 #'   \item{L2.x3}{The percentage of the population living in urban areas}
