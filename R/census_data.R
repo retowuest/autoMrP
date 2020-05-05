@@ -24,5 +24,5 @@
 #'   \item{L2.x6}{The share of Whites}
 #'   ...
 #' }
-#' @source \url{https://cces.gov.harvard.edu/pages/welcome-cooperative-congressional-election-study}
+#' @source The data was collected for "Improved Multilevel Regression with Post-Stratification Through Machine Learning (autoMrP). More information is avaialable at: dataverse-address
 "census"
