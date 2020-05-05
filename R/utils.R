@@ -766,6 +766,22 @@ ebma_folding <- function(data, L2.unit, ebma.size) {
 #                         Function to create CV folds                          #
 ################################################################################
 
+#' Generates folds for cross-validation
+#'
+#' \code{cv_folding} creates folds used in classifier training within the survey
+#' data.
+#'
+#' @param data The survey data; must be a tibble.
+#' @param L2.unit The column name of the factor variable identifying the
+#'   context-level unit
+#' @param k.folds An integer value indicating the number of folds to be
+#'   generated.
+#' @param cv.sampling Cross-validation sampling method. A character-valued
+#'   scalar indicating whether cross-validation folds should be created by
+#'   sampling individual respondents (\code{individuals}) or geographic units
+#'   (\code{L2 units}). Default is \code{L2 units}. \emph{Note:} ignored if
+#'   \code{folds} is provided, but must be specified otherwise.
+
 cv_folding <- function(data, L2.unit, k.folds,
                        cv.sampling = c("individuals", "L2 units")) {
 
