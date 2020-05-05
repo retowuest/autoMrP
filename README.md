@@ -56,6 +56,8 @@ In this example, we accept the default settings for the tuning parameters and co
 
 Note, that because we want the standard MrP model to use only two context-level variables while we want our classifiers to use all six context-level variables, we specify the context-level variables to be used for the standard MrP model in the argument `mrp.L2.x = c("L2.x1", "L2.x2")`.
 
+EBMA tuning is quite exhaustive with the default settings and takes quite long. We reduce the search grid to speed up the proccess by setting the argument `ebma.tol` and `ebma.n.draws`.
+
 ```R
 out <- autoMrP::auto_MrP(
   y = "YES",
@@ -73,7 +75,9 @@ out <- autoMrP::auto_MrP(
   gb = TRUE,
   svm = TRUE,
   mrp = TRUE,
-  mrp.L2.x = c("L2.x1", "L2.x2")
+  mrp.L2.x = c("L2.x1", "L2.x2"),
+  ebma.tol = c(0.001, 0.0005),
+  ebma.n.draws = 10
 )
 ```
 

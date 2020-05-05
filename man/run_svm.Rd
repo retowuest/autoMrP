@@ -64,10 +64,7 @@ cross-validation.}
 \item{verbose}{Verbose output. A logical argument indicating whether or not
 verbose output should be printed. Default is \code{TRUE}.}
 
-\item{loss.unit}{Loss function unit. A character-valued scalar indicating
-whether performance loss should be evaluated at the level of individual
-respondents (\code{individuals}) or geographic units (\code{L2 units}).
-Default is \code{individuals}.}
+\item{cross}{The number cross-validation folds. A numeric scalar.}
 }
 \value{
 
