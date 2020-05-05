@@ -9,10 +9,10 @@
 #' @format A data frame with 1500 rows and 13 variables:
 #' \describe{
 #'   \item{YES}{1 if individual supports use of troops; 0 otherwise}
-#'   \item{L1x1}{Age group (four categories)}
-#'   \item{L1x2}{Education level (four categories)}
-#'   \item{L1x3}{Gender-race combination (six categories)}
-#'   \item{state}{The state that the respondent is from}
+#'   \item{L1x1}{Age group (four categories: 1 = 18-29; 2 = 30-44; 3 = 45-64; 4 = 65+)}
+#'   \item{L1x2}{Education level (four categories: 1 = < high school; 2 = high school graduate; 3 = some college; 4 = college graduate)}
+#'   \item{L1x3}{Gender-race combination (six categories: 1 = white male; 2 = black male; 3 = hispanic male; 4 = white female; 5 = black female; 6 = hispanic female)}
+#'   \item{state}{The state that the respondent is from (four categories: )}
 #'   \item{L2.unit}{An aditional  variable indicating the state that the respondent is from}
 #'   \item{region}{Region in the U.S. that the respondent is from; 1 = something, 2 = something, 3 = something, 4 = something}
 #'   \item{L2.x1}{The share of votes for the Republican candidate in the previous presidential election}
