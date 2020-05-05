@@ -38,6 +38,10 @@
 #'   \code{NULL} or an integer-valued scalar specifying the maximum number of
 #'   iterations without performance improvement the algorithm runs before
 #'   stopping. Default is \eqn{70}.
+#' @param iterations.max Lasso maximum number of iterations without improvement.
+#'   Either \code{NULL} or an integer-valued scalar specifying the maximum
+#'   number of iterations without performance improvement the algorithm runs
+#'   before stopping. Passed from \code{autoMrP()} argument \code{lasso.n.iter}.
 #' @param data Data for cross-validation. A \code{list} of \eqn{k}
 #'   \code{data.frames}, one for each fold to be used in \eqn{k}-fold
 #'   cross-validation.

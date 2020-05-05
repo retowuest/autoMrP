@@ -20,10 +20,6 @@
 #'   name of the geographic region in \code{survey} and \code{census} by which
 #'   geographic units are grouped (\code{L2.unit} must be nested within
 #'   \code{L2.reg}). Default is \code{NULL}.
-#' @param loss.unit Loss function unit. A character-valued scalar indicating
-#'   whether performance loss should be evaluated at the level of individual
-#'   respondents (\code{individuals}) or geographic units (\code{L2 units}).
-#'   Default is \code{individuals}.
 #' @param loss.fun Loss function. A character-valued scalar indicating whether
 #'   prediction loss should be measured by the mean squared error (\code{MSE})
 #'   or the mean absolute error (\code{MAE}). Default is \code{MSE}.
@@ -45,6 +41,7 @@
 #'   cross-validation.
 #' @param verbose Verbose output. A logical argument indicating whether or not
 #'   verbose output should be printed. Default is \code{TRUE}.
+#' @param cross The number cross-validation folds. A numeric scalar.
 #' @return
 #' @examples #not_yet
 
