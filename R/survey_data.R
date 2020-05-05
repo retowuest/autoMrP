@@ -4,7 +4,9 @@
 #'
 #' @usage data(survey)
 #'
-#' The survey question asked: "Would you approve of the use of U.S. military troops in order to ensure the supply of oil?" This 2008 CCES item cc418_1 contains 36,832 respondents. This sample mimics a typical national survey. It contains at least 5 respondents from each state but is otherwise a random sample.
+#' The survey question asked: "Would you approve of the use of U.S. military troops in order to ensure the supply of oil?"
+#' This 2008 CCES item cc418_1 contains 36,832 respondents. This sample mimics a typical national survey. It contains at
+#' least 5 respondents from each state but is otherwise a random sample.
 #'
 #' @format A data frame with 1500 rows and 13 variables:
 #' \describe{
@@ -23,5 +25,6 @@
 #'   \item{L2.x6}{State-level share of Whites}
 #'   ...
 #' }
-#' @source The data was collected for "Improved Multilevel Regression with Post-Stratification Through Machine Learning (autoMrP). More information is avaialable at: dataverse-address
+#' @source The data was collected for "Improved Multilevel Regression with Post-Stratification Through Machine Learning
+#' (autoMrP). More information is avaialable at: dataverse-address.
 "survey"

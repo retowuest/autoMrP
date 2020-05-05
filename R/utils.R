@@ -507,12 +507,12 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
       } else{
         # Check if pcs are not specified but column names contain "PC" followed by at least one number
         if (is.null(pcs)){
-          if(any(grepl(pattern = "PC[0-9]?", x = names(survey)))){
+          if (any(grepl(pattern = "PC[0-9]?", x = names(survey)))){
             stop(paste("Survey contains the column names: ",
                        paste(names(survey)[grepl(pattern = "PC[0-9]?", x = names(survey))], collapse = ", "),
                        ". These must be specified in the argument 'pcs' or removed from survey or renamed in survey.", sep = ""))
           }
-          if(any(grepl(pattern = "PC[0-9]?", x = names(census)))){
+          if (any(grepl(pattern = "PC[0-9]?", x = names(census)))){
             stop(paste("Census contains the column names: ",
                        paste(names(census)[grepl(pattern = "PC[0-9]?", x = names(census))], collapse = ", "),
                        ". These must be specified in the argument 'pcs' or removed from census or renamed in census.", sep = ""))

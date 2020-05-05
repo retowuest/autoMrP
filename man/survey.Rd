@@ -24,12 +24,15 @@ A data frame with 1500 rows and 13 variables:
 }
 }
 \source{
-The data was collected for "Improved Multilevel Regression with Post-Stratification Through Machine Learning (autoMrP). More information is avaialable at: dataverse-address
+The data was collected for "Improved Multilevel Regression with Post-Stratification Through Machine Learning
+(autoMrP). More information is avaialable at: dataverse-address.
 }
 \usage{
 data(survey)
 
-The survey question asked: "Would you approve of the use of U.S. military troops in order to ensure the supply of oil?" This 2008 CCES item cc418_1 contains 36,832 respondents. This sample mimics a typical national survey. It contains at least 5 respondents from each state but is otherwise a random sample.
+The survey question asked: "Would you approve of the use of U.S. military troops in order to ensure the supply of oil?"
+This 2008 CCES item cc418_1 contains 36,832 respondents. This sample mimics a typical national survey. It contains at
+least 5 respondents from each state but is otherwise a random sample.
 }
 \description{
 A sample from the 2008 Cooperative Congressional Election Studies (item cc418_1) with additional state-level variables.

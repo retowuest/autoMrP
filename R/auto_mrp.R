@@ -270,15 +270,6 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
                                   0.00001), uncertainty = FALSE, seed = NULL,
                      verbose = FALSE) {
 
-  # ----------------------------- Start message --------------------------------
-
-  if(sum(!is.null(best.subset), !is.null(lasso), !is.null(pca), !is.null(gb),
-         !is.null(svm), !is.null(mrp)) > 1){
-    message("Starting prediction. Depending on the number of context-level variables, the set of tuning parameters and the computer it may take some time (with 6 context-level variables around 15 minutes on average)")
-  } else{
-      message("Starting prediction.")
-    }
-
   # ----------------------------------- Seed -----------------------------------
 
   # Check seed argument and set seed
