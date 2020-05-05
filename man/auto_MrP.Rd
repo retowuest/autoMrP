@@ -316,6 +316,7 @@ regression with post-stratification (MrP) by combining a number of machine
 learning methods through ensemble bayesian model averaging (EBMA).
 }
 \examples{
+\dontrun{
 # MrP model only:
 mrp_model <- autoMrP::auto_MrP(
   y = "YES",
@@ -352,7 +353,7 @@ out <- autoMrP::auto_MrP(
   svm = TRUE,
   mrp = TRUE,
   mrp.L2.x = c("L2.x1", "L2.x2")
-  )
+  )}
 }
 \keyword{EBMA}
 \keyword{MRP}

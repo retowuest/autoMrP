@@ -207,6 +207,7 @@
 #' @keywords MRP multilevel regression post-stratification machine learning
 #'   EBMA ensemble bayesian model averaging
 #' @examples
+#' \dontrun{
 #' # MrP model only:
 #' mrp_model <- autoMrP::auto_MrP(
 #'   y = "YES",
@@ -243,7 +244,7 @@
 #'   svm = TRUE,
 #'   mrp = TRUE,
 #'   mrp.L2.x = c("L2.x1", "L2.x2")
-#'   )
+#'   )}
 #' @export
 
 auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
