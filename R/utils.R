@@ -6,6 +6,139 @@
 #'
 #' \code{error_checks()} checks for incorrect data entry in \code{autoMrP()}
 #' call.
+#'
+#' @param y Outcome variable. A character vector containing the column names of
+#'   the outcome variable.
+#' @param L1.x #' @param L1.x Individual-level covariates. A character vector
+#'   containing the column names of the individual-level variables in
+#'   \code{survey} and \code{census} used to predict outcome \code{y}. Note that
+#'   geographic unit is specified in argument \code{L2.unit}.
+#' @param L2.x Context-level covariates. A character vector containing the
+#'   column names of the context-level variables in \code{survey} and
+#'   \code{census} used to predict outcome \code{y}.
+#' @param L2.unit Geographic unit. A character scalar containing the column name
+#'   of the geographic unit in \code{survey} and \code{census} at which outcomes
+#'   should be aggregated.
+#' @param L2.reg Geographic region. A character scalar containing the column
+#'   name of the geographic region in \code{survey} and \code{census} by which
+#'   geographic units are grouped (\code{L2.unit} must be nested within
+#'   \code{L2.reg}). Default is \code{NULL}.
+#' @param L2.x.scale Scale context-level covariates. A logical argument
+#'   indicating whether the context-level covariates should be normalized.
+#'   Default is \code{TRUE}. Note that if set to \code{FALSE}, then the
+#'   context-level covariates should be normalized prior to calling
+#'   \code{auto_MrP()}.
+#' @param pcs Principal components. A character vector containing the column
+#'   names of the principal components of the context-level variables in
+#'   \code{survey} and \code{census}. Default is \code{NULL}.
+#' @param folds EBMA and cross-validation folds. A character scalar containing
+#'   the column name of the variable in \code{survey} that specifies the fold to
+#'   which an observation is allocated. The variable should contain integers
+#'   running from \eqn{1} to \eqn{k + 1}, where \eqn{k} is the number of
+#'   cross-validation folds. Value \eqn{k + 1} refers to the EBMA fold. Default
+#'   is \code{NULL}. \emph{Note:} if \code{folds} is \code{NULL}, then
+#'   \code{ebma.size}, \code{k.folds}, and \code{cv.sampling} must be specified.
+#' @param bin.proportion Proportion of ideal types. A character scalar
+#'   containing the column name of the variable in \code{census} that indicates
+#'   the proportion of individuals by ideal type and geographic unit. Default is
+#'   \code{NULL}. \emph{Note:} if \code{bin.proportion} is \code{NULL}, then
+#'   \code{bin.size} must be specified.
+#' @param bin.size Bin size of ideal types. A character scalar containing the
+#'   column name of the variable in \code{census} that indicates the bin size of
+#'   ideal types by geographic unit. Default is \code{NULL}. \emph{Note:}
+#'   ignored if \code{bin.proportion} is provided, but must be specified
+#'   otherwise.
+#' @param survey Survey data. A \code{data.frame} whose column names include
+#'   \code{y}, \code{L1.x}, \code{L2.x}, \code{L2.unit}, and, if specified,
+#'   \code{L2.reg}, \code{pcs}, and \code{folds}.
+#' @param census Census data. A \code{data.frame} whose column names include
+#'   \code{L1.x}, \code{L2.x}, \code{L2.unit}, if specified, \code{L2.reg} and
+#'   \code{pcs}, and either \code{bin.proportion} or \code{bin.size}.
+#' @param ebma.size EBMA fold size. A number in the open unit interval
+#'   indicating the proportion of respondents to be allocated to the EBMA fold.
+#'   Default is \eqn{1/3}. \emph{Note:} ignored if \code{folds} is provided, but
+#'   must be specified otherwise.
+#' @param k.folds Number of cross-validation folds. An integer-valued scalar
+#'   indicating the number of folds to be used in cross-validation. Default is
+#'   \eqn{5}. \emph{Note:} ignored if \code{folds} is provided, but must be
+#'   specified otherwise.
+#' @param cv.sampling Cross-validation sampling method. A character-valued
+#'   scalar indicating whether cross-validation folds should be created by
+#'   sampling individual respondents (\code{individuals}) or geographic units
+#'   (\code{L2 units}). Default is \code{L2 units}. \emph{Note:} ignored if
+#'   \code{folds} is provided, but must be specified otherwise.
+#' @param loss.unit Loss function unit. A character-valued scalar indicating
+#'   whether performance loss should be evaluated at the level of individual
+#'   respondents (\code{individuals}) or geographic units (\code{L2 units}).
+#'   Default is \code{individuals}.
+#' @param loss.fun Loss function. A character-valued scalar indicating whether
+#'   prediction loss should be measured by the mean squared error (\code{MSE})
+#'   or the mean absolute error (\code{MAE}). Default is \code{MSE}.
+#' @param best.subset Best subset classifier. A logical argument indicating
+#'   whether the best subset classifier should be used for predicting outcome
+#'   \code{y}. Default is \code{TRUE}.
+#' @param lasso Lasso classifier. A logical argument indicating whether the
+#'   lasso classifier should be used for predicting outcome \code{y}. Default is
+#'   \code{TRUE}.
+#' @param pca PCA classifier. A logical argument indicating whether the PCA
+#'   classifier should be used for predicting outcome \code{y}. Default is
+#'   \code{TRUE}.
+#' @param gb GB classifier. A logical argument indicating whether the GB
+#'   classifier should be used for predicting outcome \code{y}. Default is
+#'   \code{TRUE}.
+#' @param svm SVM classifier. A logical argument indicating whether the SVM
+#'   classifier should be used for predicting outcome \code{y}. Default is
+#'   \code{TRUE}.
+#' @param mrp MRP classifier. A logical argument indicating whether the standard
+#'   MRP classifier should be used for predicting outcome \code{y}. Default is
+#'   \code{FALSE}.
+#' @param forward.select Forward selection classifier. A logical argument
+#'   indicating whether to use forward selection rather than best subset
+#'   selection. Default is \code{FALSE}. \emph{Note:} forward selection is
+#'   recommended if there are more than \eqn{8} context-level variables.
+#' @param best.subset.L2.x Best subset context-level covariates. A character
+#'   vector containing the column names of the context-level variables in
+#'   \code{survey} and \code{census} to be used by the best subset classifier.
+#'   If \code{NULL} and \code{best.subset} is set to \code{TRUE}, then best
+#'   subset uses the variables specified in \code{L2.x}. Default is \code{NULL}.
+#' @param lasso.L2.x Lasso context-level covariates. A character vector
+#'   containing the column names of the context-level variables in \code{survey}
+#'   and \code{census} to be used by the lasso classifier. If \code{NULL} and
+#'   \code{lasso} is set to \code{TRUE}, then lasso uses the variables specified
+#'   in \code{L2.x}. Default is \code{NULL}.
+#' @param gb.L2.x GB context-level covariates. A character vector containing the
+#'   column names of the context-level variables in \code{survey} and
+#'   \code{census} to be used by the GB classifier. If \code{NULL} and \code{gb}
+#'   is set to \code{TRUE}, then GB uses the variables specified in \code{L2.x}.
+#'   Default is \code{NULL}.
+#' @param svm.L2.x SVM context-level covariates. A character vector containing
+#'   the column names of the context-level variables in \code{survey} and
+#'   \code{census} to be used by the SVM classifier. If \code{NULL} and
+#'   \code{svm} is set to \code{TRUE}, then SVM uses the variables specified in
+#'   \code{L2.x}. Default is \code{NULL}.
+#' @param mrp.L2.x MRP context-level covariates. A character vector containing
+#'   the column names of the context-level variables in \code{survey} and
+#'   \code{census} to be used by the MRP classifier. The character vector
+#'   \emph{empty} if no context-level variables should be used by the MRP
+#'   classifier. If \code{NULL} and \code{mrp} is set to \code{TRUE}, then MRP
+#'   uses the variables specified in \code{L2.x}. Default is \code{NULL}.
+#' @param gb.L2.unit GB L2.unit. A logical argument indicating whether
+#'   \code{L2.unit} should be included in the GB classifier. Default is
+#'   \code{FALSE}.
+#' @param gb.L2.reg GB L2.reg. A logical argument indicating whether
+#'   \code{L2.reg} should be included in the GB classifier. Default is
+#'   \code{FALSE}.
+#' @param lasso.lambda Lasso penalty parameter. A numeric \code{vector} of
+#'   non-negative values or a \code{list} of two numeric vectors of equal size,
+#'   with the first vector containing the step sizes by which the penalty
+#'   parameter should increase and the second vector containing the upper
+#'   thresholds of the intervals to which the step sizes apply. The penalty
+#'   parameter controls the shrinkage of the context-level variables in the
+#'   lasso model. Default is \code{list(c(0.1, 0.3, 1), c(1, 10, 10000))}.
+#' @param lasso.n.iter Lasso number of iterations without improvement. Either
+#'   \code{NULL} or an integer-valued scalar specifying the maximum number of
+#'   iterations without performance improvement the algorithm runs before
+#'   stopping. Default is \eqn{70}.
 
 error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                          folds, bin.proportion, bin.size, survey, census,
