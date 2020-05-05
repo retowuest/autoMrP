@@ -9,44 +9,27 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                          best.subset.L2.x, lasso.L2.x, gb.L2.x, svm.L2.x,
                          mrp.L2.x, gb.L2.unit, gb.L2.reg, lasso.lambda,
                          lasso.n.iter) {
-<<<<<<< HEAD
 
 
-=======
-  
-  
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
   # Check if y is a character scalar
   if (!(is.character(y) & length(y) == 1)) {
     stop(paste("The argument 'y', specifying the outcome variable, must be a",
                " character scalar.", sep = ""))
   }
-<<<<<<< HEAD
 
-=======
-  
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
   # Check if y is in survey data
   if (!(y %in% colnames(survey))) {
     stop(paste("Outcome '", y,
                "' is not in your survey data.", sep = ""))
   }
-<<<<<<< HEAD
 
-=======
-  
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
   # Check if L1.x is a character vector
   if (!is.character(L1.x)) {
     stop(paste("The argument 'L1.x', specifying the individual-level variables",
                " to be used to predict y, must be a character vector.",
                sep = ""))
   }
-<<<<<<< HEAD
 
-=======
-  
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
   # Check if L1.x is in survey data
   if (!all(L1.x %in% colnames(survey))) {
     stop(cat(paste("Individual-level variable '",
@@ -54,11 +37,7 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                    "', specified in argument 'L1.x', is not in your survey",
                    " data.\n", sep = ""), sep = ""))
   }
-<<<<<<< HEAD
 
-=======
-  
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
   # Check if L1.x is in census data
   if (!all(L1.x %in% colnames(census))) {
     stop(cat(paste("Individual-level variable '",
@@ -66,21 +45,13 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                    "', specified in argument 'L1.x', is not in your census",
                    " data.\n", sep = ""), sep = ""))
   }
-<<<<<<< HEAD
 
-=======
-  
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
   # Check if L2.x is a character vector
   if (!is.character(L2.x)) {
     stop(paste("The argument 'L2.x', specifying the context-level variables to",
                " be used to predict y, must be a character vector.", sep = ""))
   }
-<<<<<<< HEAD
 
-=======
-  
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
   # Check if L2.x is in survey data
   if (!all(L2.x %in% colnames(survey))) {
     stop(cat(paste("Context-level variable '",
@@ -88,11 +59,7 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                    "', specified in argument 'L2.x', is not in your survey",
                    " data.\n", sep = ""), sep = ""))
   }
-<<<<<<< HEAD
 
-=======
-  
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
   # Check if L2.x is in census data
   if (!all(L2.x %in% colnames(census))) {
     stop(cat(paste("Context-level variable '",
@@ -100,41 +67,25 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                    "', specified in argument 'L2.x', is not in your census",
                    " data.\n", sep = ""), sep = ""))
   }
-<<<<<<< HEAD
 
-=======
-  
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
   # Check if L2.unit is a character scalar
   if (!(is.character(L2.unit) & length(L2.unit) == 1)) {
     stop(paste("The argument 'L2.unit', specifying the geographic unit,",
                " must be a character scalar.", sep = ""))
   }
-<<<<<<< HEAD
 
-=======
-  
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
   # Check if L2.unit is in survey data
   if (!(L2.unit %in% colnames(survey))) {
     stop(paste("The geographic unit '", L2.unit,
                "' is not in your survey data.", sep = ""))
   }
-<<<<<<< HEAD
 
-=======
-  
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
   # Check if L2.unit is in census data
   if (!(L2.unit %in% colnames(census))) {
     stop(paste("The geographic unit '", L2.unit,
                "' is not in your census data.", sep = ""))
   }
-<<<<<<< HEAD
 
-=======
-  
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
   # Check if L2.reg is NULL
   if (!is.null(L2.reg)) {
     # Check if L2.reg is a character scalar
@@ -142,31 +93,19 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
       stop(paste("The argument 'L2.reg', specifying the geographic region,",
                  " must be a character scalar.", sep = ""))
     }
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
     # Check if L2.reg is in survey data
     if (!(L2.reg %in% colnames(survey))) {
       stop(paste("The geographic region '", L2.reg,
                  "' is not in your survey data.", sep = ""))
     }
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
     # Check if L2.reg is in census data
     if (!(L2.reg %in% colnames(census))) {
       stop(paste("The geographic region '", L2.reg,
                  "' is not in your census data.", sep = ""))
     }
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
     # Check if each geographic unit is nested in only one geographic region
     # in survey data
     if (any(unlist(lapply(dplyr::group_split(survey, .data[[L2.unit]]),
@@ -176,11 +115,7 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                                                  function(x) length(unique(x[[L2.reg]])))) > 1)],
                      "' is nested in multiple regions in your survey data.\n"), sep = ""))
     }
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
     # Check if each geographic unit is nested in only one geographic region
     # in census data
     if (any(unlist(lapply(dplyr::group_split(census, .data[[L2.unit]]),
@@ -191,21 +126,13 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                      "' is nested in multiple regions in your census data.\n"), sep = ""))
     }
   }
-<<<<<<< HEAD
 
-=======
-  
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
   # Check if L2.x.scale is logical
   if (!is.logical(L2.x.scale)) {
     stop(paste("The logical argument 'L2.x.scale' must be either TRUE or",
                " FALSE.", sep = ""))
   }
-<<<<<<< HEAD
 
-=======
-  
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
   # Check if folds is NULL
   if (!is.null(folds)) {
     # Check if folds is a character scalar
@@ -214,41 +141,25 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                  " observation is to be allocated, must be a character scalar.",
                  sep = ""))
     }
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
     # Check if folds is in survey data
     if (!(folds %in% colnames(survey))) {
       stop(paste("Fold variable '", folds,
                  "' is not in your survey data.", sep = ""))
     }
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
     # Check if folds contains a sequence of integer numbers
     folds_var <- survey %>%
       dplyr::select_at(.vars = folds) %>%
       dplyr::pull() %>%
       unique() %>%
       sort()
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
     if (isFALSE(all(dplyr::near(folds_var, as.integer(folds_var))))) {
       stop(paste("Fold variable '", folds,
                  "' must contain integer numbers only.", sep = ""))
     }
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
     if (!(folds_var == 1:max(folds_var))) {
       stop(paste("Fold variable '", folds,
                  "' must contain a sequence of integers running from 1 to ",
@@ -263,19 +174,11 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
       # Check if ebma.size is a proportion in the open unit interval
       if (!(is.numeric(ebma.size) & ebma.size > 0 & ebma.size < 1)) {
         stop(paste("The argument 'ebma.size', specifying the share of",
-<<<<<<< HEAD
-             " respondents to be allocated to the EBMA fold, must take a",
-             " number in the open unit interval.", sep = ""))
-      }
-    }
-
-=======
                    " respondents to be allocated to the EBMA fold, must take a",
                    " number in the open unit interval.", sep = ""))
       }
     }
-    
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
+
     # Check if k.folds is NULL
     if (is.null(k.folds)) {
       stop(paste("If argument 'folds' is NULL, then argument 'k.folds' must",
@@ -299,11 +202,7 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
         }
       }
     }
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
     # Check if cv.sampling is NULL
     if (is.null(cv.sampling)) {
       stop(paste("If argument 'folds' is NULL, then argument 'cv.sampling'",
@@ -317,11 +216,7 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
       }
     }
   }
-<<<<<<< HEAD
 
-=======
-  
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
   # Check if bin.proportion is NULL
   if (!is.null(bin.proportion)) {
     # Check if bin.proportion is a character scalar
@@ -330,32 +225,20 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                  " indicates the proportion of ideal types in the census data,",
                  " must be a character scalar.", sep = ""))
     }
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
     # Check if bin.proportion is in census data
     if (!(bin.proportion %in% colnames(census))) {
       stop(paste("Variable '", bin.proportion,
                  "', indicating the proportion of ideal types, is not in your",
                  " census data.", sep = ""))
     }
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
     # Check if bin.proportion is a proportion
     bin_proportion_var <- census %>%
       dplyr::select_at(.vars = bin.proportion) %>%
       dplyr::pull() %>%
       unique()
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
     if (!(is.numeric(bin_proportion_var) &
           min(bin_proportion_var) >= 0 &
           max(bin_proportion_var) <= 1)) {
@@ -372,42 +255,26 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                    " indicates the bin size of ideal types in the census data,",
                    " must be a character scalar.", sep = ""))
       }
-<<<<<<< HEAD
 
-=======
-      
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
       # Check if bin.size is in census data
       if (!(bin.size %in% colnames(census))) {
         stop(paste("Variable '", bin.size,
                    "', indicating the bin size of ideal types, is not in your",
                    " census data.", sep = ""))
       }
-<<<<<<< HEAD
 
-=======
-      
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
       # Check if bin.size contains only non-negative numbers
       bin_size_var <- census %>%
         dplyr::select_at(.vars = bin.size) %>%
         dplyr::pull() %>%
         unique()
-<<<<<<< HEAD
 
-=======
-      
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
       if (!is.numeric(bin_size_var)) {
         stop(paste("Variable '", bin.size,
                    "', indicating the bin size of ideal types, must be numeric.",
                    sep = ""))
       }
-<<<<<<< HEAD
 
-=======
-      
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
       if (min(bin_size_var) < 0) {
         stop(paste("Variable '", bin.size,
                    "', indicating the bin size of ideal types, can only take",
@@ -418,11 +285,7 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                  " be specified to perform post-stratification.", sep = ""))
     }
   }
-<<<<<<< HEAD
 
-=======
-  
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
   # Check if survey data is provided as a data.frame
   if (is.null(survey)) {
     stop(paste("Argument 'survey' cannot be NULL. Please provide survey data.",
@@ -433,11 +296,7 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                  " must be a data.frame.", sep = ""))
     }
   }
-<<<<<<< HEAD
 
-=======
-  
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
   # Check if census data is provided as a data.frame
   if (is.null(census)) {
     stop(paste("Argument 'census' cannot be NULL. Please provide census data.",
@@ -448,33 +307,21 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                  " must be a data.frame.", sep = ""))
     }
   }
-<<<<<<< HEAD
 
-=======
-  
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
   # Check if loss.unit is either "individuals" or "L2 units"
   if (!loss.unit %in% c("individuals", "L2 units")) {
     stop(paste("The argument 'loss.unit', specifying the level at which to",
                " evaluate prediction performance, must be either",
                " 'individuals' or 'L2 units'.", sep = ""))
   }
-<<<<<<< HEAD
 
-=======
-  
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
   # Check if loss.fun is either "MSE" or "MAE"
   if (!loss.fun %in% c("MSE", "MAE")) {
     stop(paste("The argument 'loss.fun', specifying the loss function used",
                " to measure prediction performance, must be either",
                " 'MSE' or 'MAE'.", sep = ""))
   }
-<<<<<<< HEAD
 
-=======
-  
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
   # Check if best.subset is logical
   if (is.logical(best.subset)) {
     # Check if best.subset is TRUE
@@ -487,11 +334,7 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                      " variables to be used by the best subset classifier, must be",
                      " a character vector.", sep = ""))
         }
-<<<<<<< HEAD
 
-=======
-        
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
         # Check if best.subset.L2.x is in survey data
         if (!all(best.subset.L2.x %in% colnames(survey))) {
           stop(cat(paste("Context-level variable '",
@@ -500,11 +343,7 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                          " best subset classifier, is not in your survey data.", sep = ""),
                    sep = ""))
         }
-<<<<<<< HEAD
 
-=======
-        
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
         # Check if best.subset.L2.x is in census data
         if (!all(best.subset.L2.x %in% colnames(census))) {
           stop(cat(paste("Context-level variable '",
@@ -527,11 +366,7 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                " best subset classifier is to be used for predicting y,",
                " must be either TRUE or FALSE.", sep = ""))
   }
-<<<<<<< HEAD
 
-=======
-  
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
   # Check if lasso is logical
   if (is.logical(lasso)) {
     # Check if lasso is TRUE
@@ -544,11 +379,7 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                      " variables to be used by the lasso classifier, must be",
                      " a character vector.", sep = ""))
         }
-<<<<<<< HEAD
 
-=======
-        
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
         # Check if lasso.L2.x is in survey data
         if (!all(lasso.L2.x %in% colnames(survey))) {
           stop(cat(paste("Context-level variable '",
@@ -557,11 +388,7 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                          " lasso classifier, is not in your survey data.", sep = ""),
                    sep = ""))
         }
-<<<<<<< HEAD
 
-=======
-        
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
         # Check if lasso.L2.x is in census data
         if (!all(lasso.L2.x %in% colnames(census))) {
           stop(cat(paste("Context-level variable '",
@@ -571,11 +398,7 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                    sep = ""))
         }
       }
-<<<<<<< HEAD
 
-=======
-      
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
       # Check if lasso.lambda is a list
       if (is.list(lasso.lambda)) {
         # Check if lasso.lambda is a list of two numeric vectors of equal size
@@ -625,21 +448,12 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                      sep = ""))
         }
       }
-<<<<<<< HEAD
 
       # Check if lasso.n.iter is NULL
       if (is.null(lasso.n.iter)) {
 
       }
 
-=======
-      
-      # Check if lasso.n.iter is NULL
-      if (is.null(lasso.n.iter)) {
-        
-      }
-      
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
       # Check if lasso.n.iter is an integer-valued scalar
       if (!(dplyr::near(lasso.n.iter, as.integer(lasso.n.iter)) &
             length(lasso.n.iter) == 1)) {
@@ -661,11 +475,7 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                " classifier is to be used for predicting y,",
                " must be either TRUE or FALSE.", sep = ""))
   }
-<<<<<<< HEAD
 
-=======
-  
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
   # Check if pca is logical
   if (is.logical(pca)) {
     # Check if pca is TRUE
@@ -678,11 +488,7 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                      " the context-level variables, must be a character vector.",
                      sep = ""))
         }
-<<<<<<< HEAD
 
-=======
-        
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
         # Check if pcs is in survey data
         if (!all(pcs %in% colnames(survey))) {
           stop(cat(paste("Principal component '",
@@ -690,11 +496,7 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                          "', specified in argument 'pcs', is not in your survey",
                          " data.\n", sep = ""), sep = ""))
         }
-<<<<<<< HEAD
 
-=======
-        
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
         # Check if pcs is in census data
         if (!all(pcs %in% colnames(census))) {
           stop(cat(paste("Principal component '",
@@ -730,11 +532,7 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                " classifier is to be used for predicting y,",
                " must be either TRUE or FALSE.", sep = ""))
   }
-<<<<<<< HEAD
 
-=======
-  
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
   # Check if gb is logical
   if (is.logical(gb)) {
     # Check if gb is TRUE
@@ -747,11 +545,7 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                      " variables to be used by the GB classifier, must be",
                      " a character vector.", sep = ""))
         }
-<<<<<<< HEAD
 
-=======
-        
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
         # Check if gb.L2.x is in survey data
         if (!all(gb.L2.x %in% colnames(survey))) {
           stop(cat(paste("Context-level variable '",
@@ -760,11 +554,7 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                          " classifier, is not in your survey data.", sep = ""),
                    sep = ""))
         }
-<<<<<<< HEAD
 
-=======
-        
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
         # Check if gb.L2.x is in census data
         if (!all(gb.L2.x %in% colnames(census))) {
           stop(cat(paste("Context-level variable '",
@@ -774,22 +564,14 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                    sep = ""))
         }
       }
-<<<<<<< HEAD
 
-=======
-      
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
       # Check if gb.L2.unit is logical
       if (!is.logical(gb.L2.unit)) {
         stop(paste("The logical argument 'gb.L2.unit', indicating whether",
                    " 'L2.unit' should be included in the GB classifier must be",
                    " either TRUE or FALSE.", sep = ""))
       }
-<<<<<<< HEAD
 
-=======
-      
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
       # Check if gb.L2.reg is logical
       if (!is.logical(gb.L2.reg)) {
         stop(paste("The logical argument 'gb.L2.reg', indicating whether",
@@ -803,22 +585,14 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                       " variables to be used by the GB classifier, will be",
                       " ignored because 'gb' is set to FALSE.", sep = ""))
       }
-<<<<<<< HEAD
 
-=======
-      
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
       # Check if gb.L2.unit has a value other than the default
       if (!isFALSE(gb.L2.unit)) {
         stop(paste("The argument 'gb.L2.unit', indicating whether 'L2.unit'",
                    " should be included in the GB classifier, will be",
                    " ignored because 'gb' is set to FALSE.", sep = ""))
       }
-<<<<<<< HEAD
 
-=======
-      
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
       # Check if gb.L2.reg has a value other than the default
       if (!isFALSE(gb.L2.reg)) {
         stop(paste("The argument 'gb.L2.reg', indicating whether 'L2.reg'",
@@ -831,11 +605,7 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                " classifier is to be used for predicting y,",
                " must be either TRUE or FALSE.", sep = ""))
   }
-<<<<<<< HEAD
 
-=======
-  
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
   # Check if svm is logical
   if (is.logical(svm)) {
     # Check if svm is TRUE
@@ -848,11 +618,7 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                      " variables to be used by the SVM classifier, must be",
                      " a character vector.", sep = ""))
         }
-<<<<<<< HEAD
 
-=======
-        
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
         # Check if svm.L2.x is in survey data
         if (!all(svm.L2.x %in% colnames(survey))) {
           stop(cat(paste("Context-level variable '",
@@ -861,11 +627,7 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                          " SVM classifier, is not in your survey data.", sep = ""),
                    sep = ""))
         }
-<<<<<<< HEAD
 
-=======
-        
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
         # Check if svm.L2.x is in census data
         if (!all(svm.L2.x %in% colnames(census))) {
           stop(cat(paste("Context-level variable '",
@@ -888,11 +650,7 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                " classifier is to be used for predicting y,",
                " must be either TRUE or FALSE.", sep = ""))
   }
-<<<<<<< HEAD
 
-=======
-  
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
   # Check if mrp is logical
   if (is.logical(mrp)) {
     # Check if mrp is TRUE
@@ -905,11 +663,7 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                      " variables to be used by the standard MRP classifier, must",
                      " be a character vector.", sep = ""))
         }
-<<<<<<< HEAD
 
-=======
-        
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
         # Check if mrp.L2.x is in survey data
         if (mrp.L2.x != "empty"){
           if (!all(mrp.L2.x %in% colnames(survey))) {
@@ -920,11 +674,7 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                            sep = ""), sep = ""))
           }
         }
-<<<<<<< HEAD
 
-=======
-        
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
         # Check if mrp.L2.x is in census data
         if (mrp.L2.x != "empty"){
           if (!all(mrp.L2.x %in% colnames(census))) {
@@ -949,11 +699,7 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                " MRP classifier is to be used for predicting y,",
                " must be either TRUE or FALSE.", sep = ""))
   }
-<<<<<<< HEAD
 
-=======
-  
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
   # Check if forward.select is logical
   if (!is.logical(forward.select)) {
     stop(paste("The logical argument 'forward.select', indicating whether to",
@@ -971,25 +717,16 @@ ebma_folding <- function(data, L2.unit, ebma.size) {
   # Add row number to data frame
   data <- data %>%
     dplyr::mutate(index = dplyr::row_number())
-<<<<<<< HEAD
 
   # Split data by geographic unit into a list of data frames
   data_list <- data %>%
     dplyr::group_split(.data[[L2.unit]])
 
-=======
-  
-  # Split data by geographic unit into a list of data frames
-  data_list <- data %>%
-    dplyr::group_split(.data[[L2.unit]])
-  
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
   # Sample one respondent per geographic unit
   one_per_unit <- lapply(data_list, function(x) {
     sample(x$index, size = 1, replace = FALSE)
   }) %>%
     unlist()
-<<<<<<< HEAD
 
   # Create EBMA hold-out fold
   ebma_fold <- data %>%
@@ -1018,36 +755,6 @@ ebma_folding <- function(data, L2.unit, ebma.size) {
   cv_data <- cv_data %>%
     dplyr::select(-index)
 
-=======
-  
-  # Create EBMA hold-out fold
-  ebma_fold <- data %>%
-    dplyr::filter(index %in% one_per_unit)
-  
-  data <- data %>%
-    dplyr::filter(!(index %in% one_per_unit))
-  
-  remainder <- sample(data$index, size = ebma.size - length(one_per_unit),
-                      replace = FALSE)
-  
-  ebma_remainder <- data %>%
-    dplyr::filter(index %in% remainder)
-  
-  ebma_fold <- ebma_fold %>%
-    dplyr::bind_rows(ebma_remainder)
-  
-  # Extract EBMA hold-out fold from survey sample
-  cv_data <- data %>%
-    dplyr::filter(!(index %in% ebma_fold$index))
-  
-  # Remove index variable
-  ebma_fold <- ebma_fold %>%
-    dplyr::select(-index)
-  
-  cv_data <- cv_data %>%
-    dplyr::select(-index)
-  
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
   # Function output
   out <- list(ebma_fold = ebma_fold,
               cv_data = cv_data)
@@ -1061,16 +768,11 @@ ebma_folding <- function(data, L2.unit, ebma.size) {
 
 cv_folding <- function(data, L2.unit, k.folds,
                        cv.sampling = c("individuals", "L2 units")) {
-<<<<<<< HEAD
 
-=======
-  
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
   if (cv.sampling == "individuals") {
     # Add row number to data frame
     data <- data %>%
       dplyr::mutate(index = row_number())
-<<<<<<< HEAD
 
     # Randomize indices of individuals
     indices <- sample(data$index, size = length(data$index), replace = FALSE)
@@ -1088,25 +790,6 @@ cv_folding <- function(data, L2.unit, k.folds,
     # Split indices into folds
     fold_indices <- split(indices, rep(1:k.folds, times = no_fold))
 
-=======
-    
-    # Randomize indices of individuals
-    indices <- sample(data$index, size = length(data$index), replace = FALSE)
-    
-    # Define number of units per fold
-    no_floor <- floor(length(indices) / k.folds)
-    no_remaining <- length(indices) - no_floor * k.folds
-    
-    no_fold <- rep(no_floor, times = k.folds)
-    
-    if (no_remaining > 0) {
-      no_fold[1:no_remaining] <- no_fold[1:no_remaining] + 1
-    }
-    
-    # Split indices into folds
-    fold_indices <- split(indices, rep(1:k.folds, times = no_fold))
-    
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
     # Partition data according to indices
     out <- lapply(fold_indices, function(x) {
       data %>%
@@ -1117,7 +800,6 @@ cv_folding <- function(data, L2.unit, k.folds,
     # Extract indices of geographic units
     indices <- data[[L2.unit]] %>%
       unique()
-<<<<<<< HEAD
 
     # Randomize order of indices
     indices <- sample(indices, size = length(indices), replace = FALSE)
@@ -1135,36 +817,13 @@ cv_folding <- function(data, L2.unit, k.folds,
     # Split indices into folds
     fold_indices <- split(indices, rep(1:k.folds, times = no_fold))
 
-=======
-    
-    # Randomize order of indices
-    indices <- sample(indices, size = length(indices), replace = FALSE)
-    
-    # Define number of units per fold
-    no_floor <- floor(length(indices) / k.folds)
-    no_remaining <- length(indices) - no_floor * k.folds
-    
-    no_fold <- rep(no_floor, times = k.folds)
-    
-    if (no_remaining > 0) {
-      no_fold[1:no_remaining] <- no_fold[1:no_remaining] + 1
-    }
-    
-    # Split indices into folds
-    fold_indices <- split(indices, rep(1:k.folds, times = no_fold))
-    
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
     # Partition data according to indices
     out <- lapply(fold_indices, function(x) {
       data %>%
         dplyr::filter(.data[[L2.unit]] %in% x)
     })
   }
-<<<<<<< HEAD
 
-=======
-  
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
   # Function output
   return(out)
 }
@@ -1177,11 +836,7 @@ cv_folding <- function(data, L2.unit, k.folds,
 model_list <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL) {
   # Individual-level random effects
   L1_re <- paste(paste("(1 | ", L1.x, ")", sep = ""), collapse = " + ")
-<<<<<<< HEAD
 
-=======
-  
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
   # Geographic unit or geographic unit-geographic region random effects
   if (is.null(L2.reg)) {
     L2_re <- paste("(1 | ", L2.unit, ")", sep = "")
@@ -1189,7 +844,6 @@ model_list <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL) {
     L2_re <- paste(paste("(1 | ", L2.reg, "/", L2.unit, ")", sep = ""),
                    collapse = " + ")
   }
-<<<<<<< HEAD
 
   # Combine all random effects
   all_re <- paste(c(L1_re, L2_re), collapse = " + ")
@@ -1197,15 +851,6 @@ model_list <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL) {
   # Empty model
   empty_model <- list(as.formula(paste(y, " ~ ", all_re, sep = "")))
 
-=======
-  
-  # Combine all random effects
-  all_re <- paste(c(L1_re, L2_re), collapse = " + ")
-  
-  # Empty model
-  empty_model <- list(as.formula(paste(y, " ~ ", all_re, sep = "")))
-  
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
   # Remaining models
   L2_list <- lapply(seq_along(L2.x), function(x) {combn(L2.x, x)})
   L2_list <- lapply(L2_list, function(x) {
@@ -1214,17 +859,10 @@ model_list <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL) {
     })
   }) %>%
     unlist()
-<<<<<<< HEAD
 
   # Combine models in list
   out <- c(empty_model, L2_list)
 
-=======
-  
-  # Combine models in list
-  out <- c(empty_model, L2_list)
-  
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
   # Function output
   return(out)
 }
@@ -1237,11 +875,7 @@ model_list <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL) {
 model_list_pca <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL) {
   # Individual-level random effects
   L1_re <- paste(paste("(1 | ", L1.x, ")", sep = ""), collapse = " + ")
-<<<<<<< HEAD
 
-=======
-  
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
   # Geographic unit or Geographic unit-Geographic region random effects
   if (is.null(L2.reg)) {
     L2_re <- paste("(1 | ", L2.unit, ")", sep = "")
@@ -1249,7 +883,6 @@ model_list_pca <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL) {
     L2_re <- paste(paste("(1 | ", L2.reg, "/", L2.unit, ")", sep = ""),
                    collapse = " + ")
   }
-<<<<<<< HEAD
 
   # Combine all random effects
   all_re <- paste(c(L1_re, L2_re), collapse = " + ")
@@ -1257,32 +890,15 @@ model_list_pca <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL) {
   # Empty model
   empty_model <- list(as.formula(paste(y, " ~ ", all_re, sep = "")))
 
-=======
-  
-  # Combine all random effects
-  all_re <- paste(c(L1_re, L2_re), collapse = " + ")
-  
-  # Empty model
-  empty_model <- list(as.formula(paste(y, " ~ ", all_re, sep = "")))
-  
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
   # Remaining models
   L2_list <- lapply(seq_along(L2.x), function(x) {L2.x[1:x]})
   L2_list <- lapply(L2_list, function(x) {
     as.formula(paste(y, " ~ ", paste(x, collapse = " + "), " + ", all_re, sep = ""))
-<<<<<<< HEAD
-    })
-
-  # Combine models in list
-  out <- c(empty_model, L2_list)
-
-=======
   })
-  
+
   # Combine models in list
   out <- c(empty_model, L2_list)
-  
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
+
   # Function output
   return(out)
 }
@@ -1303,46 +919,27 @@ loss_function <- function(pred, data.valid,
   } else if (loss.unit == "L2 units" & loss.fun == "MSE") {
     data.valid <- data.valid %>%
       dplyr::mutate(pred = pred)
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
     out <- data.valid %>%
       dplyr::group_by_at(L2.unit) %>%
       dplyr::summarise_at(.vars = c(y, "pred"), mean) %>%
       dplyr::mutate(sqe = (.data[[y]] - pred)^2) %>%
       dplyr::pull(sqe)
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
     out <- mean(out)
   } else {
     data.valid <- data.valid %>%
       dplyr::mutate(pred = pred)
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
     out <- data.valid %>%
       dplyr::group_by_at(L2.unit) %>%
       dplyr::summarise_at(.vars = c(y, "pred"), mean) %>%
       dplyr::mutate(ae = abs(.data[[y]] - pred)) %>%
       dplyr::pull(ae)
-<<<<<<< HEAD
 
     out <- mean(out)
   }
 
-=======
-    
-    out <- mean(out)
-  }
-  
->>>>>>> ecc76af7303ac2cddf2b5bbd68ca6f24c10cc869
   # Function output
   return(out)
 }
