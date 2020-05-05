@@ -1,6 +1,8 @@
 #' Quasi census data.
 #'
-#' The census file is generated from the full 2008 Cooperative Congressional Election Studies item cc418_1 by dissaggregating the 64 ideal type combinations of the individual level variables L1x1, L2x2 and L1x3. A row is an ideal type in a given state.
+#' The census file is generated from the full 2008 Cooperative Congressional Election Studies
+#' item cc418_1 by dissaggregating the 64 ideal type combinations of the individual level variables
+#' L1x1, L2x2 and L1x3. A row is an ideal type in a given state.
 #'
 #' @docType data
 #'
@@ -24,5 +26,6 @@
 #'   \item{L2.x6}{State-level share of Whites}
 #'   ...
 #' }
-#' @source The data was collected for "Improved Multilevel Regression with Post-Stratification Through Machine Learning (autoMrP). More information is avaialable at: dataverse-address
+#' @source The data was collected for "Improved Multilevel Regression with Post-Stratification
+#' Through Machine Learning (autoMrP). More information is avaialable at: dataverse-address
 "census"
