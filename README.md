@@ -20,7 +20,7 @@ autoMrP can be used to improve forecasts by combining predictions from various c
 
 For this example, we use the data that is included in the package (see `?autoMrP::survey` and `?autoMrP::census`).
 
-```Running
+```R
 census <- autoMrP::census
 survey <- autoMrP::survey
 ```
@@ -54,7 +54,7 @@ mrp_model <- autoMrP::auto_MrP(
 
 In this example, we accept the default settings for the tuning parameters and combine predictions from four classifiers (best subset, lasso, pca, gb, svm) via EBMA to one overall prediction. The classifiers make use of all six context-level variables in the data. In addition, we include the standard MrP model with the context-level variables that we used in the previous example in EBMA. To exclude the standard MrP model from EBMA, we would need to set the argument `mrp = FALSE`. Running this example will take some time (~20 minutes).
 
-Note, that because we want the standard MrP model to use only two context-level variables while we want our classifiers to use all six context-level variables, we specify the variables to be used for the standard MrP model in the argument `mrp.L2.x = c("L2.x1", "L2.x2")`.
+Note, that because we want the standard MrP model to use only two context-level variables while we want our classifiers to use all six context-level variables, we specify the context-level variables to be used for the standard MrP model in the argument `mrp.L2.x = c("L2.x1", "L2.x2")`.
 
 ```R
 out <- autoMrP::auto_MrP(

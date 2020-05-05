@@ -230,6 +230,15 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
                                   0.00001), uncertainty = FALSE, seed = NULL,
                      verbose = FALSE) {
 
+  # ----------------------------- Start message --------------------------------
+
+  if(sum(!is.null(best.subset), !is.null(lasso), !is.null(pca), !is.null(gb),
+         !is.null(svm), !is.null(mrp)) > 1){
+    message("Starting prediction. Depending on the number of context-level variables, the set of tuning parameters and the computer it may take some time (with 6 context-level variables around 15 minutes on average)")
+  } else{
+      message("Starting prediction.")
+    }
+
   # ----------------------------------- Seed -----------------------------------
 
   # Check seed argument and set seed
@@ -435,6 +444,9 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
 
   # Classifier 1: Best Subset
   if (isTRUE(best.subset)) {
+
+    message("Starting multilevel regression with best subset selection classifier tuning")
+
     # Determine context-level covariates
     if (is.null(best.subset.L2.x)) {
       best.subset.L2.x <- L2.x
@@ -456,6 +468,9 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
 
   # Classifier 2: Lasso
   if (isTRUE(lasso)) {
+
+    message("Starting multilevel regression with L1 regularization tuning")
+
     # Determine context-level covariates
     if (is.null(lasso.L2.x)) {
       lasso.L2.x <- L2.x
@@ -479,6 +494,9 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
 
   # Classifier 3: PCA
   if (isTRUE(pca)) {
+
+    message("Starting multilevel regression with principal components as context level variables tuning")
+
     pca_out <- run_pca(
       y = y,
       L1.x = L1.x,
@@ -495,6 +513,9 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
 
   # Classifier 4: GB
   if (isTRUE(gb)) {
+
+    message("Starting gradient tree boosting tuning")
+
     # Determine context-level covariates
     if (is.null(gb.L2.x)) {
       gb.L2.x <- L2.x
@@ -537,6 +558,9 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
 
   # Classifier 5: SVM
   if (isTRUE(svm)) {
+
+    message("Starting support vector machine tuning")
+
     # Determine context-level covariates
     if (is.null(svm.L2.x)) {
       svm.L2.x <- L2.x
@@ -559,6 +583,8 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
   }
 
   # --------------------------- Post-stratification ----------------------------
+
+  message("Starting post-stratification")
 
   ps_out <- post_stratification(
     y = y,
@@ -584,6 +610,8 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
     )
 
   # ----------------------------------- EBMA -----------------------------------
+
+  message("Starting bayesian ensemble model averaging tuning")
 
   ebma_out <- ebma(
     ebma.fold = ebma_fold,
