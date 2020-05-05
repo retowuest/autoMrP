@@ -28,7 +28,7 @@ The data was collected for "Improved Multilevel Regression with Post-Stratificat
 (autoMrP). More information is avaialable at: dataverse-address.
 }
 \usage{
-data(survey)
+survey
 
 The survey question asked: "Would you approve of the use of U.S. military
 troops in order to ensure the supply of oil?" This 2008 CCES item cc418_1

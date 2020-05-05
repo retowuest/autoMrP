@@ -2,7 +2,7 @@
 #'
 #' @docType data
 #'
-#' @usage data(survey)
+#' @usage survey
 #'
 #' The survey question asked: "Would you approve of the use of U.S. military
 #' troops in order to ensure the supply of oil?" This 2008 CCES item cc418_1

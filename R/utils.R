@@ -2,6 +2,11 @@
 #            Function to check if arguments to auto_MrP() are valid            #
 ################################################################################
 
+#' Catches user input errors
+#'
+#' \code{error_checks()} checks for incorrect data entry in \code{autoMrP()}
+#' call.
+
 error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                          folds, bin.proportion, bin.size, survey, census,
                          ebma.size, k.folds, cv.sampling, loss.unit, loss.fun,
@@ -713,6 +718,20 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
 #                    Function to create EBMA hold-out fold                     #
 ################################################################################
 
+#' Generates data fold to be used for EBMA tuning
+#'
+#' #' \code{ebma_folding()} generates a data fold that will not be used in
+#' classifier tuning. It is data that is needed to determine the optimal
+#' tolerance for EBMA.
+#'
+#' @param data The full survey data. A tibble.
+#' @param L2.unit Geographic unit. A character scalar containing the column name
+#'   of the geographic unit in \code{survey} and \code{census} at which outcomes
+#'   should be aggregated.
+#' @param ebma.size EBMA fold size. A number in the open unit interval
+#'   indicating the proportion of respondents to be allocated to the EBMA fold.
+#'   Default is \eqn{1/3}.
+
 ebma_folding <- function(data, L2.unit, ebma.size) {
   # Add row number to data frame
   data <- data %>%
@@ -849,6 +868,29 @@ cv_folding <- function(data, L2.unit, k.folds,
 #           Function to create model list for best subset classifier           #
 ################################################################################
 
+#' A list of models for the best subset selection.
+#'
+#' \code{model_list()} generates an exhaustive list of lme4 model formulas from
+#' the individual level and context level variables as well as geographic unit
+#' variables to be iterated over in best subset selection.
+#'
+#' @param y Outcome variable. A character vector containing the column names of
+#'   the outcome variable.
+#' @param L1.x Individual-level covariates. A character vector containing the
+#'   column names of the individual-level variables in \code{survey} and
+#'   \code{census} used to predict outcome \code{y}. Note that geographic unit
+#'   is specified in argument \code{L2.unit}.
+#' @param L2.x Context-level covariates. A character vector containing the
+#'   column names of the context-level variables in \code{survey} and
+#'   \code{census} used to predict outcome \code{y}.
+#' @param L2.unit Geographic unit. A character scalar containing the column name
+#'   of the geographic unit in \code{survey} and \code{census} at which outcomes
+#'   should be aggregated.
+#' @param L2.reg Geographic region. A character scalar containing the column
+#'   name of the geographic region in \code{survey} and \code{census} by which
+#'   geographic units are grouped (\code{L2.unit} must be nested within
+#'   \code{L2.reg}). Default is \code{NULL}.
+
 model_list <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL) {
   # Individual-level random effects
   L1_re <- paste(paste("(1 | ", L1.x, ")", sep = ""), collapse = " + ")
@@ -888,6 +930,30 @@ model_list <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL) {
 #               Function to create model list for PCA classifier               #
 ################################################################################
 
+#' A list of models for the best subset selection with PCA.
+#'
+#' \code{model_list_pca()} generates an exhaustive list of lme4 model formulas
+#' from the individual level and context level principal components as well as
+#' geographic unit variables to be iterated over in best subset selection with
+#' principal components.
+#'
+#' @param y Outcome variable. A character vector containing the column names of
+#'   the outcome variable.
+#' @param L1.x Individual-level covariates. A character vector containing the
+#'   column names of the individual-level variables in \code{survey} and
+#'   \code{census} used to predict outcome \code{y}. Note that geographic unit
+#'   is specified in argument \code{L2.unit}.
+#' @param L2.x Context-level covariates. A character vector containing the
+#'   column names of the context-level variables in \code{survey} and
+#'   \code{census} used to predict outcome \code{y}.
+#' @param L2.unit Geographic unit. A character scalar containing the column name
+#'   of the geographic unit in \code{survey} and \code{census} at which outcomes
+#'   should be aggregated.
+#' @param L2.reg Geographic region. A character scalar containing the column
+#'   name of the geographic region in \code{survey} and \code{census} by which
+#'   geographic units are grouped (\code{L2.unit} must be nested within
+#'   \code{L2.reg}). Default is \code{NULL}.
+
 model_list_pca <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL) {
   # Individual-level random effects
   L1_re <- paste(paste("(1 | ", L1.x, ")", sep = ""), collapse = " + ")
@@ -923,6 +989,11 @@ model_list_pca <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL) {
 ################################################################################
 #                           Prediction loss function                           #
 ################################################################################
+
+#' Estimates loss value
+#'
+#' \code{loss_function()} estimates the loss based on a loss function.
+#'
 
 loss_function <- function(pred, data.valid,
                           loss.unit = c("individuals", "L2 units"),
