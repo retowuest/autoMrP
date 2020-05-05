@@ -58,6 +58,8 @@ Note, that because we want the standard MrP model to use only two context-level 
 
 EBMA tuning is quite exhaustive with the default settings and takes quite long. We reduce the search grid to speed up the proccess by setting the argument `ebma.tol` and `ebma.n.draws`.
 
+Finally, we set the argument `gb.L2.unit = FALSE` because, in our applications, the gradient boosting classifier tended to perform worse with many state context-level indicators (there are 48 states in our example data).
+
 ```R
 out <- autoMrP::auto_MrP(
   y = "YES",
@@ -77,7 +79,8 @@ out <- autoMrP::auto_MrP(
   mrp = TRUE,
   mrp.L2.x = c("L2.x1", "L2.x2"),
   ebma.tol = c(0.001, 0.0005),
-  ebma.n.draws = 10
+  ebma.n.draws = 10,
+  gb.L2.unit = FALSE
 )
 ```
 
