@@ -63,10 +63,12 @@ auto_MrP(
   A character scalar containing the column name of
   the outcome variable in \code{survey}.}
 
-\item{L1.x}{Individual-level covariates. A character vector containing the
-column names of the individual-level variables in \code{survey} and
-\code{census} used to predict outcome \code{y}. Note that geographic unit
-is specified in argument \code{L2.unit}.}
+\item{L1.x}{Individual-level covariates.
+
+  A character vector containing the
+  column names of the individual-level variables in \code{survey} and
+  \code{census} used to predict outcome \code{y}. Note that geographic unit
+  is specified in argument \code{L2.unit}.}
 
 \item{L2.x}{Context-level covariates. A character vector containing the
 column names of the context-level variables in \code{survey} and
@@ -314,7 +316,43 @@ regression with post-stratification (MrP) by combining a number of machine
 learning methods through ensemble bayesian model averaging (EBMA).
 }
 \examples{
-#not_yet
+# MrP model only:
+mrp_model <- autoMrP::auto_MrP(
+  y = "YES",
+  L1.x = c("L1x1", "L1x2", "L1x3"),
+  L2.x = c("L2.x1", "L2.x2"),
+  L2.unit = "state",
+  L2.reg = "region",
+  L2.x.scale = TRUE,
+  survey = survey,
+  census = census,
+  bin.proportion = "proportion",
+  best.subset = FALSE,
+  lasso = FALSE,
+  pca = FALSE,
+  gb = FALSE,
+  svm = FALSE,
+  mrp = TRUE)
+
+# Better predictions through machine learning
+out <- autoMrP::auto_MrP(
+  y = "YES",
+  L1.x = c("L1x1", "L1x2", "L1x3"),
+  L2.x = c("L2.x1", "L2.x2", "L2.x3", "L2.x4", "L2.x5", "L2.x6"),
+  L2.unit = "state",
+  L2.reg = "region",
+  L2.x.scale = TRUE,
+  survey = survey,
+  census = census,
+  bin.proportion = "proportion",
+  best.subset = TRUE,
+  lasso = TRUE,
+  pca = TRUE,
+  gb = TRUE,
+  svm = TRUE,
+  mrp = TRUE,
+  mrp.L2.x = c("L2.x1", "L2.x2")
+  )
 }
 \keyword{EBMA}
 \keyword{MRP}
