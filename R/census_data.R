@@ -4,10 +4,6 @@
 #' item cc418_1 by dissaggregating the 64 ideal type combinations of the individual level variables
 #' L1x1, L2x2 and L1x3. A row is an ideal type in a given state.
 #'
-#' @docType data
-#'
-#' @usage data(census)
-#'
 #'
 #' @format A data frame with 2934 rows and 13 variables:
 #' \describe{
@@ -24,7 +20,6 @@
 #'   \item{L2.x4}{State-level unemployment rate}
 #'   \item{L2.x5}{State-level share of Hispanics}
 #'   \item{L2.x6}{State-level share of Whites}
-#'   ...
 #' }
 #' @source The data was collected for "Improved Multilevel Regression with Post-Stratification
 #' Through Machine Learning (autoMrP). More information is avaialable at: dataverse-address

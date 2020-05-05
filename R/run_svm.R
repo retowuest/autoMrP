@@ -41,7 +41,7 @@
 #'   cross-validation.
 #' @param verbose Verbose output. A logical argument indicating whether or not
 #'   verbose output should be printed. Default is \code{TRUE}.
-#' @param cross The number cross-validation folds. A numeric scalar.
+#'
 #' @return
 #' @examples #not_yet
 

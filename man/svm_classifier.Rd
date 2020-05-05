@@ -51,6 +51,8 @@ constraints violation.}
 scheme to be used. Possible values are cross, fix, and boot. Default is
 cross, which performs cross-validation.}
 
+\item{cross}{The number cross-validation folds. A numeric scalar.}
+
 \item{verbose}{Verbose output. A logical vector indicating whether or not
 verbose output should be printed.}
 }

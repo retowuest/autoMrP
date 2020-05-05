@@ -26,6 +26,7 @@
 #' @param sampling Sampling scheme. A character string specifying the sampling
 #'   scheme to be used. Possible values are cross, fix, and boot. Default is
 #'   cross, which performs cross-validation.
+#' @param cross The number cross-validation folds. A numeric scalar.
 #' @param verbose Verbose output. A logical vector indicating whether or not
 #'   verbose output should be printed.
 #' @return

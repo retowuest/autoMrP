@@ -63,8 +63,6 @@ cross-validation.}
 
 \item{verbose}{Verbose output. A logical argument indicating whether or not
 verbose output should be printed. Default is \code{TRUE}.}
-
-\item{cross}{The number cross-validation folds. A numeric scalar.}
 }
 \value{
 

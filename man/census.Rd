@@ -20,7 +20,6 @@ A data frame with 2934 rows and 13 variables:
   \item{L2.x4}{State-level unemployment rate}
   \item{L2.x5}{State-level share of Hispanics}
   \item{L2.x6}{State-level share of Whites}
-  ...
 }
 }
 \source{
@@ -28,7 +27,7 @@ The data was collected for "Improved Multilevel Regression with Post-Stratificat
 Through Machine Learning (autoMrP). More information is avaialable at: dataverse-address
 }
 \usage{
-data(census)
+census
 }
 \description{
 The census file is generated from the full 2008 Cooperative Congressional Election Studies
