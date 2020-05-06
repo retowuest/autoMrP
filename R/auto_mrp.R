@@ -245,6 +245,11 @@
 #'   mrp.L2.x = c("L2.x1", "L2.x2")
 #'   )}
 #' @export
+#' @importFrom stats as.formula binomial predict setNames weighted.mean
+#' @importFrom utils combn
+#' @importFrom dplyr %>%
+#' @importFrom rlang .data
+#' @import knitr
 
 auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
                      pcs = NULL, folds = NULL, bin.proportion = NULL,
@@ -268,6 +273,7 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
                      ebma.tol = c(0.01, 0.005, 0.001, 0.0005, 0.0001, 0.00005,
                                   0.00001), uncertainty = FALSE, seed = NULL,
                      verbose = FALSE) {
+
 
   # ----------------------------------- Seed -----------------------------------
 
