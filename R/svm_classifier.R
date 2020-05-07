@@ -19,9 +19,9 @@
 #' the mean squared error for numeric predictions.
 #' @param probability Probability predictions. A logical argument indicating
 #'   whether the model should allow for probability predictions
-#' @param svm.gamma Gamma parameter for SVM. This parameter is needed for all
+#' @param gamma.set Gamma parameter for SVM. This parameter is needed for all
 #'   kernels except linear.
-#' @param svm.cost Cost parameter for SVM. This parameter specifies the cost of
+#' @param cost.set Cost parameter for SVM. This parameter specifies the cost of
 #'   constraints violation.
 #' @param sampling Sampling scheme. A character string specifying the sampling
 #'   scheme to be used. Possible values are cross, fix, and boot. Default is
@@ -34,7 +34,7 @@
 
 svm_classifier <- function(method, form, data, kernel,
                            error.fun, probability,
-                           svm.gamma, svm.cost,
+                           gamma.set, cost.set,
                            sampling = "cross", cross,
                            verbose = c(TRUE, FALSE)) {
   # Train and evaluate model using the supplied set of tuning parameters
@@ -45,8 +45,8 @@ svm_classifier <- function(method, form, data, kernel,
                        kernel = kernel,
                        error.fun = error.fun,
                        probability = probability,
-                       ranges = list(gamma = svm.gamma,
-                                     cost = svm.cost),
+                       ranges = list(gamma = gamma.set,
+                                     cost = cost.set),
                        tunecontrol = e1071::tune.control(sampling = sampling,
                                                          cross = cross))
   } else {
@@ -57,8 +57,8 @@ svm_classifier <- function(method, form, data, kernel,
                   kernel = kernel,
                   error.fun = error.fun,
                   probability = probability,
-                  ranges = list(gamma = svm.gamma,
-                                cost = svm.cost),
+                  ranges = list(gamma = gamma.set,
+                                cost = cost.set),
                   tunecontrol = e1071::tune.control(sampling = sampling,
                                                     cross = cross))
     ))
