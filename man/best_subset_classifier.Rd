@@ -43,7 +43,7 @@ set.
 \examples{
 \dontrun{
 m <- best_subset_classifier(
-  model = YES ~ (1 | L1x1) + (1 | L1x2) + (1 | L1x3) + (1 | region/state) + L2.x1 + L2.x2,
+  model = YES ~ (1 | L1x1) + (1 | L1x2) + (1 | L1x3) + (1 | region/state) + L2.x1,
   data.train = survey_item,
   model.family = binomial(link = "probit"),
   model.optimizer = "bobyqa",

@@ -69,6 +69,14 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                                 kernel, mrp.L2.x, data, ebma.fold,
                                 census, verbose){
 
+  # globals
+  lasso <- NULL
+  pca <- NULL
+  gb <- NULL
+  svm <- NULL
+  mrp <- NULL
+  best_subset <- NULL
+
   # Copy L2.unit b/c it is needed twice but might be reset depending on call
   L2_unit <- L2.unit
 
