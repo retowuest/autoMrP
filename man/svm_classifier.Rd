@@ -11,8 +11,8 @@ svm_classifier(
   kernel,
   error.fun,
   probability,
-  svm.gamma,
-  svm.cost,
+  gamma.set,
+  cost.set,
   sampling = "cross",
   cross,
   verbose = c(TRUE, FALSE)
@@ -41,10 +41,10 @@ the mean squared error for numeric predictions.}
 \item{probability}{Probability predictions. A logical argument indicating
 whether the model should allow for probability predictions}
 
-\item{svm.gamma}{Gamma parameter for SVM. This parameter is needed for all
+\item{gamma.set}{Gamma parameter for SVM. This parameter is needed for all
 kernels except linear.}
 
-\item{svm.cost}{Cost parameter for SVM. This parameter specifies the cost of
+\item{cost.set}{Cost parameter for SVM. This parameter specifies the cost of
 constraints violation.}
 
 \item{sampling}{Sampling scheme. A character string specifying the sampling
