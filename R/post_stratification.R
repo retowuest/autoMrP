@@ -106,7 +106,7 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                                                  newdata = census, allow.new.levels = TRUE,
                                                  type = "response")) %>%
       dplyr::group_by(.dots = list(L2_unit)) %>%
-      dplyr::summarize(best_subset = weighted.mean(x = best_subset, w = prop))
+      dplyr::summarize(best_subset = weighted.mean(x = best_subset, w = .data$prop))
 
     # individual level predictions for EBMA
     bs_ind <- stats::predict(object = best_subset_opt_ebma, type = "response")
@@ -153,7 +153,7 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
     lasso_preds <- census %>%
       dplyr::mutate(lasso = lasso_p) %>%
       dplyr::group_by(.dots = list(L2_unit)) %>%
-      dplyr::summarize(lasso = weighted.mean(x = lasso, w = prop))
+      dplyr::summarize(lasso = weighted.mean(x = lasso, w = .data$prop))
 
     # individual level predictions for EBMA
     lasso_ind <- stats::predict(object = lasso_opt_ebma, type = "response")
@@ -190,7 +190,7 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                                          allow.new.levels = TRUE,
                                          type = "response")) %>%
       dplyr::group_by(.dots = list(L2_unit)) %>%
-      dplyr::summarize(pca = weighted.mean(x = pca, w = prop))
+      dplyr::summarize(pca = weighted.mean(x = pca, w = .data$prop))
 
     # individual level predictions for EBMA
     pca_ind <- stats::predict(object = pca_opt_ebma, type = "response")
@@ -249,7 +249,7 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                                           n.trees = gb.opt$n_trees,
                                           type = "response")) %>%
       dplyr::group_by(.dots = list(L2_unit)) %>%
-      dplyr::summarize(gb = weighted.mean(x = gb, w = prop))
+      dplyr::summarize(gb = weighted.mean(x = gb, w = .data$prop))
 
     # individual level predictions for EBMA
     gb_ind <- gbm::predict.gbm(object = gb_opt_ebma, n.trees = gb.opt$n_trees, type = "response")
@@ -328,7 +328,7 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                                               newdata = census,
                                               probability = TRUE),"probabilities")[,"1"]) %>%
       dplyr::group_by(.dots = list(L2_unit)) %>%
-      dplyr::summarize(svm = weighted.mean(x = svm, w = prop))
+      dplyr::summarize(svm = weighted.mean(x = svm, w = .data$prop))
 
     # individual level predictions for EBMA
     svm_ind <- attr(stats::predict(object = svm_opt_ebma, newdata = data, probability = TRUE),"probabilities")[,"1"]
@@ -417,7 +417,7 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                                          newdata = census, allow.new.levels = TRUE,
                                          type = "response")) %>%
       dplyr::group_by(.dots = list(L2_unit)) %>%
-      dplyr::summarize(mrp = weighted.mean(x = mrp, w = prop))
+      dplyr::summarize(mrp = weighted.mean(x = mrp, w = .data$prop))
 
     # individual level predictions for EBMA
     mrp_ind <- stats::predict(object = mrp_model_ebma, type = "response")

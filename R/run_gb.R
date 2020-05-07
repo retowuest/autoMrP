@@ -61,8 +61,36 @@
 #'   cross-validation.
 #' @param verbose Verbose output. A logical argument indicating whether or not
 #'   verbose output should be printed. Default is \code{TRUE}.
-#' @return
-#' @examples #not_yet
+#' @return The tuned gradient boosting parameters. A list with three elements:
+#'   \code{interaction_depth} contains the interaction depth parameter,
+#'   \code{shrinkage} contains the learning rate, \code{n_trees} the number of
+#'   trees to be grown.
+#' @examples \dontrun{
+#' # create list of cross-validation folds
+#' cv_folds <- list(
+#'   `1` = survey_item[1:200, ],
+#'   `2` = survey_item[201:400, ],
+#'   `3` = survey_item[401:1500, ])
+#'
+#' # run gradient boosting classifier
+#' out <- run_gb(
+#'   y = "YES",
+#'   L1.x = c("L1x1", "L1x2"),
+#'   L2.x = c("L2.x1", "L2.x2"),
+#'   L2.unit = NULL,
+#'   L2.reg = "region",
+#'   loss.unit = "individuals",
+#'   loss.fun = "MSE",
+#'   interaction.depth = c(1, 2, 3),
+#'   shrinkage = c(0.04, 0.01),
+#'   n.trees.init = 50,
+#'   n.trees.increase = 50,
+#'   n.trees.max = 1000,
+#'   n.iter = 70,
+#'   n.minobsinnode = 5,
+#'   data = cv_folds,
+#'   verbose = TRUE)
+#' }
 
 run_gb <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                    loss.unit, loss.fun,

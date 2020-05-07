@@ -21,6 +21,10 @@
 #'   \item{L2.x5}{State-level share of Hispanics}
 #'   \item{L2.x6}{State-level share of Whites}
 #' }
-#' @source The data was collected for "Improved Multilevel Regression with Post-Stratification
-#' Through Machine Learning (autoMrP). More information is avaialable at: dataverse-address
+#' @source The data set (excluding L2.x3, L2.x4, L2.x5, L2.x6) is taken from the
+#'   article: Buttice, Matthew K, and Benjamin Highton. 2013. "How does
+#'   multilevel regression and poststrat-stratification perform with
+#'   conventional national surveys?" Political Analysis 21(4): 449-467. L2.x3,
+#'   L2.x3, L2.x4, L2.x5 and L2.x6 are available at
+#'   \url{https://www.census.gov}.
 "census"

@@ -29,6 +29,8 @@ survey <- autoMrP::survey
 
 We include the three individual level variables L1x1, L1x2 and L1x3 as well as the context-level variables L2.x1 and L2.x2. In addition, we include context-level random effects for states nested in regions.
 
+Note, that we set the argument `L2.x.scale = FALSE` which stops `autoMrP()` from normalizing the context-level variables. In our example data, the context-level variables are already normalized. Context-level variables must be normalized because some of our classifiers are not scale invariant.
+
 ```R
 mrp_model <- autoMrP::auto_MrP(
   y = "YES",
@@ -36,7 +38,7 @@ mrp_model <- autoMrP::auto_MrP(
   L2.x = c("L2.x1", "L2.x2"),
   L2.unit = "state",
   L2.reg = "region",
-  L2.x.scale = TRUE,
+  L2.x.scale = FALSE,
   survey = survey,
   census = census,
   bin.proportion = "proportion",
@@ -67,7 +69,7 @@ out <- autoMrP::auto_MrP(
   L2.x = c("L2.x1", "L2.x2", "L2.x3", "L2.x4", "L2.x5", "L2.x6"),
   L2.unit = "state",
   L2.reg = "region",
-  L2.x.scale = TRUE,
+  L2.x.scale = FALSE,
   survey = survey,
   census = census,
   bin.proportion = "proportion",

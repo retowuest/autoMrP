@@ -307,7 +307,10 @@ random number generation. If \code{NULL}, then the seed is set to
 verbose output should be printed. Default is \code{FALSE}.}
 }
 \value{
-
+The context-level predictions. A list with two elements. The first
+  element, \code{EBMA}, contains the post-stratified ensemble bayesian model
+  avaeraging (EBMA) predictions. The second element, \code{classifiers},
+  contains the post-stratified predictions from all estimated classifiers.
 }
 \description{
 \code{auto_MrP()} improves the prediction performance of multilevel

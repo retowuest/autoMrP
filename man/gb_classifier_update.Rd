@@ -15,12 +15,17 @@ gb_classifier_update(object, n.new.trees, verbose = c(TRUE, FALSE))
 verbose output should be printed.}
 }
 \value{
-
+An updated gradient tree boosting model. A \code{\link[gbm]{gbm.more}} object.
 }
 \description{
 \code{gb_classifier_update()} grows additional trees in gradient tree
 boosting ensemble.
 }
 \examples{
-#not_yet
+\dontrun{
+m <- gb_classifier_update(
+  object = m,
+  n.new.trees = 50,
+  verbose = TRUE)
+}
 }

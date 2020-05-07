@@ -43,11 +43,21 @@ learning rate applied to each tree in the expansion.}
 verbose output should be printed.}
 }
 \value{
-
+A gradient tree boosting model. An \code{\link[gbm]{gbm}} object.
 }
 \description{
 \code{gb_classifier} applies gradient boosting classification to a data set.
 }
 \examples{
-#not_yet
+\dontrun{
+m <- gb_classifier(
+  form = YES ~ L1x1 + L1x2 + L1x3 + state + region + L2.x1 + L2.x2,
+  distribution = "bernoulli",
+  data.train = survey_item,
+  n.trees = 100,
+  interaction.depth = 2,
+  n.minobsinnode = 5,
+  shrinkage = 0.01,
+  verbose = TRUE)
+}
 }

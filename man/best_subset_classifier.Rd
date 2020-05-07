@@ -34,12 +34,20 @@ number of function evaluations tried by the optimization method.}
 verbose output should be printed.}
 }
 \value{
-
+The multilevel model. An \code{\link[lme4]{glmer}} object.
 }
 \description{
 \code{best_subset_classifier} applies best subset classification to a data
 set.
 }
 \examples{
-#not_yet
+\dontrun{
+m <- best_subset_classifier(
+  model = YES ~ (1 | L1x1) + (1 | L1x2) + (1 | L1x3) + (1 | region/state) + L2.x1 + L2.x2,
+  data.train = survey_item,
+  model.family = binomial(link = "probit"),
+  model.optimizer = "bobyqa",
+  n.iter = 1000000,
+  verbose = TRUE)
+}
 }

@@ -55,7 +55,7 @@ cross-validation.}
 verbose output should be printed. Default is \code{TRUE}.}
 }
 \value{
-
+A model formula of the winning best subset classifier model.
 }
 \description{
 \code{run_best_subset} is a wrapper function that applies the best subset
@@ -63,5 +63,23 @@ classifier to a list of models provided by the user, evaluates the models'
 prediction performance, and chooses the best-performing model.
 }
 \examples{
-#not_yet
+\dontrun{
+# create list of cross-validation folds
+cv_folds <- list(
+  `1` = survey_item[1:200, ],
+  `2` = survey_item[201:400, ],
+  `3` = survey_item[401:1500, ])
+
+# run best subset classifier
+out <- run_best_subset(
+  y = "YES",
+  L1.x = c("L1x1", "L1x2", "L1x3"),
+  L2.x = c("L2.x1", "L2.x2"),
+  L2.unit = "state",
+  L2.reg = "region",
+  loss.unit = "individuals",
+  loss.fun = "MSE",
+  data = cv_folds,
+  verbose = TRUE)
+}
 }

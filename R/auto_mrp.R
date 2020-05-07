@@ -202,7 +202,10 @@
 #'   \eqn{546213978}. Default is \code{NULL}.
 #' @param verbose Verbose output. A logical argument indicating whether or not
 #'   verbose output should be printed. Default is \code{FALSE}.
-#' @return
+#' @return The context-level predictions. A list with two elements. The first
+#'   element, \code{EBMA}, contains the post-stratified ensemble bayesian model
+#'   avaeraging (EBMA) predictions. The second element, \code{classifiers},
+#'   contains the post-stratified predictions from all estimated classifiers.
 #' @keywords MRP multilevel regression post-stratification machine learning
 #'   EBMA ensemble bayesian model averaging
 #' @examples
