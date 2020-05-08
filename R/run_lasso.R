@@ -47,8 +47,29 @@
 #'   cross-validation.
 #' @param verbose Verbose output. A logical argument indicating whether or not
 #'   verbose output should be printed. Default is \code{TRUE}.
-#' @return
-#' @examples #not_yet
+#'
+#' @return The tuned lambda value. A numeric scalar.
+#' @examples \dontrun{
+#' # create list of cross-validation folds
+#' cv_folds <- list(
+#'   `1` = survey_item[1:200, ],
+#'   `2` = survey_item[201:400, ],
+#'   `3` = survey_item[401:1500, ])
+#'
+#' # run lasso classifier
+#' lasso_out <- run_lasso(
+#'   y = "YES",
+#'   L1.x = c("L1x1", "L1x2"),
+#'   L2.x = c("L2.x1", "L2.x2"),
+#'   L2.unit = "state",
+#'   L2.reg = "region",
+#'   loss.unit = "individuals",
+#'   loss.fun = "MSE",
+#'   lambda = list(c(0.1, 0.3, 1), c(1, 10, 10000)),
+#'   n.iter = 70,
+#'   data = cv_folds,
+#'   verbose = TRUE)
+#' }
 
 run_lasso <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                       n.iter = NULL,

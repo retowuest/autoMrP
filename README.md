@@ -22,7 +22,7 @@ For this example, we use the data that is included in the package (see `?autoMrP
 
 ```R
 census <- autoMrP::census
-survey <- autoMrP::survey
+survey <- autoMrP::survey_item
 ```
 
 ### The Standard MrP Model

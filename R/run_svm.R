@@ -42,8 +42,28 @@
 #' @param verbose Verbose output. A logical argument indicating whether or not
 #'   verbose output should be printed. Default is \code{TRUE}.
 #'
-#' @return
-#' @examples #not_yet
+#' @return The support vector machine tuned parameters. A list.
+#' @examples \dontrun{
+#' # Create list of cross-validation folds
+#' cv_folds <- list(
+#'   `1` = survey_item[1:200, ],
+#'   `2` = survey_item[201:400, ],
+#'   `3` = survey_item[401:1500, ])
+#'
+#' # Run svm classifier
+#' svm_out <- run_svm(
+#'   y = "YES",
+#'   L1.x = c("L1x1", "L1x2"),
+#'   L2.x = c("PC1", "PC2"),
+#'   L2.unit = "state",
+#'   L2.reg = "region",
+#'   kernel = "radial",
+#'   loss.fun = NULL,
+#'   gamma = c(0.3, 0.5, 0.55, 0.6, 0.65, 0.7, 0.8, 0.9, 1, 2, 3, 4),
+#'   cost = c(1, 10),
+#'   data = cv_folds,
+#'   verbose = TRUE)
+#' }
 
 run_svm <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                     kernel = "radial", loss.fun,
@@ -68,8 +88,8 @@ run_svm <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                            kernel = kernel,
                            error.fun = loss.fun,
                            probability = TRUE,
-                           gamma = gamma,
-                           cost = cost,
+                           svm.gamma = gamma,
+                           svm.cost = cost,
                            sampling = "cross",
                            cross = k,
                            verbose = TRUE)

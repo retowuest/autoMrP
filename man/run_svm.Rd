@@ -65,7 +65,7 @@ cross-validation.}
 verbose output should be printed. Default is \code{TRUE}.}
 }
 \value{
-
+The support vector machine tuned parameters. A list.
 }
 \description{
 \code{run_svm} is a wrapper function that applies the support vector machine
@@ -73,5 +73,25 @@ classifier to data provided by the user, evaluates prediction performance,
 and chooses the best-performing model.
 }
 \examples{
-#not_yet
+\dontrun{
+# Create list of cross-validation folds
+cv_folds <- list(
+  `1` = survey_item[1:200, ],
+  `2` = survey_item[201:400, ],
+  `3` = survey_item[401:1500, ])
+
+# Run svm classifier
+svm_out <- run_svm(
+  y = "YES",
+  L1.x = c("L1x1", "L1x2"),
+  L2.x = c("PC1", "PC2"),
+  L2.unit = "state",
+  L2.reg = "region",
+  kernel = "radial",
+  loss.fun = NULL,
+  gamma = c(0.3, 0.5, 0.55, 0.6, 0.65, 0.7, 0.8, 0.9, 1, 2, 3, 4),
+  cost = c(1, 10),
+  data = cv_folds,
+  verbose = TRUE)
+}
 }

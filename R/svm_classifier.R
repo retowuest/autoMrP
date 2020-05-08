@@ -19,9 +19,9 @@
 #' the mean squared error for numeric predictions.
 #' @param probability Probability predictions. A logical argument indicating
 #'   whether the model should allow for probability predictions
-#' @param gamma.set Gamma parameter for SVM. This parameter is needed for all
+#' @param svm.gamma Gamma parameter for SVM. This parameter is needed for all
 #'   kernels except linear.
-#' @param cost.set Cost parameter for SVM. This parameter specifies the cost of
+#' @param svm.cost Cost parameter for SVM. This parameter specifies the cost of
 #'   constraints violation.
 #' @param sampling Sampling scheme. A character string specifying the sampling
 #'   scheme to be used. Possible values are cross, fix, and boot. Default is
@@ -29,12 +29,30 @@
 #' @param cross The number cross-validation folds. A numeric scalar.
 #' @param verbose Verbose output. A logical vector indicating whether or not
 #'   verbose output should be printed.
-#' @return
-#' @examples #not_yet
+#' @return The support vector machine model. An \code{\link[e1071]{tune}} object.
+#' @examples \dontrun{
+#' # Prepare data
+#' survey_item <- dplyr::bind_rows(survey_item) %>%
+#'   dplyr::mutate_at(.vars = y, as.factor)
+#'
+#' # run svm classifier
+#' models <- svm_classifier(
+#'   method = "svm",
+#'   form = YES ~ L1x1 + L1x2 + state + region + L2.x1,
+#'   data = survey_item,
+#'   kernel = "radial",
+#'   error.fun = "MSE",
+#'   probability = TRUE,
+#'   gamma = c(0.3, 0.5, 0.55, 0.6, 0.65, 0.7, 0.8, 0.9, 1, 2, 3, 4),
+#'   cost = c(1, 10),
+#'   sampling = "cross",
+#'   cross = 5,
+#'   verbose = TRUE)
+#' }
 
 svm_classifier <- function(method, form, data, kernel,
                            error.fun, probability,
-                           gamma.set, cost.set,
+                           svm.gamma, svm.cost,
                            sampling = "cross", cross,
                            verbose = c(TRUE, FALSE)) {
   # Train and evaluate model using the supplied set of tuning parameters
@@ -45,8 +63,8 @@ svm_classifier <- function(method, form, data, kernel,
                        kernel = kernel,
                        error.fun = error.fun,
                        probability = probability,
-                       ranges = list(gamma = gamma.set,
-                                     cost = cost.set),
+                       ranges = list(gamma = svm.gamma,
+                                     cost = svm.cost),
                        tunecontrol = e1071::tune.control(sampling = sampling,
                                                          cross = cross))
   } else {
@@ -57,8 +75,8 @@ svm_classifier <- function(method, form, data, kernel,
                   kernel = kernel,
                   error.fun = error.fun,
                   probability = probability,
-                  ranges = list(gamma = gamma.set,
-                                cost = cost.set),
+                  ranges = list(gamma = svm.gamma,
+                                cost = svm.cost),
                   tunecontrol = e1071::tune.control(sampling = sampling,
                                                     cross = cross))
     ))

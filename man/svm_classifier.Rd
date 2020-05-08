@@ -11,8 +11,8 @@ svm_classifier(
   kernel,
   error.fun,
   probability,
-  gamma.set,
-  cost.set,
+  svm.gamma,
+  svm.cost,
   sampling = "cross",
   cross,
   verbose = c(TRUE, FALSE)
@@ -41,10 +41,10 @@ the mean squared error for numeric predictions.}
 \item{probability}{Probability predictions. A logical argument indicating
 whether the model should allow for probability predictions}
 
-\item{gamma.set}{Gamma parameter for SVM. This parameter is needed for all
+\item{svm.gamma}{Gamma parameter for SVM. This parameter is needed for all
 kernels except linear.}
 
-\item{cost.set}{Cost parameter for SVM. This parameter specifies the cost of
+\item{svm.cost}{Cost parameter for SVM. This parameter specifies the cost of
 constraints violation.}
 
 \item{sampling}{Sampling scheme. A character string specifying the sampling
@@ -57,12 +57,30 @@ cross, which performs cross-validation.}
 verbose output should be printed.}
 }
 \value{
-
+The support vector machine model. An \code{\link[e1071]{tune}} object.
 }
 \description{
 \code{svm_classifier} applies support vector machine classification to a
 data set.
 }
 \examples{
-#not_yet
+\dontrun{
+# Prepare data
+survey_item <- dplyr::bind_rows(survey_item) \%>\%
+  dplyr::mutate_at(.vars = y, as.factor)
+
+# run svm classifier
+models <- svm_classifier(
+  method = "svm",
+  form = YES ~ L1x1 + L1x2 + state + region + L2.x1,
+  data = survey_item,
+  kernel = "radial",
+  error.fun = "MSE",
+  probability = TRUE,
+  gamma = c(0.3, 0.5, 0.55, 0.6, 0.65, 0.7, 0.8, 0.9, 1, 2, 3, 4),
+  cost = c(1, 10),
+  sampling = "cross",
+  cross = 5,
+  verbose = TRUE)
+}
 }
