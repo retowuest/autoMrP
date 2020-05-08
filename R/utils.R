@@ -814,7 +814,7 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
         }
 
         # Check if mrp.L2.x is in census data
-        if (mrp.L2.x != "empty"){
+        if (all(mrp.L2.x != "empty")){
           if (!all(mrp.L2.x %in% colnames(census))) {
             stop(cat(paste("Context-level variable '",
                            mrp.L2.x[which(!(mrp.L2.x %in% colnames(census)))],
