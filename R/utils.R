@@ -1178,3 +1178,22 @@ loss_function <- function(pred, data.valid,
   # Function output
   return(out)
 }
+
+
+################################################################################
+#                   Suppress cat in external package                           #
+################################################################################
+
+#' Suppress cat in external package
+#'
+#' \code{quiet()} suppresses cat output.
+#'
+#' @param x Input. It can be any kind.
+#' @source The author is Hadley Wickham. We found the function here:
+#' \url{http://r.789695.n4.nabble.com/Suppressing-output-e-g-from-cat-td859876.html}.
+
+quiet <- function(x) {
+  sink(tempfile())
+  on.exit(sink())
+  invisible(force(x))
+}
