@@ -650,8 +650,6 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
 
   # ----------------------------------- EBMA -----------------------------------
 
-  message("Starting bayesian ensemble model averaging tuning")
-
   ebma_out <- ebma(
     ebma.fold = ebma_fold,
     y = y,
