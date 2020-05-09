@@ -12,6 +12,7 @@ run_svm(
   L2.reg,
   kernel = "radial",
   loss.fun,
+  loss.unit,
   gamma,
   cost,
   data,
@@ -49,6 +50,11 @@ misclassification error to measure the loss of categorical predictions and
 the mean squared error to measure the loss of numeric predictions. Default
 is \code{NULL}.}
 
+\item{loss.unit}{Loss function unit. A character-valued scalar indicating
+whether performance loss should be evaluated at the level of individual
+respondents (\code{individuals}) or geographic units (\code{L2 units}).
+Default is \code{individuals}.}
+
 \item{gamma}{SVM kernel parameter. A numeric vector whose values specify
 the gamma parameter in the SVM kernel. This parameter is needed for all
 kernel types except linear. Default is
@@ -81,16 +87,17 @@ cv_folds <- list(
   `3` = survey_item[401:1500, ])
 
 # Run svm classifier
-svm_out <- run_svm(
+m <- run_svm(
   y = "YES",
   L1.x = c("L1x1", "L1x2"),
-  L2.x = c("PC1", "PC2"),
+  L2.x = c("L2.x1", "L2.x2"),
   L2.unit = "state",
   L2.reg = "region",
   kernel = "radial",
-  loss.fun = NULL,
-  gamma = c(0.3, 0.5, 0.55, 0.6, 0.65, 0.7, 0.8, 0.9, 1, 2, 3, 4),
-  cost = c(1, 10),
+  loss.fun = "MSE",
+  loss.unit = "individuals",
+  gamma = c(0.3, 0.1),
+  cost = c(1, 50),
   data = cv_folds,
   verbose = TRUE)
 }

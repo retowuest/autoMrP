@@ -47,7 +47,6 @@ auto_MrP(
   gb.n.iter = 70,
   gb.n.minobsinnode = 5,
   svm.kernel = "radial",
-  svm.loss.fun = NULL,
   svm.gamma = c(0.3, 0.5, 0.55, 0.6, 0.65, 0.7, 0.8, 0.9, 1, 2, 3, 4),
   svm.cost = c(1, 10),
   ebma.n.draws = 100,
@@ -272,11 +271,6 @@ observations that each terminal node of the trees must contain. Default is
 \item{svm.kernel}{SVM kernel. A character-valued scalar specifying the kernel
 to be used by SVM. The possible values are \code{linear}, \code{polynomial},
 \code{radial}, and \code{sigmoid}. Default is \code{radial}.}
-
-\item{svm.loss.fun}{SVM loss function. If \code{NULL}, then SVM uses the
-misclassification error to measure the loss of categorical predictions and
-the mean squared error to measure the loss of numeric predictions. Default
-is \code{NULL}.}
 
 \item{svm.gamma}{SVM kernel parameter. A numeric vector whose values specify
 the gamma parameter in the SVM kernel. This parameter is needed for all

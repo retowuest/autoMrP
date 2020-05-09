@@ -5,23 +5,17 @@
 \title{SVM classifier}
 \usage{
 svm_classifier(
-  method,
   form,
   data,
   kernel,
-  error.fun,
+  type,
   probability,
   svm.gamma,
   svm.cost,
-  sampling = "cross",
-  cross,
   verbose = c(TRUE, FALSE)
 )
 }
 \arguments{
-\item{method}{Function. A character string specifying the name of the
-function to be tuned.}
-
 \item{form}{Model formula. A two-sided linear formula describing
 the model to be fit, with the outcome on the LHS and the covariates
 separated by + operators on the RHS.}
@@ -33,10 +27,13 @@ train and evaluate the model.}
 be used for SVM. The possible types are linear, polynomial, radial, and
 sigmoid. Default is radial.}
 
-\item{error.fun}{function returning the error measure to be minimized. It
-takes two arguments: a vector of true values and a vector of predicted values.
-If NULL, the misclassification error is used for categorical predictions and
-the mean squared error for numeric predictions.}
+\item{type}{svm can be used as a classification machine, as a regression machine, or for novelty detection. Depending of whether y is a factor or not, the default setting for type is C-classification or eps-regression, respectively, but may be overwritten by setting an explicit value. Valid options are: #' \enumerate{
+  \item C-classification
+  \item nu-classification
+  \item one-classification (for novelty detection)
+  \item eps-regression
+  \item nu-regression
+}}
 
 \item{probability}{Probability predictions. A logical argument indicating
 whether the model should allow for probability predictions}
@@ -47,17 +44,11 @@ kernels except linear.}
 \item{svm.cost}{Cost parameter for SVM. This parameter specifies the cost of
 constraints violation.}
 
-\item{sampling}{Sampling scheme. A character string specifying the sampling
-scheme to be used. Possible values are cross, fix, and boot. Default is
-cross, which performs cross-validation.}
-
-\item{cross}{The number cross-validation folds. A numeric scalar.}
-
 \item{verbose}{Verbose output. A logical vector indicating whether or not
 verbose output should be printed.}
 }
 \value{
-The support vector machine model. An \code{\link[e1071]{tune}} object.
+The support vector machine model. An \code{\link[e1071]{svm}} object.
 }
 \description{
 \code{svm_classifier} applies support vector machine classification to a
@@ -69,18 +60,16 @@ data set.
 survey_item <- dplyr::bind_rows(survey_item) \%>\%
   dplyr::mutate_at(.vars = y, as.factor)
 
-# run svm classifier
-models <- svm_classifier(
-  method = "svm",
-  form = YES ~ L1x1 + L1x2 + state + region + L2.x1,
+# Svm classifier
+m <- svm_classifier(
+  form = YES ~ L1x1 + L1x2 + L2.x1 + L2.x2 + state + region,
   data = survey_item,
   kernel = "radial",
-  error.fun = "MSE",
+  type = "C-classification",
   probability = TRUE,
-  gamma = c(0.3, 0.5, 0.55, 0.6, 0.65, 0.7, 0.8, 0.9, 1, 2, 3, 4),
-  cost = c(1, 10),
-  sampling = "cross",
-  cross = 5,
-  verbose = TRUE)
+  svm.gamma = 0.3,
+  svm.cost = 1,
+  verbose = TRUE
+  )
 }
 }

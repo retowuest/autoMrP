@@ -30,6 +30,10 @@
 #'   misclassification error to measure the loss of categorical predictions and
 #'   the mean squared error to measure the loss of numeric predictions. Default
 #'   is \code{NULL}.
+#' @param loss.unit Loss function unit. A character-valued scalar indicating
+#'   whether performance loss should be evaluated at the level of individual
+#'   respondents (\code{individuals}) or geographic units (\code{L2 units}).
+#'   Default is \code{individuals}.
 #' @param gamma SVM kernel parameter. A numeric vector whose values specify
 #'   the gamma parameter in the SVM kernel. This parameter is needed for all
 #'   kernel types except linear. Default is
@@ -51,56 +55,88 @@
 #'   `3` = survey_item[401:1500, ])
 #'
 #' # Run svm classifier
-#' svm_out <- run_svm(
+#' m <- run_svm(
 #'   y = "YES",
 #'   L1.x = c("L1x1", "L1x2"),
-#'   L2.x = c("PC1", "PC2"),
+#'   L2.x = c("L2.x1", "L2.x2"),
 #'   L2.unit = "state",
 #'   L2.reg = "region",
 #'   kernel = "radial",
-#'   loss.fun = NULL,
-#'   gamma = c(0.3, 0.5, 0.55, 0.6, 0.65, 0.7, 0.8, 0.9, 1, 2, 3, 4),
-#'   cost = c(1, 10),
+#'   loss.fun = "MSE",
+#'   loss.unit = "individuals",
+#'   gamma = c(0.3, 0.1),
+#'   cost = c(1, 50),
 #'   data = cv_folds,
 #'   verbose = TRUE)
 #' }
 
 run_svm <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                     kernel = "radial", loss.fun,
-                    gamma, cost,
-                    data, verbose) {
+                    loss.unit, gamma, cost, data,
+                    verbose) {
 
   # Create model formula
   x <- paste(c(L1.x, L2.x, L2.unit, L2.reg), collapse = " + ")
   form <- as.formula(paste(y, " ~ ", x, sep = ""))
 
-  # Determine number of cross-validation folds provided
-  k <- length(data)
+  # tuning parameter grid
+  svm_grid <- expand.grid(gamma, cost)
+  names(svm_grid) <- c("gamma", "cost")
 
-  # Prepare data
-  data <- dplyr::bind_rows(data) %>%
-    dplyr::mutate_at(.vars = y, as.factor)
+  # loop over tuning grid
+  grid_cells <- apply(svm_grid, 1, function(g) {
 
-  # Train and evaluate model using the supplied set of tuning parameters
-  models <- svm_classifier(method = "svm",
-                           form = form,
-                           data = data,
-                           kernel = kernel,
-                           error.fun = loss.fun,
-                           probability = TRUE,
-                           svm.gamma = gamma,
-                           svm.cost = cost,
-                           sampling = "cross",
-                           cross = k,
-                           verbose = TRUE)
+    # Set tuning parameters
+    gamma_value <- as.numeric(g["gamma"])
+    cost_value <- as.numeric(g["cost"])
 
-  # Extract the best model
-  best_model <- models$best.model
+    # Loop over each fold
+    k_errors <- lapply(seq_along(data), function(k) {
 
-  # Extract tuning parameters of best model
-  out <- list(gamma = best_model$gamma,
-              cost = best_model$cost)
+      # Split data in training and validation sets and factorize DV
+      data_train <- dplyr::bind_rows(data[-k]) %>%
+        dplyr::mutate_at(.vars = y, as.factor)
+      data_valid <- dplyr::bind_rows(data[k]) %>%
+        dplyr::mutate_at(.vars = y, as.factor)
+
+      # Svm classifier
+      model_l <- svm_classifier(
+        form = form,
+        data = data_train,
+        kernel = kernel,
+        type = "C-classification",
+        probability = TRUE,
+        svm.gamma = gamma_value,
+        svm.cost = cost_value,
+        verbose = verbose
+      )
+
+      # Use trained model to make predictions for kth validation set
+      pred_l <- predict(model_l, newdata = data.frame(data_valid),
+                        probability = TRUE)
+      pred_l <- as.numeric(attr(pred_l, "probabilities")[, "1"])
+
+      # Transform factor DV to numeric for loss function
+      data_valid <- data_valid %>%
+        dplyr::mutate_at(.vars = y, function(x) as.numeric(levels(x))[x])
+
+      # Evaluate predictions based on loss function
+      perform_l <- loss_function(pred = pred_l, data.valid = data_valid,
+                                 loss.unit = loss.unit,
+                                 loss.fun = loss.fun,
+                                 y = y, L2.unit = L2.unit)
+    })
+
+    # Mean over all k folds
+    best_error <- mean(unlist(k_errors))
+
+  })
+
+  # Extract best tuning parameters
+  out <- list(gamma = svm_grid[which.min(grid_cells), "gamma"],
+              cost = svm_grid[which.min(grid_cells), "cost"])
 
   # Function output
   return(out)
+
 }
