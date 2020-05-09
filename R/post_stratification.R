@@ -281,54 +281,28 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
     form_svm <- as.formula(paste("y_svm ~ ", x, sep = ""))
 
     # Fit optimal model for EBMA
-    if (isTRUE(verbose == TRUE)) {
-      # model for EBMA
-      svm_opt_ebma <- e1071::svm(
-        formula = form_svm,
-        data = svm_data,
-        scale = FALSE,
-        type = "C-classification",
-        kernel = kernel,
-        gamma = svm.opt$gamma,
-        cost = svm.opt$cost,
-        probability = TRUE)
+    svm_opt_ebma <- svm_classifier(
+      form = form_svm,
+      data = svm_data,
+      kernel = kernel,
+      type = "C-classification",
+      probability = TRUE,
+      svm.gamma = svm.opt$gamma,
+      svm.cost = svm.opt$cost,
+      verbose = verbose
+    )
 
-      # Fit optimal model for post-stratification w/o EBMA
-      svm_opt_poststrat_only <- e1071::svm(
-        formula = form_svm,
-        data = svm_data_no_ebma,
-        scale = FALSE,
-        type = "C-classification",
-        kernel = kernel,
-        gamma = svm.opt$gamma,
-        cost = svm.opt$cost,
-        probability = TRUE)
-
-    } else {
-      # model for EBMA
-      svm_opt_ebma <- suppressMessages(suppressWarnings(
-        e1071::svm(formula = form_svm,
-                   data = svm_data,
-                   scale = FALSE,
-                   type = "C-classification",
-                   kernel = kernel,
-                   gamma = svm.opt$gamma,
-                   cost = svm.opt$cost,
-                   probability = TRUE)
-      ))
-
-      # model for post-stratification w/o EBMA
-      svm_opt_poststrat_only <- suppressMessages(suppressWarnings(
-        e1071::svm(formula = form_svm,
-                   data = svm_data_no_ebma,
-                   scale = FALSE,
-                   type = "C-classification",
-                   kernel = kernel,
-                   gamma = svm.opt$gamma,
-                   cost = svm.opt$cost,
-                   probability = TRUE)
-      ))
-    }
+    # Fit optimal model for post-stratification w/o EBMA
+    svm_opt_poststrat_only <- svm_classifier(
+      form = form_svm,
+      data = svm_data_no_ebma,
+      kernel = kernel,
+      type = "C-classification",
+      probability = TRUE,
+      svm.gamma = svm.opt$gamma,
+      svm.cost = svm.opt$cost,
+      verbose = verbose
+    )
 
     # post-stratification
     svm_preds <- census %>%
@@ -382,46 +356,24 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
 
     # std MrP formula
     form_mrp <- as.formula(paste(y, " ~ ", L2_fe, " + ", all_re, sep = ""))
-    if (isTRUE(verbose == TRUE)) {
 
-      # fit model for EBMA
-      mrp_model_ebma <- lme4::glmer(
-        formula = form_mrp,
-        data = data,
-        family = binomial(link = "probit"),
-        lme4::glmerControl(optimizer = "bobyqa",
-                           optCtrl = list(maxfun = 1000000)))
+    # fit model for EBMA
+    mrp_model_ebma <- best_subset_classifier(
+      model = form_mrp,
+      data.train = data,
+      model.family = binomial(link = "probit"),
+      model.optimizer = "bobyqa",
+      n.iter = 1000000,
+      verbose = verbose)
 
-      # fit MrP model for post-stratification only
-      mrp_model_poststrat_only <- lme4::glmer(
-        formula = form_mrp,
-        data = no_ebma_data,
-        family = binomial(link = "probit"),
-        lme4::glmerControl(optimizer = "bobyqa",
-                           optCtrl = list(maxfun = 1000000)))
-
-    } else {
-
-      # fit model EBMA
-      mrp_model_ebma <- suppressMessages(suppressWarnings(
-        lme4::glmer(
-          formula = form_mrp,
-          data = data,
-          family = binomial(link = "probit"),
-          lme4::glmerControl(optimizer = "bobyqa",
-                             optCtrl = list(maxfun = 1000000)))
-      ))
-
-      # fit MrP model for post-stratification only
-      mrp_model_poststrat_only <- suppressMessages(suppressWarnings(
-        lme4::glmer(
-          formula = form_mrp,
-          data = no_ebma_data,
-          family = binomial(link = "probit"),
-          lme4::glmerControl(optimizer = "bobyqa",
-                             optCtrl = list(maxfun = 1000000)))
-      ))
-    }
+    # # fit MrP model for post-stratification only
+    mrp_model_poststrat_only <- best_subset_classifier(
+      model = form_mrp,
+      data.train = no_ebma_data,
+      model.family = binomial(link = "probit"),
+      model.optimizer = "bobyqa",
+      n.iter = 1000000,
+      verbose = verbose)
 
     # post-stratification
     mrp_preds <- census %>%
