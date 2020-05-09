@@ -37,6 +37,8 @@ auto_MrP(
   mrp.L2.x = NULL,
   gb.L2.unit = FALSE,
   gb.L2.reg = FALSE,
+  svm.L2.unit = FALSE,
+  svm.L2.reg = FALSE,
   lasso.lambda = list(c(0.1, 0.3, 1), c(1, 10, 10000)),
   lasso.n.iter = 70,
   gb.interaction.depth = c(1, 2, 3),
@@ -217,6 +219,14 @@ uses the variables specified in \code{L2.x}. Default is \code{NULL}.}
 
 \item{gb.L2.reg}{GB L2.reg. A logical argument indicating whether
 \code{L2.reg} should be included in the GB classifier. Default is
+\code{FALSE}.}
+
+\item{svm.L2.unit}{SVM L2.unit. A logical argument indicating whether
+\code{L2.unit} should be included in the SVM classifier. Default is
+\code{FALSE}.}
+
+\item{svm.L2.reg}{SVM L2.reg. A logical argument indicating whether
+\code{L2.reg} should be included in the SVM classifier. Default is
 \code{FALSE}.}
 
 \item{lasso.lambda}{Lasso penalty parameter. A numeric \code{vector} of

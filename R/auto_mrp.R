@@ -134,6 +134,12 @@
 #' @param gb.L2.reg GB L2.reg. A logical argument indicating whether
 #'   \code{L2.reg} should be included in the GB classifier. Default is
 #'   \code{FALSE}.
+#' @param svm.L2.unit SVM L2.unit. A logical argument indicating whether
+#'   \code{L2.unit} should be included in the SVM classifier. Default is
+#'   \code{FALSE}.
+#' @param svm.L2.reg SVM L2.reg. A logical argument indicating whether
+#'   \code{L2.reg} should be included in the SVM classifier. Default is
+#'   \code{FALSE}.
 #' @param lasso.lambda Lasso penalty parameter. A numeric \code{vector} of
 #'   non-negative values or a \code{list} of two numeric vectors of equal size,
 #'   with the first vector containing the step sizes by which the penalty
@@ -260,6 +266,7 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
                      best.subset.L2.x = NULL, lasso.L2.x = NULL,
                      pca.L2.x = NULL, gb.L2.x = NULL, svm.L2.x = NULL,
                      mrp.L2.x = NULL, gb.L2.unit = FALSE, gb.L2.reg = FALSE,
+                     svm.L2.unit = FALSE, svm.L2.reg = FALSE,
                      lasso.lambda = list(c(0.1, 0.3, 1), c(1, 10, 10000)),
                      lasso.n.iter = 70, gb.interaction.depth = c(1, 2, 3),
                      gb.shrinkage = c(0.04, 0.01, 0.008, 0.005, 0.001),
@@ -601,12 +608,26 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
       svm.L2.x <- L2.x
     }
 
+    # Evaluate inclusion of L2.unit in GB
+    if (isTRUE(svm.L2.unit)) {
+      svm.L2.unit <- L2.unit
+    } else {
+      svm.L2.unit <- NULL
+    }
+
+    # Evaluate inclusion of L2.reg in GB
+    if (isTRUE(svm.L2.reg)) {
+      svm.L2.reg <- L2.reg
+    } else {
+      svm.L2.reg <- NULL
+    }
+
     # Run classifier
     svm_out <- run_svm(y = y,
                        L1.x = L1.x,
                        L2.x = svm.L2.x,
-                       L2.unit = L2.unit,
-                       L2.reg = L2.reg,
+                       L2.unit = svm.L2.unit,
+                       L2.reg = svm.L2.reg,
                        kernel = svm.kernel,
                        loss.fun = loss.fun,
                        loss.unit = loss.unit,
