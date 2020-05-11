@@ -1,4 +1,5 @@
 globalVariables(c("%>%",
+                  "%dopar%",
                   ".",
                   "ae",
                   "one_of",

@@ -4,7 +4,18 @@
 \alias{run_pca}
 \title{Apply PCA classifier to MrP.}
 \usage{
-run_pca(y, L1.x, L2.x, L2.unit, L2.reg, loss.unit, loss.fun, data, verbose)
+run_pca(
+  y,
+  L1.x,
+  L2.x,
+  L2.unit,
+  L2.reg,
+  loss.unit,
+  loss.fun,
+  data,
+  cores,
+  verbose
+)
 }
 \arguments{
 \item{y}{Outcome variable. A character scalar containing the column name of
@@ -40,6 +51,9 @@ or the mean absolute error (\code{MAE}). Default is \code{MSE}.}
 \item{data}{Data for cross-validation. A \code{list} of \eqn{k}
 \code{data.frames}, one for each fold to be used in \eqn{k}-fold
 cross-validation.}
+
+\item{cores}{The number of cores to be used. An integer indicating the number
+of processor cores used for parallel computing. Default is 1.}
 
 \item{verbose}{Verbose output. A logical argument indicating whether or not
 verbose output should be printed. Default is \code{TRUE}.}

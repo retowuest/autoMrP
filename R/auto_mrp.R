@@ -58,6 +58,8 @@
 #'   indicating the proportion of respondents to be allocated to the EBMA fold.
 #'   Default is \eqn{1/3}. \emph{Note:} ignored if \code{folds} is provided, but
 #'   must be specified otherwise.
+#' @param cores The number of cores to be used. An integer indicating the number
+#'   of processor cores used for parallel computing. Default is 1.
 #' @param k.folds Number of cross-validation folds. An integer-valued scalar
 #'   indicating the number of folds to be used in cross-validation. Default is
 #'   \eqn{5}. \emph{Note:} ignored if \code{folds} is provided, but must be
@@ -259,7 +261,7 @@
 auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
                      pcs = NULL, folds = NULL, bin.proportion = NULL,
                      bin.size = NULL, survey, census, ebma.size = 1/3,
-                     k.folds = 5, cv.sampling = "L2 units",
+                     cores = 1, k.folds = 5, cv.sampling = "L2 units",
                      loss.unit = "individuals", loss.fun = "MSE",
                      best.subset = TRUE, lasso = TRUE, pca = TRUE, gb = TRUE,
                      svm = TRUE, mrp = FALSE, forward.select = FALSE,
@@ -371,6 +373,10 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
   #  stop(paste("gb.trees.max.set must be either a scalar or a vector of size ",
   #             "`length(gb.shrinkage.set)`.", sep = ""))
   #}
+
+  # ----------------------------- Parallel computing ----------------------------
+
+
 
   # ------------------------------- Prepare data -------------------------------
 
@@ -503,7 +509,8 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
                                        loss.unit = loss.unit,
                                        loss.fun = loss.fun,
                                        data = cv_folds,
-                                       verbose = verbose)
+                                       verbose = verbose,
+                                       cores = cores)
   } else {
     best_subset_out <- NULL
   }
@@ -548,7 +555,8 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
       loss.unit = loss.unit,
       loss.fun = loss.fun,
       data = cv_folds,
-      verbose = verbose)
+      verbose = verbose,
+      cores = cores)
   } else {
     pca_out <- NULL
   }

@@ -1197,3 +1197,37 @@ quiet <- function(x) {
   on.exit(sink())
   invisible(force(x))
 }
+
+################################################################################
+#                   Register Cores for multicore                               #
+################################################################################
+
+#' Register cores for multicore computing
+#'
+#' \code{multicore()} registers cores for parallel processing.
+#'
+#' @param cores Number of cores to be used. An integer. Default is \code{1}.
+#' @param type Whether to start or end parallel processing. A character string.
+#'   The possible values are \code{open}, \code{close}.
+#' @param cl The registered cluster. Default is \code{NULL}
+
+multicore <- function(cores = 1, type, cl = NULL) {
+
+  # Start parallel processing
+  if (type == "open"){
+    # register clusters for windows
+    if( Sys.info()["sysname"] == "Windows" ){
+      cl <- parallel::makeCluster(cores)
+      doParallel::registerDoParallel(cl)
+    } else {
+      cl <- parallel::makeForkCluster(cores)
+      doParallel::registerDoParallel(cl)
+    }
+    return(cl)
+  }
+
+  # Stop parallel processing
+  if (type == "close"){
+    parallel::stopCluster(cl)
+  }
+}

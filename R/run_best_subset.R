@@ -32,6 +32,8 @@
 #'   cross-validation.
 #' @param verbose Verbose output. A logical argument indicating whether or not
 #'   verbose output should be printed. Default is \code{TRUE}.
+#' @param cores The number of cores to be used. An integer indicating the number
+#'   of processor cores used for parallel computing. Default is 1.
 #' @return A model formula of the winning best subset classifier model.
 #' @examples \dontrun{
 #' # create list of cross-validation folds
@@ -55,7 +57,7 @@
 
 run_best_subset <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                             loss.unit, loss.fun,
-                            data, verbose) {
+                            data, verbose, cores) {
 
   # List of all models to be evaluated
   models <- model_list(y = y,
@@ -64,14 +66,153 @@ run_best_subset <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                        L2.unit = L2.unit,
                        L2.reg = L2.reg)
 
+  # prallel tuning if cores > 1
+  if( cores > 1 ){
+
+    # Train all models in parallel
+    m_errors <- run_best_subset_mc(
+      best.subset.classifier = best_subset_classifier,
+      verbose = verbose,
+      models = models,
+      data = data,
+      loss.function = loss_function,
+      loss.unit = loss.unit,
+      loss.fun = loss.fun,
+      y = y,
+      L1.x = L1.x,
+      L2.x = L2.x,
+      L2.unit = L2.unit,
+      L2.reg = L2.reg,
+      cores = cores)
+  } else{
+
+    # Train and evaluate each model
+    m_errors <- lapply(seq_along(models), function(m) {
+      # Print model m
+      if (isTRUE(verbose)) {
+        M <- length(models)
+        cat(paste("Best subset: Running model ", m,
+                  " out of ", M, " models\n", sep = ""))
+      }
+
+      # Loop over each fold
+      k_errors <- lapply(seq_along(data), function(k) {
+        # Split data in training and validation sets
+        data_train <- dplyr::bind_rows(data[-k])
+        data_valid <- dplyr::bind_rows(data[k])
+
+        # Train mth model on kth training set
+        model_m <- best_subset_classifier(model = models[[m]],
+                                          data.train = data_train,
+                                          model.family = binomial(link = "probit"),
+                                          model.optimizer = "bobyqa",
+                                          n.iter = 1000000,
+                                          verbose = verbose)
+
+        # Use trained model to make predictions for kth validation set
+        pred_m <- stats::predict(model_m, newdata = data_valid,
+                                 type = "response", allow.new.levels = TRUE)
+
+        # Evaluate predictions based on loss function
+        perform_m <- loss_function(pred = pred_m,
+                                   data.valid = data_valid,
+                                   loss.unit = loss.unit,
+                                   loss.fun = loss.fun,
+                                   y = y,
+                                   L2.unit = L2.unit)
+      })
+
+      # Mean over all k folds
+      mean(unlist(k_errors))
+    })
+  }
+
+  # Choose best-performing model
+  min_m <- which.min(m_errors)
+  out <- models[[min_m]]
+
+  # Function output
+  return(out)
+}
+
+################################################################################
+#                Multicore tuning for best subset                              #
+################################################################################
+#' Best subset multicore tuning.
+#'
+#' \code{run_best_subset_mc} is called from within \code{run_best_subset}. It
+#' tunes using multiple cores.
+#'
+#' @param y Outcome variable. A character scalar containing the column name of
+#'   the outcome variable in \code{survey}.
+#' @param L1.x Individual-level covariates. A character vector containing the
+#'   column names of the individual-level variables in \code{survey} and
+#'   \code{census} used to predict outcome \code{y}. Note that geographic unit
+#'   is specified in argument \code{L2.unit}.
+#' @param L2.x Context-level covariates. A character vector containing the
+#'   column names of the context-level variables in \code{survey} and
+#'   \code{census} used to predict outcome \code{y}.
+#' @param L2.unit Geographic unit. A character scalar containing the column
+#'   name of the geographic unit in \code{survey} and \code{census} at which
+#'   outcomes should be aggregated.
+#' @param L2.reg Geographic region. A character scalar containing the column
+#'   name of the geographic region in \code{survey} and \code{census} by which
+#'   geographic units are grouped (\code{L2.unit} must be nested within
+#'   \code{L2.reg}). Default is \code{NULL}.
+#' @param loss.unit Loss function unit. A character-valued scalar indicating
+#'   whether performance loss should be evaluated at the level of individual
+#'   respondents (\code{individuals}) or geographic units (\code{L2 units}).
+#'   Default is \code{individuals}.
+#' @param loss.fun Loss function. A character-valued scalar indicating whether
+#'   prediction loss should be measured by the mean squared error (\code{MSE})
+#'   or the mean absolute error (\code{MAE}). Default is \code{MSE}.
+#' @param data Data for cross-validation. A \code{list} of \eqn{k}
+#'   \code{data.frames}, one for each fold to be used in \eqn{k}-fold
+#'   cross-validation.
+#' @param cores The number of cores to be used. An integer indicating the number
+#'   of processor cores used for parallel computing. Default is 1.
+#' @param best.subset.classifier Best subset classifier. An \code{autoMrP} function.
+#' @param models The models to perform best subset selection on. A list of model
+#'   formulas.
+#' @param loss.function The loss function used to evaluate model performance. An
+#'   \code{autoMrP} function which implements the loss functions specified in
+#'   \code{loss.fun}.
+#' @param verbose Verbose output. A logical argument indicating whether or not
+#'   verbose output should be printed. Default is \code{TRUE}.
+#' @return The cross-validation errors for all models. A list.
+#' @examples \dontrun{
+#' # create list of cross-validation folds
+#' cv_folds <- list(
+#'   `1` = survey_item[1:200, ],
+#'   `2` = survey_item[201:400, ],
+#'   `3` = survey_item[401:1500, ])
+#'
+#' # run best subset classifier
+#' out <- run_best_subset(
+#'   y = "YES",
+#'   L1.x = c("L1x1", "L1x2", "L1x3"),
+#'   L2.x = c("L2.x1", "L2.x2"),
+#'   L2.unit = "state",
+#'   L2.reg = "region",
+#'   loss.unit = "individuals",
+#'   loss.fun = "MSE",
+#'   data = cv_folds,
+#'   verbose = TRUE)
+#' }
+
+run_best_subset_mc <- function(y, L1.x, L2.x, L2.unit, L2.reg,
+                               loss.unit, loss.fun, data,
+                               cores, best.subset.classifier,
+                               models, loss.function, verbose){
+
+  # Binding for global variables
+  m <- NULL
+
+  # Register cores
+  cl <- multicore(cores = cores, type = "open", cl = NULL)
+
   # Train and evaluate each model
-  m_errors <- lapply(seq_along(models), function(m) {
-    # Print model m
-    if (isTRUE(verbose)) {
-      M <- length(models)
-      cat(paste("Best subset: Running model ", m,
-                " out of ", M, " models\n", sep = ""))
-    }
+  m_errors <- foreach::foreach(m = 1:length(models)) %dopar% {
 
     # Loop over each fold
     k_errors <- lapply(seq_along(data), function(k) {
@@ -80,34 +221,33 @@ run_best_subset <- function(y, L1.x, L2.x, L2.unit, L2.reg,
       data_valid <- dplyr::bind_rows(data[k])
 
       # Train mth model on kth training set
-      model_m <- best_subset_classifier(model = models[[m]],
-                                        data.train = data_train,
-                                        model.family = binomial(link = "probit"),
-                                        model.optimizer = "bobyqa",
-                                        n.iter = 1000000,
-                                        verbose = verbose)
+      model_m <- best.subset.classifier(
+        model = models[[m]],
+        data.train = data_train,
+        model.family = binomial(link = "probit"),
+        model.optimizer = "bobyqa",
+        n.iter = 1000000,
+        verbose = verbose)
 
       # Use trained model to make predictions for kth validation set
-      pred_m <- stats::predict(model_m, newdata = data_valid,
-                               type = "response", allow.new.levels = TRUE)
+      pred_m <- stats::predict(
+        model_m, newdata = data_valid,
+        type = "response", allow.new.levels = TRUE)
 
       # Evaluate predictions based on loss function
-      perform_m <- loss_function(pred = pred_m,
-                                 data.valid = data_valid,
-                                 loss.unit = loss.unit,
-                                 loss.fun = loss.fun,
-                                 y = y,
-                                 L2.unit = L2.unit)
+      perform_m <- loss.function(
+        pred = pred_m,
+        data.valid = data_valid,
+        loss.unit = loss.unit,
+        loss.fun = loss.fun,
+        y = y,
+        L2.unit = L2.unit)
     })
 
     # Mean over all k folds
     mean(unlist(k_errors))
-  })
-
-  # Choose best-performing model
-  min_m <- which.min(m_errors)
-  out <- models[[min_m]]
+  }
 
   # Function output
-  return(out)
+  return(m_errors)
 }

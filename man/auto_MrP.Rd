@@ -18,6 +18,7 @@ auto_MrP(
   survey,
   census,
   ebma.size = 1/3,
+  cores = 1,
   k.folds = 5,
   cv.sampling = "L2 units",
   loss.unit = "individuals",
@@ -125,6 +126,9 @@ otherwise.}
 indicating the proportion of respondents to be allocated to the EBMA fold.
 Default is \eqn{1/3}. \emph{Note:} ignored if \code{folds} is provided, but
 must be specified otherwise.}
+
+\item{cores}{The number of cores to be used. An integer indicating the number
+of processor cores used for parallel computing. Default is 1.}
 
 \item{k.folds}{Number of cross-validation folds. An integer-valued scalar
 indicating the number of folds to be used in cross-validation. Default is

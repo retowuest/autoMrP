@@ -30,6 +30,8 @@
 #' @param data Data for cross-validation. A \code{list} of \eqn{k}
 #'   \code{data.frames}, one for each fold to be used in \eqn{k}-fold
 #'   cross-validation.
+#' @param cores The number of cores to be used. An integer indicating the number
+#'   of processor cores used for parallel computing. Default is 1.
 #' @param verbose Verbose output. A logical argument indicating whether or not
 #'   verbose output should be printed. Default is \code{TRUE}.
 #'
@@ -68,7 +70,7 @@
 
 run_pca <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                     loss.unit, loss.fun,
-                    data, verbose) {
+                    data, cores, verbose) {
 
   # List of all models to be evaluated
   models <- model_list_pca(y = y,
@@ -77,45 +79,65 @@ run_pca <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                            L2.unit = L2.unit,
                            L2.reg = L2.reg)
 
-  # Train and evaluate each model
-  m_errors <- lapply(seq_along(models), function(m) {
-    # Print model m
-    if (isTRUE(verbose)) {
-      M <- length(models)
-      cat(paste("Best subset: Running model ", m,
-                " out of ", M, " models\n", sep = ""))
-    }
+  # prallel tuning if cores > 1
+  if( cores > 1 ){
 
-    # Loop over each fold
-    k_errors <- lapply(seq_along(data), function(k) {
-      # Split data in training and validation sets
-      data_train <- dplyr::bind_rows(data[-k])
-      data_valid <- dplyr::bind_rows(data[k])
+    # Train all models in parallel
+    m_errors <- run_best_subset_mc(
+      best.subset.classifier = best_subset_classifier,
+      verbose = verbose,
+      models = models,
+      data = data,
+      loss.function = loss_function,
+      loss.unit = loss.unit,
+      loss.fun = loss.fun,
+      y = y,
+      L1.x = L1.x,
+      L2.x = L2.x,
+      L2.unit = L2.unit,
+      L2.reg = L2.reg,
+      cores = cores)
+  } else{
+    # Train and evaluate each model
+    m_errors <- lapply(seq_along(models), function(m) {
+      # Print model m
+      if (isTRUE(verbose)) {
+        M <- length(models)
+        cat(paste("Best subset: Running model ", m,
+                  " out of ", M, " models\n", sep = ""))
+      }
 
-      # Train mth model on kth training set
-      model_m <- best_subset_classifier(model = models[[m]],
-                                        data.train = data_train,
-                                        model.family = binomial(link = "probit"),
-                                        model.optimizer = "bobyqa",
-                                        n.iter = 1000000,
-                                        verbose = verbose)
+      # Loop over each fold
+      k_errors <- lapply(seq_along(data), function(k) {
+        # Split data in training and validation sets
+        data_train <- dplyr::bind_rows(data[-k])
+        data_valid <- dplyr::bind_rows(data[k])
 
-      # Use trained model to make predictions for kth validation set
-      pred_m <- stats::predict(model_m, newdata = data_valid,
-                               type = "response", allow.new.levels = TRUE)
+        # Train mth model on kth training set
+        model_m <- best_subset_classifier(model = models[[m]],
+                                          data.train = data_train,
+                                          model.family = binomial(link = "probit"),
+                                          model.optimizer = "bobyqa",
+                                          n.iter = 1000000,
+                                          verbose = verbose)
 
-      # Evaluate predictions based on loss function
-      perform_m <- loss_function(pred = pred_m,
-                                 data.valid = data_valid,
-                                 loss.unit = loss.unit,
-                                 loss.fun = loss.fun,
-                                 y = y,
-                                 L2.unit = L2.unit)
+        # Use trained model to make predictions for kth validation set
+        pred_m <- stats::predict(model_m, newdata = data_valid,
+                                 type = "response", allow.new.levels = TRUE)
+
+        # Evaluate predictions based on loss function
+        perform_m <- loss_function(pred = pred_m,
+                                   data.valid = data_valid,
+                                   loss.unit = loss.unit,
+                                   loss.fun = loss.fun,
+                                   y = y,
+                                   L2.unit = L2.unit)
+      })
+
+      # Mean over all k folds
+      mean(unlist(k_errors))
     })
-
-    # Mean over all k folds
-    mean(unlist(k_errors))
-  })
+  }
 
   # Choose best-performing model
   min.m <- which.min(m_errors)
