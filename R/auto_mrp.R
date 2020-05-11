@@ -642,7 +642,8 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
                        gamma = svm.gamma,
                        cost = svm.cost,
                        data = cv_folds,
-                       verbose = verbose)
+                       verbose = verbose,
+                       cores = cores)
   } else {
     svm_out <- NULL
   }

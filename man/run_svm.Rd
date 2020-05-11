@@ -16,7 +16,8 @@ run_svm(
   gamma,
   cost,
   data,
-  verbose
+  verbose,
+  cores
 )
 }
 \arguments{
@@ -69,6 +70,9 @@ cross-validation.}
 
 \item{verbose}{Verbose output. A logical argument indicating whether or not
 verbose output should be printed. Default is \code{TRUE}.}
+
+\item{cores}{The number of cores to be used. An integer indicating the number
+of processor cores used for parallel computing. Default is 1.}
 }
 \value{
 The support vector machine tuned parameters. A list.

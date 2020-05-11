@@ -45,6 +45,8 @@
 #'   cross-validation.
 #' @param verbose Verbose output. A logical argument indicating whether or not
 #'   verbose output should be printed. Default is \code{TRUE}.
+#' @param cores The number of cores to be used. An integer indicating the number
+#'   of processor cores used for parallel computing. Default is 1.
 #'
 #' @return The support vector machine tuned parameters. A list.
 #' @examples \dontrun{
@@ -73,7 +75,7 @@
 run_svm <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                     kernel = "radial", loss.fun,
                     loss.unit, gamma, cost, data,
-                    verbose) {
+                    verbose, cores) {
 
   # Create model formula
   x <- paste(c(L1.x, L2.x, L2.unit, L2.reg), collapse = " + ")
@@ -83,12 +85,141 @@ run_svm <- function(y, L1.x, L2.x, L2.unit, L2.reg,
   svm_grid <- expand.grid(gamma, cost)
   names(svm_grid) <- c("gamma", "cost")
 
-  # loop over tuning grid
-  grid_cells <- apply(svm_grid, 1, function(g) {
+  # prallel tuning if cores > 1
+  if( cores > 1 ){
+
+    # Train all models in parallel
+    grid_cells <- run_svm_mc(
+      svm.classifier = svm_classifier,
+      verbose = verbose,
+      svm.grid = svm_grid,
+      data = data,
+      loss.function = loss_function,
+      loss.unit = loss.unit,
+      loss.fun = loss.fun,
+      y = y,
+      L2.unit = L2.unit,
+      form = form,
+      kernel = kernel,
+      cores = cores)
+  } else {
+    # loop over tuning grid
+    grid_cells <- apply(svm_grid, 1, function(g) {
+
+      # Set tuning parameters
+      gamma_value <- as.numeric(g["gamma"])
+      cost_value <- as.numeric(g["cost"])
+
+      # Loop over each fold
+      k_errors <- lapply(seq_along(data), function(k) {
+
+        # Split data in training and validation sets and factorize DV
+        data_train <- dplyr::bind_rows(data[-k]) %>%
+          dplyr::mutate_at(.vars = y, as.factor)
+        data_valid <- dplyr::bind_rows(data[k]) %>%
+          dplyr::mutate_at(.vars = y, as.factor)
+
+        # Svm classifier
+        model_l <- svm_classifier(
+          form = form,
+          data = data_train,
+          kernel = kernel,
+          type = "C-classification",
+          probability = TRUE,
+          svm.gamma = gamma_value,
+          svm.cost = cost_value,
+          verbose = verbose
+        )
+
+        # Use trained model to make predictions for kth validation set
+        pred_l <- predict(model_l, newdata = data.frame(data_valid),
+                          probability = TRUE)
+        pred_l <- as.numeric(attr(pred_l, "probabilities")[, "1"])
+
+        # Transform factor DV to numeric for loss function
+        data_valid <- data_valid %>%
+          dplyr::mutate_at(.vars = y, function(x) as.numeric(levels(x))[x])
+
+        # Evaluate predictions based on loss function
+        perform_l <- loss_function(pred = pred_l, data.valid = data_valid,
+                                   loss.unit = loss.unit,
+                                   loss.fun = loss.fun,
+                                   y = y, L2.unit = L2.unit)
+      })
+
+      # Mean over all k folds
+      best_error <- mean(unlist(k_errors))
+    })
+  }
+
+  # Extract best tuning parameters
+  out <- list(gamma = svm_grid[which.min(grid_cells), "gamma"],
+              cost = svm_grid[which.min(grid_cells), "cost"])
+
+  # Function output
+  return(out)
+
+}
+
+################################################################################
+#                     Multicore tuning for svm                                 #
+################################################################################
+#' SVM multicore tuning.
+#'
+#' \code{run_svm_mc} is called from within \code{run_svm}. It tunes using
+#' multiple cores.
+#'
+#' @param y Outcome variable. A character scalar containing the column name of
+#'   the outcome variable in \code{survey}.
+#' @param L2.unit Geographic unit. A character scalar containing the column
+#'   name of the geographic unit in \code{survey} and \code{census} at which
+#'   outcomes should be aggregated.
+#' @param form The SVM model formula.
+#' @param loss.unit Loss function unit. A character-valued scalar indicating
+#'   whether performance loss should be evaluated at the level of individual
+#'   respondents (\code{individuals}) or geographic units (\code{L2 units}).
+#'   Default is \code{individuals}.
+#' @param loss.fun Loss function. A character-valued scalar indicating whether
+#'   prediction loss should be measured by the mean squared error (\code{MSE})
+#'   or the mean absolute error (\code{MAE}). Default is \code{MSE}.
+#' @param data Data for cross-validation. A \code{list} of \eqn{k}
+#'   \code{data.frames}, one for each fold to be used in \eqn{k}-fold
+#'   cross-validation.
+#' @param cores The number of cores to be used. An integer indicating the number
+#'   of processor cores used for parallel computing. Default is 1.
+#' @param kernel SVM kernel. A character-valued scalar specifying the kernel to
+#'   be used by SVM. The possible values are \code{linear}, \code{polynomial},
+#'   \code{radial}, and \code{sigmoid}. Default is \code{radial}.
+#' @param svm.classifier SVM classifier. An \code{autoMrP} function.
+#' @param svm.grid The tuning grid for SVM. A data.frame.
+#' @param loss.function The loss function used to evaluate model performance. An
+#'   \code{autoMrP} function which implements the loss functions specified in
+#'   \code{loss.fun}.
+#' @param verbose Verbose output. A logical argument indicating whether or not
+#'   verbose output should be printed. Default is \code{TRUE}.
+#' @return The cross-validation errors for all models. A list.
+#' @examples \dontrun{
+#' # not yet
+#' }
+
+run_svm_mc <- function(y, L2.unit, form, loss.unit,
+                       loss.fun, data, cores, kernel,
+                       svm.classifier, svm.grid,
+                       loss.function, verbose){
+
+  # Binding for global variables
+  g <- NULL
+  `%>%` <- dplyr::`%>%`
+
+  # Register cores
+  cl <- multicore(cores = cores, type = "open", cl = NULL)
+
+  # Train and evaluate each model
+  grid_cells <- foreach::foreach(g = 1:nrow(svm.grid), .combine = "c") %dopar% {
 
     # Set tuning parameters
-    gamma_value <- as.numeric(g["gamma"])
-    cost_value <- as.numeric(g["cost"])
+    gamma_value <- as.numeric(svm.grid[g, "gamma"])
+    cost_value <- as.numeric(svm.grid[g, "cost"])
 
     # Loop over each fold
     k_errors <- lapply(seq_along(data), function(k) {
@@ -100,7 +231,7 @@ run_svm <- function(y, L1.x, L2.x, L2.unit, L2.reg,
         dplyr::mutate_at(.vars = y, as.factor)
 
       # Svm classifier
-      model_l <- svm_classifier(
+      model_l <- svm.classifier(
         form = form,
         data = data_train,
         kernel = kernel,
@@ -121,22 +252,19 @@ run_svm <- function(y, L1.x, L2.x, L2.unit, L2.reg,
         dplyr::mutate_at(.vars = y, function(x) as.numeric(levels(x))[x])
 
       # Evaluate predictions based on loss function
-      perform_l <- loss_function(pred = pred_l, data.valid = data_valid,
+      perform_l <- loss.function(pred = pred_l, data.valid = data_valid,
                                  loss.unit = loss.unit,
                                  loss.fun = loss.fun,
                                  y = y, L2.unit = L2.unit)
     })
 
     # Mean over all k folds
-    best_error <- mean(unlist(k_errors))
+    mean(unlist(k_errors))
+  }
 
-  })
-
-  # Extract best tuning parameters
-  out <- list(gamma = svm_grid[which.min(grid_cells), "gamma"],
-              cost = svm_grid[which.min(grid_cells), "cost"])
+  # De-register cluster
+  multicore(cores = cores, type = "close", cl = cl)
 
   # Function output
-  return(out)
-
+  return(grid_cells)
 }

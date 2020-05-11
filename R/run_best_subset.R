@@ -181,23 +181,7 @@ run_best_subset <- function(y, L1.x, L2.x, L2.unit, L2.reg,
 #'   verbose output should be printed. Default is \code{TRUE}.
 #' @return The cross-validation errors for all models. A list.
 #' @examples \dontrun{
-#' # create list of cross-validation folds
-#' cv_folds <- list(
-#'   `1` = survey_item[1:200, ],
-#'   `2` = survey_item[201:400, ],
-#'   `3` = survey_item[401:1500, ])
-#'
-#' # run best subset classifier
-#' out <- run_best_subset(
-#'   y = "YES",
-#'   L1.x = c("L1x1", "L1x2", "L1x3"),
-#'   L2.x = c("L2.x1", "L2.x2"),
-#'   L2.unit = "state",
-#'   L2.reg = "region",
-#'   loss.unit = "individuals",
-#'   loss.fun = "MSE",
-#'   data = cv_folds,
-#'   verbose = TRUE)
+#' # not yet
 #' }
 
 run_best_subset_mc <- function(y, L1.x, L2.x, L2.unit, L2.reg,
@@ -247,6 +231,9 @@ run_best_subset_mc <- function(y, L1.x, L2.x, L2.unit, L2.reg,
     # Mean over all k folds
     mean(unlist(k_errors))
   }
+
+  # De-register cluster
+  multicore(cores = cores, type = "close", cl = cl)
 
   # Function output
   return(m_errors)
