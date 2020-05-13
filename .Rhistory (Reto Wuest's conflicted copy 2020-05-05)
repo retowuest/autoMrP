@@ -1,3 +1,7 @@
+to be allocated, 'folds', must be a character scalar.",
+sep = "")
+paste("The argument specifying the fold to which each observation",
+"is to be allocated, 'folds', must be a character scalar.",
 sep = "")
 paste("The argument specifying the fold to which each observation",
 " is to be allocated, 'folds', must be a character scalar.",
@@ -499,14 +503,10 @@ devtools::install_github("retowuest/autoMrP",
 auth_token = "042a7ceb4aeca462c4479d54ad40b5926563c4a6",
 force = TRUE)
 ?autoMrP::auto_MrP
-install.packages("knitr")
-library(knitr)
-install.packages("knitr", lib="C:/Users/Philipp/Dropbox/MRP and ML/autoMrP/packrat/lib-R/x86_64-w64-mingw32/4.0.0")
-devtools::install_github("retowuest/autoMrP",lib="C:/Users/Philipp/Dropbox/MRP and ML/autoMrP/packrat/lib-R/x86_64-w64-mingw32/4.0.0")
-install.packages("devtools", lib="C:/Users/Philipp/Dropbox/MRP and ML/autoMrP/packrat/lib-R/x86_64-w64-mingw32/4.0.0")
-devtools::install_github("retowuest/autoMrP",lib="C:/Users/Philipp/Dropbox/MRP and ML/autoMrP/packrat/lib-R/x86_64-w64-mingw32/4.0.0")
-devtools::install_github("cran/EBMAforecast",lib="C:/Users/Philipp/Dropbox/MRP and ML/autoMrP/packrat/lib-R/x86_64-w64-mingw32/4.0.0")
 library(autoMrP)
-?auto_MrP::census
-?autoMrP::census
 library(autoMrP)
+devtools::install_github("retowuest/autoMrP",
+auth_token = "042a7ceb4aeca462c4479d54ad40b5926563c4a6",
+force = TRUE)
+library(autoMrP)
+?auto_MrP
