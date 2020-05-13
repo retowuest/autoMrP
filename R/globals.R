@@ -1,0 +1,12 @@
+globalVariables(c("%>%",
+                  "%dopar%",
+                  ".",
+                  "ae",
+                  "one_of",
+                  "all_of",
+                  "index",
+                  "n",
+                  "n_L2",
+                  "row_number",
+                  "sqe",
+                  "state"))

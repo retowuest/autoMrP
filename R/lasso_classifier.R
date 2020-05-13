@@ -15,8 +15,16 @@
 #'   to be used by glmmLasso. Defaults to binomial(link = "probit").
 #' @param verbose Verbose output. A logical vector indicating whether or not
 #'   verbose output should be printed.
-#' @return
-#' @examples #not_yet
+#' @return A multilevel lasso model. An \code{\link[glmmLasso]{glmmLasso}} object.
+#' @examples \dontrun{
+#' m <- lasso_classifier(
+#'   L2.fix = YES ~ L2.x1 + L2.x2,
+#'   L1.re = list(L1x1 = ~1, L1x2 = ~1, state = ~1, region = ~1),
+#'   data.train = survey_item,
+#'   lambda = 5,
+#'   model.family = binomial(link = "probit"),
+#'   verbose = TRUE)
+#' }
 
 lasso_classifier <- function(L2.fix, L1.re, data.train,
                              lambda, model.family,
@@ -30,14 +38,16 @@ lasso_classifier <- function(L2.fix, L1.re, data.train,
                                 control = list(center = TRUE,
                                                standardize = TRUE))
   } else {
-    out <- suppressMessages(suppressWarnings(
-      glmmLasso::glmmLasso(fix = L2.fix, rnd = L1.re,
-                           data = data.train, lambda = lambda,
-                           family = model.family,
-                           switch.NR = FALSE, final.re = TRUE,
-                           control = list(center = TRUE,
-                                          standardize = TRUE))
-    ))
+    out <- quiet(
+      suppressMessages(suppressWarnings(
+        glmmLasso::glmmLasso(fix = L2.fix, rnd = L1.re,
+                             data = data.train, lambda = lambda,
+                             family = model.family,
+                             switch.NR = FALSE, final.re = TRUE,
+                             control = list(center = TRUE,
+                                            standardize = TRUE))
+      ))
+    )
   }
 
   # Function output

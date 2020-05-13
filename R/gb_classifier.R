@@ -20,8 +20,18 @@
 #'   learning rate applied to each tree in the expansion.
 #' @param verbose Verbose output. A logical vector indicating whether or not
 #'   verbose output should be printed.
-#' @return
-#' @examples #not_yet
+#' @return A gradient tree boosting model. An \code{\link[gbm]{gbm}} object.
+#' @examples \dontrun{
+#' m <- gb_classifier(
+#'   form = YES ~ L1x1 + L1x2 + L1x3 + state + region + L2.x1 + L2.x2,
+#'   distribution = "bernoulli",
+#'   data.train = survey_item,
+#'   n.trees = 100,
+#'   interaction.depth = 2,
+#'   n.minobsinnode = 5,
+#'   shrinkage = 0.01,
+#'   verbose = TRUE)
+#' }
 
 gb_classifier <- function(form, distribution, data.train,
                           n.trees, interaction.depth,
@@ -51,6 +61,22 @@ gb_classifier <- function(form, distribution, data.train,
   return(out)
 }
 
+#' GB classifier update
+#'
+#' \code{gb_classifier_update()} grows additional trees in gradient tree
+#' boosting ensemble.
+#'
+#' @param object Gradient tree boosting output. A gbm object.
+#' @param n.new.trees Number of additional trees to grow. A numeric scalar.
+#' @param verbose Verbose output. A logical vector indicating whether or not
+#'   verbose output should be printed.
+#' @return An updated gradient tree boosting model. A \code{\link[gbm]{gbm.more}} object.
+#' @examples \dontrun{
+#' m <- gb_classifier_update(
+#'   object = m,
+#'   n.new.trees = 50,
+#'   verbose = TRUE)
+#' }
 
 gb_classifier_update <- function(object, n.new.trees,
                                  verbose = c(TRUE, FALSE)) {

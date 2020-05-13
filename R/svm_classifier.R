@@ -3,8 +3,6 @@
 #' \code{svm_classifier} applies support vector machine classification to a
 #' data set.
 #'
-#' @param method Function. A character string specifying the name of the
-#'   function to be tuned.
 #' @param form Model formula. A two-sided linear formula describing
 #'   the model to be fit, with the outcome on the LHS and the covariates
 #'   separated by + operators on the RHS.
@@ -13,53 +11,67 @@
 #' @param kernel Kernel for SVM. A character string specifying the kernel to
 #'   be used for SVM. The possible types are linear, polynomial, radial, and
 #'   sigmoid. Default is radial.
-#' @param error.fun function returning the error measure to be minimized. It
-#' takes two arguments: a vector of true values and a vector of predicted values.
-#' If NULL, the misclassification error is used for categorical predictions and
-#' the mean squared error for numeric predictions.
+#' @param type svm can be used as a classification machine, as a regression machine, or for novelty detection. Depending of whether y is a factor or not, the default setting for type is C-classification or eps-regression, respectively, but may be overwritten by setting an explicit value. Valid options are: #' \enumerate{
+#'   \item C-classification
+#'   \item nu-classification
+#'   \item one-classification (for novelty detection)
+#'   \item eps-regression
+#'   \item nu-regression
+#' }
 #' @param probability Probability predictions. A logical argument indicating
 #'   whether the model should allow for probability predictions
-#' @param gamma.set Gamma parameter for SVM. This parameter is needed for all
+#' @param svm.gamma Gamma parameter for SVM. This parameter is needed for all
 #'   kernels except linear.
-#' @param cost.set Cost parameter for SVM. This parameter specifies the cost of
+#' @param svm.cost Cost parameter for SVM. This parameter specifies the cost of
 #'   constraints violation.
-#' @param sampling Sampling scheme. A character string specifying the sampling
-#'   scheme to be used. Possible values are cross, fix, and boot. Default is
-#'   cross, which performs cross-validation.
 #' @param verbose Verbose output. A logical vector indicating whether or not
 #'   verbose output should be printed.
-#' @return
-#' @examples #not_yet
+#' @return The support vector machine model. An \code{\link[e1071]{svm}} object.
+#' @examples \dontrun{
+#' # Prepare data
+#' survey_item <- dplyr::bind_rows(survey_item) %>%
+#'   dplyr::mutate_at(.vars = y, as.factor)
+#'
+#' # Svm classifier
+#' m <- svm_classifier(
+#'   form = YES ~ L1x1 + L1x2 + L2.x1 + L2.x2 + state + region,
+#'   data = survey_item,
+#'   kernel = "radial",
+#'   type = "C-classification",
+#'   probability = TRUE,
+#'   svm.gamma = 0.3,
+#'   svm.cost = 1,
+#'   verbose = TRUE
+#'   )
+#' }
 
-svm_classifier <- function(method, form, data, kernel,
-                           error.fun, probability,
-                           gamma.set, cost.set,
-                           sampling = "cross", cross,
+svm_classifier <- function(form, data, kernel,
+                           type, probability,
+                           svm.gamma, svm.cost,
                            verbose = c(TRUE, FALSE)) {
+
   # Train and evaluate model using the supplied set of tuning parameters
   if (isTRUE(verbose == TRUE)) {
-    out <- e1071::tune(method = method,
-                       train.x = form,
-                       data = data,
-                       kernel = kernel,
-                       error.fun = error.fun,
-                       probability = probability,
-                       ranges = list(gamma = gamma.set,
-                                     cost = cost.set),
-                       tunecontrol = e1071::tune.control(sampling = sampling,
-                                                         cross = cross))
+    out <- e1071::svm(
+      formula = form,
+      data = data,
+      type = type,
+      kernel = kernel,
+      gamma = svm.gamma,
+      cost = svm.cost,
+      probability = probability
+    )
   } else {
     out <- suppressMessages(suppressWarnings(
-      e1071::tune(method = method,
-                  train.x = form,
-                  data = data,
-                  kernel = kernel,
-                  error.fun = error.fun,
-                  probability = probability,
-                  ranges = list(gamma = gamma.set,
-                                cost = cost.set),
-                  tunecontrol = e1071::tune.control(sampling = sampling,
-                                                    cross = cross))
+      e1071::svm(
+        formula = form,
+        data = data,
+        type = type,
+        kernel = kernel,
+        gamma = svm.gamma,
+        cost = svm.cost,
+        probability = probability
+      )
     ))
   }
 

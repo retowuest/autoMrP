@@ -18,6 +18,7 @@ auto_MrP(
   survey,
   census,
   ebma.size = 1/3,
+  cores = 1,
   k.folds = 5,
   cv.sampling = "L2 units",
   loss.unit = "individuals",
@@ -37,6 +38,8 @@ auto_MrP(
   mrp.L2.x = NULL,
   gb.L2.unit = FALSE,
   gb.L2.reg = FALSE,
+  svm.L2.unit = FALSE,
+  svm.L2.reg = FALSE,
   lasso.lambda = list(c(0.1, 0.3, 1), c(1, 10, 10000)),
   lasso.n.iter = 70,
   gb.interaction.depth = c(1, 2, 3),
@@ -47,7 +50,6 @@ auto_MrP(
   gb.n.iter = 70,
   gb.n.minobsinnode = 5,
   svm.kernel = "radial",
-  svm.loss.fun = NULL,
   svm.gamma = c(0.3, 0.5, 0.55, 0.6, 0.65, 0.7, 0.8, 0.9, 1, 2, 3, 4),
   svm.cost = c(1, 10),
   ebma.n.draws = 100,
@@ -58,7 +60,8 @@ auto_MrP(
 )
 }
 \arguments{
-\item{y}{Outcome variable.
+\item{y}{Outcome variable. A character vector containing the
+  column names of the outcome variable.
 
   A character scalar containing the column name of
   the outcome variable in \code{survey}.}
@@ -123,6 +126,9 @@ otherwise.}
 indicating the proportion of respondents to be allocated to the EBMA fold.
 Default is \eqn{1/3}. \emph{Note:} ignored if \code{folds} is provided, but
 must be specified otherwise.}
+
+\item{cores}{The number of cores to be used. An integer indicating the number
+of processor cores used for parallel computing. Default is 1.}
 
 \item{k.folds}{Number of cross-validation folds. An integer-valued scalar
 indicating the number of folds to be used in cross-validation. Default is
@@ -219,6 +225,14 @@ uses the variables specified in \code{L2.x}. Default is \code{NULL}.}
 \code{L2.reg} should be included in the GB classifier. Default is
 \code{FALSE}.}
 
+\item{svm.L2.unit}{SVM L2.unit. A logical argument indicating whether
+\code{L2.unit} should be included in the SVM classifier. Default is
+\code{FALSE}.}
+
+\item{svm.L2.reg}{SVM L2.reg. A logical argument indicating whether
+\code{L2.reg} should be included in the SVM classifier. Default is
+\code{FALSE}.}
+
 \item{lasso.lambda}{Lasso penalty parameter. A numeric \code{vector} of
 non-negative values or a \code{list} of two numeric vectors of equal size,
 with the first vector containing the step sizes by which the penalty
@@ -272,11 +286,6 @@ observations that each terminal node of the trees must contain. Default is
 to be used by SVM. The possible values are \code{linear}, \code{polynomial},
 \code{radial}, and \code{sigmoid}. Default is \code{radial}.}
 
-\item{svm.loss.fun}{SVM loss function. If \code{NULL}, then SVM uses the
-misclassification error to measure the loss of categorical predictions and
-the mean squared error to measure the loss of numeric predictions. Default
-is \code{NULL}.}
-
 \item{svm.gamma}{SVM kernel parameter. A numeric vector whose values specify
 the gamma parameter in the SVM kernel. This parameter is needed for all
 kernel types except linear. Default is
@@ -306,7 +315,10 @@ random number generation. If \code{NULL}, then the seed is set to
 verbose output should be printed. Default is \code{FALSE}.}
 }
 \value{
-
+The context-level predictions. A list with two elements. The first
+  element, \code{EBMA}, contains the post-stratified ensemble bayesian model
+  avaeraging (EBMA) predictions. The second element, \code{classifiers},
+  contains the post-stratified predictions from all estimated classifiers.
 }
 \description{
 \code{auto_MrP()} improves the prediction performance of multilevel
@@ -314,7 +326,44 @@ regression with post-stratification (MrP) by combining a number of machine
 learning methods through ensemble bayesian model averaging (EBMA).
 }
 \examples{
-#not_yet
+\dontrun{
+# MrP model only:
+mrp_model <- autoMrP::auto_MrP(
+  y = "YES",
+  L1.x = c("L1x1", "L1x2", "L1x3"),
+  L2.x = c("L2.x1", "L2.x2"),
+  L2.unit = "state",
+  L2.reg = "region",
+  L2.x.scale = TRUE,
+  survey = survey,
+  census = census,
+  bin.proportion = "proportion",
+  best.subset = FALSE,
+  lasso = FALSE,
+  pca = FALSE,
+  gb = FALSE,
+  svm = FALSE,
+  mrp = TRUE)
+
+# Better predictions through machine learning
+out <- autoMrP::auto_MrP(
+  y = "YES",
+  L1.x = c("L1x1", "L1x2", "L1x3"),
+  L2.x = c("L2.x1", "L2.x2", "L2.x3", "L2.x4", "L2.x5", "L2.x6"),
+  L2.unit = "state",
+  L2.reg = "region",
+  L2.x.scale = TRUE,
+  survey = survey,
+  census = census,
+  bin.proportion = "proportion",
+  best.subset = TRUE,
+  lasso = TRUE,
+  pca = TRUE,
+  gb = TRUE,
+  svm = TRUE,
+  mrp = TRUE,
+  mrp.L2.x = c("L2.x1", "L2.x2")
+  )}
 }
 \keyword{EBMA}
 \keyword{MRP}

@@ -12,10 +12,12 @@ run_svm(
   L2.reg,
   kernel = "radial",
   loss.fun,
+  loss.unit,
   gamma,
   cost,
   data,
-  verbose
+  verbose,
+  cores
 )
 }
 \arguments{
@@ -49,6 +51,11 @@ misclassification error to measure the loss of categorical predictions and
 the mean squared error to measure the loss of numeric predictions. Default
 is \code{NULL}.}
 
+\item{loss.unit}{Loss function unit. A character-valued scalar indicating
+whether performance loss should be evaluated at the level of individual
+respondents (\code{individuals}) or geographic units (\code{L2 units}).
+Default is \code{individuals}.}
+
 \item{gamma}{SVM kernel parameter. A numeric vector whose values specify
 the gamma parameter in the SVM kernel. This parameter is needed for all
 kernel types except linear. Default is
@@ -64,13 +71,11 @@ cross-validation.}
 \item{verbose}{Verbose output. A logical argument indicating whether or not
 verbose output should be printed. Default is \code{TRUE}.}
 
-\item{loss.unit}{Loss function unit. A character-valued scalar indicating
-whether performance loss should be evaluated at the level of individual
-respondents (\code{individuals}) or geographic units (\code{L2 units}).
-Default is \code{individuals}.}
+\item{cores}{The number of cores to be used. An integer indicating the number
+of processor cores used for parallel computing. Default is 1.}
 }
 \value{
-
+The support vector machine tuned parameters. A list.
 }
 \description{
 \code{run_svm} is a wrapper function that applies the support vector machine
@@ -78,5 +83,26 @@ classifier to data provided by the user, evaluates prediction performance,
 and chooses the best-performing model.
 }
 \examples{
-#not_yet
+\dontrun{
+# Create list of cross-validation folds
+cv_folds <- list(
+  `1` = survey_item[1:200, ],
+  `2` = survey_item[201:400, ],
+  `3` = survey_item[401:1500, ])
+
+# Run svm classifier
+m <- run_svm(
+  y = "YES",
+  L1.x = c("L1x1", "L1x2"),
+  L2.x = c("L2.x1", "L2.x2"),
+  L2.unit = "state",
+  L2.reg = "region",
+  kernel = "radial",
+  loss.fun = "MSE",
+  loss.unit = "individuals",
+  gamma = c(0.3, 0.1),
+  cost = c(1, 50),
+  data = cv_folds,
+  verbose = TRUE)
+}
 }

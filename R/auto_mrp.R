@@ -4,13 +4,12 @@
 #' regression with post-stratification (MrP) by combining a number of machine
 #' learning methods through ensemble bayesian model averaging (EBMA).
 #'
-#' @param y Outcome variable.
+#' @param y Outcome variable. A character vector containing the
+#'   column names of the outcome variable.
 #'
 #'   A character scalar containing the column name of
 #'   the outcome variable in \code{survey}.
-#' @param L1.x Individual-level covariates.
-#'
-#'   A character vector containing the
+#' @param L1.x Individual-level covariates. A character vector containing the
 #'   column names of the individual-level variables in \code{survey} and
 #'   \code{census} used to predict outcome \code{y}. Note that geographic unit
 #'   is specified in argument \code{L2.unit}.
@@ -59,6 +58,8 @@
 #'   indicating the proportion of respondents to be allocated to the EBMA fold.
 #'   Default is \eqn{1/3}. \emph{Note:} ignored if \code{folds} is provided, but
 #'   must be specified otherwise.
+#' @param cores The number of cores to be used. An integer indicating the number
+#'   of processor cores used for parallel computing. Default is 1.
 #' @param k.folds Number of cross-validation folds. An integer-valued scalar
 #'   indicating the number of folds to be used in cross-validation. Default is
 #'   \eqn{5}. \emph{Note:} ignored if \code{folds} is provided, but must be
@@ -135,6 +136,12 @@
 #' @param gb.L2.reg GB L2.reg. A logical argument indicating whether
 #'   \code{L2.reg} should be included in the GB classifier. Default is
 #'   \code{FALSE}.
+#' @param svm.L2.unit SVM L2.unit. A logical argument indicating whether
+#'   \code{L2.unit} should be included in the SVM classifier. Default is
+#'   \code{FALSE}.
+#' @param svm.L2.reg SVM L2.reg. A logical argument indicating whether
+#'   \code{L2.reg} should be included in the SVM classifier. Default is
+#'   \code{FALSE}.
 #' @param lasso.lambda Lasso penalty parameter. A numeric \code{vector} of
 #'   non-negative values or a \code{list} of two numeric vectors of equal size,
 #'   with the first vector containing the step sizes by which the penalty
@@ -178,10 +185,6 @@
 #' @param svm.kernel SVM kernel. A character-valued scalar specifying the kernel
 #'   to be used by SVM. The possible values are \code{linear}, \code{polynomial},
 #'   \code{radial}, and \code{sigmoid}. Default is \code{radial}.
-#' @param svm.loss.fun SVM loss function. If \code{NULL}, then SVM uses the
-#'   misclassification error to measure the loss of categorical predictions and
-#'   the mean squared error to measure the loss of numeric predictions. Default
-#'   is \code{NULL}.
 #' @param svm.gamma SVM kernel parameter. A numeric vector whose values specify
 #'   the gamma parameter in the SVM kernel. This parameter is needed for all
 #'   kernel types except linear. Default is
@@ -203,43 +206,82 @@
 #'   \eqn{546213978}. Default is \code{NULL}.
 #' @param verbose Verbose output. A logical argument indicating whether or not
 #'   verbose output should be printed. Default is \code{FALSE}.
-#' @return
+#' @return The context-level predictions. A list with two elements. The first
+#'   element, \code{EBMA}, contains the post-stratified ensemble bayesian model
+#'   avaeraging (EBMA) predictions. The second element, \code{classifiers},
+#'   contains the post-stratified predictions from all estimated classifiers.
 #' @keywords MRP multilevel regression post-stratification machine learning
 #'   EBMA ensemble bayesian model averaging
-#' @examples #not_yet
+#' @examples
+#' \dontrun{
+#' # MrP model only:
+#' mrp_model <- autoMrP::auto_MrP(
+#'   y = "YES",
+#'   L1.x = c("L1x1", "L1x2", "L1x3"),
+#'   L2.x = c("L2.x1", "L2.x2"),
+#'   L2.unit = "state",
+#'   L2.reg = "region",
+#'   L2.x.scale = TRUE,
+#'   survey = survey,
+#'   census = census,
+#'   bin.proportion = "proportion",
+#'   best.subset = FALSE,
+#'   lasso = FALSE,
+#'   pca = FALSE,
+#'   gb = FALSE,
+#'   svm = FALSE,
+#'   mrp = TRUE)
+#'
+#' # Better predictions through machine learning
+#' out <- autoMrP::auto_MrP(
+#'   y = "YES",
+#'   L1.x = c("L1x1", "L1x2", "L1x3"),
+#'   L2.x = c("L2.x1", "L2.x2", "L2.x3", "L2.x4", "L2.x5", "L2.x6"),
+#'   L2.unit = "state",
+#'   L2.reg = "region",
+#'   L2.x.scale = TRUE,
+#'   survey = survey,
+#'   census = census,
+#'   bin.proportion = "proportion",
+#'   best.subset = TRUE,
+#'   lasso = TRUE,
+#'   pca = TRUE,
+#'   gb = TRUE,
+#'   svm = TRUE,
+#'   mrp = TRUE,
+#'   mrp.L2.x = c("L2.x1", "L2.x2")
+#'   )}
 #' @export
+#' @importFrom stats as.formula binomial predict setNames weighted.mean
+#' @importFrom utils combn
+#' @importFrom dplyr %>%
+#' @importFrom rlang .data
+#' @import knitr
 
 auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
                      pcs = NULL, folds = NULL, bin.proportion = NULL,
                      bin.size = NULL, survey, census, ebma.size = 1/3,
-                     k.folds = 5, cv.sampling = "L2 units",
+                     cores = 1, k.folds = 5, cv.sampling = "L2 units",
                      loss.unit = "individuals", loss.fun = "MSE",
                      best.subset = TRUE, lasso = TRUE, pca = TRUE, gb = TRUE,
                      svm = TRUE, mrp = FALSE, forward.select = FALSE,
                      best.subset.L2.x = NULL, lasso.L2.x = NULL,
                      pca.L2.x = NULL, gb.L2.x = NULL, svm.L2.x = NULL,
                      mrp.L2.x = NULL, gb.L2.unit = FALSE, gb.L2.reg = FALSE,
+                     svm.L2.unit = FALSE, svm.L2.reg = FALSE,
                      lasso.lambda = list(c(0.1, 0.3, 1), c(1, 10, 10000)),
                      lasso.n.iter = 70, gb.interaction.depth = c(1, 2, 3),
                      gb.shrinkage = c(0.04, 0.01, 0.008, 0.005, 0.001),
                      gb.n.trees.init = 50, gb.n.trees.increase = 50,
                      gb.n.trees.max = 1000, gb.n.iter = 70,
                      gb.n.minobsinnode = 5, svm.kernel = "radial",
-                     svm.loss.fun = NULL, svm.gamma = c(0.3, 0.5, 0.55, 0.6, 0.65,
-                                                        0.7, 0.8, 0.9, 1, 2, 3, 4),
+                     svm.gamma = c(0.3, 0.5, 0.55, 0.6, 0.65,
+                                   0.7, 0.8, 0.9, 1, 2, 3, 4),
                      svm.cost = c(1, 10), ebma.n.draws = 100,
                      ebma.tol = c(0.01, 0.005, 0.001, 0.0005, 0.0001, 0.00005,
                                   0.00001), uncertainty = FALSE, seed = NULL,
                      verbose = FALSE) {
 
-  # ----------------------------- Start message --------------------------------
-
-  if(sum(!is.null(best.subset), !is.null(lasso), !is.null(pca), !is.null(gb),
-         !is.null(svm), !is.null(mrp)) > 1){
-    message("Starting prediction. Depending on the number of context-level variables, the set of tuning parameters and the computer it may take some time (with 6 context-level variables around 15 minutes on average)")
-  } else{
-      message("Starting prediction.")
-    }
 
   # ----------------------------------- Seed -----------------------------------
 
@@ -331,6 +373,10 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
   #  stop(paste("gb.trees.max.set must be either a scalar or a vector of size ",
   #             "`length(gb.shrinkage.set)`.", sep = ""))
   #}
+
+  # ----------------------------- Parallel computing ----------------------------
+
+
 
   # ------------------------------- Prepare data -------------------------------
 
@@ -463,7 +509,8 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
                                        loss.unit = loss.unit,
                                        loss.fun = loss.fun,
                                        data = cv_folds,
-                                       verbose = verbose)
+                                       verbose = verbose,
+                                       cores = cores)
   } else {
     best_subset_out <- NULL
   }
@@ -508,7 +555,8 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
       loss.unit = loss.unit,
       loss.fun = loss.fun,
       data = cv_folds,
-      verbose = verbose)
+      verbose = verbose,
+      cores = cores)
   } else {
     pca_out <- NULL
   }
@@ -568,18 +616,34 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
       svm.L2.x <- L2.x
     }
 
+    # Evaluate inclusion of L2.unit in GB
+    if (isTRUE(svm.L2.unit)) {
+      svm.L2.unit <- L2.unit
+    } else {
+      svm.L2.unit <- NULL
+    }
+
+    # Evaluate inclusion of L2.reg in GB
+    if (isTRUE(svm.L2.reg)) {
+      svm.L2.reg <- L2.reg
+    } else {
+      svm.L2.reg <- NULL
+    }
+
     # Run classifier
     svm_out <- run_svm(y = y,
                        L1.x = L1.x,
                        L2.x = svm.L2.x,
-                       L2.unit = L2.unit,
-                       L2.reg = L2.reg,
+                       L2.unit = svm.L2.unit,
+                       L2.reg = svm.L2.reg,
                        kernel = svm.kernel,
-                       loss.fun = svm.loss.fun,
+                       loss.fun = loss.fun,
+                       loss.unit = loss.unit,
                        gamma = svm.gamma,
                        cost = svm.cost,
                        data = cv_folds,
-                       verbose = verbose)
+                       verbose = verbose,
+                       cores = cores)
   } else {
     svm_out <- NULL
   }
@@ -612,8 +676,6 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
     )
 
   # ----------------------------------- EBMA -----------------------------------
-
-  message("Starting bayesian ensemble model averaging tuning")
 
   ebma_out <- ebma(
     ebma.fold = ebma_fold,

@@ -22,12 +22,14 @@ For this example, we use the data that is included in the package (see `?autoMrP
 
 ```R
 census <- autoMrP::census
-survey <- autoMrP::survey
+survey <- autoMrP::survey_item
 ```
 
 ### The Standard MrP Model
 
 We include the three individual level variables L1x1, L1x2 and L1x3 as well as the context-level variables L2.x1 and L2.x2. In addition, we include context-level random effects for states nested in regions.
+
+Note, that we set the argument `L2.x.scale = FALSE` which stops `autoMrP()` from normalizing the context-level variables. In our example data, the context-level variables are already normalized. Context-level variables must be normalized because some of our classifiers are not scale invariant.
 
 ```R
 mrp_model <- autoMrP::auto_MrP(
@@ -36,7 +38,7 @@ mrp_model <- autoMrP::auto_MrP(
   L2.x = c("L2.x1", "L2.x2"),
   L2.unit = "state",
   L2.reg = "region",
-  L2.x.scale = TRUE,
+  L2.x.scale = FALSE,
   survey = survey,
   census = census,
   bin.proportion = "proportion",
@@ -56,6 +58,10 @@ In this example, we accept the default settings for the tuning parameters and co
 
 Note, that because we want the standard MrP model to use only two context-level variables while we want our classifiers to use all six context-level variables, we specify the context-level variables to be used for the standard MrP model in the argument `mrp.L2.x = c("L2.x1", "L2.x2")`.
 
+EBMA tuning is quite exhaustive with the default settings and takes quite long. We reduce the search grid to speed up the proccess by setting the argument `ebma.tol` and `ebma.n.draws`.
+
+Finally, we set the argument `gb.L2.unit = FALSE` because, in our applications, the gradient boosting classifier tended to perform worse with many state context-level indicators (there are 48 states in our example data).
+
 ```R
 out <- autoMrP::auto_MrP(
   y = "YES",
@@ -63,7 +69,7 @@ out <- autoMrP::auto_MrP(
   L2.x = c("L2.x1", "L2.x2", "L2.x3", "L2.x4", "L2.x5", "L2.x6"),
   L2.unit = "state",
   L2.reg = "region",
-  L2.x.scale = TRUE,
+  L2.x.scale = FALSE,
   survey = survey,
   census = census,
   bin.proportion = "proportion",
@@ -73,7 +79,10 @@ out <- autoMrP::auto_MrP(
   gb = TRUE,
   svm = TRUE,
   mrp = TRUE,
-  mrp.L2.x = c("L2.x1", "L2.x2")
+  mrp.L2.x = c("L2.x1", "L2.x2"),
+  ebma.tol = c(0.001, 0.0005),
+  ebma.n.draws = 10,
+  gb.L2.unit = FALSE
 )
 ```
 

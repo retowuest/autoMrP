@@ -4,7 +4,18 @@
 \alias{run_pca}
 \title{Apply PCA classifier to MrP.}
 \usage{
-run_pca(y, L1.x, L2.x, L2.unit, L2.reg, loss.unit, loss.fun, data, verbose)
+run_pca(
+  y,
+  L1.x,
+  L2.x,
+  L2.unit,
+  L2.reg,
+  loss.unit,
+  loss.fun,
+  data,
+  cores,
+  verbose
+)
 }
 \arguments{
 \item{y}{Outcome variable. A character scalar containing the column name of
@@ -41,11 +52,14 @@ or the mean absolute error (\code{MAE}). Default is \code{MSE}.}
 \code{data.frames}, one for each fold to be used in \eqn{k}-fold
 cross-validation.}
 
+\item{cores}{The number of cores to be used. An integer indicating the number
+of processor cores used for parallel computing. Default is 1.}
+
 \item{verbose}{Verbose output. A logical argument indicating whether or not
 verbose output should be printed. Default is \code{TRUE}.}
 }
 \value{
-
+A model formula of the winning best subset classifier model.
 }
 \description{
 \code{run_pca} is a wrapper function that applies the PCA classifier to data
@@ -53,5 +67,35 @@ provided by the user, evaluates prediction performance, and chooses the
 best-performing model.
 }
 \examples{
-#not_yet
+\dontrun{
+# generate principal components
+pca_out <- stats::prcomp(
+  survey[, pca.L2.x],
+  retx = TRUE,
+  center = TRUE,
+  scale. = TRUE,
+  tol = NULL)
+
+# Add PCs to survey data
+survey_item <- survey_item \%>\%
+  dplyr::bind_cols(as.data.frame(pca_out$x))
+
+# create list of cross-validation folds
+cv_folds <- list(
+  `1` = survey_item[1:200, ],
+  `2` = survey_item[201:400, ],
+  `3` = survey_item[401:1500, ])
+
+# run pca classifier
+pca_out <- run_pca(
+  y = "YES",
+  L1.x = c("L1x1", "L1x2"),
+  L2.x = c("PC1", "PC2"),
+  L2.unit = "state",
+  L2.reg = "region",
+  loss.unit = "individuals",
+  loss.fun = "MSE",
+  data = cv_folds,
+  verbose = TRUE)
+}
 }

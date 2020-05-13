@@ -1,9 +1,58 @@
+#' Bayesian Ensemble Model Averaging EBMA
+#'
+#' \code{ebma} tunes EBMA and generates weights for classifier averaging.
+#'
+#' @param ebma.fold New data for EBMA tuning. A list containing the the data
+#'   that must not have been used in classifier training.
+#' @param y Outcome variable. A character vector containing the column names of
+#'   the outcome variable.
+#' @param L1.x Individual-level covariates. A character vector containing the
+#'   column names of the individual-level variables in \code{survey} and
+#'   \code{census} used to predict outcome \code{y}. Note that geographic unit
+#'   is specified in argument \code{L2.unit}.
+#' @param L2.x Context-level covariates. A character vector containing the
+#'   column names of the context-level variables in \code{survey} and
+#'   \code{census} used to predict outcome \code{y}.
+#' @param L2.unit Geographic unit. A character scalar containing the column
+#'   name of the geographic unit in \code{survey} and \code{census} at which
+#'   outcomes should be aggregated.
+#' @param L2.reg Geographic region. A character scalar containing the column
+#'   name of the geographic region in \code{survey} and \code{census} by which
+#'   geographic units are grouped (\code{L2.unit} must be nested within
+#'   \code{L2.reg}). Default is \code{NULL}.
+#' @param post.strat Post-stratification results. A list containing the best
+#'   models for each of the tuned classifiers, the individual level predictions
+#'   on the data classifier trainig data and the post-stratified context-level
+#'   predictions.
+#' @param n.draws EBMA number of samples. An integer-valued scalar specifying
+#'   the number of bootstrapped samples to be drawn from the EBMA fold and used
+#'   for tuning EBMA. Default is \eqn{100}. Passed on from \code{ebma.n.draws}.
+#' @param tol EBMA tolerance. A numeric vector containing the tolerance values
+#'   for improvements in the log-likelihood before the EM algorithm stops
+#'   optimization. Values should range at least from \eqn{0.01} to \eqn{0.001}.
+#'   Default is \code{c(0.01, 0.005, 0.001, 0.0005, 0.0001, 0.00005, 0.00001)}.
+#'   Passed on from \code{ebma.tol}.
+#' @param best.subset.opt Tuned best subset parameters. A list returned from
+#'   \code{run_best_subset()}.
+#' @param pca.opt Tuned best subset with principal components parameters. A list
+#'   returned from \code{run_pca()}.
+#' @param lasso.opt Tuned lasso parameters. A list returned from
+#'   \code{run_lasso()}.
+#' @param gb.opt Tuned gradient tree boosting parameters. A list returned from
+#'   \code{run_gb()}.
+#' @param svm.opt Tuned support vector machine parameters. A list returned from
+#'   \code{run_svm()}.
+#' @param verbose Verbose output. A logical argument indicating whether or not
+#'   verbose output should be printed. Default is \code{FALSE}.
+
 ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, post.strat,
                  n.draws, tol, best.subset.opt, pca.opt, lasso.opt,
                  gb.opt, svm.opt, verbose){
 
   # run EBMA if at least two classifiers selected
   if (sum(unlist(lapply(X = post.strat$models, FUN = function(x) !is.null(x)))) > 1){
+
+    message("Starting bayesian ensemble model averaging tuning")
 
     # models
     model_bs <- post.strat$models$best_subset
@@ -133,7 +182,7 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, post.strat,
     return(list(ebma = L2_preds, classifiers = post.strat$predictions$Level2))
 
   } else{
-   cat("\n Skipping EBMA (only 1 classifier selected) \n")
+   message("\n Skipping EBMA (only 1 classifier selected) \n")
 
     # function output
     return(list(ebma = "EBMA step skipped (only 1 classifier run)", classifiers = post.strat$predictions$Level2))

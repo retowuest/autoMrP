@@ -34,11 +34,19 @@ to be used by glmmLasso. Defaults to binomial(link = "probit").}
 verbose output should be printed.}
 }
 \value{
-
+A multilevel lasso model. An \code{\link[glmmLasso]{glmmLasso}} object.
 }
 \description{
 \code{lasso_classifier} applies lasso classification to a data set.
 }
 \examples{
-#not_yet
+\dontrun{
+m <- lasso_classifier(
+  L2.fix = YES ~ L2.x1 + L2.x2,
+  L1.re = list(L1x1 = ~1, L1x2 = ~1, state = ~1, region = ~1),
+  data.train = survey_item,
+  lambda = 5,
+  model.family = binomial(link = "probit"),
+  verbose = TRUE)
+}
 }
