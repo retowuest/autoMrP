@@ -4,10 +4,8 @@
 #' regression with post-stratification (MrP) by combining a number of machine
 #' learning methods through ensemble bayesian model averaging (EBMA).
 #'
-#' @param y Outcome variable. A character vector containing the
-#'   column names of the outcome variable.
-#'
-#'   A character scalar containing the column name of
+#' @param y Outcome variable. A character vector containing the column names of
+#'   the outcome variable. A character scalar containing the column name of
 #'   the outcome variable in \code{survey}.
 #' @param L1.x Individual-level covariates. A character vector containing the
 #'   column names of the individual-level variables in \code{survey} and
