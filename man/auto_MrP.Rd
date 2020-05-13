@@ -60,11 +60,9 @@ auto_MrP(
 )
 }
 \arguments{
-\item{y}{Outcome variable. A character vector containing the
-  column names of the outcome variable.
-
-  A character scalar containing the column name of
-  the outcome variable in \code{survey}.}
+\item{y}{Outcome variable. A character vector containing the column names of
+the outcome variable. A character scalar containing the column name of
+the outcome variable in \code{survey}.}
 
 \item{L1.x}{Individual-level covariates. A character vector containing the
 column names of the individual-level variables in \code{survey} and

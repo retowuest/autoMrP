@@ -13,7 +13,7 @@ A data frame with 2934 rows and 13 variables:
   \item{L1x1}{Age group (four categories)}
   \item{L1x2}{Education level (four categories)}
   \item{L1x3}{Gender-race combination (six categories)}
-  \item{proportion}{The proportion of respondents of that ideal type in the population}
+  \item{proportion}{State-level proportion of respondents of that ideal type in the population}
   \item{L2.x1}{State-level share of votes for the Republican candidate in the previous presidential election}
   \item{L2.x2}{State-level percentage of Evangelical Protestant or Mormon respondents}
   \item{L2.x3}{State-level percentage of the population living in urban areas}
