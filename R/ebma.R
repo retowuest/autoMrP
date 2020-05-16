@@ -73,6 +73,7 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, post.strat,
           model.svm = model_svm,
           model.mrp = model_mrp,
           tol = tol,
+          n.draws = n.draws,
           cores = cores)
 
       } else {
@@ -92,6 +93,7 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, post.strat,
           model.svm = model_svm,
           model.mrp = model_mrp,
           tol = tol,
+          n.draws = n.draws,
           cores = cores)
       }
     } else{
