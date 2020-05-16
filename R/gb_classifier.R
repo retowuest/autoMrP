@@ -20,7 +20,7 @@
 #'   learning rate applied to each tree in the expansion.
 #' @param verbose Verbose output. A logical vector indicating whether or not
 #'   verbose output should be printed.
-#' @return A gradient tree boosting model. An \code{\link[gbm]{gbm}} object.
+#' @return A gradient tree boosting model. A \code{\link[gbm]{gbm}} object.
 #' @examples \dontrun{
 #' m <- gb_classifier(
 #'   form = YES ~ L1x1 + L1x2 + L1x3 + state + region + L2.x1 + L2.x2,

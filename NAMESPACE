@@ -3,6 +3,7 @@
 export(auto_MrP)
 import(knitr)
 importFrom(dplyr,"%>%")
+importFrom(foreach,"%dopar%")
 importFrom(rlang,.data)
 importFrom(stats,as.formula)
 importFrom(stats,binomial)

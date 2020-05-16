@@ -43,7 +43,7 @@ learning rate applied to each tree in the expansion.}
 verbose output should be printed.}
 }
 \value{
-A gradient tree boosting model. An \code{\link[gbm]{gbm}} object.
+A gradient tree boosting model. A \code{\link[gbm]{gbm}} object.
 }
 \description{
 \code{gb_classifier} applies gradient boosting classification to a data set.
