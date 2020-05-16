@@ -691,7 +691,8 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
     lasso.opt = lasso_out,
     gb.opt = gb_out,
     svm.opt = svm_out,
-    verbose = verbose
+    verbose = verbose,
+    cores = cores
     )
 
   # ----------------------------- Function output ------------------------------
