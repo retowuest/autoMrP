@@ -535,7 +535,8 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
                            lambda = lasso.lambda,
                            n.iter = lasso.n.iter,
                            data = cv_folds,
-                           verbose = verbose)
+                           verbose = verbose,
+                           cores = cores)
   } else {
     lasso_out <- NULL
   }
