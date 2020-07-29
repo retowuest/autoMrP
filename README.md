@@ -80,4 +80,4 @@ out <- autoMrP::auto_MrP(
 )
 ```
 
-During parameter tuning, models may not converge for certain parameter values and cause warning messages.
+During parameter tuning, models may not converge for certain parameter values and cause warning messages if `verbose = TRUE`.
