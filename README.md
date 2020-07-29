@@ -2,13 +2,7 @@
 autoMrP improves the prediction performance of multilevel regression with post-stratification (MrP) by combining a number of machine learning methods through ensemble Bayesian model averaging (EBMA). The full discussion can be found here: Broniecki, Leemann, and Wüest. 2020. "Improving Multilevel Regression with Post-Stratification Through Machine Learning (autoMrP)." Journal of Politics, conditionally accepted.
 
 ## Installation
-Step 1) autoMrP depends on EBMAforecast which is currently unavailable on cran. To install EBMAforecast run the following code.
-
-```R
-devtools::install_github("cran/EBMAforecast")
-```
-
-Step 2) To install autoMrP from GitHub run:
+To install autoMrP from GitHub run:
 
 ```R
 devtools::install_github("retowuest/autoMrP")
