@@ -40,7 +40,7 @@ auto_MrP(
   gb.L2.reg = FALSE,
   svm.L2.unit = FALSE,
   svm.L2.reg = FALSE,
-  lasso.lambda = list(c(0.1, 0.3, 1), c(1, 10, 10000)),
+  lasso.lambda = 1/exp(-seq(from = -1, to = 4.5, length = 100)),
   lasso.n.iter = 70,
   gb.interaction.depth = c(1, 2, 3),
   gb.shrinkage = c(0.04, 0.01, 0.008, 0.005, 0.001),
@@ -237,7 +237,8 @@ with the first vector containing the step sizes by which the penalty
 parameter should increase and the second vector containing the upper
 thresholds of the intervals to which the step sizes apply. The penalty
 parameter controls the shrinkage of the context-level variables in the
-lasso model. Default is \code{list(c(0.1, 0.3, 1), c(1, 10, 10000))}.}
+lasso model. Default is \code{1 / exp(- seq(from = -1, to = 4.5, length =
+100))}.}
 
 \item{lasso.n.iter}{Lasso number of iterations without improvement. Either
 \code{NULL} or an integer-valued scalar specifying the maximum number of

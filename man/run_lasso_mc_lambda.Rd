@@ -81,7 +81,8 @@ with the first vector containing the step sizes by which the penalty
 parameter should increase and the second vector containing the upper
 thresholds of the intervals to which the step sizes apply. The penalty
 parameter controls the shrinkage of the context-level variables in the
-lasso model. Default is \code{list(c(0.1, 0.3, 1), c(1, 10, 10000))}.}
+lasso model. Default is \code{1 / exp(- seq(from = -1, to = 4.5, length =
+100))}.}
 
 \item{lasso.classifier}{Lasso classifier. An \code{autoMrP} function.}
 }
