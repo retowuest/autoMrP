@@ -453,12 +453,16 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
     # EBMA hold-out fold
     ebma.size <- round(nrow(survey) * ebma.size, digits = 0)
 
-    ebma_folding_out <- ebma_folding(data = survey,
-                                     L2.unit = L2.unit,
-                                     ebma.size = ebma.size)
-
-    ebma_fold <- ebma_folding_out$ebma_fold
-    cv_data <- ebma_folding_out$cv_data
+    if(ebma.size>0){
+      ebma_folding_out <- ebma_folding(data = survey,
+                                       L2.unit = L2.unit,
+                                       ebma.size = ebma.size)
+      ebma_fold <- ebma_folding_out$ebma_fold
+      cv_data <- ebma_folding_out$cv_data
+    } else{
+      ebma_fold <- NULL
+      cv_data <- survey
+    }
 
     # K folds for cross-validation
     cv_folds <- cv_folding(data = cv_data,
@@ -466,18 +470,13 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
                            k.folds = k.folds,
                            cv.sampling = cv.sampling)
   } else {
-    # If svm is TRUE, print warning that SVM classifier does not rely on
-    # user-specified folds
-    if (isTRUE(svm)) {
-    warning(paste("Currently the SVM classifier does not use the user-supplied",
-                  " folds. This will be added in the next version of the",
-                  " package.", sep = ""))
-    }
 
-    # EBMA hold-out fold
-    ebma_fold <- survey %>%
-      dplyr::filter_at(dplyr::vars(dplyr::one_of(folds)),
-                       dplyr::any_vars(. == k.folds + 1))
+    if (ebma.size > 0){
+      # EBMA hold-out fold
+      ebma_fold <- survey %>%
+        dplyr::filter_at(dplyr::vars(dplyr::one_of(folds)),
+                         dplyr::any_vars(. == k.folds + 1))
+    }
 
     # K folds for cross-validation
     cv_data <- survey %>%

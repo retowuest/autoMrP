@@ -14,12 +14,12 @@ A data frame with 1500 rows and 13 variables:
   \item{state}{U.S. state}
   \item{L2.unit}{U.S. state id}
   \item{region}{U.S. region (four categories: 1 = Northeast; 2 = Midwest; 3 = South; 4 = West)}
-  \item{L2.x1}{Normalized state-level share of votes for the Republican candidate in the previous presidential election}
-  \item{L2.x2}{Normalized state-level percentage of Evangelical Protestant or Mormon respondents}
-  \item{L2.x3}{Normalized state-level percentage of the population living in urban areas}
-  \item{L2.x4}{Normalized state-level unemployment rate}
-  \item{L2.x5}{Normalized state-level share of Hispanics}
-  \item{L2.x6}{Normalized state-level share of Whites}
+  \item{L2.x1}{State-level share of votes for the Republican candidate in the previous presidential election}
+  \item{L2.x2}{State-level percentage of Evangelical Protestant or Mormon respondents}
+  \item{L2.x3}{State-level percentage of the population living in urban areas}
+  \item{L2.x4}{State-level unemployment rate}
+  \item{L2.x5}{State-level share of Hispanics}
+  \item{L2.x6}{State-level share of Whites}
 }
 }
 \source{

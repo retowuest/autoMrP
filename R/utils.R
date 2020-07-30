@@ -310,7 +310,7 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                  " be specified.", sep = ""))
     } else {
       # Check if ebma.size is a proportion in the open unit interval
-      if (!(is.numeric(ebma.size) & ebma.size > 0 & ebma.size < 1)) {
+      if (!(is.numeric(ebma.size) & ebma.size >= 0 & ebma.size < 1)) {
         stop(paste("The argument 'ebma.size', specifying the share of",
                    " respondents to be allocated to the EBMA fold, must take a",
                    " number in the open unit interval.", sep = ""))
