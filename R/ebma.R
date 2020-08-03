@@ -168,19 +168,35 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, post.strat,
           test_y <- dplyr::select(.data = test, one_of(y))
 
           # EBMA
-          forecast.data <- suppressWarnings(
-            EBMAforecast::makeForecastData(
+          if(verbose){
+            forecast.data <- EBMAforecast::makeForecastData(
               .predCalibration = data.frame(train_preds),
               .outcomeCalibration = as.numeric(unlist(train_y)),
               .predTest = data.frame(test_preds),
               .outcomeTest = as.numeric(unlist(test_y)))
-          )
 
-          forecast.out <- EBMAforecast::calibrateEnsemble(
-            forecast.data,
-            model = "normal",
-            useModelParams = FALSE,
-            tol = tol[idx.tol])
+            forecast.out <- EBMAforecast::calibrateEnsemble(
+              forecast.data,
+              model = "normal",
+              useModelParams = FALSE,
+              tol = tol[idx.tol])
+
+          } else {
+            forecast.data <- quiet(
+              EBMAforecast::makeForecastData(
+                .predCalibration = data.frame(train_preds),
+                .outcomeCalibration = as.numeric(unlist(train_y)),
+                .predTest = data.frame(test_preds),
+                .outcomeTest = as.numeric(unlist(test_y)))
+            )
+
+            forecast.out <- quiet(EBMAforecast::calibrateEnsemble(
+              forecast.data,
+              model = "normal",
+              useModelParams = FALSE,
+              tol = tol[idx.tol]))
+
+          }
 
           # mse
           mse_collector[idx.Ndraws, idx.tol] <- mean(( as.numeric(unlist(test_y)) -
@@ -210,7 +226,12 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, post.strat,
       }
 
       # average model weights
-      final_model_weights <- apply(weights_mat, 2, mean)
+      if (is.null(dim(weights_mat))){
+        final_model_weights <- as.numeric(weights_mat)
+      } else{
+        final_model_weights <- apply(weights_mat, 2, mean)
+      }
+
       names(final_model_weights) <- names(train_preds)
 
     }
@@ -424,11 +445,6 @@ ebma_mc_draws <- function(
 
   # Register cores
   cl <- multicore(cores = cores, type = "open", cl = NULL)
-
-  # loop over Ndraws with equal obs/state
-  for(idx.Ndraws in 1:n.draws){
-
-  }
 
   ebma_tune <- foreach::foreach(idx.Ndraws = 1:n.draws, .packages = c("glmmLasso", "e1071", "gbm")) %dopar% {
 

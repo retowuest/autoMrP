@@ -333,7 +333,6 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
                lasso.lambda = lasso.lambda,
                lasso.n.iter = lasso.n.iter)
 
-
   #if (!(is.null(lasso.iterations.max) | (is.numeric(lasso.iterations.max) &
   #                                       length(lasso.iterations.max) == 1))) {
   #  stop("lasso.iterations.max must be either a numeric scalar or NULL.")
@@ -374,329 +373,364 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
   #             "`length(gb.shrinkage.set)`.", sep = ""))
   #}
 
-  # ----------------------------- Parallel computing ----------------------------
 
 
+  # ---------------------------- No Bootstrapping --------------------------------
 
-  # ------------------------------- Prepare data -------------------------------
+  if (!uncertainty){
 
-  # Coerce individual-level variables and geographic variables to factors in
-  # survey and census data
-  survey <- survey %>%
-    dplyr::mutate_at(.vars = c(L1.x, L2.unit, L2.reg), .funs = as.factor)
+    # ------------------------------- Prepare data -------------------------------
 
-  census <- census %>%
-    dplyr::mutate_at(.vars = c(L1.x, L2.unit, L2.reg), .funs = as.factor)
-
-  # If not provided in census data, calculate bin size and bin proportion for
-  # each ideal type in a geographic unit
-  if (is.null(bin.proportion)) {
-    if (is.null(bin.size)) {
-      census <- census %>%
-        dplyr::group_by(.dots = c(L1.x, L2.unit)) %>%
-        dplyr::summarise(n = dplyr::n())
-    } else {
-      census$n <- census[[bin.size]]
-    }
-    census <- census %>%
-      dplyr::group_by(.dots = L2.unit) %>%
-      dplyr::mutate(prop = n / sum(n))
-  } else {
-    census <- census %>%
-      dplyr::rename(prop = one_of(bin.proportion))
-  }
-
-  # If not provided in survey and census data, compute the principal components
-  # of context-level variables
-  if (is.null(pcs)) {
-    # Determine context-level covariates whose principal components are to be
-    # computed
-    if (is.null(pca.L2.x)) {
-      pca.L2.x <- L2.x
-    }
-
-    # Compute principal components for survey data
-    pca_out <- stats::prcomp(survey[, pca.L2.x],
-                             retx = TRUE,
-                             center = TRUE,
-                             scale. = TRUE,
-                             tol = NULL)
-
-    # Add PCs to survey data
+    # Coerce individual-level variables and geographic variables to factors in
+    # survey and census data
     survey <- survey %>%
-      dplyr::bind_cols(as.data.frame(pca_out$x))
-
-    # Add PCs to census data
-    pc_names <- colnames(pca_out$x)
+      dplyr::mutate_at(.vars = c(L1.x, L2.unit, L2.reg), .funs = as.factor)
 
     census <- census %>%
-      dplyr::left_join(unique(survey %>% dplyr::select(all_of(L2.unit),
-                                                       all_of(pc_names))),
-                       by = L2.unit)
-  } else {
-    pc_names <- pcs
-  }
+      dplyr::mutate_at(.vars = c(L1.x, L2.unit, L2.reg), .funs = as.factor)
 
-  # Scale context-level variables in survey and census data
-  if (isTRUE(L2.x.scale)) {
-    survey[, L2.x] <- scale(survey[, L2.x], center = TRUE, scale = TRUE)
-    census[, L2.x] <- scale(census[, L2.x], center = TRUE, scale = TRUE)
-  }
-
-  # Convert survey and census data to tibble
-  survey <- tibble::as_tibble(x = survey)
-  census <- tibble::as_tibble(x = census)
-
-  # ------------------------------- Create folds -------------------------------
-
-  if (is.null(folds)) {
-    # EBMA hold-out fold
-    ebma.size <- round(nrow(survey) * ebma.size, digits = 0)
-
-    if(ebma.size>0){
-      ebma_folding_out <- ebma_folding(data = survey,
-                                       L2.unit = L2.unit,
-                                       ebma.size = ebma.size)
-      ebma_fold <- ebma_folding_out$ebma_fold
-      cv_data <- ebma_folding_out$cv_data
-    } else{
-      ebma_fold <- NULL
-      cv_data <- survey
+    # If not provided in census data, calculate bin size and bin proportion for
+    # each ideal type in a geographic unit
+    if (is.null(bin.proportion)) {
+      if (is.null(bin.size)) {
+        census <- census %>%
+          dplyr::group_by(.dots = c(L1.x, L2.unit)) %>%
+          dplyr::summarise(n = dplyr::n())
+      } else {
+        census$n <- census[[bin.size]]
+      }
+      census <- census %>%
+        dplyr::group_by(.dots = L2.unit) %>%
+        dplyr::mutate(prop = n / sum(n))
+    } else {
+      census <- census %>%
+        dplyr::rename(prop = one_of(bin.proportion))
     }
 
-    # K folds for cross-validation
-    cv_folds <- cv_folding(data = cv_data,
-                           L2.unit = L2.unit,
-                           k.folds = k.folds,
-                           cv.sampling = cv.sampling)
-  } else {
+    # If not provided in survey and census data, compute the principal components
+    # of context-level variables
+    if (is.null(pcs)) {
+      # Determine context-level covariates whose principal components are to be
+      # computed
+      if (is.null(pca.L2.x)) {
+        pca.L2.x <- L2.x
+      }
 
-    if (ebma.size > 0){
+      # Compute principal components for survey data
+      pca_out <- stats::prcomp(survey[, pca.L2.x],
+                               retx = TRUE,
+                               center = TRUE,
+                               scale. = TRUE,
+                               tol = NULL)
+
+      # Add PCs to survey data
+      survey <- survey %>%
+        dplyr::bind_cols(as.data.frame(pca_out$x))
+
+      # Add PCs to census data
+      pc_names <- colnames(pca_out$x)
+
+      census <- census %>%
+        dplyr::left_join(unique(survey %>% dplyr::select(all_of(L2.unit),
+                                                         all_of(pc_names))),
+                         by = L2.unit)
+    } else {
+      pc_names <- pcs
+    }
+
+    # Scale context-level variables in survey and census data
+    if (isTRUE(L2.x.scale)) {
+      survey[, L2.x] <- scale(survey[, L2.x], center = TRUE, scale = TRUE)
+      census[, L2.x] <- scale(census[, L2.x], center = TRUE, scale = TRUE)
+    }
+
+    # Convert survey and census data to tibble
+    survey <- tibble::as_tibble(x = survey)
+    census <- tibble::as_tibble(x = census)
+
+    # ------------------------------- Create folds -------------------------------
+
+    if (is.null(folds)) {
       # EBMA hold-out fold
-      ebma_fold <- survey %>%
+      ebma.size <- round(nrow(survey) * ebma.size, digits = 0)
+
+      if(ebma.size>0){
+        ebma_folding_out <- ebma_folding(data = survey,
+                                         L2.unit = L2.unit,
+                                         ebma.size = ebma.size)
+        ebma_fold <- ebma_folding_out$ebma_fold
+        cv_data <- ebma_folding_out$cv_data
+      } else{
+        ebma_fold <- NULL
+        cv_data <- survey
+      }
+
+      # K folds for cross-validation
+      cv_folds <- cv_folding(data = cv_data,
+                             L2.unit = L2.unit,
+                             k.folds = k.folds,
+                             cv.sampling = cv.sampling)
+    } else {
+
+      if (ebma.size > 0){
+        # EBMA hold-out fold
+        ebma_fold <- survey %>%
+          dplyr::filter_at(dplyr::vars(dplyr::one_of(folds)),
+                           dplyr::any_vars(. == k.folds + 1))
+      }
+
+      # K folds for cross-validation
+      cv_data <- survey %>%
         dplyr::filter_at(dplyr::vars(dplyr::one_of(folds)),
-                         dplyr::any_vars(. == k.folds + 1))
+                         dplyr::any_vars(. != k.folds + 1))
+
+      cv_folds <- cv_data %>%
+        dplyr::group_split(.data[[folds]])
     }
 
-    # K folds for cross-validation
-    cv_data <- survey %>%
-      dplyr::filter_at(dplyr::vars(dplyr::one_of(folds)),
-                       dplyr::any_vars(. != k.folds + 1))
+    # ---------------------- Optimal individual classifiers ----------------------
 
-    cv_folds <- cv_data %>%
-      dplyr::group_split(.data[[folds]])
-  }
+    # Classifier 1: Best Subset
+    if (isTRUE(best.subset)) {
 
-  # ---------------------- Optimal individual classifiers ----------------------
+      message("Starting multilevel regression with best subset selection classifier tuning")
 
-  # Classifier 1: Best Subset
-  if (isTRUE(best.subset)) {
+      # Determine context-level covariates
+      if (is.null(best.subset.L2.x)) {
+        best.subset.L2.x <- L2.x
+      }
 
-    message("Starting multilevel regression with best subset selection classifier tuning")
-
-    # Determine context-level covariates
-    if (is.null(best.subset.L2.x)) {
-      best.subset.L2.x <- L2.x
+      # Run classifier
+      best_subset_out <- run_best_subset(y = y,
+                                         L1.x = L1.x,
+                                         L2.x = best.subset.L2.x,
+                                         L2.unit = L2.unit,
+                                         L2.reg = L2.reg,
+                                         loss.unit = loss.unit,
+                                         loss.fun = loss.fun,
+                                         data = cv_folds,
+                                         verbose = verbose,
+                                         cores = cores)
+    } else {
+      best_subset_out <- NULL
     }
 
-    # Run classifier
-    best_subset_out <- run_best_subset(y = y,
-                                       L1.x = L1.x,
-                                       L2.x = best.subset.L2.x,
-                                       L2.unit = L2.unit,
-                                       L2.reg = L2.reg,
-                                       loss.unit = loss.unit,
-                                       loss.fun = loss.fun,
-                                       data = cv_folds,
-                                       verbose = verbose,
-                                       cores = cores)
-  } else {
-    best_subset_out <- NULL
-  }
+    # Classifier 2: Lasso
+    if (isTRUE(lasso)) {
 
-  # Classifier 2: Lasso
-  if (isTRUE(lasso)) {
+      message("Starting multilevel regression with L1 regularization tuning")
 
-    message("Starting multilevel regression with L1 regularization tuning")
+      # Determine context-level covariates
+      if (is.null(lasso.L2.x)) {
+        lasso.L2.x <- L2.x
+      }
 
-    # Determine context-level covariates
-    if (is.null(lasso.L2.x)) {
-      lasso.L2.x <- L2.x
+      # Run classifier
+      lasso_out <- run_lasso(y = y,
+                             L1.x = L1.x,
+                             L2.x = lasso.L2.x,
+                             L2.unit = L2.unit,
+                             L2.reg = L2.reg,
+                             loss.unit = loss.unit,
+                             loss.fun = loss.fun,
+                             lambda = lasso.lambda,
+                             n.iter = lasso.n.iter,
+                             data = cv_folds,
+                             verbose = verbose,
+                             cores = cores)
+    } else {
+      lasso_out <- NULL
     }
 
-    # Run classifier
-    lasso_out <- run_lasso(y = y,
-                           L1.x = L1.x,
-                           L2.x = lasso.L2.x,
-                           L2.unit = L2.unit,
-                           L2.reg = L2.reg,
-                           loss.unit = loss.unit,
-                           loss.fun = loss.fun,
-                           lambda = lasso.lambda,
-                           n.iter = lasso.n.iter,
-                           data = cv_folds,
-                           verbose = verbose,
-                           cores = cores)
-  } else {
-    lasso_out <- NULL
-  }
+    # Classifier 3: PCA
+    if (isTRUE(pca)) {
 
-  # Classifier 3: PCA
-  if (isTRUE(pca)) {
+      message("Starting multilevel regression with principal components as context level variables tuning")
 
-    message("Starting multilevel regression with principal components as context level variables tuning")
+      pca_out <- run_pca(
+        y = y,
+        L1.x = L1.x,
+        L2.x = pc_names,
+        L2.unit = L2.unit,
+        L2.reg = L2.reg,
+        loss.unit = loss.unit,
+        loss.fun = loss.fun,
+        data = cv_folds,
+        verbose = verbose,
+        cores = cores)
+    } else {
+      pca_out <- NULL
+    }
 
-    pca_out <- run_pca(
+    # Classifier 4: GB
+    if (isTRUE(gb)) {
+
+      message("Starting gradient tree boosting tuning")
+
+      # Determine context-level covariates
+      if (is.null(gb.L2.x)) {
+        gb.L2.x <- L2.x
+      }
+
+      # Evaluate inclusion of L2.unit in GB
+      if (isTRUE(gb.L2.unit)) {
+        gb.L2.unit <- L2.unit
+      } else {
+        gb.L2.unit <- NULL
+      }
+
+      # Evaluate inclusion of L2.reg in GB
+      if (isTRUE(gb.L2.reg)) {
+        gb.L2.reg <- L2.reg
+      } else {
+        gb.L2.reg <- NULL
+      }
+
+      # Run classifier
+      gb_out <- run_gb(y = y,
+                       L1.x = L1.x,
+                       L2.x = gb.L2.x,
+                       L2.unit = gb.L2.unit,
+                       L2.reg = gb.L2.reg,
+                       loss.unit = loss.unit,
+                       loss.fun = loss.fun,
+                       interaction.depth = gb.interaction.depth,
+                       shrinkage = gb.shrinkage,
+                       n.trees.init = gb.n.trees.init,
+                       n.trees.increase = gb.n.trees.increase,
+                       n.trees.max = gb.n.trees.max,
+                       n.iter = gb.n.iter,
+                       n.minobsinnode = gb.n.minobsinnode,
+                       data = cv_folds,
+                       verbose = verbose)
+    } else {
+      gb_out <- NULL
+    }
+
+    # Classifier 5: SVM
+    if (isTRUE(svm)) {
+
+      message("Starting support vector machine tuning")
+
+      # Determine context-level covariates
+      if (is.null(svm.L2.x)) {
+        svm.L2.x <- L2.x
+      }
+
+      # Evaluate inclusion of L2.unit in GB
+      if (isTRUE(svm.L2.unit)) {
+        svm.L2.unit <- L2.unit
+      } else {
+        svm.L2.unit <- NULL
+      }
+
+      # Evaluate inclusion of L2.reg in GB
+      if (isTRUE(svm.L2.reg)) {
+        svm.L2.reg <- L2.reg
+      } else {
+        svm.L2.reg <- NULL
+      }
+
+      # Run classifier
+      svm_out <- run_svm(y = y,
+                         L1.x = L1.x,
+                         L2.x = svm.L2.x,
+                         L2.unit = svm.L2.unit,
+                         L2.reg = svm.L2.reg,
+                         kernel = svm.kernel,
+                         loss.fun = loss.fun,
+                         loss.unit = loss.unit,
+                         gamma = svm.gamma,
+                         cost = svm.cost,
+                         data = cv_folds,
+                         verbose = verbose,
+                         cores = cores)
+    } else {
+      svm_out <- NULL
+    }
+
+    # --------------------------- Post-stratification ----------------------------
+
+    message("Starting post-stratification")
+
+    ps_out <- post_stratification(
       y = y,
       L1.x = L1.x,
-      L2.x = pc_names,
+      L2.x = L2.x,
       L2.unit = L2.unit,
       L2.reg = L2.reg,
-      loss.unit = loss.unit,
-      loss.fun = loss.fun,
-      data = cv_folds,
+      best.subset.opt = best_subset_out,
+      lasso.opt = lasso_out,
+      pca.opt = pca_out,
+      gb.opt = gb_out,
+      svm.opt = svm_out,
+      mrp.include = mrp,
+      n.minobsinnode = gb.n.minobsinnode,
+      L2.unit.include = gb.L2.unit,
+      L2.reg.include = gb.L2.reg,
+      kernel = svm.kernel,
+      mrp.L2.x = mrp.L2.x,
+      data = cv_data,
+      ebma.fold = ebma_fold,
+      census = census,
+      verbose = verbose
+    )
+
+    # ----------------------------------- EBMA -----------------------------------
+
+    ebma_out <- ebma(
+      ebma.fold = ebma_fold,
+      y = y,
+      L1.x = L1.x,
+      L2.x = L2.x,
+      L2.unit = L2.unit,
+      L2.reg = L2.reg,
+      post.strat = ps_out,
+      n.draws = ebma.n.draws,
+      tol = ebma.tol,
+      best.subset.opt = best_subset_out,
+      pca.opt = pca_out,
+      lasso.opt = lasso_out,
+      gb.opt = gb_out,
+      svm.opt = svm_out,
       verbose = verbose,
-      cores = cores)
-  } else {
-    pca_out <- NULL
-  }
-
-  # Classifier 4: GB
-  if (isTRUE(gb)) {
-
-    message("Starting gradient tree boosting tuning")
-
-    # Determine context-level covariates
-    if (is.null(gb.L2.x)) {
-      gb.L2.x <- L2.x
-    }
-
-    # Evaluate inclusion of L2.unit in GB
-    if (isTRUE(gb.L2.unit)) {
-      gb.L2.unit <- L2.unit
-    } else {
-      gb.L2.unit <- NULL
-    }
-
-    # Evaluate inclusion of L2.reg in GB
-    if (isTRUE(gb.L2.reg)) {
-      gb.L2.reg <- L2.reg
-    } else {
-      gb.L2.reg <- NULL
-    }
-
-    # Run classifier
-    gb_out <- run_gb(y = y,
-                     L1.x = L1.x,
-                     L2.x = gb.L2.x,
-                     L2.unit = gb.L2.unit,
-                     L2.reg = gb.L2.reg,
-                     loss.unit = loss.unit,
-                     loss.fun = loss.fun,
-                     interaction.depth = gb.interaction.depth,
-                     shrinkage = gb.shrinkage,
-                     n.trees.init = gb.n.trees.init,
-                     n.trees.increase = gb.n.trees.increase,
-                     n.trees.max = gb.n.trees.max,
-                     n.iter = gb.n.iter,
-                     n.minobsinnode = gb.n.minobsinnode,
-                     data = cv_folds,
-                     verbose = verbose)
-  } else {
-    gb_out <- NULL
-  }
-
-  # Classifier 5: SVM
-  if (isTRUE(svm)) {
-
-    message("Starting support vector machine tuning")
-
-    # Determine context-level covariates
-    if (is.null(svm.L2.x)) {
-      svm.L2.x <- L2.x
-    }
-
-    # Evaluate inclusion of L2.unit in GB
-    if (isTRUE(svm.L2.unit)) {
-      svm.L2.unit <- L2.unit
-    } else {
-      svm.L2.unit <- NULL
-    }
-
-    # Evaluate inclusion of L2.reg in GB
-    if (isTRUE(svm.L2.reg)) {
-      svm.L2.reg <- L2.reg
-    } else {
-      svm.L2.reg <- NULL
-    }
-
-    # Run classifier
-    svm_out <- run_svm(y = y,
-                       L1.x = L1.x,
-                       L2.x = svm.L2.x,
-                       L2.unit = svm.L2.unit,
-                       L2.reg = svm.L2.reg,
-                       kernel = svm.kernel,
-                       loss.fun = loss.fun,
-                       loss.unit = loss.unit,
-                       gamma = svm.gamma,
-                       cost = svm.cost,
-                       data = cv_folds,
-                       verbose = verbose,
-                       cores = cores)
-  } else {
-    svm_out <- NULL
-  }
-
-  # --------------------------- Post-stratification ----------------------------
-
-  message("Starting post-stratification")
-
-  ps_out <- post_stratification(
-    y = y,
-    L1.x = L1.x,
-    L2.x = L2.x,
-    L2.unit = L2.unit,
-    L2.reg = L2.reg,
-    best.subset.opt = best_subset_out,
-    lasso.opt = lasso_out,
-    pca.opt = pca_out,
-    gb.opt = gb_out,
-    svm.opt = svm_out,
-    mrp.include = mrp,
-    n.minobsinnode = gb.n.minobsinnode,
-    L2.unit.include = gb.L2.unit,
-    L2.reg.include = gb.L2.reg,
-    kernel = svm.kernel,
-    mrp.L2.x = mrp.L2.x,
-    data = cv_data,
-    ebma.fold = ebma_fold,
-    census = census,
-    verbose = verbose
+      cores = cores
     )
 
-  # ----------------------------------- EBMA -----------------------------------
+    # ----------------------------- Function output ------------------------------
 
-  ebma_out <- ebma(
-    ebma.fold = ebma_fold,
-    y = y,
-    L1.x = L1.x,
-    L2.x = L2.x,
-    L2.unit = L2.unit,
-    L2.reg = L2.reg,
-    post.strat = ps_out,
-    n.draws = ebma.n.draws,
-    tol = ebma.tol,
-    best.subset.opt = best_subset_out,
-    pca.opt = pca_out,
-    lasso.opt = lasso_out,
-    gb.opt = gb_out,
-    svm.opt = svm_out,
-    verbose = verbose,
-    cores = cores
-    )
+    return(ebma_out)
+
+    # ------------------------- Bootstrapping wrapper ----------------------------
+
+  } else{
+    ebma_out <- boot_auto_mrp(
+      y = y, L1.x = L1.x, L2.x = L2.x, mrp.L2.x = mrp.L2.x,
+      L2.unit = L2.unit, L2.reg = L2.reg, L2.x.scale = L2.x.scale,
+      pcs = pcs, folds = folds, bin.proportion = bin.proportion,
+      bin.size = bin.size, survey = survey, census = census,
+      ebma.size = ebma.size, k.folds = k.folds,
+      cv.sampling = cv.sampling, loss.unit = loss.unit,
+      loss.fun = loss.fun, best.subset = best.subset,
+      lasso = lasso, pca = pca, gb = gb, svm = svm, mrp = mrp,
+      forward.select = forward.select,
+      best.subset.L2.x = best.subset.L2.x,
+      lasso.L2.x = lasso.L2.x, pca.L2.x = pca.L2.x,
+      gb.L2.x = gb.L2.x, svm.L2.x = svm.L2.x,
+      gb.L2.unit = gb.L2.unit, gb.L2.reg = gb.L2.reg,
+      lasso.lambda = lasso.lambda, lasso.n.iter = lasso.n.iter,
+      gb.interaction.depth = gb.interaction.depth,
+      gb.shrinkage = gb.shrinkage,
+      gb.n.trees.init = gb.n.trees.init,
+      gb.n.trees.increase = gb.n.trees.increase,
+      gb.n.trees.max = gb.n.trees.max, gb.n.iter = gb.n.iter,
+      gb.n.minobsinnode = gb.n.minobsinnode,
+      svm.kernel = svm.kernel, svm.gamma = svm.gamma,
+      svm.cost = svm.cost, ebma.tol = ebma.tol, seed = seed)
+  }
 
   # ----------------------------- Function output ------------------------------
 
   return(ebma_out)
+
 }
