@@ -335,7 +335,9 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
                gb.L2.unit = gb.L2.unit,
                gb.L2.reg = gb.L2.reg,
                lasso.lambda = lasso.lambda,
-               lasso.n.iter = lasso.n.iter)
+               lasso.n.iter = lasso.n.iter,
+               uncertainty = uncertainty,
+               boot.iter = boot.iter)
 
   #if (!(is.null(lasso.iterations.max) | (is.numeric(lasso.iterations.max) &
   #                                       length(lasso.iterations.max) == 1))) {
