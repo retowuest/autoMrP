@@ -86,21 +86,29 @@ boot_auto_mrp <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
       seed = seed,
       boot.iter = NULL
     )
-
   }
 
   # Median and standard deviation of EBMA estimates
-  ebma <- do.call(rbind, do.call(rbind, boot_out)[,"ebma"] ) %>%
-    dplyr::group_by(.dots = list(L2.unit)) %>%
-    dplyr::summarise(median = median(ebma),
-                     sd = sd(ebma), .groups = "drop")
-
+  if (!any(do.call(rbind, do.call(rbind, boot_out)[,"ebma"] ) == "EBMA step skipped (only 1 classifier run)")){
+    ebma <- do.call(rbind, do.call(rbind, boot_out)[,"ebma"] ) %>%
+      dplyr::group_by(.dots = list(L2.unit)) %>%
+      dplyr::summarise(median = median(ebma),
+                       sd = sd(ebma), .groups = "drop")
+  }
 
   # Median and standard deviations for classifier estimates
   classifiers <- do.call(rbind, do.call(rbind, boot_out)[,"classifiers"] ) %>%
     dplyr::group_by(.dots = list(L2.unit)) %>%
-    dplyr::summarise_all(.funs = c(median = median, sd = sd))
-
+    dplyr::summarise_all(.funs = c(median = median, sd = sd)) %>%
+    dplyr::select(
+      state,
+      contains("best_subset"),
+      contains("pca"),
+      contains("lasso"),
+      contains("gbm"),
+      contains("svm"),
+      contains("mrp")
+    )
 
   # De-register cluster
   multicore(cores = cores, type = "close", cl = cl)
