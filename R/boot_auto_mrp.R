@@ -83,7 +83,8 @@ boot_auto_mrp <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
       svm.gamma = svm.gamma,
       svm.cost = svm.cost,
       ebma.tol = ebma.tol,
-      seed = seed
+      seed = seed,
+      boot.iter = NULL
     )
 
   }
