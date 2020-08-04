@@ -200,6 +200,10 @@
 #'   \code{c(0.01, 0.005, 0.001, 0.0005, 0.0001, 0.00005, 0.00001)}.
 #' @param uncertainty Uncertainty estimates. A logical argument indicating
 #'   whether uncertainty estimates should be computed. Default is \code{FALSE}.
+#' @param boot.iter Number of bootstrap iterations. An integer argument
+#'   indicating the number of bootstrap iterations to be computed. Will be
+#'   ignored unless \code{uncertainty = TRUE}. Default is \code{200} if
+#'   \code{uncertainty = TRUE} and \code{NULL} if \code{uncertainty = FALSE}.
 #' @param seed Seed. Either \code{NULL} or an integer-valued scalar controlling
 #'   random number generation. If \code{NULL}, then the seed is set to
 #'   \eqn{546213978}. Default is \code{NULL}.
@@ -251,7 +255,7 @@
 #'   mrp.L2.x = c("L2.x1", "L2.x2")
 #'   )}
 #' @export
-#' @importFrom stats as.formula binomial predict setNames weighted.mean
+#' @importFrom stats as.formula binomial predict setNames weighted.mean median sd
 #' @importFrom utils combn
 #' @importFrom dplyr %>%
 #' @importFrom rlang .data
@@ -279,8 +283,8 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
                                    0.7, 0.8, 0.9, 1, 2, 3, 4),
                      svm.cost = c(1, 10), ebma.n.draws = 100,
                      ebma.tol = c(0.01, 0.005, 0.001, 0.0005, 0.0001, 0.00005,
-                                  0.00001), uncertainty = FALSE, seed = NULL,
-                     verbose = FALSE) {
+                                  0.00001), seed = NULL, verbose = FALSE,
+                     uncertainty = FALSE, boot.iter = NULL) {
 
 
   # ----------------------------------- Seed -----------------------------------
@@ -697,13 +701,14 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
       cores = cores
     )
 
-    # ----------------------------- Function output ------------------------------
-
-    return(ebma_out)
-
     # ------------------------- Bootstrapping wrapper ----------------------------
 
   } else{
+
+    if (is.null(boot.iter)){
+      boot.iter <- 200
+    }
+
     ebma_out <- boot_auto_mrp(
       y = y, L1.x = L1.x, L2.x = L2.x, mrp.L2.x = mrp.L2.x,
       L2.unit = L2.unit, L2.reg = L2.reg, L2.x.scale = L2.x.scale,
@@ -726,7 +731,8 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
       gb.n.trees.max = gb.n.trees.max, gb.n.iter = gb.n.iter,
       gb.n.minobsinnode = gb.n.minobsinnode,
       svm.kernel = svm.kernel, svm.gamma = svm.gamma,
-      svm.cost = svm.cost, ebma.tol = ebma.tol, seed = seed)
+      svm.cost = svm.cost, ebma.tol = ebma.tol, seed = seed,
+      boot.iter = boot.iter, cores = cores)
   }
 
   # ----------------------------- Function output ------------------------------

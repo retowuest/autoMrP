@@ -1,3 +1,9 @@
+#' Bootstrappinng wrapper for auto_mrp
+#'
+#' \code{boot_auto_mrp} estimates uncertainty for auto_mrp via botstrapping.
+#'
+#' @inheritParams auto_MrP
+
 boot_auto_mrp <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
                           L2.x.scale, pcs, folds, bin.proportion,
                           bin.size, survey, census, ebma.size,
@@ -10,10 +16,12 @@ boot_auto_mrp <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
                           gb.shrinkage, gb.n.trees.init,
                           gb.n.trees.increase, gb.n.trees.max,
                           gb.n.iter, gb.n.minobsinnode, svm.kernel,
-                          svm.gamma, svm.cost, ebma.tol, seed){
+                          svm.gamma, svm.cost, ebma.tol, seed,
+                          boot.iter, cores){
 
   # Binding for global variables
   `%>%` <- dplyr::`%>%`
+  idx_boot <- NULL
 
   # Register cores
   cl <- multicore(cores = cores, type = "open", cl = NULL)
@@ -23,73 +31,6 @@ boot_auto_mrp <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
 
     # Bootstrapped survey sample
     boot_sample <- dplyr::sample_n(tbl = survey, size = nrow(survey), replace = TRUE)
-
-    # # ------------------------------- Create folds -------------------------------
-    #
-    # if (is.null(folds)) {
-    #   # EBMA hold-out fold
-    #   ebma.size <- round(nrow(survey) * ebma.size, digits = 0)
-    #
-    #   if(ebma.size>0){
-    #     ebma_folding_out <- ebma_folding(data = survey,
-    #                                      L2.unit = L2.unit,
-    #                                      ebma.size = ebma.size)
-    #     ebma_fold <- ebma_folding_out$ebma_fold
-    #     cv_data <- ebma_folding_out$cv_data
-    #   } else{
-    #     ebma_fold <- NULL
-    #     cv_data <- survey
-    #   }
-    #
-    #   # K folds for cross-validation
-    #   cv_folds <- cv_folding(data = cv_data,
-    #                          L2.unit = L2.unit,
-    #                          k.folds = k.folds,
-    #                          cv.sampling = cv.sampling)
-    # } else {
-    #
-    #   if (ebma.size > 0){
-    #     # EBMA hold-out fold
-    #     ebma_fold <- survey %>%
-    #       dplyr::filter_at(dplyr::vars(dplyr::one_of(folds)),
-    #                        dplyr::any_vars(. == k.folds + 1))
-    #   }
-    #
-    #   # K folds for cross-validation
-    #   cv_data <- survey %>%
-    #     dplyr::filter_at(dplyr::vars(dplyr::one_of(folds)),
-    #                      dplyr::any_vars(. != k.folds + 1))
-    #
-    #   cv_folds <- cv_data %>%
-    #     dplyr::group_split(.data[[folds]])
-    # }
-    #
-    # # ---------------------- Optimal individual classifiers ----------------------
-    #
-    # # Classifier 1: Best Subset
-    # if (isTRUE(best.subset)) {
-    #
-    #   message("Starting multilevel regression with best subset selection classifier tuning")
-    #
-    #   # Determine context-level covariates
-    #   if (is.null(best.subset.L2.x)) {
-    #     best.subset.L2.x <- L2.x
-    #   }
-    #
-    #   # Run classifier
-    #   best_subset_out <- run_best_subset(y = y,
-    #                                      L1.x = L1.x,
-    #                                      L2.x = best.subset.L2.x,
-    #                                      L2.unit = L2.unit,
-    #                                      L2.reg = L2.reg,
-    #                                      loss.unit = loss.unit,
-    #                                      loss.fun = loss.fun,
-    #                                      data = cv_folds,
-    #                                      verbose = verbose,
-    #                                      cores = cores)
-    # } else {
-    #   best_subset_out <- NULL
-    # }
 
     # Estimate on 1 sample in autoMrP
     boot_mrp <- auto_MrP(
@@ -146,6 +87,19 @@ boot_auto_mrp <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
     )
 
   }
+
+  # Median and standard deviation of EBMA estimates
+  ebma <- do.call(rbind, do.call(rbind, boot_out)[,"ebma"] ) %>%
+    dplyr::group_by(.dots = list(L2.unit)) %>%
+    dplyr::summarise(median = median(ebma),
+                     sd = sd(ebma), .groups = "drop")
+
+
+  # Median and standard deviations for classifier estimates
+  classifiers <- do.call(rbind, do.call(rbind, boot_out)[,"classifiers"] ) %>%
+    dplyr::group_by(.dots = list(L2.unit)) %>%
+    dplyr::summarise_all(.funs = c(median = median, sd = sd))
+
 
   # De-register cluster
   multicore(cores = cores, type = "close", cl = cl)

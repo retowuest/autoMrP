@@ -54,9 +54,10 @@ auto_MrP(
   svm.cost = c(1, 10),
   ebma.n.draws = 100,
   ebma.tol = c(0.01, 0.005, 0.001, 5e-04, 1e-04, 5e-05, 1e-05),
-  uncertainty = FALSE,
   seed = NULL,
-  verbose = FALSE
+  verbose = FALSE,
+  uncertainty = FALSE,
+  boot.iter = NULL
 )
 }
 \arguments{
@@ -303,15 +304,20 @@ algorithm stops optimization. Values should range at least from \eqn{0.01}
 to \eqn{0.001}. Default is
 \code{c(0.01, 0.005, 0.001, 0.0005, 0.0001, 0.00005, 0.00001)}.}
 
-\item{uncertainty}{Uncertainty estimates. A logical argument indicating
-whether uncertainty estimates should be computed. Default is \code{FALSE}.}
-
 \item{seed}{Seed. Either \code{NULL} or an integer-valued scalar controlling
 random number generation. If \code{NULL}, then the seed is set to
 \eqn{546213978}. Default is \code{NULL}.}
 
 \item{verbose}{Verbose output. A logical argument indicating whether or not
 verbose output should be printed. Default is \code{FALSE}.}
+
+\item{uncertainty}{Uncertainty estimates. A logical argument indicating
+whether uncertainty estimates should be computed. Default is \code{FALSE}.}
+
+\item{boot.iter}{Number of bootstrap iterations. An integer argument
+indicating the number of bootstrap iterations to be computed. Will be
+ignored unless \code{uncertainty = TRUE}. Default is \code{200} if
+\code{uncertainty = TRUE} and \code{NULL} if \code{uncertainty = FALSE}.}
 }
 \value{
 The context-level predictions. A list with two elements. The first
