@@ -94,6 +94,8 @@ boot_auto_mrp <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
       dplyr::group_by(.dots = list(L2.unit)) %>%
       dplyr::summarise(median = median(ebma),
                        sd = sd(ebma), .groups = "drop")
+  } else {
+    ebma <- "EBMA step skipped (only 1 classifier run)"
   }
 
   # Median and standard deviations for classifier estimates
@@ -109,6 +111,8 @@ boot_auto_mrp <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
       contains("svm"),
       contains("mrp")
     )
+
+  boot_out <- list(ebma = ebma, classifiers = classifiers)
 
   # De-register cluster
   multicore(cores = cores, type = "close", cl = cl)
