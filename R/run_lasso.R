@@ -17,10 +17,6 @@
 #'   \code{NULL} or an integer-valued scalar specifying the maximum number of
 #'   iterations without performance improvement the algorithm runs before
 #'   stopping. Default is \eqn{70}.
-#' @param iterations.max Lasso maximum number of iterations without improvement.
-#'   Either \code{NULL} or an integer-valued scalar specifying the maximum
-#'   number of iterations without performance improvement the algorithm runs
-#'   before stopping. Passed from \code{autoMrP()} argument \code{lasso.n.iter}.
 #' @param data Data for cross-validation. A \code{list} of \eqn{k}
 #'   \code{data.frames}, one for each fold to be used in \eqn{k}-fold
 #'   cross-validation.
@@ -49,10 +45,8 @@
 #' }
 
 run_lasso <- function(y, L1.x, L2.x, L2.unit, L2.reg,
-                      n.iter = NULL,
-                      loss.unit, loss.fun,
-                      lambda, iterations.max,
-                      data, verbose, cores) {
+                      n.iter = NULL, loss.unit, loss.fun,
+                      lambda, data, verbose, cores) {
 
   # Context-level fixed effects
   L2_fe <- paste(L2.x, collapse = " + ")
@@ -203,8 +197,8 @@ run_lasso <- function(y, L1.x, L2.x, L2.unit, L2.reg,
 
         # Break loop if maximum number of iterations without performance
         # improvement is reached
-        if (!is.null(iterations.max)) {
-          if (iter_since_improv > iterations.max) {
+        if (!is.null(n.iter)) {
+          if (iter_since_improv > n.iter) {
             break
           }
         }

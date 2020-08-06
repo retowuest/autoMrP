@@ -14,7 +14,6 @@ run_lasso(
   loss.unit,
   loss.fun,
   lambda,
-  iterations.max,
   data,
   verbose,
   cores
@@ -65,11 +64,6 @@ thresholds of the intervals to which the step sizes apply. The penalty
 parameter controls the shrinkage of the context-level variables in the
 lasso model. Default is \code{1 / exp(- seq(from = -1, to = 4.5, length =
 100))}.}
-
-\item{iterations.max}{Lasso maximum number of iterations without improvement.
-Either \code{NULL} or an integer-valued scalar specifying the maximum
-number of iterations without performance improvement the algorithm runs
-before stopping. Passed from \code{autoMrP()} argument \code{lasso.n.iter}.}
 
 \item{data}{Data for cross-validation. A \code{list} of \eqn{k}
 \code{data.frames}, one for each fold to be used in \eqn{k}-fold
