@@ -1,8 +1,8 @@
 #' Improve MrP through ensemble learning.
 #'
-#' \code{auto_MrP()} improves the prediction performance of multilevel
+#' This package improves the prediction performance of multilevel
 #' regression with post-stratification (MrP) by combining a number of machine
-#' learning methods through ensemble bayesian model averaging (EBMA).
+#' learning methods through ensemble Bayesian model averaging (EBMA).
 #'
 #' @param y Outcome variable. A character vector containing the column names of
 #'   the outcome variable. A character scalar containing the column name of
@@ -260,7 +260,6 @@
 #' @importFrom dplyr %>%
 #' @importFrom rlang .data
 #' @importFrom foreach %dopar%
-#' @import knitr
 
 auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
                      pcs = NULL, folds = NULL, bin.proportion = NULL,

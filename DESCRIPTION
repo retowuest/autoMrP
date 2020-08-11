@@ -3,21 +3,43 @@ Type: Package
 Title: Improving MrP with Ensemble Learning
 Version: 0.0.0.9000
 Authors@R: c(
-    person("Wüest", "Reto", email = "wuest.reto@gmail.com",
-      role = c("aut", "cre")),
-    person("Leemann", "Lucas", email = "leemann@ipz.uzh.ch",
-      role = c("aut")),
-	person("Broniecki", "Philipp", email = "philippbroniecki@gmail.com",
-      role = c("aut")))
-Description: This package improves the prediction performance of multilevel
+    person(given = "Reto",
+		   family = "Wüest",
+		   role = c("aut", "cre"),
+		   email = "wuest.reto@gmail.com",
+		   comment = c(ORCID = "0000-0002-7502-6489")),
+    person(given = "Lucas",
+	       family = "Leemann",
+		   role = c("aut"),
+		   email = "leemann@ipz.uzh.ch",
+		   comment = c(ORCID = "0000-0001-5201-869X")),
+	person(given = "Philipp",
+	       family = "Broniecki", 
+		   role = c("aut"),
+		   email = "philippbroniecki@gmail.com",
+		   comment = c(ORCID = "0000-0001-9214-4404")))
+Description: A tool that improves the prediction performance of multilevel
     regression with post-stratification (MrP) by combining a number of machine
     learning methods.
+URL: https://github.com/retowuest/autoMrP
 Depends:
-    R (>= 3.6), knitr
+    R (>= 3.6)
 Imports:
-    rlang (>= 0.4.5), dplyr (>= 0.8.3), lme4 (>= 1.1), gbm (>= 2.1.5), e1071 (>= 1.7-3), tibble (>= 3.0.1), glmmLasso (>= 1.5.1), EBMAforecast (>= 1.0.0), foreach (>= 1.5.0), doParallel (>= 1.0.15)
+    rlang (>= 0.4.5),
+	dplyr (>= 0.8.3),
+	lme4 (>= 1.1),
+	gbm (>= 2.1.5),
+	e1071 (>= 1.7-3),
+	tibble (>= 3.0.1),
+	glmmLasso (>= 1.5.1),
+	EBMAforecast (>= 1.0.0),
+	foreach (>= 1.5.0),
+	doParallel (>= 1.0.15)
+Suggests:
+	knitr
 License: GPL-3
+VignetteBuilder:
+	knitr
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.1
-VignetteBuilder: knitr
