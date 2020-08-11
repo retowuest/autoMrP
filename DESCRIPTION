@@ -1,15 +1,15 @@
 Package: autoMrP
 Type: Package
-Title: Improving MrP With Ensemble Learning
+Title: Improving MrP with Ensemble Learning
 Version: 0.0.0.9000
 Authors@R: c(
     person("Wüest", "Reto", email = "wuest.reto@gmail.com",
       role = c("aut", "cre")),
     person("Leemann", "Lucas", email = "leemann@ipz.uzh.ch",
       role = c("aut")),
-    person("Broniecki", "Philipp", email = "philippbroniecki@gmail.com",
+	person("Broniecki", "Philipp", email = "philippbroniecki@gmail.com",
       role = c("aut")))
-Description: autoMrP improves the prediction performance of multilevel
+Description: This package improves the prediction performance of multilevel
     regression with post-stratification (MrP) by combining a number of machine
     learning methods.
 Depends:

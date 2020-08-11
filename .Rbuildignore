@@ -2,5 +2,5 @@
 ^\.Rprofile$
 ^.*\.Rproj$
 ^\.Rproj\.user$
-^to-be-removed\.R$
 ^make-data\.R$
+^\.cran-comments.md
