@@ -5,7 +5,7 @@ Version: 0.0.0.9000
 Authors@R: c(
     person(given = "Reto",
 		   family = "Wüest",
-		   role = c("aut", "cre"),
+		   role = c("aut"),
 		   email = "wuest.reto@gmail.com",
 		   comment = c(ORCID = "0000-0002-7502-6489")),
     person(given = "Lucas",
@@ -15,7 +15,7 @@ Authors@R: c(
 		   comment = c(ORCID = "0000-0001-5201-869X")),
 	person(given = "Philipp",
 	       family = "Broniecki", 
-		   role = c("aut"),
+		   role = c("aut", "cre"),
 		   email = "philippbroniecki@gmail.com",
 		   comment = c(ORCID = "0000-0001-9214-4404")))
 Description: A tool that improves the prediction performance of multilevel
@@ -23,7 +23,8 @@ Description: A tool that improves the prediction performance of multilevel
     learning methods.
 URL: https://github.com/retowuest/autoMrP
 Depends:
-    R (>= 3.6)
+    R (>= 3.6),
+	knitr
 Imports:
     rlang (>= 0.4.5),
 	dplyr (>= 0.8.3),
@@ -36,7 +37,6 @@ Imports:
 	foreach (>= 1.5.0),
 	doParallel (>= 1.0.15)
 Suggests:
-	knitr
 License: GPL-3
 VignetteBuilder:
 	knitr

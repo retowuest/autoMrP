@@ -61,6 +61,8 @@
 #'   cross-validation.
 #' @param verbose Verbose output. A logical argument indicating whether or not
 #'   verbose output should be printed. Default is \code{TRUE}.
+#' @param cores The number of cores to be used. An integer indicating the number
+#'   of processor cores used for parallel computing. Default is 1.
 #' @return The tuned gradient boosting parameters. A list with three elements:
 #'   \code{interaction_depth} contains the interaction depth parameter,
 #'   \code{shrinkage} contains the learning rate, \code{n_trees} the number of
@@ -96,7 +98,7 @@ run_gb <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                    loss.unit, loss.fun,
                    interaction.depth, shrinkage,
                    n.trees.init, n.trees.increase,
-                   n.trees.max, n.iter,
+                   n.trees.max, n.iter, cores = cores,
                    n.minobsinnode, data, verbose) {
 
   # Create model formula

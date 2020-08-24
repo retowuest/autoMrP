@@ -18,6 +18,7 @@ run_gb(
   n.trees.increase,
   n.trees.max,
   n.iter,
+  cores = cores,
   n.minobsinnode,
   data,
   verbose
@@ -84,6 +85,9 @@ trees. Default is \eqn{1000}.}
 \item{n.iter}{GB number of iterations without improvement. A numeric scalar
 specifying the maximum number of iterations without performance
 improvement the algorithm runs before stopping. Default is \eqn{70}.}
+
+\item{cores}{The number of cores to be used. An integer indicating the number
+of processor cores used for parallel computing. Default is 1.}
 
 \item{n.minobsinnode}{GB minimum number of observations in the terminal
 nodes. An integer-valued scalar specifying the minimum number of
