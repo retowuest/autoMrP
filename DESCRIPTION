@@ -24,7 +24,7 @@ Description: A tool that improves the prediction performance of multilevel
 	Wüest, Leemann (2020) ``Improving Multilevel Regression with 
 	Post-Stratification Through Machine Learning (autoMrP)'' forthcoming in 
 	`Journal of Politics'. Final pre-print version: 
-	https://lucasleemann.files.wordpress.com/2020/07/automrp-r2pa.pdf
+	<https://lucasleemann.files.wordpress.com/2020/07/automrp-r2pa.pdf>.
 URL: https://github.com/retowuest/autoMrP
 BugReports: https://github.com/retowuest/autoMrP/issues
 Depends:
