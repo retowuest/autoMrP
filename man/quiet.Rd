@@ -5,7 +5,7 @@
 \title{Suppress cat in external package}
 \source{
 The author is Hadley Wickham. We found the function here:
-\url{http://r.789695.n4.nabble.com/Suppressing-output-e-g-from-cat-td859876.html}.
+\url{https://r.789695.n4.nabble.com/Suppressing-output-e-g-from-cat-td859876.html}.
 }
 \usage{
 quiet(x)

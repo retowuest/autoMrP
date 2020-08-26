@@ -1,7 +1,7 @@
 Package: autoMrP
 Type: Package
 Title: Improving MrP with Ensemble Learning
-Version: 0.0.0.9000
+Version: 0.90
 Authors@R: c(
     person(given = "Reto",
 		   family = "Wüest",
@@ -20,11 +20,15 @@ Authors@R: c(
 		   comment = c(ORCID = "0000-0001-9214-4404")))
 Description: A tool that improves the prediction performance of multilevel
     regression with post-stratification (MrP) by combining a number of machine
-    learning methods.
+    learning methods. For information on the method, please refer to Broniecki, 
+	Wüest, Leemann (2020) ``Improving Multilevel Regression with 
+	Post-Stratification Through Machine Learning (autoMrP)'' forthcoming in 
+	`Journal of Politics'. Final pre-print version: 
+	https://lucasleemann.files.wordpress.com/2020/07/automrp-r2pa.pdf
 URL: https://github.com/retowuest/autoMrP
+BugReports: https://github.com/retowuest/autoMrP/issues
 Depends:
-    R (>= 3.6),
-	knitr
+    R (>= 3.6)
 Imports:
     rlang (>= 0.4.5),
 	dplyr (>= 0.8.3),
@@ -36,10 +40,9 @@ Imports:
 	EBMAforecast (>= 1.0.0),
 	foreach (>= 1.5.0),
 	doParallel (>= 1.0.15)
-Suggests:
-License: GPL-3
-VignetteBuilder:
+Suggests: 
 	knitr
+License: GPL-3
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.1

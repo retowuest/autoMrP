@@ -3,4 +3,3 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^make-data\.R$
-^\.cran-comments.md

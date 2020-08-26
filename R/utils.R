@@ -1066,7 +1066,7 @@ loss_function <- function(pred, data.valid,
 #'
 #' @param x Input. It can be any kind.
 #' @source The author is Hadley Wickham. We found the function here:
-#' \url{http://r.789695.n4.nabble.com/Suppressing-output-e-g-from-cat-td859876.html}.
+#' \url{https://r.789695.n4.nabble.com/Suppressing-output-e-g-from-cat-td859876.html}.
 
 quiet <- function(x) {
   sink(tempfile())
