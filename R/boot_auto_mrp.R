@@ -107,7 +107,7 @@ boot_auto_mrp <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
       contains("best_subset"),
       contains("pca"),
       contains("lasso"),
-      contains("gbm"),
+      contains("gb"),
       contains("svm"),
       contains("mrp")
     )
