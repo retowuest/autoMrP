@@ -215,7 +215,7 @@ run_svm_mc <- function(y, L2.unit, form, loss.unit,
   cl <- multicore(cores = cores, type = "open", cl = NULL)
 
   # Train and evaluate each model
-  grid_cells <- foreach::foreach(g = 1:nrow(svm.grid), .combine = "c") %dopar% {
+  grid_cells <- foreach::foreach(g = 1:nrow(svm.grid), .combine = "c") %dorng% {
 
     # Set tuning parameters
     gamma_value <- as.numeric(svm.grid[g, "gamma"])

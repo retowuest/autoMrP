@@ -346,7 +346,7 @@ ebma_mc_tol <- function(train.preds, train.y, ebma.fold,
     cl <- multicore(cores = cores, type = "open", cl = NULL)
 
     # Loop over tolerance values
-    ebma_tune <- foreach::foreach(idx.tol = 1:length(tol), .packages = c("glmmLasso", "e1071", "gbm")) %dopar% {
+    ebma_tune <- foreach::foreach(idx.tol = 1:length(tol), .packages = c("glmmLasso", "e1071", "gbm")) %dorng% {
 
       # EBMA
       forecast.data <- suppressWarnings(
@@ -446,7 +446,7 @@ ebma_mc_draws <- function(
   # Register cores
   cl <- multicore(cores = cores, type = "open", cl = NULL)
 
-  ebma_tune <- foreach::foreach(idx.Ndraws = 1:n.draws, .packages = c("glmmLasso", "e1071", "gbm")) %dopar% {
+  ebma_tune <- foreach::foreach(idx.Ndraws = 1:n.draws, .packages = c("glmmLasso", "e1071", "gbm")) %dorng% {
 
     # Determine number per group to sample
     n_per_group <- as.integer(nrow(ebma.fold) / length(levels(ebma.fold[[L2.unit]])))

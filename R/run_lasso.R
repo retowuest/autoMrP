@@ -458,7 +458,7 @@ run_lasso_mc_kfolds <- function(
   cl <- multicore(cores = cores, type = "open", cl = NULL)
 
   # Loop over each fold
-  k_errors <- foreach::foreach(k = 1:length(data)) %dopar% {
+  k_errors <- foreach::foreach(k = 1:length(data)) %dorng% {
 
     # Split data in training and validation sets
     data_train <- dplyr::bind_rows(data[-k])
@@ -540,7 +540,7 @@ run_lasso_mc_lambda <- function(
   cl <- multicore(cores = cores, type = "open", cl = NULL)
 
   # Loop over each lambda value
-  lambda_errors <- foreach::foreach(l = 1:length(lambda)) %dopar% {
+  lambda_errors <- foreach::foreach(l = 1:length(lambda)) %dorng% {
 
     # Set lambda value to 0
     lambda_value <- lambda[l]

@@ -196,7 +196,7 @@ run_best_subset_mc <- function(y, L1.x, L2.x, L2.unit, L2.reg,
   cl <- multicore(cores = cores, type = "open", cl = NULL)
 
   # Train and evaluate each model
-  m_errors <- foreach::foreach(m = 1:length(models)) %dopar% {
+  m_errors <- foreach::foreach(m = 1:length(models)) %dorng% {
 
     # Loop over each fold
     k_errors <- lapply(seq_along(data), function(k) {
