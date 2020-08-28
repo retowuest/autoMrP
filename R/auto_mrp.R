@@ -260,6 +260,7 @@
 #' @importFrom dplyr %>%
 #' @importFrom rlang .data
 #' @importFrom foreach %dopar%
+#' @importFrom doRNG %dorng%
 
 auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
                      pcs = NULL, folds = NULL, bin.proportion = NULL,
