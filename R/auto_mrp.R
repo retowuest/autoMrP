@@ -286,19 +286,6 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
                                   0.00001), seed = NULL, verbose = FALSE,
                      uncertainty = FALSE, boot.iter = NULL) {
 
-
-  # ----------------------------------- Seed -----------------------------------
-
-  # Check seed argument and set seed
-  if (is.null(seed)) {
-    seed <- 546213978
-  } else {
-    if (isTRUE(dplyr::near(seed, as.integer(seed)))) {
-      set.seed(seed)
-    }
-  }
-  set.seed(seed)
-
   # ------------------------------- Error checks -------------------------------
 
   # Call to function doing the error checks
@@ -339,47 +326,11 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
                boot.iter = boot.iter,
                seed = seed)
 
-  #if (!(is.null(lasso.iterations.max) | (is.numeric(lasso.iterations.max) &
-  #                                       length(lasso.iterations.max) == 1))) {
-  #  stop("lasso.iterations.max must be either a numeric scalar or NULL.")
-  #}
+  # ----------------------------------- Seed -----------------------------------
 
-  #if (!(is.integer(gb.interaction.set) |
-  #      all(as.integer(gb.interaction.set) == gb.interaction.set))) {
-  #  stop("gb.interaction.set must be an integer-valued vector.")
-  #}
-
-  #if (!is.numeric(gb.shrinkage.set)) {
-  #  stop("gb.shrinkage.set must be a numeric vector")
-  #} else if (min(gb.shrinkage.set) < 0.001 | max(gb.shrinkage.set) > 0.1) {
-  #  warning("gb.shrinkage.set should have values lying between 0.001 and 0.1.")
-  #}
-
-  #if (!((is.integer(gb.tree.start) |
-  #       all(as.integer(gb.tree.start) == gb.tree.start)) &
-  #      length(gb.tree.start) == 1)) {
-  #  stop("gb.tree.start must be an integer-valued scalar.")
-  #}
-
-  #if (!(is.integer(gb.tree.increase.set) |
-  #      all(as.integer(gb.tree.increase.set) == gb.tree.increase.set))) {
-  #  stop("gb.tree.increase.set must be an integer-valued scalar or vector.")
-  #} else if (length(gb.tree.increase.set) > 1 &
-  #           length(gb.tree.increase.set) != length(gb.shrinkage.set)) {
-  #  stop(paste("gb.tree.increase.set must be either a scalar or a vector of ",
-  #             "size `length(gb.shrinkage.set)`.", sep = ""))
-  #}
-
-  #if (!(is.integer(gb.trees.max.set) |
-  #      all(as.integer(gb.trees.max.set) == gb.trees.max.set))) {
-  #  stop("gb.trees.max.set must be an integer-valued scalar or vector.")
-  #} else if (length(gb.trees.max.set) > 1 &
-  #           length(gb.trees.max.set) != length(gb.shrinkage.set)) {
-  #  stop(paste("gb.trees.max.set must be either a scalar or a vector of size ",
-  #             "`length(gb.shrinkage.set)`.", sep = ""))
-  #}
-
-
+  # Check seed argument and set seed
+  if (is.null(seed)) { seed <- 546213978 }
+  set.seed(seed)
 
   # ---------------------------- No Bootstrapping --------------------------------
 

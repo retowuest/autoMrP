@@ -27,7 +27,7 @@ boot_auto_mrp <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
   cl <- multicore(cores = cores, type = "open", cl = NULL)
 
   # Bootstrap iterations
-  boot_out <- foreach::foreach(idx_boot = 1:boot.iter, .packages = "autoMrP") %dopar% {
+  boot_out <- foreach::foreach(idx_boot = 1:boot.iter, .packages = "autoMrP") %dorng% {
 
     # Bootstrapped survey sample
     boot_sample <- dplyr::sample_n(tbl = survey, size = nrow(survey), replace = TRUE)
