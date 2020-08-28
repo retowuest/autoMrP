@@ -15,7 +15,7 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                          best.subset, lasso, pca, gb, svm, mrp, forward.select,
                          best.subset.L2.x, lasso.L2.x, gb.L2.x, svm.L2.x,
                          mrp.L2.x, gb.L2.unit, gb.L2.reg, lasso.lambda,
-                         lasso.n.iter, uncertainty, boot.iter) {
+                         lasso.n.iter, uncertainty, boot.iter, seed) {
 
 
   # Check if y is a character scalar
@@ -718,6 +718,13 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
   if (!uncertainty){
     if(!is.null(boot.iter)) {
       warning("boot.iter is ignored unless uncertainty = TRUE.")
+    }
+  }
+
+  # Check if supplied seed is integer
+  if (!is.null(seed)){
+    if (isFALSE(dplyr::near(seed, as.integer(seed)))) {
+      stop("Seed must be either NULL or an integer-valued scalar.")
     }
   }
 }

@@ -290,14 +290,13 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
 
   # Check seed argument and set seed
   if (is.null(seed)) {
-    set.seed(546213978)
+    seed <- 546213978
   } else {
     if (isTRUE(dplyr::near(seed, as.integer(seed)))) {
       set.seed(seed)
-    } else {
-      stop("Seed must be either NULL or an integer-valued scalar.")
     }
   }
+  set.seed(seed)
 
   # ------------------------------- Error checks -------------------------------
 
@@ -336,7 +335,8 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
                lasso.lambda = lasso.lambda,
                lasso.n.iter = lasso.n.iter,
                uncertainty = uncertainty,
-               boot.iter = boot.iter)
+               boot.iter = boot.iter,
+               seed = seed)
 
   #if (!(is.null(lasso.iterations.max) | (is.numeric(lasso.iterations.max) &
   #                                       length(lasso.iterations.max) == 1))) {
@@ -506,6 +506,7 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
       }
 
       # Run classifier
+      set.seed(seed)
       best_subset_out <- run_best_subset(y = y,
                                          L1.x = L1.x,
                                          L2.x = best.subset.L2.x,
@@ -531,6 +532,7 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
       }
 
       # Run classifier
+      set.seed(seed)
       lasso_out <- run_lasso(y = y,
                              L1.x = L1.x,
                              L2.x = lasso.L2.x,
@@ -552,6 +554,7 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
 
       message("Starting multilevel regression with principal components as context level variables tuning")
 
+      set.seed(seed)
       pca_out <- run_pca(
         y = y,
         L1.x = L1.x,
@@ -592,6 +595,7 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
       }
 
       # Run classifier
+      set.seed(seed)
       gb_out <- run_gb(y = y,
                        L1.x = L1.x,
                        L2.x = gb.L2.x,
@@ -638,6 +642,7 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
       }
 
       # Run classifier
+      set.seed(seed)
       svm_out <- run_svm(y = y,
                          L1.x = L1.x,
                          L2.x = svm.L2.x,
@@ -659,6 +664,7 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
 
     message("Starting post-stratification")
 
+    set.seed(seed)
     ps_out <- post_stratification(
       y = y,
       L1.x = L1.x,
@@ -684,6 +690,7 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
 
     # ----------------------------------- EBMA -----------------------------------
 
+    set.seed(seed)
     ebma_out <- ebma(
       ebma.fold = ebma_fold,
       y = y,

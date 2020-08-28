@@ -39,7 +39,8 @@ error_checks(
   lasso.lambda,
   lasso.n.iter,
   uncertainty,
-  boot.iter
+  boot.iter,
+  seed
 )
 }
 \arguments{
@@ -217,6 +218,10 @@ whether uncertainty estimates should be computed. Default is \code{FALSE}.}
 indicating the number of bootstrap iterations to be computed. Will be
 ignored unless \code{uncertainty = TRUE}. Default is \code{200} if
 \code{uncertainty = TRUE} and \code{NULL} if \code{uncertainty = FALSE}.}
+
+\item{seed}{Seed. Either \code{NULL} or an integer-valued scalar controlling
+random number generation. If \code{NULL}, then the seed is set to
+\eqn{546213978}. Default is \code{NULL}.}
 }
 \description{
 \code{error_checks()} checks for incorrect data entry in \code{autoMrP()}
