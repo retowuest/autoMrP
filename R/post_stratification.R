@@ -307,7 +307,7 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
     # post-stratification
     svm_preds <- census %>%
       dplyr::mutate(svm = attr(stats::predict(object = svm_opt_poststrat_only,
-                                              newdata = census,
+                                              newdata = census, allow.new.levels = TRUE,
                                               probability = TRUE),"probabilities")[,"1"]) %>%
       dplyr::group_by(.dots = list(L2_unit)) %>%
       dplyr::summarize(svm = weighted.mean(x = svm, w = .data$prop))
