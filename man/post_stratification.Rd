@@ -12,9 +12,13 @@ post_stratification(
   L2.reg,
   best.subset.opt,
   lasso.opt,
+  lasso.L2.x,
   pca.opt,
   gb.opt,
   svm.opt,
+  svm.L2.reg,
+  svm.L2.unit,
+  svm.L2.x,
   mrp.include,
   n.minobsinnode,
   L2.unit.include,
@@ -28,7 +32,8 @@ post_stratification(
 )
 }
 \arguments{
-\item{y}{Outcome variable. A character scalar containing the column name of
+\item{y}{Outcome variable. A character vector containing the column names of
+the outcome variable. A character scalar containing the column name of
 the outcome variable in \code{survey}.}
 
 \item{L1.x}{Individual-level covariates. A character vector containing the
@@ -40,9 +45,9 @@ is specified in argument \code{L2.unit}.}
 column names of the context-level variables in \code{survey} and
 \code{census} used to predict outcome \code{y}.}
 
-\item{L2.unit}{Geographic unit. A character scalar containing the column name
-of the geographic unit in \code{survey} and \code{census} at which outcomes
-should be aggregated.}
+\item{L2.unit}{Geographic unit. A character scalar containing the column
+name of the geographic unit in \code{survey} and \code{census} at which
+outcomes should be aggregated.}
 
 \item{L2.reg}{Geographic region. A character scalar containing the column
 name of the geographic region in \code{survey} and \code{census} by which
@@ -55,6 +60,12 @@ classifier. A list returned by \code{run_best_subset()}.}
 \item{lasso.opt}{Optimal tuning parameters from lasso classifier A list
 returned by \code{run_lasso()}.}
 
+\item{lasso.L2.x}{Lasso context-level covariates. A character vector
+containing the column names of the context-level variables in
+\code{survey} and \code{census} to be used by the lasso classifier. If
+\code{NULL} and \code{lasso} is set to \code{TRUE}, then lasso uses the
+variables specified in \code{L2.x}. Default is \code{NULL}.}
+
 \item{pca.opt}{Optimal tuning parameters from best subset selection with
 principal components classifier A list returned by \code{run_pca()}.}
 
@@ -63,6 +74,20 @@ classifier A list returned by \code{run_gb()}.}
 
 \item{svm.opt}{Optimal tuning parameters from support vector machine
 classifier A list returned by \code{run_svm()}.}
+
+\item{svm.L2.reg}{SVM L2.reg. A logical argument indicating whether
+\code{L2.reg} should be included in the SVM classifier. Default is
+\code{FALSE}.}
+
+\item{svm.L2.unit}{SVM L2.unit. A logical argument indicating whether
+\code{L2.unit} should be included in the SVM classifier. Default is
+\code{FALSE}.}
+
+\item{svm.L2.x}{SVM context-level covariates. A character vector containing
+the column names of the context-level variables in \code{survey} and
+\code{census} to be used by the SVM classifier. If \code{NULL} and
+\code{svm} is set to \code{TRUE}, then SVM uses the variables specified in
+\code{L2.x}. Default is \code{NULL}.}
 
 \item{mrp.include}{Whether to run MRP classifier. A logical argument
 indicating whether the standard MRP classifier should be used for
@@ -92,8 +117,7 @@ the column names of the context-level variables in \code{survey} and
 \code{census} to be used by the MRP classifier. The character vector
 \emph{empty} if no context-level variables should be used by the MRP
 classifier. If \code{NULL} and \code{mrp} is set to \code{TRUE}, then MRP
-uses the variables specified in \code{L2.x}. Passed from \code{autoMrP()}
-argument \code{mrp.L2.x}.}
+uses the variables specified in \code{L2.x}. Default is \code{NULL}.}
 
 \item{data}{A data.frame containing the survey data used in classifier
 training.}
@@ -101,12 +125,12 @@ training.}
 \item{ebma.fold}{A data.frame containing the data not used in classifier
 training.}
 
-\item{census}{A data.frame containing census information used for
-post-stratification.}
+\item{census}{Census data. A \code{data.frame} whose column names include
+\code{L1.x}, \code{L2.x}, \code{L2.unit}, if specified, \code{L2.reg} and
+\code{pcs}, and either \code{bin.proportion} or \code{bin.size}.}
 
 \item{verbose}{Verbose output. A logical argument indicating whether or not
-verbose output should be printed. Passed from \code{autoMrP()} argument
-\code{verbose}.}
+verbose output should be printed. Default is \code{FALSE}.}
 }
 \description{
 Apply post-stratification to classifiers.

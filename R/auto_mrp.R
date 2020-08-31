@@ -146,8 +146,8 @@
 #'   parameter should increase and the second vector containing the upper
 #'   thresholds of the intervals to which the step sizes apply. The penalty
 #'   parameter controls the shrinkage of the context-level variables in the
-#'   lasso model. Default is \code{1 / exp(- seq(from = -1, to = 4.5, length =
-#'   100))}.
+#'   lasso model. Default is \code{1 / exp(- seq(from = -1, to = 4.5, length.out
+#'   = 100))}.
 #' @param lasso.n.iter Lasso number of iterations without improvement. Either
 #'   \code{NULL} or an integer-valued scalar specifying the maximum number of
 #'   iterations without performance improvement the algorithm runs before
@@ -628,6 +628,9 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
       pca.opt = pca_out,
       gb.opt = gb_out,
       svm.opt = svm_out,
+      svm.L2.reg = svm.L2.reg,
+      svm.L2.unit = svm.L2.unit,
+      svm.L2.x = svm.L2.x,
       mrp.include = mrp,
       n.minobsinnode = gb.n.minobsinnode,
       L2.unit.include = gb.L2.unit,

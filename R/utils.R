@@ -1114,3 +1114,53 @@ multicore <- function(cores = 1, type, cl = NULL) {
     parallel::stopCluster(cl)
   }
 }
+
+
+################################################################################
+#                 Predict function for glmmLasso                               #
+################################################################################
+
+#' Predicts on newdata from glmmLasso objects
+#'
+#' \code{glmmLasso()} predicts on newdata objects from a glmmLasso object.
+#'
+#' @inheritParams auto_MrP
+#' @param m A \code{glmmLasso()} object.
+
+predict_glmmLasso <- function(census, m, L1.x, lasso.L2.x, L2.unit, L2.reg) {
+
+  # Fixed effects
+  fixed_effects <- as.matrix(cbind(1, as.data.frame(census)[, lasso.L2.x])) %*% cbind(m$coefficients)
+
+  # Individual-level random effects
+  ind_ranef <- as.data.frame(census)[, L1.x]
+  ind_ranef[] <- base::Map(paste, names(ind_ranef), ind_ranef, sep = '')
+  ind_ranef <- cbind(apply(ind_ranef, 1, function(x){
+    sum(m$ranef[which(names(m$ranef) %in% x)])
+  }))
+
+  # State random effects
+  state_ranef <- cbind(paste(L2.unit, as.character(as.data.frame(census)[, L2.unit]), sep = ""))
+  state_ranef <- cbind(apply(state_ranef, 1, function(x){
+    m$ranef[names(m$ranef) == x]
+  }))
+
+  # Region random effect
+  if(!is.null(L2.reg)){
+    region_ranef <- cbind(paste(L2.reg, as.character(as.data.frame(census)[, L2.reg]), sep = ""))
+    region_ranef <- cbind(apply(region_ranef, 1, function(x){
+      m$ranef[names(m$ranef) == x]
+    }))
+  }
+
+  # Predictions
+  if(!is.null(L2.reg)){
+    lasso_preds <- cbind(fixed_effects, ind_ranef, state_ranef, region_ranef)
+  } else{
+    lasso_preds <- cbind(fixed_effects, ind_ranef, state_ranef)
+  }
+  lasso_preds <- apply(lasso_preds, 1, sum)
+  lasso_preds <- stats::pnorm(lasso_preds)
+
+  return(lasso_preds)
+}

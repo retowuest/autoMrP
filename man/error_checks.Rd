@@ -203,8 +203,8 @@ with the first vector containing the step sizes by which the penalty
 parameter should increase and the second vector containing the upper
 thresholds of the intervals to which the step sizes apply. The penalty
 parameter controls the shrinkage of the context-level variables in the
-lasso model. Default is \code{1 / exp(- seq(from = -1, to = 4.5, length =
-100))}.}
+lasso model. Default is \code{1 / exp(- seq(from = -1, to = 4.5, length.out
+= 100))}.}
 
 \item{lasso.n.iter}{Lasso number of iterations without improvement. Either
 \code{NULL} or an integer-valued scalar specifying the maximum number of

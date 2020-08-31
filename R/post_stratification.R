@@ -1,21 +1,6 @@
 #' Apply post-stratification to classifiers.
 #'
-#' @param y Outcome variable. A character scalar containing the column name of
-#'   the outcome variable in \code{survey}.
-#' @param L1.x Individual-level covariates. A character vector containing the
-#'   column names of the individual-level variables in \code{survey} and
-#'   \code{census} used to predict outcome \code{y}. Note that geographic unit
-#'   is specified in argument \code{L2.unit}.
-#' @param L2.x Context-level covariates. A character vector containing the
-#'   column names of the context-level variables in \code{survey} and
-#'   \code{census} used to predict outcome \code{y}.
-#' @param L2.unit Geographic unit. A character scalar containing the column name
-#'   of the geographic unit in \code{survey} and \code{census} at which outcomes
-#'   should be aggregated.
-#' @param L2.reg Geographic region. A character scalar containing the column
-#'   name of the geographic region in \code{survey} and \code{census} by which
-#'   geographic units are grouped (\code{L2.unit} must be nested within
-#'   \code{L2.reg}). Default is \code{NULL}.
+#' @inheritParams auto_MrP
 #' @param best.subset.opt Optimal tuning parameters from best subset selection
 #'   classifier. A list returned by \code{run_best_subset()}.
 #' @param lasso.opt Optimal tuning parameters from lasso classifier A list
@@ -44,30 +29,18 @@
 #'   be used by SVM. The possible values are \code{linear}, \code{polynomial},
 #'   \code{radial}, and \code{sigmoid}. Passed from \code{autoMrP()} argument
 #'   \code{svm.kernel}.
-#' @param mrp.L2.x MRP context-level covariates. A character vector containing
-#'   the column names of the context-level variables in \code{survey} and
-#'   \code{census} to be used by the MRP classifier. The character vector
-#'   \emph{empty} if no context-level variables should be used by the MRP
-#'   classifier. If \code{NULL} and \code{mrp} is set to \code{TRUE}, then MRP
-#'   uses the variables specified in \code{L2.x}. Passed from \code{autoMrP()}
-#'   argument \code{mrp.L2.x}.
 #' @param data A data.frame containing the survey data used in classifier
 #'   training.
 #' @param ebma.fold A data.frame containing the data not used in classifier
 #'   training.
-#' @param census A data.frame containing census information used for
-#'   post-stratification.
-#' @param verbose Verbose output. A logical argument indicating whether or not
-#'   verbose output should be printed. Passed from \code{autoMrP()} argument
-#'   \code{verbose}.
 
 post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
-                                best.subset.opt, lasso.opt,
-                                pca.opt, gb.opt, svm.opt,
-                                mrp.include, n.minobsinnode,
-                                L2.unit.include, L2.reg.include,
-                                kernel, mrp.L2.x, data, ebma.fold,
-                                census, verbose){
+                                best.subset.opt, lasso.opt, lasso.L2.x,
+                                pca.opt, gb.opt, svm.opt, svm.L2.reg,
+                                svm.L2.unit, svm.L2.x, mrp.include,
+                                n.minobsinnode, L2.unit.include,
+                                L2.reg.include, kernel, mrp.L2.x,
+                                data, ebma.fold, census, verbose){
 
   # globals
   lasso <- NULL
@@ -90,6 +63,7 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
 
   # Classifier 1: Best Subset
   if (!is.null(best.subset.opt)) {
+
     # Fit optimal model for EBMA
     best_subset_opt_ebma <- best_subset_classifier(
       model = best.subset.opt,
@@ -114,7 +88,7 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                                                  newdata = census, allow.new.levels = TRUE,
                                                  type = "response")) %>%
       dplyr::group_by(.dots = list(L2_unit)) %>%
-      dplyr::summarize(best_subset = weighted.mean(x = best_subset, w = .data$prop))
+      dplyr::summarize(best_subset = weighted.mean(x = best_subset, w = .data$prop), .groups = "keep")
 
     # individual level predictions for EBMA
     bs_ind <- stats::predict(object = best_subset_opt_ebma, type = "response")
@@ -126,8 +100,9 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
 
   # Classifier 2: Lasso
   if (!is.null(lasso.opt)) {
+
     # Context-level fixed effects
-    L2_fe <- paste(L2.x, collapse = " + ")
+    L2_fe <- paste(lasso.L2.x, collapse = " + ")
     L2_fe_form <- as.formula(paste(y, " ~ ", L2_fe, sep = ""))
 
     # Individual-level random effects as named list
@@ -153,15 +128,19 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
       verbose = verbose)
 
     # predictions for post-stratification only (no EBMA)
-    lasso.census <- census
-    lasso.census[,y] <- 1
-    lasso_p <- stats::predict(lasso_opt_poststrat_only, newdata = data.frame(lasso.census), type = "response")
+    lasso_ests <- predict_glmmLasso(
+      m = lasso_opt_poststrat_only,
+      lasso.L2.x = lasso.L2.x,
+      L2.unit = L2.unit,
+      L2.reg = L2.reg,
+      L1.x = L1.x,
+      census = census)
 
-    # # post-stratification
+    # post-stratification
     lasso_preds <- census %>%
-      dplyr::mutate(lasso = lasso_p) %>%
+      dplyr::mutate(lasso = lasso_ests) %>%
       dplyr::group_by(.dots = list(L2_unit)) %>%
-      dplyr::summarize(lasso = weighted.mean(x = lasso, w = .data$prop))
+      dplyr::summarize(lasso = weighted.mean(x = lasso, w = .data$prop), .groups = "keep")
 
     # individual level predictions for EBMA
     lasso_ind <- stats::predict(object = lasso_opt_ebma, type = "response")
@@ -198,7 +177,7 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                                          allow.new.levels = TRUE,
                                          type = "response")) %>%
       dplyr::group_by(.dots = list(L2_unit)) %>%
-      dplyr::summarize(pca = weighted.mean(x = pca, w = .data$prop))
+      dplyr::summarize(pca = weighted.mean(x = pca, w = .data$prop), .groups = "keep")
 
     # individual level predictions for EBMA
     pca_ind <- stats::predict(object = pca_opt_ebma, type = "response")
@@ -257,7 +236,7 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                                           n.trees = gb.opt$n_trees,
                                           type = "response")) %>%
       dplyr::group_by(.dots = list(L2_unit)) %>%
-      dplyr::summarize(gb = weighted.mean(x = gb, w = .data$prop))
+      dplyr::summarize(gb = weighted.mean(x = gb, w = .data$prop), .groups = "keep")
 
     # individual level predictions for EBMA
     gb_ind <- gbm::predict.gbm(object = gb_opt_ebma, n.trees = gb.opt$n_trees, type = "response")
@@ -269,6 +248,26 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
 
   # Classifier 5: SVM
   if (!is.null(svm.opt)) {
+
+    # Determine context-level covariates
+    if (is.null(svm.L2.x)) {
+      svm.L2.x <- L2.x
+    }
+
+    # Evaluate inclusion of L2.unit in GB
+    if (isTRUE(svm.L2.unit)) {
+      svm.L2.unit <- L2.unit
+    } else {
+      svm.L2.unit <- NULL
+    }
+
+    # Evaluate inclusion of L2.reg in GB
+    if (isTRUE(svm.L2.reg)) {
+      svm.L2.reg <- L2.reg
+    } else {
+      svm.L2.reg <- NULL
+    }
+
     # Prepare data
     svm_data <- data %>%
       dplyr::mutate_at(.vars = y, .funs = list(y_svm = ~as.factor(.)))
@@ -277,7 +276,7 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
       dplyr::mutate_at(.vars = y, .funs = list(y_svm = ~as.factor(.)))
 
     # Create model formula
-    x <- paste(c(L1.x, L2.x, L2.unit, L2.reg), collapse = " + ")
+    x <- paste(c(L1.x, svm.L2.x, svm.L2.unit, svm.L2.reg), collapse = " + ")
     form_svm <- as.formula(paste("y_svm ~ ", x, sep = ""))
 
     # Fit optimal model for EBMA
@@ -306,11 +305,12 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
 
     # post-stratification
     svm_preds <- census %>%
+      dplyr::filter(dplyr::pull(.data = census, !!L2.unit) %in% dplyr::pull(.data = svm_data_no_ebma, !!L2.unit)) %>%
       dplyr::mutate(svm = attr(stats::predict(object = svm_opt_poststrat_only,
                                               newdata = census, allow.new.levels = TRUE,
                                               probability = TRUE),"probabilities")[,"1"]) %>%
       dplyr::group_by(.dots = list(L2_unit)) %>%
-      dplyr::summarize(svm = weighted.mean(x = svm, w = .data$prop))
+      dplyr::summarize(svm = weighted.mean(x = svm, w = .data$prop), .groups = "keep")
 
     # individual level predictions for EBMA
     svm_ind <- attr(stats::predict(object = svm_opt_ebma, newdata = data, probability = TRUE),"probabilities")[,"1"]
