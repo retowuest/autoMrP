@@ -101,6 +101,11 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
   # Classifier 2: Lasso
   if (!is.null(lasso.opt)) {
 
+    # Determine context-level covariates
+    if (is.null(lasso.L2.x)) {
+      lasso.L2.x <- L2.x
+      }
+
     # Context-level fixed effects
     L2_fe <- paste(lasso.L2.x, collapse = " + ")
     L2_fe_form <- as.formula(paste(y, " ~ ", L2_fe, sep = ""))
@@ -381,7 +386,7 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                                          newdata = census, allow.new.levels = TRUE,
                                          type = "response")) %>%
       dplyr::group_by(.dots = list(L2_unit)) %>%
-      dplyr::summarize(mrp = weighted.mean(x = mrp, w = .data$prop))
+      dplyr::summarize(mrp = weighted.mean(x = mrp, w = .data$prop), .groups = "keep")
 
     # individual level predictions for EBMA
     mrp_ind <- stats::predict(object = mrp_model_ebma, type = "response")

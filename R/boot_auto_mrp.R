@@ -92,8 +92,8 @@ boot_auto_mrp <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
   if (!any(do.call(rbind, do.call(rbind, boot_out)[,"ebma"] ) == "EBMA step skipped (only 1 classifier run)")){
     ebma <- do.call(rbind, do.call(rbind, boot_out)[,"ebma"] ) %>%
       dplyr::group_by(.dots = list(L2.unit)) %>%
-      dplyr::summarise(median = median(ebma),
-                       sd = sd(ebma), .groups = "drop")
+      dplyr::summarise(median = median(ebma, na.rm = TRUE),
+                       sd = sd(ebma, na.rm = TRUE), .groups = "drop")
   } else {
     ebma <- "EBMA step skipped (only 1 classifier run)"
   }
@@ -101,7 +101,7 @@ boot_auto_mrp <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
   # Median and standard deviations for classifier estimates
   classifiers <- do.call(rbind, do.call(rbind, boot_out)[,"classifiers"] ) %>%
     dplyr::group_by(.dots = list(L2.unit)) %>%
-    dplyr::summarise_all(.funs = c(median = median, sd = sd)) %>%
+    dplyr::summarise_all(.funs = c(median = median, sd = sd), na.rm = TRUE) %>%
     dplyr::select(
       state,
       contains("best_subset"),
