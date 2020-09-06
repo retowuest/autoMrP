@@ -27,7 +27,9 @@ boot_auto_mrp <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
   cl <- multicore(cores = cores, type = "open", cl = NULL)
 
   # Bootstrap iterations
-  boot_out <- foreach::foreach(idx_boot = 1:boot.iter, .packages = "autoMrP") %dorng% {
+  boot_out <- foreach::foreach(idx_boot = 1:boot.iter,
+                               .errorhandling = "pass",
+                               .packages = "autoMrP") %dorng% {
 
     # Bootstrapped survey sample
     boot_sample <- dplyr::sample_n(tbl = survey, size = nrow(survey), replace = TRUE)
@@ -89,7 +91,7 @@ boot_auto_mrp <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
   }
 
   # Median and standard deviation of EBMA estimates
-  if (!any(do.call(rbind, do.call(rbind, boot_out)[,"ebma"] ) == "EBMA step skipped (only 1 classifier run)")){
+  if ( !any(boot_out[[1]]$ebma == "EBMA step skipped (only 1 classifier run)") ){
     ebma <- do.call(rbind, do.call(rbind, boot_out)[,"ebma"] ) %>%
       dplyr::group_by(.dots = list(L2.unit)) %>%
       dplyr::summarise(median = median(ebma, na.rm = TRUE),
