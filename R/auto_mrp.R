@@ -702,6 +702,7 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
 
   # ----------------------------- Function output ------------------------------
 
+  class(ebma_out) <- c("autoMrP", "list")
   return(ebma_out)
 
 }

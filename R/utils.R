@@ -1164,3 +1164,66 @@ predict_glmmLasso <- function(census, m, L1.x, lasso.L2.x, L2.unit, L2.reg) {
 
   return(lasso_preds)
 }
+
+
+################################################################################
+#                 Plot method for autoMrP                                      #
+################################################################################
+
+#' A plot method for autoMrP objects. Plots unit-level preference estiamtes.
+#'
+#' \code{plot.autoMrP()} plots unit-level preference estimates and error bars.
+#'
+#' @param x An \code{autoMrP()} object.
+#' @param algorithm The algorithm on which preference estimates are based. A
+#'   character-valued scalar indicating either \code{ebma} or the classifier to
+#'   be used. Default is \code{ebma}.
+#' @param ci.lvl The level of the confidence intervals. A proportion. Default is
+#'   \code{0.95}. Confidence intervals are based on bootstrapped estimates and
+#'   will not be printed if bootstrapping was not carried out.
+
+plot.autoMrP <- function(x, algorithm = "ebma", ci.lvl = 0.95){
+
+  # L2.unit identifier
+  L2.unit <- names(x$classifiers)[1]
+
+  # plot data
+  if(algorithm == "ebma"){
+    plot_data <- x$ebma %>%
+      dplyr::group_by(.dots = list(L2.unit)) %>%
+      dplyr::summarise(median = median(ebma, na.rm = TRUE),
+                       lb = stats::quantile(x = ebma, p = (1 - ci.lvl)*.5),
+                       ub = stats::quantile(x = ebma, p = ci.lvl + (1 - ci.lvl)*.5),
+                       .groups = "drop") %>%
+      dplyr::arrange(median) %>%
+      dplyr::mutate(rank = dplyr::row_number()) %>%
+      dplyr::mutate(rank = as.factor(rank))
+  } else{
+    plot_data <- x$classifiers %>%
+      dplyr::group_by(.dots = list(L2.unit)) %>%
+      dplyr::select(all_of(L2.unit), contains(algorithm)) %>%
+      dplyr::summarise_all(.funs = list(median = ~ quantile(x = ., probs = 0.5),
+                                        lb = ~ quantile(x = ., probs = (1 - ci.lvl) *.5),
+                                        ub = ~ quantile(x = ., probs = ci.lvl + (1 - ci.lvl) *.5))) %>%
+      dplyr::arrange(median) %>%
+      dplyr::mutate(rank = dplyr::row_number()) %>%
+      dplyr::mutate(rank = as.factor(rank))
+  }
+
+  # y axis tick labels
+  ylabs <- as.character(dplyr::pull(.data = plot_data, var = L2.unit))
+
+  # plot (with/ without error bars)
+  if(all(plot_data$median == plot_data$lb)){
+    ggplot2::ggplot(data = plot_data, mapping = ggplot2::aes_string(x = "median", y = "rank", label = L2.unit)) +
+      ggplot2::geom_point() +
+      ggplot2::labs(x = "Estimates") +
+      ggplot2::scale_y_discrete(breaks = rank, labels = ylabs, name = "States")
+  } else{
+    ggplot2::ggplot(data = plot_data, mapping = ggplot2::aes_string(x = "median", y = "rank", label = L2.unit)) +
+      ggplot2::geom_point() +
+      ggplot2::labs(x = "Estimates") +
+      ggplot2::scale_y_discrete(breaks = rank, labels = ylabs, name = "States") +
+      ggplot2::geom_errorbarh(mapping = ggplot2::aes(xmin = lb, xmax = ub))
+  }
+}

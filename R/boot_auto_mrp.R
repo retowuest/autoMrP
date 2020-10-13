@@ -92,29 +92,42 @@ boot_auto_mrp <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
 
   # Median and standard deviation of EBMA estimates
   if ( !any(boot_out[[1]]$ebma == "EBMA step skipped (only 1 classifier run)") ){
-    ebma <- do.call(rbind, do.call(rbind, boot_out)[,"ebma"] ) %>%
-      dplyr::group_by(.dots = list(L2.unit)) %>%
-      dplyr::summarise(median = median(ebma, na.rm = TRUE),
-                       sd = sd(ebma, na.rm = TRUE), .groups = "drop")
+    ebma <- base::do.call(base::rbind, base::do.call(base::rbind, boot_out)[,"ebma"] ) #%>%
+      #dplyr::group_by(.dots = list(L2.unit)) %>%
+      #dplyr::summarise(median = median(ebma, na.rm = TRUE),
+      #                 sd = sd(ebma, na.rm = TRUE), .groups = "drop")
   } else {
     ebma <- "EBMA step skipped (only 1 classifier run)"
   }
 
   # Median and standard deviations for classifier estimates
-  classifiers <- do.call(rbind, do.call(rbind, boot_out)[,"classifiers"] ) %>%
-    dplyr::group_by(.dots = list(L2.unit)) %>%
-    dplyr::summarise_all(.funs = c(median = median, sd = sd), na.rm = TRUE) %>%
-    dplyr::select(
-      state,
-      contains("best_subset"),
-      contains("pca"),
-      contains("lasso"),
-      contains("gb"),
-      contains("svm"),
-      contains("mrp")
-    )
+  classifiers <- base::do.call(base::rbind, base::do.call(base::rbind, boot_out)[,"classifiers"] ) #%>%
+    #dplyr::group_by(.dots = list(L2.unit)) %>%
+    #dplyr::summarise_all(.funs = c(median = median, sd = sd), na.rm = TRUE) %>%
+    #dplyr::select(
+    #  state,
+    #  contains("best_subset"),
+    #  contains("pca"),
+    #  contains("lasso"),
+    #  contains("gb"),
+    #  contains("svm"),
+    #  contains("mrp")
+    #)
 
-  boot_out <- list(ebma = ebma, classifiers = classifiers)
+  # weights
+  weights <- base::do.call(base::rbind, base::do.call(base::rbind, boot_out)[,"weights"] ) %>%
+    dplyr::as_tibble() #%>%
+    #dplyr::summarise_all(.funs = c(median = median, sd = sd), na.rm = TRUE) %>%
+    #dplyr::select(
+    #  contains("best_subset"),
+    #  contains("pca"),
+    #  contains("lasso"),
+    #  contains("gb"),
+    #  contains("svm"),
+    #  contains("mrp")
+    #)
+
+  boot_out <- list(ebma = ebma, classifiers = classifiers, weights = weights)
 
   # De-register cluster
   multicore(cores = cores, type = "close", cl = cl)

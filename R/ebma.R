@@ -246,7 +246,7 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, post.strat,
     )
 
     # function output
-    return(list(ebma = L2_preds, classifiers = post.strat$predictions$Level2))
+    return(list(ebma = L2_preds, classifiers = post.strat$predictions$Level2, weights = final_model_weights))
 
   } else{
    message("\n Skipping EBMA (only 1 classifier selected) \n")

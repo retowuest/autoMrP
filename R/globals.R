@@ -11,4 +11,6 @@ globalVariables(c("%>%",
                   "n_L2",
                   "row_number",
                   "sqe",
-                  "state"))
+                  "state",
+                  "lb",
+                  "ub"))
