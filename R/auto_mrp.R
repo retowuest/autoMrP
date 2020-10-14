@@ -254,6 +254,7 @@
 #'   mrp = TRUE,
 #'   mrp.L2.x = c("L2.x1", "L2.x2")
 #'   )}
+#' @export
 #' @importFrom stats as.formula binomial predict setNames weighted.mean median sd
 #' @importFrom utils combn
 #' @importFrom dplyr %>%

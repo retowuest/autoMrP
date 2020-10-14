@@ -12,7 +12,7 @@ output_table(x, col.names, format, digits)
 \item{col.names}{The column names of the table. A}
 
 \item{format}{The table format. A character string passed to
-\code{\link[knitr]{kable}}. Default is \code{rst}.}
+\code{\link[knitr]{kable}}. Default is \code{simple}.}
 
 \item{digits}{The number of digits to be displayed. An integer scalar.
 Default is \code{4}.}

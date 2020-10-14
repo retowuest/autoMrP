@@ -1181,12 +1181,17 @@ predict_glmmLasso <- function(census, m, L1.x, lasso.L2.x, L2.unit, L2.reg) {
 #' @param ci.lvl The level of the confidence intervals. A proportion. Default is
 #'   \code{0.95}. Confidence intervals are based on bootstrapped estimates and
 #'   will not be printed if bootstrapping was not carried out.
-#' @export plot.autoMrP
+#' @export
 
 plot.autoMrP <- function(x, algorithm = "ebma", ci.lvl = 0.95){
 
   # L2.unit identifier
   L2.unit <- names(x$classifiers)[1]
+
+  # plot classifier if EBMA was not estimated
+  if(x$ebma == "EBMA step skipped (only 1 classifier run)") {
+    algorithm <- names(x$classifiers)[-1]
+  }
 
   # plot data
   if(algorithm == "ebma"){
@@ -1245,16 +1250,16 @@ plot.autoMrP <- function(x, algorithm = "ebma", ci.lvl = 0.95){
 #' @param digits The number of digits to be displayed. An integer scalar.
 #'   Default is \code{4}.
 #' @param format The table format. A character string passed to
-#'   \code{\link[knitr]{kable}}. Default is \code{rst}.
+#'   \code{\link[knitr]{kable}}. Default is \code{simple}.
 #' @param classifiers Summarize a single classifier. A character string. Must be
 #'   one of \code{best_subset}, \code{lasso}, \code{pca}, \code{gb}, \code{svm},
 #'   or \code{mrp}. Default is \code{NULL}.
 #' @param n Number of rows to be printed. An integer scalar. Default is
 #'   \code{10}.
 #' @param ... Additional arguments affecting the summary produced.
-#' @export summary.autoMrP
+#' @export
 
-summary.autoMrP <- function(x, ci.lvl = 0.95, digits = 4, format = "rst",
+summary.autoMrP <- function(x, ci.lvl = 0.95, digits = 4, format = "simple",
                             classifiers = NULL, n = 10, ...){
 
   # weights

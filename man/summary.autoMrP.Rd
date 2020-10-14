@@ -8,7 +8,7 @@
   x,
   ci.lvl = 0.95,
   digits = 4,
-  format = "rst",
+  format = "simple",
   classifiers = NULL,
   n = 10,
   ...
@@ -25,7 +25,7 @@ will not be printed if bootstrapping was not carried out.}
 Default is \code{4}.}
 
 \item{format}{The table format. A character string passed to
-\code{\link[knitr]{kable}}. Default is \code{rst}.}
+\code{\link[knitr]{kable}}. Default is \code{simple}.}
 
 \item{classifiers}{Summarize a single classifier. A character string. Must be
 one of \code{best_subset}, \code{lasso}, \code{pca}, \code{gb}, \code{svm},
