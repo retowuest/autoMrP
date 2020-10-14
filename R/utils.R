@@ -1363,7 +1363,7 @@ summary.autoMrP <- function(x, ci.lvl = 0.95, digits = 4, format = "simple",
       cat( paste("\n", "# EBMA estimates:"), sep = "")
       output_table(
         x = s_data[1:n, ],
-        col.names = c(L2.unit, "Estimates"),
+        col.names = c(L2.unit, "Estimate"),
         format = format,
         digits = digits)
       if (n < nrow(s_data)) cat( paste("... with", nrow(s_data)-n, " more rows"), sep = "")
@@ -1429,7 +1429,7 @@ summary.autoMrP <- function(x, ci.lvl = 0.95, digits = 4, format = "simple",
         cat( paste("\n", "# estimates of", classifiers, "classifier"), sep = "")
         output_table(
           x = s_data[1:n, ],
-          col.names = c(L2.unit, "Estimates"),
+          col.names = c(L2.unit, "Estimate"),
           format = format,
           digits = digits)
         if (n < nrow(s_data)) cat( paste("... with", nrow(s_data)-n, " more rows"), sep = "")
@@ -1509,7 +1509,7 @@ summary.autoMrP <- function(x, ci.lvl = 0.95, digits = 4, format = "simple",
        s_data <- dplyr::select(.data = s_data, dplyr::one_of(L2.unit), median)
        n <- ifelse(n <= nrow(s_data), yes = n, no = nrow(s_data) )
        cat( paste("\n", "# ", names(x$classifiers)[2]," estimates:"), sep = "")
-       output_table(x = s_data[1:n, ], col.names = c(L2.unit, "Median"), format = format, digits = digits)
+       output_table(x = s_data[1:n, ], col.names = c(L2.unit, "Estimate"), format = format, digits = digits)
        if (n < nrow(s_data)) cat( paste("... with", nrow(s_data)-n, " more rows"), sep = "")
 
       }
