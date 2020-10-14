@@ -41,9 +41,10 @@ Imports:
 	foreach (>= 1.5.0),
 	doParallel (>= 1.0.15),
 	doRNG (>= 1.8.2),
-	ggplot2 (>= 3.3.2)
+	ggplot2 (>= 3.3.2),
+	knitr (>= 1.29),
+	tidyr (>= 1.1.2)
 Suggests: 
-	knitr
 License: GPL-3
 Encoding: UTF-8
 LazyData: true

@@ -13,4 +13,6 @@ globalVariables(c("%>%",
                   "sqe",
                   "state",
                   "lb",
-                  "ub"))
+                  "ub",
+                  "method",
+                  "estimates"))

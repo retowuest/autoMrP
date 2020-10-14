@@ -255,6 +255,7 @@
 #'   mrp.L2.x = c("L2.x1", "L2.x2")
 #'   )}
 #' @export
+#' @exportMethod summary.autoMrP print.autoMrP
 #' @importFrom stats as.formula binomial predict setNames weighted.mean median sd
 #' @importFrom utils combn
 #' @importFrom dplyr %>%
@@ -703,6 +704,9 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
   # ----------------------------- Function output ------------------------------
 
   class(ebma_out) <- c("autoMrP", "list")
+  class(ebma_out$ebma) <- c("autoMrP", "ensemble", class(ebma_out$ebma))
+  class(ebma_out$classifiers) <- c("autoMrP", "classifiers", class(ebma_out$classifiers))
+  class(ebma_out$weights) <- c("autoMrP", "weights", class(ebma_out$weights))
   return(ebma_out)
 
 }
