@@ -1258,6 +1258,11 @@ summary.autoMrP <- function(x, ci.lvl = 0.95, digits = 4, format = "rst",
   # weights
   if ( all(c("autoMrP", "weights") %in% class(x)) ){
 
+    # error message if weights summary called without running multiple classifiers
+    if (x == "EBMA step skipped (only 1 classifier run)"){
+      stop("Weights are not reported if the EBMA step was skipped. Re-run autoMrP with multiple classifiers.")
+    }
+
     # summary statistics
     s_data <- x %>%
       tidyr::pivot_longer(

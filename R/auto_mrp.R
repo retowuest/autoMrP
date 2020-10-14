@@ -706,7 +706,11 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
   class(ebma_out) <- c("autoMrP", "list")
   class(ebma_out$ebma) <- c("autoMrP", "ensemble", class(ebma_out$ebma))
   class(ebma_out$classifiers) <- c("autoMrP", "classifiers", class(ebma_out$classifiers))
-  class(ebma_out$weights) <- c("autoMrP", "weights", class(ebma_out$weights))
+  if (exists("ebma_out$weights")){
+    class(ebma_out$weights) <- c("autoMrP", "weights", class(ebma_out$weights))
+  } else{
+    ebma_out$weights <- "EBMA step skipped (only 1 classifier run)"
+    class(ebma_out$weights) <- c("autoMrP", "weights", class(ebma_out$weights))
+  }
   return(ebma_out)
-
 }
