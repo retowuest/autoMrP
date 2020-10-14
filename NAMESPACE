@@ -3,6 +3,8 @@
 S3method(plot,autoMrP)
 S3method(summary,autoMrP)
 export(auto_MrP)
+export(plot.autoMrP)
+export(summary.autoMrP)
 importFrom(doRNG,"%dorng%")
 importFrom(dplyr,"%>%")
 importFrom(foreach,"%dopar%")
