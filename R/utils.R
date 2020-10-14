@@ -1181,6 +1181,7 @@ predict_glmmLasso <- function(census, m, L1.x, lasso.L2.x, L2.unit, L2.reg) {
 #' @param ci.lvl The level of the confidence intervals. A proportion. Default is
 #'   \code{0.95}. Confidence intervals are based on bootstrapped estimates and
 #'   will not be printed if bootstrapping was not carried out.
+#' @export plot.autoMrP
 
 plot.autoMrP <- function(x, algorithm = "ebma", ci.lvl = 0.95){
 
@@ -1251,6 +1252,7 @@ plot.autoMrP <- function(x, algorithm = "ebma", ci.lvl = 0.95){
 #' @param n Number of rows to be printed. An integer scalar. Default is
 #'   \code{10}.
 #' @param ... Additional arguments affecting the summary produced.
+#' @export summary.autoMrP
 
 summary.autoMrP <- function(x, ci.lvl = 0.95, digits = 4, format = "rst",
                             classifiers = NULL, n = 10, ...){
