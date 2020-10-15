@@ -4,7 +4,7 @@
 \alias{plot.autoMrP}
 \title{A plot method for autoMrP objects. Plots unit-level preference estiamtes.}
 \usage{
-\method{plot}{autoMrP}(x, algorithm = "ebma", ci.lvl = 0.95)
+\method{plot}{autoMrP}(x, algorithm = "ebma", ci.lvl = 0.95, ...)
 }
 \arguments{
 \item{x}{An \code{autoMrP()} object.}
@@ -16,6 +16,8 @@ be used. Default is \code{ebma}.}
 \item{ci.lvl}{The level of the confidence intervals. A proportion. Default is
 \code{0.95}. Confidence intervals are based on bootstrapped estimates and
 will not be printed if bootstrapping was not carried out.}
+
+\item{...}{Additional arguments affecting the summary produced.}
 }
 \description{
 \code{plot.autoMrP()} plots unit-level preference estimates and error bars.
