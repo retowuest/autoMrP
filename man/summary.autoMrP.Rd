@@ -5,7 +5,7 @@
 \title{A summary method for autoMrP objects.}
 \usage{
 \method{summary}{autoMrP}(
-  x,
+  object,
   ci.lvl = 0.95,
   digits = 4,
   format = "simple",
@@ -15,7 +15,7 @@
 )
 }
 \arguments{
-\item{x}{An \code{autoMrP()} object.}
+\item{object}{An \code{autoMrP()} object for which a summary is desired.}
 
 \item{ci.lvl}{The level of the confidence intervals. A proportion. Default is
 \code{0.95}. Confidence intervals are based on bootstrapped estimates and

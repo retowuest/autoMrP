@@ -1183,6 +1183,7 @@ predict_glmmLasso <- function(census, m, L1.x, lasso.L2.x, L2.unit, L2.reg) {
 #'   will not be printed if bootstrapping was not carried out.
 #' @param ... Additional arguments affecting the summary produced.
 #' @export
+#' @export plot.autoMrP
 
 plot.autoMrP <- function(x, algorithm = "ebma", ci.lvl = 0.95, ...){
 
@@ -1244,7 +1245,7 @@ plot.autoMrP <- function(x, algorithm = "ebma", ci.lvl = 0.95, ...){
 #'
 #' \code{summary.autoMrP()} ...
 #'
-#' @param x An \code{autoMrP()} object.
+#' @param object An \code{autoMrP()} object for which a summary is desired.
 #' @param ci.lvl The level of the confidence intervals. A proportion. Default is
 #'   \code{0.95}. Confidence intervals are based on bootstrapped estimates and
 #'   will not be printed if bootstrapping was not carried out.
@@ -1259,20 +1260,21 @@ plot.autoMrP <- function(x, algorithm = "ebma", ci.lvl = 0.95, ...){
 #'   \code{10}.
 #' @param ... Additional arguments affecting the summary produced.
 #' @export
+#' @export summary.autoMrP
 
-summary.autoMrP <- function(x, ci.lvl = 0.95, digits = 4, format = "simple",
+summary.autoMrP <- function(object, ci.lvl = 0.95, digits = 4, format = "simple",
                             classifiers = NULL, n = 10, ...){
 
   # weights
-  if ( all(c("autoMrP", "weights") %in% class(x)) ){
+  if ( all(c("autoMrP", "weights") %in% class(object)) ){
 
     # error message if weights summary called without running multiple classifiers
-    if (x == "EBMA step skipped (only 1 classifier run)"){
+    if (object == "EBMA step skipped (only 1 classifier run)"){
       stop("Weights are not reported if the EBMA step was skipped. Re-run autoMrP with multiple classifiers.")
     }
 
     # summary statistics
-    s_data <- x %>%
+    s_data <- object %>%
       tidyr::pivot_longer(
         cols = dplyr::everything(),
         names_to = "method",
@@ -1280,10 +1282,10 @@ summary.autoMrP <- function(x, ci.lvl = 0.95, digits = 4, format = "simple",
       dplyr::group_by(method) %>%
       dplyr::summarise(
         min = base::min(estimates, na.rm = TRUE),
-        quart1 = stats::quantile(x = estimates, probs = 0.25),
+        quart1 = stats::quantile(object = estimates, probs = 0.25),
         median = stats::median(estimates),
         mean = base::mean(estimates),
-        quart3 = stats::quantile(x = estimates, probs = 0.75),
+        quart3 = stats::quantile(object = estimates, probs = 0.75),
         max = base::max(estimates),
         .groups = "drop") %>%
       dplyr::arrange(dplyr::desc(median))
@@ -1294,7 +1296,7 @@ summary.autoMrP <- function(x, ci.lvl = 0.95, digits = 4, format = "simple",
       cat( paste("\n", "# EBMA classifier weights:"), sep = "")
       # output table
       output_table(
-        x = s_data[1:n, ],
+        object = s_data[1:n, ],
         col.names = c(
           "Classifier",
           "Min.",
@@ -1311,7 +1313,7 @@ summary.autoMrP <- function(x, ci.lvl = 0.95, digits = 4, format = "simple",
       n <- ifelse(n <= nrow(s_data), yes = n, no = nrow(s_data) )
       cat( paste("\n", "# EBMA classifier weights:"), sep = "")
       output_table(
-        x = s_data[1:n, ],
+        object = s_data[1:n, ],
         col.names = c(
           "Classifier",
           "Weight"),
@@ -1322,13 +1324,13 @@ summary.autoMrP <- function(x, ci.lvl = 0.95, digits = 4, format = "simple",
   }
 
   # ensemble summary
-  else if ( all(c("autoMrP", "ensemble") %in% class(x)) ) {
+  else if ( all(c("autoMrP", "ensemble") %in% class(object)) ) {
 
     # unit identifier
-    L2.unit <- names(x)[1]
+    L2.unit <- names(object)[1]
 
     # summary statistics
-    s_data <- x %>%
+    s_data <- object %>%
       dplyr::group_by(.dots = list(L2.unit)) %>%
       dplyr::summarise(
         min = base::min(ebma, na.rm = TRUE),
@@ -1344,7 +1346,7 @@ summary.autoMrP <- function(x, ci.lvl = 0.95, digits = 4, format = "simple",
       cat( paste("\n", "# EBMA estimates:"), sep = "")
       # output table
       output_table(
-        x = s_data[1:n, ],
+        object = s_data[1:n, ],
         col.names = c(
           L2.unit,
           "Min.",
@@ -1361,7 +1363,7 @@ summary.autoMrP <- function(x, ci.lvl = 0.95, digits = 4, format = "simple",
       n <- ifelse(n <= nrow(s_data), yes = n, no = nrow(s_data) )
       cat( paste("\n", "# EBMA estimates:"), sep = "")
       output_table(
-        x = s_data[1:n, ],
+        object = s_data[1:n, ],
         col.names = c(L2.unit, "Estimate"),
         format = format,
         digits = digits)
@@ -1373,21 +1375,21 @@ summary.autoMrP <- function(x, ci.lvl = 0.95, digits = 4, format = "simple",
   else if ( all(c("autoMrP", "classifiers") %in% class(x)) ){
 
     # unit identifier
-    L2.unit <- names(x)[1]
+    L2.unit <- names(object)[1]
 
     # multiple classifiers
     if (base::is.null(classifiers)){
 
       # point estimates for all classifiers
-      s_data <- x %>%
+      s_data <- object %>%
         dplyr::group_by(.dots = list(L2.unit)) %>%
         dplyr::summarise_all(.funs = median )
 
       # output table
-      ests <- paste(names(x)[-1], collapse = ", ")
+      ests <- paste(names(object)[-1], collapse = ", ")
       n <- ifelse(n <= nrow(s_data), yes = n, no = nrow(s_data) )
       cat( paste("\n", "# estimates of classifiers: ", ests), sep = "")
-      output_table(x = s_data[1:n, ],
+      output_table(object = s_data[1:n, ],
                    col.names = names(s_data),
                    format = format,
                    digits = digits)
@@ -1395,7 +1397,7 @@ summary.autoMrP <- function(x, ci.lvl = 0.95, digits = 4, format = "simple",
     } else{
 
       # summary statistics
-      s_data <- x %>%
+      s_data <- object %>%
         dplyr::select(dplyr::one_of(L2.unit,classifiers)) %>%
         dplyr::group_by(.dots = list(L2.unit)) %>%
         dplyr::summarise_all(.funs = list(
@@ -1411,7 +1413,7 @@ summary.autoMrP <- function(x, ci.lvl = 0.95, digits = 4, format = "simple",
         n <- ifelse(n <= nrow(s_data), yes = n, no = nrow(s_data) )
         cat( paste("\n", "# estimates of", classifiers, "classifier"), sep = "")
         output_table(
-          x = s_data[1:n, ],
+          object = s_data[1:n, ],
           col.names = c(
             L2.unit,
             "Min.",
@@ -1427,7 +1429,7 @@ summary.autoMrP <- function(x, ci.lvl = 0.95, digits = 4, format = "simple",
         n <- ifelse(n <= nrow(s_data), yes = n, no = nrow(s_data) )
         cat( paste("\n", "# estimates of", classifiers, "classifier"), sep = "")
         output_table(
-          x = s_data[1:n, ],
+          object = s_data[1:n, ],
           col.names = c(L2.unit, "Estimate"),
           format = format,
           digits = digits)
@@ -1437,16 +1439,16 @@ summary.autoMrP <- function(x, ci.lvl = 0.95, digits = 4, format = "simple",
   }
 
   # autoMrP list object
-  else if ( all(c("autoMrP", "list") %in% class(x)) ){
+  else if ( all(c("autoMrP", "list") %in% class(object)) ){
 
     # unit identifier
-    L2.unit <- names(x$classifiers)[1]
+    L2.unit <- names(object$classifiers)[1]
 
     # if EBMA was run
-    if( all(x$ebma != "EBMA step skipped (only 1 classifier run)") ){
+    if( all(object$ebma != "EBMA step skipped (only 1 classifier run)") ){
 
       # summary statistics
-      s_data <- x$ebma %>%
+      s_data <- object$ebma %>%
         dplyr::group_by(.dots = list(L2.unit)) %>%
         dplyr::summarise_all(.funs = list(
           min = ~ base::min(x = ., na.rm = TRUE),
@@ -1461,7 +1463,7 @@ summary.autoMrP <- function(x, ci.lvl = 0.95, digits = 4, format = "simple",
         n <- ifelse(n <= nrow(s_data), yes = n, no = nrow(s_data) )
         cat( paste("\n", "# EBMA estimates:"), sep = "")
         output_table(
-          x = s_data[1:n, ],
+          object = s_data[1:n, ],
           col.names = c( L2.unit, "Min.", "Lower bound", "Median", "Upper bound", "Max"),
         format = format,
         digits = digits)
@@ -1470,13 +1472,13 @@ summary.autoMrP <- function(x, ci.lvl = 0.95, digits = 4, format = "simple",
         s_data <- dplyr::select(.data = s_data, dplyr::one_of(L2.unit), median)
         n <- ifelse(n <= nrow(s_data), yes = n, no = nrow(s_data) )
         cat( paste("\n", "# EBMA estimates:"), sep = "")
-        output_table(x = s_data[1:n, ], col.names = c(L2.unit, "Median"), format = format, digits = digits)
+        output_table(object = s_data[1:n, ], col.names = c(L2.unit, "Median"), format = format, digits = digits)
         if (n < nrow(s_data)) cat( paste("... with", nrow(s_data)-n, " more rows"), sep = "")
       }
     } else{
 
       # summary statistics
-      s_data <- x$classifiers %>%
+      s_data <- object$classifiers %>%
         dplyr::group_by(.dots = list(L2.unit)) %>%
         dplyr::summarise_all(.funs = list(
           min = ~ base::min(x = ., na.rm = TRUE),
@@ -1490,9 +1492,9 @@ summary.autoMrP <- function(x, ci.lvl = 0.95, digits = 4, format = "simple",
       if ( all(s_data$median != s_data$lb) ){
 
         n <- ifelse(n <= nrow(s_data), yes = n, no = nrow(s_data) )
-        cat( paste("\n", "# ", names(x$classifiers)[2]," estimates:"), sep = "")
+        cat( paste("\n", "# ", names(object$classifiers)[2]," estimates:"), sep = "")
         output_table(
-          x = s_data[1:n, ],
+          object = s_data[1:n, ],
           col.names = c(
             L2.unit,
             "Min.",
@@ -1507,8 +1509,8 @@ summary.autoMrP <- function(x, ci.lvl = 0.95, digits = 4, format = "simple",
        # drop uncertainty columns
        s_data <- dplyr::select(.data = s_data, dplyr::one_of(L2.unit), median)
        n <- ifelse(n <= nrow(s_data), yes = n, no = nrow(s_data) )
-       cat( paste("\n", "# ", names(x$classifiers)[2]," estimates:"), sep = "")
-       output_table(x = s_data[1:n, ], col.names = c(L2.unit, "Estimate"), format = format, digits = digits)
+       cat( paste("\n", "# ", names(object$classifiers)[2]," estimates:"), sep = "")
+       output_table(object = s_data[1:n, ], col.names = c(L2.unit, "Estimate"), format = format, digits = digits)
        if (n < nrow(s_data)) cat( paste("... with", nrow(s_data)-n, " more rows"), sep = "")
 
       }
@@ -1527,10 +1529,10 @@ summary.autoMrP <- function(x, ci.lvl = 0.95, digits = 4, format = "simple",
 #' @inheritParams summary.autoMrP
 #' @param col.names The column names of the table. A
 
-output_table <- function(x, col.names, format, digits){
+output_table <- function(object, col.names, format, digits){
 
   # output table
-  print( knitr::kable(x = x,
+  print( knitr::kable(object = object,
                       col.names = col.names,
                       format = format,
                       digits = digits))

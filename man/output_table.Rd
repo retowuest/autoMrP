@@ -4,10 +4,10 @@
 \alias{output_table}
 \title{A table for the summary  function}
 \usage{
-output_table(x, col.names, format, digits)
+output_table(object, col.names, format, digits)
 }
 \arguments{
-\item{x}{An \code{autoMrP()} object.}
+\item{object}{An \code{autoMrP()} object for which a summary is desired.}
 
 \item{col.names}{The column names of the table. A}
 
