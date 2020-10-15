@@ -15,5 +15,4 @@ globalVariables(c("%>%",
                   "lb",
                   "ub",
                   "method",
-                  "estimates",
-                  "x"))
+                  "estimates"))

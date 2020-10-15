@@ -1372,7 +1372,7 @@ summary.autoMrP <- function(object, ci.lvl = 0.95, digits = 4, format = "simple"
   }
 
   # classifier summary
-  else if ( all(c("autoMrP", "classifiers") %in% class(x)) ){
+  else if ( all(c("autoMrP", "classifiers") %in% class(object)) ){
 
     # unit identifier
     L2.unit <- names(object)[1]
