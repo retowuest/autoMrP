@@ -1532,7 +1532,7 @@ summary.autoMrP <- function(object, ci.lvl = 0.95, digits = 4, format = "simple"
 output_table <- function(object, col.names, format, digits){
 
   # output table
-  print( knitr::kable(object = object,
+  print( knitr::kable(x = object,
                       col.names = col.names,
                       format = format,
                       digits = digits))
