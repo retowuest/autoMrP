@@ -1269,8 +1269,13 @@ summary.autoMrP <- function(object, ci.lvl = 0.95, digits = 4, format = "simple"
   if ( all(c("autoMrP", "weights") %in% class(object)) ){
 
     # error message if weights summary called without running multiple classifiers
-    if (object == "EBMA step skipped (only 1 classifier run)"){
+    if (any(object == "EBMA step skipped (only 1 classifier run)")){
       stop("Weights are not reported if the EBMA step was skipped. Re-run autoMrP with multiple classifiers.")
+    }
+
+    # weights vector to tibble
+    if( is.null(dim(object)) ){
+      object <- dplyr::tibble(!!!object)
     }
 
     # summary statistics
@@ -1282,10 +1287,10 @@ summary.autoMrP <- function(object, ci.lvl = 0.95, digits = 4, format = "simple"
       dplyr::group_by(method) %>%
       dplyr::summarise(
         min = base::min(estimates, na.rm = TRUE),
-        quart1 = stats::quantile(object = estimates, probs = 0.25),
+        quart1 = stats::quantile(x = estimates, probs = 0.25),
         median = stats::median(estimates),
         mean = base::mean(estimates),
-        quart3 = stats::quantile(object = estimates, probs = 0.75),
+        quart3 = stats::quantile(x = estimates, probs = 0.75),
         max = base::max(estimates),
         .groups = "drop") %>%
       dplyr::arrange(dplyr::desc(median))
