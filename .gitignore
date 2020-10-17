@@ -4,3 +4,4 @@ packrat/lib*/
 .Rhistory
 packrat/src/
 testing/
+inst/doc

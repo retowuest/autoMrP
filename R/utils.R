@@ -1200,8 +1200,8 @@ plot.autoMrP <- function(x, algorithm = "ebma", ci.lvl = 0.95, ...){
     plot_data <- x$ebma %>%
       dplyr::group_by(.dots = list(L2.unit)) %>%
       dplyr::summarise(median = stats::median(ebma, na.rm = TRUE),
-                       lb = stats::quantile(x = ebma, p = (1 - ci.lvl)*.5),
-                       ub = stats::quantile(x = ebma, p = ci.lvl + (1 - ci.lvl)*.5),
+                       lb = stats::quantile(x = ebma, p = (1 - ci.lvl)*.5, na.rm = TRUE),
+                       ub = stats::quantile(x = ebma, p = ci.lvl + (1 - ci.lvl)*.5, na.rm = TRUE),
                        .groups = "drop") %>%
       dplyr::arrange(median) %>%
       dplyr::mutate(rank = dplyr::row_number()) %>%
@@ -1210,9 +1210,9 @@ plot.autoMrP <- function(x, algorithm = "ebma", ci.lvl = 0.95, ...){
     plot_data <- x$classifiers %>%
       dplyr::group_by(.dots = list(L2.unit)) %>%
       dplyr::select(all_of(L2.unit), contains(algorithm)) %>%
-      dplyr::summarise_all(.funs = list(median = ~ stats::quantile(x = ., probs = 0.5),
-                                        lb = ~ stats::quantile(x = ., probs = (1 - ci.lvl) *.5),
-                                        ub = ~ stats::quantile(x = ., probs = ci.lvl + (1 - ci.lvl) *.5))) %>%
+      dplyr::summarise_all(.funs = list(median = ~ stats::quantile(x = ., probs = 0.5, na.rm = TRUE),
+                                        lb = ~ stats::quantile(x = ., probs = (1 - ci.lvl) *.5, na.rm = TRUE),
+                                        ub = ~ stats::quantile(x = ., probs = ci.lvl + (1 - ci.lvl) *.5, na.rm = TRUE))) %>%
       dplyr::arrange(median) %>%
       dplyr::mutate(rank = dplyr::row_number()) %>%
       dplyr::mutate(rank = as.factor(rank))
@@ -1287,11 +1287,11 @@ summary.autoMrP <- function(object, ci.lvl = 0.95, digits = 4, format = "simple"
       dplyr::group_by(method) %>%
       dplyr::summarise(
         min = base::min(estimates, na.rm = TRUE),
-        quart1 = stats::quantile(x = estimates, probs = 0.25),
-        median = stats::median(estimates),
-        mean = base::mean(estimates),
-        quart3 = stats::quantile(x = estimates, probs = 0.75),
-        max = base::max(estimates),
+        quart1 = stats::quantile(x = estimates, probs = 0.25, na.rm = TRUE),
+        median = stats::median(estimates, na.rm = TRUE),
+        mean = base::mean(estimates, na.rm = TRUE),
+        quart3 = stats::quantile(x = estimates, probs = 0.75, na.rm = TRUE),
+        max = base::max(estimates, na.rm = TRUE),
         .groups = "drop") %>%
       dplyr::arrange(dplyr::desc(median))
 
@@ -1339,9 +1339,9 @@ summary.autoMrP <- function(object, ci.lvl = 0.95, digits = 4, format = "simple"
       dplyr::group_by(.dots = list(L2.unit)) %>%
       dplyr::summarise(
         min = base::min(ebma, na.rm = TRUE),
-        lb = stats::quantile(x = ebma, probs = (1 - ci.lvl)*.5 ),
-        median = stats::quantile(x = ebma, probs = .5 ),
-        ub = stats::quantile(x = ebma, probs = ci.lvl + (1 - ci.lvl)*.5 ),
+        lb = stats::quantile(x = ebma, probs = (1 - ci.lvl)*.5, na.rm = TRUE),
+        median = stats::quantile(x = ebma, probs = .5, na.rm = TRUE),
+        ub = stats::quantile(x = ebma, probs = ci.lvl + (1 - ci.lvl)*.5, na.rm = TRUE),
         max = base::max(ebma, na.rm = TRUE),
         .groups = "drop"
       )
@@ -1407,9 +1407,9 @@ summary.autoMrP <- function(object, ci.lvl = 0.95, digits = 4, format = "simple"
         dplyr::group_by(.dots = list(L2.unit)) %>%
         dplyr::summarise_all(.funs = list(
           min = ~ base::min(x = ., na.rm = TRUE),
-          lb = ~ stats::quantile(x = ., probs = (1 - ci.lvl)*.5 ),
-          median = ~ stats::median(x = ., na.rm = TRUE ),
-          ub = ~ stats::quantile(x = ., probs = ci.lvl + (1 - ci.lvl)*.5 ),
+          lb = ~ stats::quantile(x = ., probs = (1 - ci.lvl)*.5, na.rm = TRUE),
+          median = ~ stats::median(x = ., na.rm = TRUE),
+          ub = ~ stats::quantile(x = ., probs = ci.lvl + (1 - ci.lvl)*.5, na.rm = TRUE),
           max = ~ base::max(x = ., na.rm = TRUE)
           ))
 
@@ -1450,16 +1450,16 @@ summary.autoMrP <- function(object, ci.lvl = 0.95, digits = 4, format = "simple"
     L2.unit <- names(object$classifiers)[1]
 
     # if EBMA was run
-    if( all(object$ebma != "EBMA step skipped (only 1 classifier run)") ){
+    if( !"EBMA step skipped (only 1 classifier run)" %in% object$ebma ){
 
       # summary statistics
       s_data <- object$ebma %>%
         dplyr::group_by(.dots = list(L2.unit)) %>%
         dplyr::summarise_all(.funs = list(
           min = ~ base::min(x = ., na.rm = TRUE),
-          lb = ~ stats::quantile(x = ., probs = (1 - ci.lvl)*.5 ),
+          lb = ~ stats::quantile(x = ., probs = (1 - ci.lvl)*.5, na.rm = TRUE),
           median = ~ stats::median(x = ., na.rm = TRUE ),
-          ub = ~ stats::quantile(x = ., probs = ci.lvl + (1 - ci.lvl)*.5 ),
+          ub = ~ stats::quantile(x = ., probs = ci.lvl + (1 - ci.lvl)*.5, na.rm = TRUE),
           max = ~ base::max(x = ., na.rm = TRUE)
         ))
 
@@ -1487,9 +1487,9 @@ summary.autoMrP <- function(object, ci.lvl = 0.95, digits = 4, format = "simple"
         dplyr::group_by(.dots = list(L2.unit)) %>%
         dplyr::summarise_all(.funs = list(
           min = ~ base::min(x = ., na.rm = TRUE),
-          lb = ~ stats::quantile(x = ., probs = (1 - ci.lvl)*.5 ),
-          median = ~ stats::median(x = ., na.rm = TRUE ),
-          ub = ~ stats::quantile(x = ., probs = ci.lvl + (1 - ci.lvl)*.5 ),
+          lb = ~ stats::quantile(x = ., probs = (1 - ci.lvl)*.5, na.rm = TRUE),
+          median = ~ stats::median(x = ., na.rm = TRUE),
+          ub = ~ stats::quantile(x = ., probs = ci.lvl + (1 - ci.lvl)*.5, na.rm = TRUE),
           max = ~ base::max(x = ., na.rm = TRUE)
         ))
 
