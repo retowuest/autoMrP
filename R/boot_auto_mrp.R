@@ -32,7 +32,7 @@ boot_auto_mrp <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
                                .packages = "autoMrP") %dorng% {
 
     # Bootstrapped survey sample
-    boot_sample <- dplyr::sample_n(tbl = survey, size = nrow(survey), replace = TRUE)
+    boot_sample <- dplyr::slice_sample(.data = survey, n = base::nrow(survey), replace = TRUE)
 
     # Estimate on 1 sample in autoMrP
     boot_mrp <- auto_MrP(
@@ -101,8 +101,18 @@ boot_auto_mrp <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
   }
 
   # Median and standard deviations for classifier estimates
-  classifiers <- base::do.call(base::rbind, base::do.call(base::rbind, boot_out)[,"classifiers"] ) #%>%
-    #dplyr::group_by(.dots = list(L2.unit)) %>%
+  classifiers <- base::do.call(base::rbind, base::do.call(base::rbind, boot_out)[,"classifiers"] ) %>%
+    dplyr::select(
+     one_of(L2.unit),
+     contains("best_subset"),
+     contains("pca"),
+     contains("lasso"),
+     contains("gb"),
+     contains("svm"),
+     contains("mrp")
+    )
+
+  #dplyr::group_by(.dots = list(L2.unit)) %>%
     #dplyr::summarise_all(.funs = c(median = median, sd = sd), na.rm = TRUE) %>%
     #dplyr::select(
     #  state,
@@ -116,7 +126,16 @@ boot_auto_mrp <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
 
   # weights
   weights <- base::do.call(base::rbind, base::do.call(base::rbind, boot_out)[,"weights"] ) %>%
-    dplyr::as_tibble() #%>%
+    dplyr::as_tibble() %>%
+    dplyr::select(
+       contains("best_subset"),
+       contains("pca"),
+       contains("lasso"),
+       contains("gb"),
+       contains("svm"),
+       contains("mrp")
+      )
+
     #dplyr::summarise_all(.funs = c(median = median, sd = sd), na.rm = TRUE) %>%
     #dplyr::select(
     #  contains("best_subset"),
