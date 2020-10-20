@@ -1191,7 +1191,7 @@ plot.autoMrP <- function(x, algorithm = "ebma", ci.lvl = 0.95, ...){
   L2.unit <- names(x$classifiers)[1]
 
   # plot classifier if EBMA was not estimated
-  if(x$ebma == "EBMA step skipped (only 1 classifier run)") {
+  if( "EBMA step skipped (only 1 classifier run)" %in% x$ebma ) {
     algorithm <- names(x$classifiers)[-1]
   }
 
