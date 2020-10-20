@@ -28,7 +28,7 @@ boot_auto_mrp <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
 
   # Bootstrap iterations
   boot_out <- foreach::foreach(idx_boot = 1:boot.iter,
-                               .errorhandling = "pass",
+                               .errorhandling = "remove",
                                .packages = "autoMrP") %dorng% {
 
     # Bootstrapped survey sample
