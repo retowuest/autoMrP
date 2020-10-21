@@ -1175,9 +1175,10 @@ predict_glmmLasso <- function(census, m, L1.x, lasso.L2.x, L2.unit, L2.reg) {
 #' \code{plot.autoMrP()} plots unit-level preference estimates and error bars.
 #'
 #' @param x An \code{autoMrP()} object.
-#' @param algorithm The algorithm on which preference estimates are based. A
-#'   character-valued scalar indicating either \code{ebma} or the classifier to
-#'   be used. Default is \code{ebma}.
+#' @param algorithm The algorithm/classifier fo which preference estimates are
+#'   desired. A character-valued scalar indicating either \code{ebma} or the
+#'   classifier to be used. Allowed choices are: "ebma", "best_subset", "lasso",
+#'   "pca", "gb", "svm", and "mrp". Default is \code{ebma}.
 #' @param ci.lvl The level of the confidence intervals. A proportion. Default is
 #'   \code{0.95}. Confidence intervals are based on bootstrapped estimates and
 #'   will not be printed if bootstrapping was not carried out.
