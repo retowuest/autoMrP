@@ -1190,8 +1190,9 @@ plot.autoMrP <- function(x, algorithm = "ebma", ci.lvl = 0.95, ...){
   # L2.unit identifier
   L2.unit <- names(x$classifiers)[1]
 
+
   # Error if requested algorithm was not fitted
-  if(! algorithm %in% names(x$classifiers) ){
+  if(! algorithm %in% names(x$classifiers) & algorithm != "ebma" ){
     stop('The ', algorithm, ' classifier was not run. Re-run autoMrP() with the requested algorithm. Allowed choices are: "ebma", "best_subset", "lasso", "pca", "gb", "svm", and "mrp".')
   }
 
