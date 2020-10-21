@@ -11,5 +11,5 @@ devtools::install_github("retowuest/autoMrP", build_vignettes = TRUE)
 Please refer to the vignette for a detailed introduction to autoMrP. Access the vignette via:
 
 ```R
-browseVignettes("autoMrP")
+utils::browseVignettes("autoMrP")
 ```
