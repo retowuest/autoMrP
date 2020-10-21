@@ -9,9 +9,10 @@
 \arguments{
 \item{x}{An \code{autoMrP()} object.}
 
-\item{algorithm}{The algorithm on which preference estimates are based. A
-character-valued scalar indicating either \code{ebma} or the classifier to
-be used. Default is \code{ebma}.}
+\item{algorithm}{The algorithm/classifier fo which preference estimates are
+desired. A character-valued scalar indicating either \code{ebma} or the
+classifier to be used. Allowed choices are: "ebma", "best_subset", "lasso",
+"pca", "gb", "svm", and "mrp". Default is \code{ebma}.}
 
 \item{ci.lvl}{The level of the confidence intervals. A proportion. Default is
 \code{0.95}. Confidence intervals are based on bootstrapped estimates and
