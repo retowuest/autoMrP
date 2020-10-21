@@ -17,7 +17,7 @@ boot_auto_mrp <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
                           gb.n.trees.increase, gb.n.trees.max,
                           gb.n.iter, gb.n.minobsinnode, svm.kernel,
                           svm.gamma, svm.cost, ebma.tol, seed,
-                          boot.iter, ebma.n.draws, cores){
+                          boot.iter, cores){
 
   # Binding for global variables
   `%>%` <- dplyr::`%>%`
@@ -37,7 +37,7 @@ boot_auto_mrp <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
     # Estimate on 1 sample in autoMrP
     boot_mrp <- auto_MrP(
       survey = boot_sample,
-      ebma.n.draws = ebma.n.draws,
+      ebma.n.draws = 1,
       uncertainty = FALSE,
       verbose = FALSE,
       cores = 1,

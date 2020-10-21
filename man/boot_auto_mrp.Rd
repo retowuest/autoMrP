@@ -52,6 +52,7 @@ boot_auto_mrp(
   ebma.tol,
   seed,
   boot.iter,
+  ebma.n.draws,
   cores
 )
 }
@@ -292,6 +293,10 @@ random number generation. If \code{NULL}, then the seed is set to
 indicating the number of bootstrap iterations to be computed. Will be
 ignored unless \code{uncertainty = TRUE}. Default is \code{200} if
 \code{uncertainty = TRUE} and \code{NULL} if \code{uncertainty = FALSE}.}
+
+\item{ebma.n.draws}{EBMA number of samples. An integer-valued scalar
+specifying the number of bootstrapped samples to be drawn from the EBMA
+fold and used for tuning EBMA. Default is \eqn{100}.}
 
 \item{cores}{The number of cores to be used. An integer indicating the number
 of processor cores used for parallel computing. Default is 1.}
