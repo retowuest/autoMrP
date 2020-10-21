@@ -279,9 +279,8 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
                      gb.n.trees.init = 50, gb.n.trees.increase = 50,
                      gb.n.trees.max = 1000, gb.n.iter = 70,
                      gb.n.minobsinnode = 5, svm.kernel = "radial",
-                     svm.gamma = c(0.3, 0.5, 0.55, 0.6, 0.65,
-                                   0.7, 0.8, 0.9, 1, 2, 3, 4),
-                     svm.cost = c(1, 10), ebma.n.draws = 100,
+                     svm.gamma = NULL, svm.cost = c(0.5, 1, 3, 5, 10),
+                     ebma.n.draws = 100,
                      ebma.tol = c(0.01, 0.005, 0.001, 0.0005, 0.0001, 0.00005,
                                   0.00001), seed = NULL, verbose = FALSE,
                      uncertainty = FALSE, boot.iter = NULL) {
@@ -573,6 +572,14 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
     if (isTRUE(svm)) {
 
       message("Starting support vector machine tuning")
+
+      # Default Gamma values
+      if( is.null(svm.gamma) ){
+        svm.gamma <- seq(
+          from = 1 / ((ncol(cv_data)-1 -length(L2.x)) * 50),
+          to = 1 / ((ncol(cv_data)-1 -length(L2.x)) * 1),
+          length.out = 6)
+      }
 
       # Determine context-level covariates
       if (is.null(svm.L2.x)) {
