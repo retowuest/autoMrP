@@ -44,7 +44,7 @@ Imports:
 	ggplot2 (>= 3.3.2),
 	knitr (>= 1.29),
 	tidyr (>= 1.1.2),
-	purr (>= 0.3.4)
+	purrr (>= 0.3.4)
 Suggests: 
     testthat,
     rmarkdown,
