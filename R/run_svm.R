@@ -82,13 +82,15 @@ run_svm <- function(y, L1.x, L2.x, L2.unit, L2.reg,
   form <- as.formula(paste(y, " ~ ", x, sep = ""))
 
   # Default Gamma values
-  if( is.null(svm.gamma) ){
+  if( is.null(gamma) ){
 
     # SVM Gamma values
-    svm.gamma <- c(
-      log_spaced(min = 1e-4, 1e-2, n = 9),
-      1 / ((ncol(cv_data)-1 -length(L2.x)) * 1)
-    )
+    gamma <- log_spaced(min = 1e-5, 1e-2, n = 20)
+  }
+
+  # Default Cost values
+  if ( is.null(cost) ){
+    cost <- log_spaced(min = 0.5, max = 50, n = 5)
   }
 
   # tuning parameter grid
