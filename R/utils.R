@@ -1603,3 +1603,19 @@ output_table <- function(object, col.names, format, digits){
                       digits = digits))
 
 }
+
+
+################################################################################
+#                 Equal spacing on the log scale                               #
+################################################################################
+
+#' @param min The minimum value of the sequence. A positive numeric scalar (min
+#'   > 0).
+#' @param max The maximum value of the sequence. a positive numeric scalar (max
+#'   > 0).
+#' @param n The length of the sequence. An integer valued scalar.
+
+# Sequence that is equally spaced on the log scale
+log_spaced <- function(min, max, n){
+  return(base::exp( base::seq(from = base::log(min), to = base::log(max), length.out = n)))
+}

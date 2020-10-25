@@ -573,24 +573,6 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE,
 
       message("Starting support vector machine tuning")
 
-      # Default Gamma values
-      if( is.null(svm.gamma) ){
-
-        # Variance of L2.x variables
-        var_X <- cv_data %>%
-          dplyr::select( dplyr::one_of(L2.x) ) %>%
-          dplyr::select_if( base::is.numeric ) %>%
-          purrr::flatten() %>%
-          base::unlist() %>%
-          stats::var()
-
-        # SVM Gamma values
-        svm.gamma <- c(
-          1 / ((ncol(cv_data)-1 -length(L2.x)) * var_X),
-          1 / ((ncol(cv_data)-1 -length(L2.x)) * 1)
-          )
-      }
-
       # Determine context-level covariates
       if (is.null(svm.L2.x)) {
         svm.L2.x <- L2.x
