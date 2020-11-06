@@ -14,9 +14,7 @@ run_best_subset_mc(
   loss.fun,
   data,
   cores,
-  best.subset.classifier,
   models,
-  loss.function,
   verbose
 )
 }
@@ -58,14 +56,8 @@ cross-validation.}
 \item{cores}{The number of cores to be used. An integer indicating the number
 of processor cores used for parallel computing. Default is 1.}
 
-\item{best.subset.classifier}{Best subset classifier. An \code{autoMrP} function.}
-
 \item{models}{The models to perform best subset selection on. A list of model
 formulas.}
-
-\item{loss.function}{The loss function used to evaluate model performance. An
-\code{autoMrP} function which implements the loss functions specified in
-\code{loss.fun}.}
 
 \item{verbose}{Verbose output. A logical argument indicating whether or not
 verbose output should be printed. Default is \code{TRUE}.}

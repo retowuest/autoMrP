@@ -45,10 +45,8 @@
 #'   )
 #' }
 
-svm_classifier <- function(form, data, kernel,
-                           type, probability,
-                           svm.gamma, svm.cost,
-                           verbose = c(TRUE, FALSE)) {
+svm_classifier <- function(form, data, kernel, type, probability, svm.gamma,
+                           svm.cost, verbose = c(TRUE, FALSE)) {
 
   # Train and evaluate model using the supplied set of tuning parameters
   if (isTRUE(verbose == TRUE)) {

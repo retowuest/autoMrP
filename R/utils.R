@@ -316,17 +316,17 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
   }
 
   # Check if loss.unit is either "individuals" or "L2 units"
-  if (!loss.unit %in% c("individuals", "L2 units")) {
+  if (!all(loss.unit %in% c("individuals", "L2 units"))) {
     stop(paste("The argument 'loss.unit', specifying the level at which to",
                " evaluate prediction performance, must be either",
                " 'individuals' or 'L2 units'.", sep = ""))
   }
 
   # Check if loss.fun is either "MSE" or "MAE"
-  if (!loss.fun %in% c("MSE", "MAE")) {
+  if (!all(loss.fun %in% c("MSE", "MAE", "cross-entropy", "f1", "msfe"))) {
     stop(paste("The argument 'loss.fun', specifying the loss function used",
                " to measure prediction performance, must be either",
-               " 'MSE' or 'MAE'.", sep = ""))
+               " 'MSE', 'MAE', 'cross-entropy', 'f1', or 'msfe'.", sep = ""))
   }
 
   # Check if best.subset is logical
@@ -406,68 +406,24 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
         }
       }
 
-      # Check if lasso.lambda is a list
-      if (is.list(lasso.lambda)) {
-        # Check if lasso.lambda is a list of two numeric vectors of equal size
-        if (!(length(lasso.lambda) == 2 &
-              all(sapply(lasso.lambda, function(x) {is.numeric(x)})) &
-              length(unique(sapply(lasso.lambda, function(x) {length(x)}))) == 1)) {
-          stop(paste("If provided as a list, argument 'lasso.lambda' must be a",
-                     " list of two numeric vectors of equal size, with the",
-                     " first vector containing the step sizes by which the",
-                     " penalty parameter should increase and the second vector",
-                     " containing the upper thresholds of the intervals to",
-                     " which the step sizes apply.",
-                     sep = ""))
-        } else {
-          # Check if step sizes do not exceed upper thresholds of intervals to
-          # which they should be applied
-          if (any(lasso.lambda[[1]] > lasso.lambda[[2]])) {
-            stop(paste("If argument 'lasso.lambda' is specified as a list of",
-                       " two vectors, the value in the first vector indicating",
-                       " the step size cannot exceed the corresponding value",
-                       " in the second vector indicating the upper threshold",
-                       " of the interval to which the step size should apply.",
-                       sep = ""))
-          } else {
-            # Check if lasso.lambda contains only non-negative values
-            if (min(unlist(lasso.lambda)) < 0) {
-              stop(paste("The argument 'lasso.lambda' can only take",
-                         " non-negative values.", sep = ""))
-            }
+      # Check if is provided but not a numeric vector
+      if (!is.null(lasso.lambda)){
+        if (!is.numeric(lasso.lambda)){
+          stop("lasso.lambda must be 'NULL' or a non-negative numeric vector.")
+        } else{
+          # Check if lasso.lambda contains non-negative values
+          if (!all(lasso.lambda > 0)){
+            stop("lasso.lambda must not contain negative values")
           }
-        }
-      } else {
-        # Check if lasso.lambda is a numeric vector
-        if (is.numeric(lasso.lambda)) {
-          # Check if lasso.lambda contains only non-negative values
-          if (min(lasso.lambda) < 0) {
-            stop(paste("The argument 'lasso.lambda' can only take",
-                       " non-negative values.", sep = ""))
-          }
-        } else {
-          stop(paste("The argument 'lasso.lambda' must be either a numeric",
-                     " vector of non-negative values or a list of two numeric",
-                     " vectors of equal size, with the first vector containing",
-                     " the step sizes by which the penalty parameter should",
-                     " increase and the second vector containing the upper",
-                     " thresholds of the intervals to which the step sizes apply.",
-                     sep = ""))
         }
       }
 
       # Check if lasso.n.iter is NULL
-      if (is.null(lasso.n.iter)) {
-
-      }
-
-      # Check if lasso.n.iter is an integer-valued scalar
-      if (!(dplyr::near(lasso.n.iter, as.integer(lasso.n.iter)) &
-            length(lasso.n.iter) == 1)) {
-        stop(paste("The argument 'lasso.n.iter', specifying the number of folds to",
-                   " be used in cross-validation, must be an integer-valued",
-                   " scalar.",
-                   sep = ""))
+      if (!is.null(lasso.n.iter)) {
+        if (!(dplyr::near(lasso.n.iter, as.integer(lasso.n.iter)) &
+              length(lasso.n.iter) == 1)) {
+          stop("lasso.n.iter specifies the Lasso grid size. It must be a non-negative integer valued scalar.")
+        }
       }
     } else {
       # Check if lasso.L2.x is NULL
@@ -594,11 +550,11 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
       }
 
       # Check if gb.L2.unit has a value other than the default
-      if (!isFALSE(gb.L2.unit)) {
-        stop(paste("The argument 'gb.L2.unit', indicating whether 'L2.unit'",
-                   " should be included in the GB classifier, will be",
-                   " ignored because 'gb' is set to FALSE.", sep = ""))
-      }
+      # if (!isFALSE(gb.L2.unit)) {
+      #   stop(paste("The argument 'gb.L2.unit', indicating whether 'L2.unit'",
+      #              " should be included in the GB classifier, will be",
+      #              " ignored because 'gb' is set to FALSE.", sep = ""))
+      # }
 
       # Check if gb.L2.reg has a value other than the default
       if (!isFALSE(gb.L2.reg)) {
@@ -1006,7 +962,7 @@ model_list_pca <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL) {
 #                           Prediction loss function                           #
 ################################################################################
 
-#' Estimates loss value
+#' Estimates loss value.
 #'
 #' \code{loss_function()} estimates the loss based on a loss function.
 #'
@@ -1028,40 +984,358 @@ model_list_pca <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL) {
 
 loss_function <- function(pred, data.valid,
                           loss.unit = c("individuals", "L2 units"),
-                          loss.fun = c("MSE", "MAE"),
+                          loss.fun = c("MSE", "MAE", "cross-entropy"),
                           y, L2.unit) {
-  if (loss.unit == "individuals" & loss.fun == "MSE") {
-    out <- mean((data.valid[[y]] - pred)^2)
-  } else if (loss.unit == "individuals" & loss.fun == "MAE") {
-    out <- mean(abs(data.valid[[y]] - pred))
-  } else if (loss.unit == "L2 units" & loss.fun == "MSE") {
-    data.valid <- data.valid %>%
-      dplyr::mutate(pred = pred)
 
-    out <- data.valid %>%
-      dplyr::group_by_at(L2.unit) %>%
-      dplyr::summarise_at(.vars = c(y, "pred"), mean) %>%
-      dplyr::mutate(sqe = (.data[[y]] - pred)^2) %>%
-      dplyr::pull(sqe)
+  ## Loss functions
+  # MSE
+  mse <- mean_squared_error(
+    pred = pred, data.valid = data.valid,
+    y = y, L2.unit = L2.unit)
 
-    out <- mean(out)
-  } else {
-    data.valid <- data.valid %>%
-      dplyr::mutate(pred = pred)
+  # MAE
+  mae <- mean_absolute_error(
+    pred = pred, data.valid = data.valid,
+    y = y, L2.unit = L2.unit)
 
-    out <- data.valid %>%
-      dplyr::group_by_at(L2.unit) %>%
-      dplyr::summarise_at(.vars = c(y, "pred"), mean) %>%
-      dplyr::mutate(ae = abs(.data[[y]] - pred)) %>%
-      dplyr::pull(ae)
+  # binary cross-entropy
+  bce <- binary_cross_entropy(
+    pred = pred, data.valid = data.valid,
+    y = y, L2.unit = L2.unit)
 
-    out <- mean(out)
-  }
+  # f1 score
+  f1 <- f1_score(
+    pred = pred, data.valid = data.valid,
+    L2.unit = L2.unit, y = y)
+
+  # mean squared false error
+  msfe <- mean_squared_false_error(
+    pred = pred, data.valid = data.valid,
+    y = y, L2.unit = L2.unit)
+
+  # Combine loss functions
+  score <- mse %>%
+    dplyr::bind_rows(mae) %>%
+    dplyr::bind_rows(bce) %>%
+    dplyr::bind_rows(f1) %>%
+    dplyr::bind_rows(msfe)
+
+  # Filter score table by loss function and loss unit
+  score <- score %>%
+    dplyr::filter(measure %in% loss.fun) %>%
+    dplyr::filter(level %in% loss.unit) %>%
+    dplyr::group_by(measure) %>%
+    dplyr::summarise(value = mean(value), .groups = "drop" )
 
   # Function output
+  return(score)
+}
+
+
+###########################################################################
+# mean squared error/ brier score -----------------------------------------
+###########################################################################
+
+#' Estimates the mean squared prediction error.
+#'
+#' \code{mean_squared_error()} estimates the mean squared error for the desired
+#' loss unit.
+#' @inheritParams loss_function
+
+mean_squared_error <- function(pred, data.valid, y, L2.unit){
+
+  # outcome
+  out <- dplyr::tibble(
+    measure = rep("MSE", 2),
+    value = rep(NA, 2),
+    level = c( "individuals", "L2 units")
+  )
+
+  # mse values
+  values <- rep(NA, 2)
+
+  # loss unit = "individual"
+  values[1] <- mean((data.valid[[y]] - pred)^2)
+
+  # loss unit = "L2 units"
+  l2 <- data.valid %>%
+    dplyr::mutate(pred = pred) %>%
+    dplyr::rowwise() %>%
+    dplyr::mutate(sqe = (.data[[y]] - pred)^2 ) %>%
+    dplyr::ungroup() %>%
+    dplyr::group_by(.dots = list(L2.unit)) %>%
+    dplyr::summarise(mse = mean(sqe), .groups = "drop")
+
+  values[2] <- mean(dplyr::pull(.data = l2, var = mse))
+
+  out <- dplyr::mutate(out, value = values)
+
   return(out)
 }
 
+
+###########################################################################
+# mean absolute error -----------------------------------------------------
+###########################################################################
+
+#' Estimates the mean absolute prediction error.
+#'
+#' \code{mean_absolute_error()} estimates the mean absolute error for the
+#' desired loss unit.
+#' @inheritParams loss_function
+
+mean_absolute_error <- function(pred, data.valid, y, L2.unit){
+
+  # outcome
+  out <- dplyr::tibble(
+    measure = rep("MAE", 2),
+    value = rep(NA, 2),
+    level = c( "individuals", "L2 units"))
+
+  # mae values
+  values <- rep(NA, 2)
+
+  # loss unit = "individual"
+  values[1] <- mean(abs(data.valid[[y]] - pred))
+
+  # loss unit = "L2 units"
+  l2 <- data.valid %>%
+    dplyr::mutate(pred = pred) %>%
+    dplyr::rowwise() %>%
+    dplyr::mutate(ae = abs(.data[[y]] - pred)) %>%
+    dplyr::ungroup() %>%
+    dplyr::group_by(.dots = list(L2.unit)) %>%
+    dplyr::summarise(mae = mean(ae), .groups = "drop")
+
+  values[2] <- mean(dplyr::pull(.data = l2, var = mae))
+
+  out <- dplyr::mutate(out, value = values)
+
+  return(out = out)
+}
+
+
+###########################################################################
+# binary cross-entropy ----------------------------------------------------
+###########################################################################
+
+#' Estimates the inverse binary cross-entropy, i.e. 0 is the best score and 1
+#' the worst.
+#'
+#' \code{binary_cross_entropy()} estimates the inverse binary cross-entropy on
+#' the individual and state-level.
+#' @inheritParams loss_function
+
+binary_cross_entropy <- function(pred, data.valid,
+                                 loss.unit = c("individuals", "L2 units"),
+                                 y, L2.unit){
+
+  # outcome
+  out <- dplyr::tibble(
+    measure = rep("cross-entropy", 2),
+    value = rep(NA, 2),
+    level = c( "individuals", "L2 units")
+  )
+
+  # cross-entropy values
+  values <- rep(NA, 2)
+
+  # loss unit = "individual"
+  values[1] <- (mean( data.valid[[y]] * log(pred) + (1 - data.valid[[y]]) * log(1 - pred)))*-1
+
+  # loss unit = "L2 units"
+  l2 <- data.valid %>%
+    dplyr::mutate(pred = pred) %>%
+    dplyr::rowwise() %>%
+    dplyr::mutate(ce = .data[[y]] * log(pred) + (1 - .data[[y]]) * log(1 - pred) ) %>%
+    dplyr::ungroup() %>%
+    dplyr::group_by(.dots = list(L2.unit)) %>%
+    dplyr::summarise(bce = mean(ce), .groups = "drop")
+
+  values[2] <- mean(dplyr::pull(.data = l2, var = bce)) *-1
+
+  out <- dplyr::mutate(out, value = values)
+  return(out)
+}
+
+
+###########################################################################
+# F1 score ----------------------------------------------------------------
+###########################################################################
+#' Estimates the inverse f1 score, i.e. 0 is the best score and 1 the worst.
+#'
+#' \code{f1_score()} estimates the inverse f1 scores on the individual and state
+#' levels.
+#' @inheritParams loss_function
+
+
+f1_score <- function(pred, data.valid, y, L2.unit){
+
+  ## individual level
+
+  # true positives
+  tp_ind <- data.valid %>%
+    dplyr::mutate(pval = ifelse(test = pred > 0.5, yes = 1, no = 0)) %>%
+    dplyr::select( !! rlang::sym(y), pval ) %>%
+    dplyr::filter(pval == 1 & !! rlang::sym(y) == 1) %>%
+    dplyr::summarise(tp = sum(pval)) %>%
+    dplyr::pull(var = tp)
+
+  # false positives
+  fp_ind <- data.valid %>%
+    dplyr::mutate(pval = ifelse(test = pred > 0.5, yes = 1, no = 0)) %>%
+    dplyr::select( !! rlang::sym(y), pval ) %>%
+    dplyr::filter(pval == 1 & !! rlang::sym(y) == 0 ) %>%
+    dplyr::summarise(fp = sum(pval)) %>%
+    dplyr::pull(var = fp)
+
+  # false negatives
+  fn_ind <- data.valid %>%
+    dplyr::mutate(pval = ifelse(test = pred > 0.5, yes = 1, no = 0)) %>%
+    dplyr::select( !! rlang::sym(y), pval ) %>%
+    dplyr::filter(pval == 0 & !! rlang::sym(y) == 1 ) %>%
+    dplyr::summarise(fn = sum(!! rlang::sym(y))) %>%
+    dplyr::pull(var = fn)
+
+  # f1 score
+  f1 <- tp_ind / (tp_ind + 0.5 * (fp_ind + fn_ind) )
+
+  # state-level f1 score
+  state_out <- data.valid %>%
+    # predicted values
+    dplyr::mutate(pval = ifelse(test = pred > 0.5, yes = 1, no = 0)) %>%
+    # select L2.unit, y, and predicted values
+    dplyr::select( !! rlang::sym(L2.unit), !! rlang::sym(y), pval ) %>%
+    # group by L2.unit
+    dplyr::group_by( !! rlang::sym(L2.unit) ) %>%
+    # nest data
+    tidyr::nest() %>%
+    # new column with state-level f1 values
+    dplyr::mutate(
+      f1 = purrr::map(data, function(x){
+        # true positives
+        tp <- x %>%
+          dplyr::select( !! rlang::sym(y), pval ) %>%
+          dplyr::filter(pval == 1 & !! rlang::sym(y) == 1) %>%
+          dplyr::summarise(tp = sum(pval)) %>%
+          dplyr::pull(var = tp)
+        # false positives
+        fp <- x %>%
+          dplyr::select( !! rlang::sym(y), pval ) %>%
+          dplyr::filter(pval == 1 & !! rlang::sym(y) == 0 ) %>%
+          dplyr::summarise(fp = sum(pval)) %>%
+          dplyr::pull(var = fp)
+        # false negatives
+        fn <- x %>%
+          dplyr::select( !! rlang::sym(y), pval ) %>%
+          dplyr::filter(pval == 0 & !! rlang::sym(y) == 1 ) %>%
+          dplyr::summarise(fn = sum(!! rlang::sym(y))) %>%
+          dplyr::pull(var = fn)
+        # f1 score
+        f1 <- tp / (tp + 0.5 * (fp + fn) ) })) %>%
+    # unnest f1 values
+    tidyr::unnest(f1) %>%
+    dplyr::select( !! rlang::sym(L2.unit), f1 ) %>%
+    dplyr::ungroup() %>%
+    dplyr::summarise(f1 = mean(f1, na.rm = TRUE), .groups = "drop")
+
+  # return
+  out <- dplyr::tibble(
+    measure = c("f1", "f1"),
+    value = c(1 - f1, 1 - dplyr::pull(.data = state_out, var = f1)),
+    level = c("individuals", "L2 units"))
+
+  return(out)
+
+}
+
+
+###########################################################################
+# Mean squared false error-------------------------------------------------
+###########################################################################
+#' Estimates the mean squared false error.
+#'
+#' \code{msfe()} estimates the inverse f1 scores on the individual and state
+#' levels.
+#' @inheritParams loss_function
+
+
+mean_squared_false_error <- function(pred, data.valid, y, L2.unit){
+
+  ## individual level
+  msfe_l1 <- data.valid %>%
+    dplyr::mutate(pval = ifelse(test = pred > 0.5, yes = 1, no = 0)) %>%
+    dplyr::select( !! rlang::sym(y), pval ) %>%
+    dplyr::group_by( !! rlang::sym(y) ) %>%
+    dplyr::mutate(err = (!! rlang::sym(y) - pval) ) %>%
+    dplyr::summarise(err_rates = mean(err), .groups = "drop") %>%
+    dplyr::mutate(err_rates = err_rates^2) %>%
+    dplyr::summarise( msfe = sum(err_rates)) %>%
+    dplyr::pull(var = msfe)
+
+  ## group level
+  msfe_l2 <- data.valid %>%
+    dplyr::mutate(pval = ifelse(test = pred > 0.5, yes = 1, no = 0)) %>%
+    dplyr::select( !! rlang::sym(L2.unit), !! rlang::sym(y), pval ) %>%
+    dplyr::group_by( !! rlang::sym(L2.unit) ) %>%
+    tidyr::nest() %>%
+    dplyr::mutate(msfe = purrr::map(data, function(x){
+      msfe <- x %>%
+        dplyr::group_by( !! rlang::sym(y) ) %>%
+        dplyr::mutate(err = (!! rlang::sym(y) - pval) ) %>%
+        dplyr::summarise(err_rates = mean(err), .groups = "drop") %>%
+        dplyr::mutate(err_rates = err_rates^2) %>%
+        dplyr::summarise( msfe = sum(err_rates)) %>%
+        dplyr::pull(var = msfe)
+    })) %>%
+    tidyr::unnest(msfe) %>%
+    dplyr::ungroup() %>%
+    dplyr::summarise(msfe = mean(msfe), .groups = "drop") %>%
+    dplyr::pull(var = msfe)
+
+  # return
+  out <- dplyr::tibble(
+    measure = c("msfe", "msfe"),
+    value = c(msfe_l1, msfe_l2),
+    level = c("individuals", "L2 units"))
+
+  return(out)
+
+}
+
+###########################################################################
+# Loss score ranking ------------------------------------------------------
+###########################################################################
+
+#' Ranks tuning parameters according to loss functions
+#'
+#' \code{loss_score_ranking()} ranks tuning parameters according to the scores
+#' received in multiple loss functions.
+#'
+#' @inheritParams loss_function
+#' @param score A data set containing loss function names, the loss function
+#'   values, and the tuning parameter values.
+
+loss_score_ranking <- function(score, loss.fun){
+
+  # tuning parameter names
+  params <- names(score)[!names(score) %in% c("measure", "value")]
+
+  ranking <- lapply(loss.fun, function(x){
+    score %>%
+      dplyr::filter(measure == x) %>%
+      dplyr::arrange(value) %>%
+      dplyr::mutate(rank = dplyr::row_number())
+  })
+
+  ranking <- dplyr::bind_rows(ranking) %>%
+    dplyr::group_by(.dots = params) %>%
+    dplyr::summarise(rank = sum(rank), .groups = "drop") %>%
+    dplyr::arrange(rank)
+
+  return(ranking)
+
+}
 
 ################################################################################
 #                   Suppress cat in external package                           #
@@ -1319,7 +1593,7 @@ summary.autoMrP <- function(object, ci.lvl = 0.95, digits = 4, format = "simple"
           "Max"),
         format = format,
         digits = digits)
-      if (n < nrow(s_data)) cat( paste("... with", nrow(s_data)-n, " more rows"), sep = "")
+      if (n < nrow(s_data)) cat( paste("... with", nrow(s_data)-n, " more rows", "\n", "\n"), sep = "")
     } else{
       s_data <- dplyr::select(.data = s_data, method, median)
       n <- ifelse(n <= nrow(s_data), yes = n, no = nrow(s_data) )
@@ -1331,7 +1605,7 @@ summary.autoMrP <- function(object, ci.lvl = 0.95, digits = 4, format = "simple"
           "Weight"),
         format = format,
         digits = digits)
-      if (n < nrow(s_data)) cat( paste("... with", nrow(s_data)-n, " more rows"), sep = "")
+      if (n < nrow(s_data)) cat( paste("... with", nrow(s_data)-n, " more rows", "\n", "\n"), sep = "")
     }
   }
 
@@ -1368,7 +1642,7 @@ summary.autoMrP <- function(object, ci.lvl = 0.95, digits = 4, format = "simple"
           "Max"),
         format = format,
         digits = digits)
-      if (n < nrow(s_data)) cat( paste("... with", nrow(s_data)-n, " more rows"), sep = "")
+      if (n < nrow(s_data)) cat( paste("... with", nrow(s_data)-n, " more rows", "\n", "\n"), sep = "")
 
     } else{
       s_data <- dplyr::select(.data = s_data, one_of(L2.unit), median)
@@ -1379,7 +1653,7 @@ summary.autoMrP <- function(object, ci.lvl = 0.95, digits = 4, format = "simple"
         col.names = c(L2.unit, "Estimate"),
         format = format,
         digits = digits)
-      if (n < nrow(s_data)) cat( paste("... with", nrow(s_data)-n, " more rows"), sep = "")
+      if (n < nrow(s_data)) cat( paste("... with", nrow(s_data)-n, " more rows", "\n", "\n"), sep = "")
     }
   }
 
@@ -1405,7 +1679,7 @@ summary.autoMrP <- function(object, ci.lvl = 0.95, digits = 4, format = "simple"
                    col.names = names(s_data),
                    format = format,
                    digits = digits)
-      if (n < nrow(s_data)) cat( paste("... with", nrow(s_data)-n, " more rows"), sep = "")
+      if (n < nrow(s_data)) cat( paste("... with", nrow(s_data)-n, " more rows", "\n", "\n"), sep = "")
     } else{
 
       # summary statistics
@@ -1435,7 +1709,7 @@ summary.autoMrP <- function(object, ci.lvl = 0.95, digits = 4, format = "simple"
             "Max"),
           format = format,
           digits = digits)
-        if (n < nrow(s_data)) cat( paste("... with", nrow(s_data)-n, " more rows"), sep = "")
+        if (n < nrow(s_data)) cat( paste("... with", nrow(s_data)-n, " more rows", "\n", "\n"), sep = "")
       } else{
         s_data <- dplyr::select(.data = s_data, dplyr::one_of(L2.unit), "median")
         n <- ifelse(n <= nrow(s_data), yes = n, no = nrow(s_data) )
@@ -1445,7 +1719,7 @@ summary.autoMrP <- function(object, ci.lvl = 0.95, digits = 4, format = "simple"
           col.names = c(L2.unit, "Estimate"),
           format = format,
           digits = digits)
-        if (n < nrow(s_data)) cat( paste("... with", nrow(s_data)-n, " more rows"), sep = "")
+        if (n < nrow(s_data)) cat( paste("... with", nrow(s_data)-n, " more rows", "\n", "\n"), sep = "")
       }
     }
   }
@@ -1495,18 +1769,19 @@ summary.autoMrP <- function(object, ci.lvl = 0.95, digits = 4, format = "simple"
           col.names = c( L2.unit, "Min.", "Lower bound", "Median", "Upper bound", "Max"),
         format = format,
         digits = digits)
-        if (n < nrow(s_data)) cat( paste("... with", nrow(s_data)-n, " more rows"), sep = "")
+        if (n < nrow(s_data)) cat( paste("... with", nrow(s_data)-n, " more rows", "\n", "\n"), sep = "")
       } else{
         s_data <- dplyr::select(.data = s_data, dplyr::one_of(L2.unit), median)
         n <- ifelse(n <= nrow(s_data), yes = n, no = nrow(s_data) )
         cat( paste("\n", "# EBMA estimates:"), sep = "")
         output_table(object = s_data[1:n, ], col.names = c(L2.unit, "Median"), format = format, digits = digits)
-        if (n < nrow(s_data)) cat( paste("... with", nrow(s_data)-n, " more rows"), sep = "")
+        if (n < nrow(s_data)) cat( paste("... with", nrow(s_data)-n, " more rows", "\n", "\n"), sep = "")
       }
     } else{
 
       # Summarize all classifiers or classifier specified in classifiers argument
-      if( is.null(classifiers)) {
+      # or MrP model
+      if( is.null(classifiers) ) {
         s_data <- object$classifiers
       } else{
         s_data <- object$classifiers %>%
@@ -1529,36 +1804,39 @@ summary.autoMrP <- function(object, ci.lvl = 0.95, digits = 4, format = "simple"
         dplyr::select(one_of(grep(pattern = "median", x = names(s_data), value = "TRUE")[1],
                              grep(pattern = "lb", x = names(s_data), value = "TRUE")[1]))
 
-      if( all(comparison[,1] == comparison[,2]) ){
-
         # summarize one classifier
-        if (sum(grepl(pattern = "best_subset|pca|lasso|gb|svm|mrp", x = names(s_data))) < 4){
-          n <- ifelse(n <= nrow(s_data), yes = n, no = nrow(s_data) )
-          cat( paste("\n", "# ", names(object$classifiers)[2]," estimates:"), sep = "")
-          output_table(
-            object = s_data[1:n, ],
-            col.names = c(
-              L2.unit,
-              "Min.",
-              "Lower bound",
-              "Median",
-              "Upper bound",
-              "Max"),
-            format = format,
-            digits = digits)
-          if (n < nrow(s_data)) cat( paste("... with", nrow(s_data)-n, " more rows"), sep = "")
-        } else{
-          n <- ifelse(n <= nrow(s_data), yes = n, no = nrow(s_data) )
-          cat( paste("\n", "# estimates of: ", paste(names(object$classifiers)[-1], collapse = ", ")), sep = "")
-          s_data <- s_data %>%
-            dplyr::select(one_of( L2.unit), contains("median"))
-          output_table(
-            object = s_data[1:n, ],
-            col.names = names(s_data),
-            format = format,
-            digits = digits)
-          if (n < nrow(s_data)) cat( paste("... with", nrow(s_data)-n, " more rows"), sep = "")
-        }
+        if ( sum(grepl(pattern = "best_subset|pca|lasso|gb|svm|mrp", x = names(s_data))) < 4 ){
+
+          # without uncertainty
+          if( all(comparison[,1] != comparison[,2]) ){
+
+            n <- ifelse(n <= nrow(s_data), yes = n, no = nrow(s_data) )
+            cat( paste("\n", "# ", names(object$classifiers)[2]," estimates:"), sep = "")
+            output_table(
+              object = s_data[1:n, ],
+              col.names = c(
+                L2.unit,
+                "Min.",
+                "Lower bound",
+                "Median",
+                "Upper bound",
+                "Max"),
+              format = format,
+              digits = digits)
+            if (n < nrow(s_data)) cat( paste("... with", nrow(s_data)-n, " more rows", "\n", "\n"), sep = "")
+          } else{
+            n <- ifelse(n <= nrow(s_data), yes = n, no = nrow(s_data) )
+            cat( paste("\n", "# estimates of: ", paste(names(object$classifiers)[-1], collapse = ", ")), sep = "")
+            s_data <- s_data %>%
+              dplyr::select(one_of( L2.unit), contains("median"))
+            output_table(
+              object = s_data[1:n, ],
+              col.names = names(s_data),
+              format = format,
+              digits = digits)
+            if (n < nrow(s_data)) cat( paste("... with", nrow(s_data)-n, " more rows", "\n", "\n"), sep = "")
+          }
+
       } else {
        # drop uncertainty columns
         if ( ncol(s_data) < 5 ){
@@ -1566,7 +1844,7 @@ summary.autoMrP <- function(object, ci.lvl = 0.95, digits = 4, format = "simple"
           n <- ifelse(n <= nrow(s_data), yes = n, no = nrow(s_data) )
           cat( paste("\n", "# ", names(object$classifiers)[2]," estimates:"), sep = "")
           output_table(object = s_data[1:n, ], col.names = c(L2.unit, "Estimate"), format = format, digits = digits)
-          if (n < nrow(s_data)) cat( paste("... with", nrow(s_data)-n, " more rows"), sep = "")
+          if (n < nrow(s_data)) cat( paste("... with", nrow(s_data)-n, " more rows", "\n", "\n"), sep = "")
         } else{
           n <- ifelse(n <= nrow(s_data), yes = n, no = nrow(s_data) )
           s_data <- s_data %>%
@@ -1576,7 +1854,7 @@ summary.autoMrP <- function(object, ci.lvl = 0.95, digits = 4, format = "simple"
             col.names = names(s_data),
             format = format,
             digits = digits)
-          if (n < nrow(s_data)) cat( paste("... with", nrow(s_data)-n, " more rows"), sep = "")
+          if (n < nrow(s_data)) cat( paste("... with", nrow(s_data)-n, " more rows", "\n", "\n"), sep = "")
         }
       }
     }

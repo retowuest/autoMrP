@@ -1,7 +1,7 @@
 Package: autoMrP
 Type: Package
 Title: Improving MrP with Ensemble Learning
-Version: 0.92
+Version: 0.93
 Authors@R: c(
     person(given = "Reto",
 		   family = "Wüest",

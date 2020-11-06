@@ -49,9 +49,6 @@
 #'   vector of length \code{length(shrinkage)} with each of its values being
 #'   associated with a learning rate and an increase in the total number of
 #'   trees. Default is \eqn{1000}.
-#' @param n.iter GB number of iterations without improvement. A numeric scalar
-#'   specifying the maximum number of iterations without performance
-#'   improvement the algorithm runs before stopping. Default is \eqn{70}.
 #' @param n.minobsinnode GB minimum number of observations in the terminal
 #'   nodes. An integer-valued scalar specifying the minimum number of
 #'   observations that each terminal node of the trees must contain. Default is
@@ -68,38 +65,13 @@
 #'   \code{shrinkage} contains the learning rate, \code{n_trees} the number of
 #'   trees to be grown.
 #' @examples \dontrun{
-#' # create list of cross-validation folds
-#' cv_folds <- list(
-#'   `1` = survey_item[1:200, ],
-#'   `2` = survey_item[201:400, ],
-#'   `3` = survey_item[401:1500, ])
-#'
-#' # run gradient boosting classifier
-#' out <- run_gb(
-#'   y = "YES",
-#'   L1.x = c("L1x1", "L1x2"),
-#'   L2.x = c("L2.x1", "L2.x2"),
-#'   L2.unit = NULL,
-#'   L2.reg = "region",
-#'   loss.unit = "individuals",
-#'   loss.fun = "MSE",
-#'   interaction.depth = c(1, 2, 3),
-#'   shrinkage = c(0.04, 0.01),
-#'   n.trees.init = 50,
-#'   n.trees.increase = 50,
-#'   n.trees.max = 1000,
-#'   n.iter = 70,
-#'   n.minobsinnode = 5,
-#'   data = cv_folds,
-#'   verbose = TRUE)
+#' not yet
 #' }
 
-run_gb <- function(y, L1.x, L2.x, L2.unit, L2.reg,
-                   loss.unit, loss.fun,
-                   interaction.depth, shrinkage,
-                   n.trees.init, n.trees.increase,
-                   n.trees.max, n.iter, cores = cores,
-                   n.minobsinnode, data, verbose) {
+run_gb <- function(y, L1.x, L2.x, L2.eval.unit, L2.unit, L2.reg,
+                   loss.unit, loss.fun, interaction.depth, shrinkage,
+                   n.trees.init, n.trees.increase, n.trees.max,
+                   cores = cores, n.minobsinnode, data, verbose) {
 
   # Create model formula
   x <- paste(c(L1.x, L2.x, L2.unit, L2.reg), collapse = " + ")
@@ -107,372 +79,188 @@ run_gb <- function(y, L1.x, L2.x, L2.unit, L2.reg,
 
   # Prepare data
   data <- lapply(data, function(k) {
-    dplyr::select_at(k, c(y, L1.x, L2.x, L2.unit, L2.reg))
+    dplyr::select_at(k, c(y, L1.x, L2.x, L2.eval.unit, L2.reg))
   })
 
-  # Initialize counter for iterations
-  iteration_no <- 0
+  # Number of trees
+  n_trees <- seq(from = 50, to = n.trees.max, by = n.trees.increase)
 
-  # Loop over interaction depth
-  out_d <- lapply(seq_along(interaction.depth), function(d) {
-    # Set interaction depth
-    depth <- interaction.depth[d]
+  # Search grid
+  gb_grid <- expand.grid(interaction.depth, shrinkage, n_trees)
+  names(gb_grid) <- c("depth", "shrinkage", "ntrees")
 
-    if (length(n.trees.increase) == 1 & length(n.trees.max) == 1) {
-      # Loop over learning rate
-      out_s <- lapply(seq_along(shrinkage),
-                      function(s, n_trees = n.trees.init) {
-                        # Set learning rate
-                        shrinkage_value <- shrinkage[s]
+  ## tuning with 1) multiple cores; 2) a single core
+  if (cores > 1){
 
-                        # Update counter for iterations
-                        iteration_no <- iteration_no + 1
+    # 1) multiple cores
+    grid_cells <- run_gb_mc(
+      y = y, L1.x = L1.x, L2.eval.unit = L2.eval.unit, L2.unit = L2.unit,
+      L2.reg = L2.reg, form = form, gb_grid = gb_grid,
+      n.minobsinnode = n.minobsinnode,  loss.unit = loss.unit,
+      loss.fun = loss.fun, data = data, cores = cores)
+  } else{
 
-                        # Print tuning parameters
-                        if (isTRUE(verbose)) {
-                          cat(paste("GB: Running interaction depth ", depth,
-                                    ", learning rate ", shrinkage_value,
-                                    ", and number of total trees ", n_trees, "\n",
-                                    "    (model no. ", iteration_no,
-                                    " -- no improvement evaluation)\n", sep = ""))
-                        }
+    # 2) single core
+    # loop over tuning grid
+    grid_cells <- apply( gb_grid, 1, function(g) {
 
-                        # Loop over each fold
-                        k_errors <- lapply(seq_along(data), function(k) {
-                          # Split data in training and validation sets
-                          data_train <- dplyr::bind_rows(data[-k])
-                          data_valid <- dplyr::bind_rows(data[k])
+      # Set tuning parameters
+      depth <- as.numeric(g["depth"])
+      shrinkage_value <- as.numeric(g["shrinkage"])
+      ntrees <- as.numeric(g["ntrees"])
 
-                          # Convert individual-level, geographic unit, and geographic region
-                          # covariates to factor variables in training and validation sets
-                          data_train <- data_train %>%
-                            dplyr::mutate_at(.vars = c(L1.x, L2.unit, L2.reg), as.factor)
+      # Print tuning parameters
+      if (isTRUE(verbose)) {
+        cat(paste("GB: Running interaction depth ", depth,
+                  ", learning rate ", shrinkage_value,
+                  ", and number of total trees ", ntrees, "\n", sep = ""))
+      }
 
-                          data_valid <- data_valid %>%
-                            dplyr::mutate_at(.vars = c(L1.x, L2.unit, L2.reg), as.factor)
+      # Loop over each fold
+      k_errors <- lapply(seq_along(data), function(k) {
+        # Split data in training and validation sets
+        data_train <- dplyr::bind_rows(data[-k])
+        data_valid <- dplyr::bind_rows(data[k])
 
-                          # Train model using tuning parameters on kth training set
-                          model_l <- gb_classifier(form = form,
-                                                   distribution = "bernoulli",
-                                                   data.train = data_train,
-                                                   n.trees = n_trees,
-                                                   interaction.depth = depth,
-                                                   n.minobsinnode = n.minobsinnode,
-                                                   shrinkage = shrinkage_value,
-                                                   verbose = verbose)
+        # Convert individual-level, geographic unit, and geographic region
+        # covariates to factor variables in training and validation sets
+        data_train <- data_train %>%
+          dplyr::mutate_at(.vars = c(L1.x, L2.unit, L2.reg), as.factor)
 
-                          # Use trained model to make predictions for kth validation set
-                          pred_l <- gbm::predict.gbm(model_l, newdata = data_valid,
-                                                     n.trees = model_l$n.trees,
-                                                     type = "response")
+        data_valid <- data_valid %>%
+          dplyr::mutate_at(.vars = c(L1.x, L2.unit, L2.reg), as.factor)
 
-                          # Evaluate predictions based on loss function
-                          perform_l <- loss_function(pred = pred_l,
-                                                     data.valid = data_valid,
-                                                     loss.unit = loss.unit,
-                                                     loss.fun = loss.fun,
-                                                     y = y,
-                                                     L2.unit = L2.unit)
+        # Train model using tuning parameters on kth training set
+        model_l <- gb_classifier(form = form,
+                                 distribution = "bernoulli",
+                                 data.train = data_train,
+                                 n.trees = ntrees,
+                                 interaction.depth = depth,
+                                 n.minobsinnode = n.minobsinnode,
+                                 shrinkage = shrinkage_value,
+                                 verbose = verbose)
 
-                          # Function output
-                          return(list(perform_l = perform_l,
-                                      model_l = model_l))
-                        })
+        # Use trained model to make predictions for kth validation set
+        pred_l <- gbm::predict.gbm(model_l, newdata = data_valid,
+                                   n.trees = model_l$n.trees,
+                                   type = "response")
 
-                        # Mean over all k folds
-                        best_error <- mean(unlist(lapply(seq_along(k_errors),
-                                                         function(x) {k_errors[[x]]["perform_l"]})))
+        # Evaluate predictions based on loss function
+        perform_l <- loss_function(pred = pred_l,
+                                   data.valid = data_valid,
+                                   loss.unit = loss.unit,
+                                   loss.fun = loss.fun,
+                                   y = y,
+                                   L2.unit = L2.eval.unit)
 
-                        # Initialize list of tuning parameters associated with the currently
-                        # best error
-                        out <- list(n_trees = n_trees,
-                                    depth = depth,
-                                    shrinkage = shrinkage_value,
-                                    error = best_error,
-                                    models = lapply(seq_along(k_errors),
-                                                    function(x) {k_errors[[x]]["model_l"]}))
+      })
 
-                        # Initialize counter for iterations since last performance improvement
-                        iter_since_improv <- 0
+      # Mean over loss functions
+      k_errors <- dplyr::bind_rows(k_errors) %>%
+        dplyr::group_by(measure) %>%
+        dplyr::summarise(value = mean(value), .groups = "drop") %>%
+        dplyr::mutate(ntrees = ntrees, depth = depth, shrinkage = shrinkage_value)
 
-                        # Loop over number of total trees
-                        while (n_trees < n.trees.max) {
-                          # Set number of total trees
-                          n_trees <- n_trees + n.trees.increase
-
-                          # Update counter for iterations
-                          iteration_no <- iteration_no + 1
-
-                          # Print tuning parameters
-                          if (isTRUE(verbose)) {
-                            cat(paste("GB: Running interaction depth ", depth,
-                                      ", learning rate ", shrinkage_value,
-                                      ", and number of total trees ", n_trees, "\n",
-                                      "    (model no. ", iteration_no,
-                                      " -- iterations w/o improvement: ",
-                                      iter_since_improv, ")\n", sep = ""))
-                          }
-
-                          # Loop over each fold
-                          k_errors <- lapply(seq_along(data), function(k) {
-                            # Split data in training and validation sets
-                            data_train <- dplyr::bind_rows(data[-k])
-                            data_valid <- dplyr::bind_rows(data[k])
-
-                            # Convert individual-level, geographic unit, and geographic region
-                            # covariates to factor variables in training and validation sets
-                            data_train <- data_train %>%
-                              dplyr::mutate_at(.vars = c(L1.x, L2.unit, L2.reg), as.factor)
-
-                            data_valid <- data_valid %>%
-                              dplyr::mutate_at(.vars = c(L1.x, L2.unit, L2.reg), as.factor)
-
-                            # Train model using lambda on kth training set
-                            model_l <- gb_classifier_update(object = out$models[[k]]$model_l,
-                                                            n.new.trees = n.trees.increase,
-                                                            verbose = verbose)
-
-                            # Use trained model to make predictions for kth validation set
-                            pred_l <- gbm::predict.gbm(model_l, newdata = data_valid,
-                                                       n.trees = model_l$n.trees,
-                                                       type = "response")
-
-                            # Evaluate predictions based on loss function
-                            perform_l <- loss_function(pred = pred_l,
-                                                       data.valid = data_valid,
-                                                       loss.unit = loss.unit,
-                                                       loss.fun = loss.fun,
-                                                       y = y,
-                                                       L2.unit = L2.unit)
-
-                            # Function output
-                            return(list(perform_l = perform_l,
-                                        model_l = model_l))
-                          })
-
-                          # Mean over all k folds
-                          current_error <- mean(unlist(lapply(seq_along(k_errors),
-                                                              function(x) {k_errors[[x]]["perform_l"]})))
-
-                          # Check if current tuning parameters outperform tuning parameters
-                          # that were best so far
-                          if (current_error < best_error) {
-                            #if(verbose) cat(paste("Improvement on previous model \n"), sep = "")
-                            best_error <- current_error
-                            out <- list(n_trees = n_trees,
-                                        depth = depth,
-                                        shrinkage = shrinkage_value,
-                                        error = best_error,
-                                        models = lapply(seq_along(k_errors),
-                                                        function(x) {k_errors[[x]]["model_l"]}))
-                            iter_since_improv <- 0
-                          } else {
-                            iter_since_improv <- iter_since_improv + 1
-                          }
-
-                          # Break loop if maximum number of iterations without performance
-                          # improvement is reached
-                          if (!is.null(n.iter)) {
-                            if (iter_since_improv > n.iter) {
-                              break
-                            }
-                          }
-                        }
-                        out
-                      })
-      # Function output
-      return(out_s)
-    } else {
-      # Combine shrinkage, n.trees.increase, and n.trees.max in tuning set
-      tuning_set <- dplyr::bind_cols(shrinkage = shrinkage,
-                                     n.trees.increase = n.trees.increase,
-                                     n.trees.max = n.trees.max)
-
-      # Loop over tuning set
-      out_s <- lapply(seq_along(tuning_set$shrinkage),
-                      function(s, n_trees = n.trees.init) {
-                        # Set learning rate
-                        shrinkage_value <- tuning_set$shrinkage[s]
-
-                        # Update counter for iterations
-                        iteration_no <- iteration_no + 1
-
-                        # Print tuning parameters
-                        if (isTRUE(verbose)) {
-                          cat(paste("GB: Running interaction depth ", depth,
-                                    ", learning rate ", shrinkage_value,
-                                    ", and number of total trees ", n_trees, "\n",
-                                    "    (model no. ", iteration_no,
-                                    " -- no improvement evaluation)\n", sep = ""))
-                        }
-
-                        # Loop over each fold
-                        k_errors <- lapply(seq_along(data), function(k) {
-                          # Split data in training and validation sets
-                          data_train <- dplyr::bind_rows(data[-k])
-                          data_valid <- dplyr::bind_rows(data[k])
-
-                          # Convert individual-level, geographic unit, and geographic region
-                          # covariates to factor variables in training and validation sets
-                          data_train <- data_train %>%
-                            dplyr::mutate_at(.vars = c(L1.x, L2.unit, L2.reg), as.factor)
-
-                          data_valid <- data_valid %>%
-                            dplyr::mutate_at(.vars = c(L1.x, L2.unit, L2.reg), as.factor)
-
-                          # Train model using lambda on kth training set
-                          model_l <- gb_classifier(form = form,
-                                                   distribution = "bernoulli",
-                                                   data.train = data_train,
-                                                   n.trees = n_trees,
-                                                   interaction.depth = depth,
-                                                   n.minobsinnode = n.minobsinnode,
-                                                   shrinkage = shrinkage_value,
-                                                   verbose = verbose)
-
-                          # Use trained model to make predictions for kth validation set
-                          pred_l <- gbm::predict.gbm(model_l, newdata = data_valid,
-                                                     n.trees = model_l$n.trees,
-                                                     type = "response")
-
-                          # Evaluate predictions based on loss function
-                          perform_l <- loss_function(pred = pred_l,
-                                                     data.valid = data_valid,
-                                                     loss.unit = loss.unit,
-                                                     loss.fun = loss.fun,
-                                                     y = y,
-                                                     L2.unit = L2.unit)
-
-                          # Function output
-                          return(list(perform_l = perform_l,
-                                      model_l = model_l))
-                        })
-
-                        # Mean over all k folds
-                        best_error <- mean(unlist(lapply(seq_along(k_errors),
-                                                         function(x) {k_errors[[x]]["perform_l"]})))
-
-                        # Initialize list of tuning parameters associated with the currently
-                        # best error
-                        out <- list(n_trees = n_trees,
-                                    depth = depth,
-                                    shrinkage = shrinkage_value,
-                                    error = best_error,
-                                    models = lapply(seq_along(k_errors),
-                                                    function(x) {k_errors[[x]]["model_l"]}))
-
-                        # Initialize counter for iterations since last performance improvement
-                        iter_since_improv <- 0
-
-                        # Loop over number of total trees
-                        while (n_trees < tuning_set$n.trees.max[s]) {
-                          # Set number of total trees
-                          n_trees <- n_trees + tuning_set$n.trees.increase[s]
-
-                          # Update counter for iterations
-                          iteration_no <- iteration_no + 1
-
-                          # Print tuning parameters
-                          if (isTRUE(verbose)) {
-                            cat(paste("GB: Running interaction depth ", depth,
-                                      ", learning rate ", shrinkage_value,
-                                      ", and number of total trees ", n_trees, "\n",
-                                      "    (model no. ", iteration_no,
-                                      " -- iterations w/o improvement: ",
-                                      iter_since_improv, ")\n", sep = ""))
-                          }
-
-                          # Loop over each fold
-                          k_errors <- lapply(seq_along(data), function(k) {
-                            # Split data in training and validation sets
-                            data_train <- dplyr::bind_rows(data[-k])
-                            data_valid <- dplyr::bind_rows(data[k])
-
-                            # Convert individual-level, geographic unit, and geographic region
-                            # covariates to factor variables in training and validation sets
-                            data_train <- data_train %>%
-                              dplyr::mutate_at(.vars = c(L1.x, L2.unit, L2.reg), as.factor)
-
-                            data_valid <- data_valid %>%
-                              dplyr::mutate_at(.vars = c(L1.x, L2.unit, L2.reg), as.factor)
-
-                            # Train model using lambda on kth training set
-                            model_l <- gb_classifier(form = form,
-                                                     distribution = "bernoulli",
-                                                     data.train = data_train,
-                                                     n.trees = n_trees,
-                                                     interaction.depth = depth,
-                                                     n.minobsinnode = n.minobsinnode,
-                                                     shrinkage = shrinkage_value,
-                                                     verbose = verbose)
-
-                            # Use trained model to make predictions for kth validation set
-                            pred_l <- gbm::predict.gbm(model_l, newdata = data_valid,
-                                                       n.trees = model_l$n.trees,
-                                                       type = "response")
-
-                            # Evaluate predictions based on loss function
-                            perform_l <- loss_function(pred = pred_l,
-                                                       data.valid = data_valid,
-                                                       loss.unit = loss.unit,
-                                                       loss.fun = loss.fun,
-                                                       y = y,
-                                                       L2.unit = L2.unit)
-
-                            # Function output
-                            return(list(perform_l = perform_l,
-                                        model_l = model_l))
-                          })
-
-                          # Mean over all k folds
-                          current_error <- mean(unlist(lapply(seq_along(k_errors),
-                                                              function(x) {k_errors[[x]]["perform_l"]})))
-
-                          # Check if current tuning parameters outperform tuning parameters
-                          # that were best so far
-                          if (current_error < best_error) {
-                            best_error <- current_error
-                            out <- list(n_trees = n_trees,
-                                        depth = depth,
-                                        shrinkage = shrinkage_value,
-                                        error = best_error,
-                                        models = lapply(seq_along(k_errors),
-                                                        function(x) {k_errors[[x]]["model_l"]}))
-                            iter_since_improv <- 0
-                          } else {
-                            iter_since_improv <- iter_since_improv + 1
-                          }
-
-                          # Break loop if maximum number of iterations without performance
-                          # improvement is reached
-                          if (!is.null(n.iter)) {
-                            if (iter_since_improv > n.iter) {
-                              break
-                            }
-                          }
-                        }
-                        out
-                      })
-      # Function output
-      return(out_s)
-    }
-  })
-
-  # Choose best-performing model
-  tuning_grid <- expand.grid(d = seq_along(interaction.depth),
-                             s = shrinkage,
-                             error = NA)
-
-  for (i in 1:nrow(tuning_grid)) {
-    tuning_grid$error[i] <- out_d[[tuning_grid$d[i]]][[tuning_grid$s[i]]]$error
+    })
   }
 
-  min_e <- which.min(tuning_grid$error)
+  # Extract best tuning parameters
+  grid_cells <- dplyr::bind_rows(grid_cells)
+  best_params <- dplyr::slice(loss_score_ranking(score = grid_cells, loss.fun = loss.fun), 1)
 
-  out <- list(interaction_depth = tuning_grid$d[min_e],
-              shrinkage = tuning_grid$s[min_e],
-              n_trees = out_d[[tuning_grid$d[min_e]]][[tuning_grid$s[min_e]]]$n_trees)
+  out <- list(interaction_depth = dplyr::pull(.data = best_params, var = depth),
+              shrinkage = dplyr::pull(.data = best_params, var = shrinkage),
+              n_trees = dplyr::pull(.data = best_params, var = ntrees))
 
   # Function output
   return(out)
+}
+
+
+###########################################################################
+# Multicore tuning for GB -------------------------------------------------
+###########################################################################
+#' GB multicore tuning.
+#'
+#' \code{run_gb_mc} is called from within \code{run_gb}. It tunes using
+#' multiple cores.
+#'
+#' @inheritParams run_gb
+#' @return The tuning parameter combinations and there associated loss function
+#'   scores. A list.
+#' @examples \dontrun{
+#' # not yet
+#' }
+
+run_gb_mc <- function(y, L1.x, L2.eval.unit, L2.unit, L2.reg, form, gb_grid,
+                      n.minobsinnode, loss.unit, loss.fun, data, cores){
+
+  # Binding for global variables
+  g <- NULL
+  `%>%` <- dplyr::`%>%`
+
+  # Register cores
+  cl <- multicore(cores = cores, type = "open", cl = NULL)
+
+  # Train and evaluate each model
+  grid_cells <- foreach::foreach(g = 1:nrow(gb_grid), .packages = 'autoMrP',
+                                 .errorhandling = "pass") %dorng% {
+
+    # Set tuning parameters
+    depth <- as.numeric( gb_grid[g, "depth"] )
+    shrinkage_value <- as.numeric( gb_grid[g, "shrinkage"] )
+    ntrees <- as.numeric( gb_grid[g, "ntrees"] )
+
+    # Loop over each fold
+    k_errors <- lapply(seq_along(data), function(k) {
+
+      # Split data in training and validation sets
+      data_train <- dplyr::bind_rows(data[-k])
+      data_valid <- dplyr::bind_rows(data[k])
+
+      # Convert individual-level, geographic unit, and geographic region
+      # covariates to factor variables in training and validation sets
+      data_train <- data_train %>%
+        dplyr::mutate_at(.vars = c(L1.x, L2.unit, L2.reg), as.factor)
+
+      data_valid <- data_valid %>%
+        dplyr::mutate_at(.vars = c(L1.x, L2.unit, L2.reg), as.factor)
+
+      # Train model using tuning parameters on kth training set
+      model_l <- gb_classifier(form = form,
+                               distribution = "bernoulli",
+                               data.train = data_train,
+                               n.trees = ntrees,
+                               interaction.depth = depth,
+                               n.minobsinnode = n.minobsinnode,
+                               shrinkage = shrinkage_value,
+                               verbose = FALSE)
+
+      # Use trained model to make predictions for kth validation set
+      pred_l <- gbm::predict.gbm(model_l, newdata = data_valid,
+                                 n.trees = model_l$n.trees,
+                                 type = "response")
+
+      # Evaluate predictions based on loss function
+      perform_l <- loss_function(pred = pred_l,
+                                 data.valid = data_valid,
+                                 loss.unit = loss.unit,
+                                 loss.fun = loss.fun,
+                                 y = y,
+                                 L2.unit = L2.eval.unit)
+
+    })
+
+    # Mean over loss functions
+    k_errors <- dplyr::bind_rows(k_errors) %>%
+      dplyr::group_by(measure) %>%
+      dplyr::summarise(value = mean(value), .groups = "drop") %>%
+      dplyr::mutate(ntrees = ntrees, depth = depth, shrinkage = shrinkage_value)
+  }
+
+  # De-register cluster
+  multicore(cores = cores, type = "close", cl = cl)
+
+  # Function output
+  return(grid_cells)
 }

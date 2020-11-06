@@ -8,6 +8,7 @@ run_gb(
   y,
   L1.x,
   L2.x,
+  L2.eval.unit,
   L2.unit,
   L2.reg,
   loss.unit,

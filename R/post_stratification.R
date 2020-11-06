@@ -119,7 +119,7 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
       L2.fix = L2_fe_form,
       L1.re = L1_re,
       data.train = data,
-      lambda = lasso.opt,
+      lambda = dplyr::pull(.data = lasso.opt, var = lambda),
       model.family = binomial(link = "probit"),
       verbose = verbose)
 
@@ -128,7 +128,7 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
       L2.fix = L2_fe_form,
       L1.re = L1_re,
       data.train = no_ebma_data,
-      lambda = lasso.opt,
+      lambda = dplyr::pull(.data = lasso.opt, var = lambda),
       model.family = binomial(link = "probit"),
       verbose = verbose)
 
@@ -288,7 +288,7 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
     svm_opt_ebma <- svm_classifier(
       form = form_svm,
       data = svm_data,
-      kernel = kernel,
+      kernel = svm.opt$kernel,
       type = "C-classification",
       probability = TRUE,
       svm.gamma = svm.opt$gamma,

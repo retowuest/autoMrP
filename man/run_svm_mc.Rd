@@ -6,6 +6,7 @@
 \usage{
 run_svm_mc(
   y,
+  L2.eval.unit,
   L2.unit,
   form,
   loss.unit,
@@ -13,9 +14,7 @@ run_svm_mc(
   data,
   cores,
   kernel,
-  svm.classifier,
   svm.grid,
-  loss.function,
   verbose
 )
 }
@@ -49,13 +48,7 @@ of processor cores used for parallel computing. Default is 1.}
 be used by SVM. The possible values are \code{linear}, \code{polynomial},
 \code{radial}, and \code{sigmoid}. Default is \code{radial}.}
 
-\item{svm.classifier}{SVM classifier. An \code{autoMrP} function.}
-
 \item{svm.grid}{The tuning grid for SVM. A data.frame.}
-
-\item{loss.function}{The loss function used to evaluate model performance. An
-\code{autoMrP} function which implements the loss functions specified in
-\code{loss.fun}.}
 
 \item{verbose}{Verbose output. A logical argument indicating whether or not
 verbose output should be printed. Default is \code{TRUE}.}

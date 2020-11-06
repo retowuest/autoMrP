@@ -72,10 +72,9 @@
 #'   verbose = TRUE)
 #' }
 
-run_svm <- function(y, L1.x, L2.x, L2.unit, L2.reg,
-                    kernel = "radial", loss.fun,
-                    loss.unit, gamma, cost, data,
-                    verbose, cores) {
+run_svm <- function(y, L1.x, L2.x, L2.eval.unit, L2.unit, L2.reg,
+                    kernel = "radial", loss.fun, loss.unit, gamma,
+                    cost, data, verbose, cores) {
 
   # Create model formula
   x <- paste(c(L1.x, L2.x, L2.unit, L2.reg), collapse = " + ")
@@ -83,37 +82,36 @@ run_svm <- function(y, L1.x, L2.x, L2.unit, L2.reg,
 
   # Default Gamma values
   if( is.null(gamma) ){
-
     # SVM Gamma values
-    gamma <- log_spaced(min = 1e-5, 1e-2, n = 20)
+    gamma <- log_spaced(min = 1e-5, 1e-1, n = 20)
   }
 
   # Default Cost values
   if ( is.null(cost) ){
-    cost <- log_spaced(min = 0.5, max = 50, n = 5)
+    cost <- log_spaced(min = 0.5, max = 10, n = 5)
   }
 
   # tuning parameter grid
-  svm_grid <- expand.grid(gamma, cost)
-  names(svm_grid) <- c("gamma", "cost")
+  svm_grid <- expand.grid(gamma, cost, kernel)
+  names(svm_grid) <- c("gamma", "cost", "kernel")
 
   # prallel tuning if cores > 1
   if( cores > 1 ){
 
     # Train all models in parallel
     grid_cells <- run_svm_mc(
-      svm.classifier = svm_classifier,
       verbose = verbose,
       svm.grid = svm_grid,
       data = data,
-      loss.function = loss_function,
+      L2.eval.unit = L2.eval.unit,
       loss.unit = loss.unit,
       loss.fun = loss.fun,
       y = y,
       L2.unit = L2.unit,
       form = form,
-      kernel = kernel,
       cores = cores)
+
+  # Train all models sequentially
   } else {
     # loop over tuning grid
     grid_cells <- apply(svm_grid, 1, function(g) {
@@ -121,6 +119,7 @@ run_svm <- function(y, L1.x, L2.x, L2.unit, L2.reg,
       # Set tuning parameters
       gamma_value <- as.numeric(g["gamma"])
       cost_value <- as.numeric(g["cost"])
+      kernel_value <- as.character(g[["kernel"]])
 
       # Loop over each fold
       k_errors <- lapply(seq_along(data), function(k) {
@@ -135,7 +134,7 @@ run_svm <- function(y, L1.x, L2.x, L2.unit, L2.reg,
         model_l <- svm_classifier(
           form = form,
           data = data_train,
-          kernel = kernel,
+          kernel = kernel_value,
           type = "C-classification",
           probability = TRUE,
           svm.gamma = gamma_value,
@@ -156,17 +155,27 @@ run_svm <- function(y, L1.x, L2.x, L2.unit, L2.reg,
         perform_l <- loss_function(pred = pred_l, data.valid = data_valid,
                                    loss.unit = loss.unit,
                                    loss.fun = loss.fun,
-                                   y = y, L2.unit = L2.unit)
+                                   y = y, L2.unit = L2.eval.unit)
       })
 
-      # Mean over all k folds
-      best_error <- mean(unlist(k_errors))
+      # Mean over loss functions
+      k_errors <- dplyr::bind_rows(k_errors) %>%
+        dplyr::group_by(measure) %>%
+        dplyr::summarise(value = mean(value), .groups = "drop") %>%
+        dplyr::mutate(gamma = gamma_value,
+                      cost = cost_value,
+                      kernel = kernel_value)
+
     })
   }
 
   # Extract best tuning parameters
-  out <- list(gamma = svm_grid[which.min(grid_cells), "gamma"],
-              cost = svm_grid[which.min(grid_cells), "cost"])
+  grid_cells <- dplyr::bind_rows(grid_cells)
+  best_params <- dplyr::slice(loss_score_ranking(score = grid_cells, loss.fun = loss.fun), 1)
+
+  out <- list(gamma =  dplyr::pull(.data = best_params, var = gamma),
+              cost = dplyr::pull(.data = best_params, var = cost),
+              kernel = dplyr::pull(.data = best_params, var = kernel))
 
   # Function output
   return(out)
@@ -202,11 +211,7 @@ run_svm <- function(y, L1.x, L2.x, L2.unit, L2.reg,
 #' @param kernel SVM kernel. A character-valued scalar specifying the kernel to
 #'   be used by SVM. The possible values are \code{linear}, \code{polynomial},
 #'   \code{radial}, and \code{sigmoid}. Default is \code{radial}.
-#' @param svm.classifier SVM classifier. An \code{autoMrP} function.
 #' @param svm.grid The tuning grid for SVM. A data.frame.
-#' @param loss.function The loss function used to evaluate model performance. An
-#'   \code{autoMrP} function which implements the loss functions specified in
-#'   \code{loss.fun}.
 #' @param verbose Verbose output. A logical argument indicating whether or not
 #'   verbose output should be printed. Default is \code{TRUE}.
 #' @return The cross-validation errors for all models. A list.
@@ -214,10 +219,8 @@ run_svm <- function(y, L1.x, L2.x, L2.unit, L2.reg,
 #' # not yet
 #' }
 
-run_svm_mc <- function(y, L2.unit, form, loss.unit,
-                       loss.fun, data, cores, kernel,
-                       svm.classifier, svm.grid,
-                       loss.function, verbose){
+run_svm_mc <- function(y, L2.eval.unit, L2.unit, form, loss.unit,
+                       loss.fun, data, cores, svm.grid, verbose){
 
   # Binding for global variables
   g <- NULL
@@ -227,11 +230,12 @@ run_svm_mc <- function(y, L2.unit, form, loss.unit,
   cl <- multicore(cores = cores, type = "open", cl = NULL)
 
   # Train and evaluate each model
-  grid_cells <- foreach::foreach(g = 1:nrow(svm.grid), .combine = "c") %dorng% {
+  grid_cells <- foreach::foreach(g = 1:nrow(svm.grid), .packages = 'autoMrP') %dorng% {
 
     # Set tuning parameters
     gamma_value <- as.numeric(svm.grid[g, "gamma"])
     cost_value <- as.numeric(svm.grid[g, "cost"])
+    kernel_value <- svm.grid[g, "kernel"]
 
     # Loop over each fold
     k_errors <- lapply(seq_along(data), function(k) {
@@ -243,10 +247,10 @@ run_svm_mc <- function(y, L2.unit, form, loss.unit,
         dplyr::mutate_at(.vars = y, as.factor)
 
       # Svm classifier
-      model_l <- svm.classifier(
+      model_l <- svm_classifier(
         form = form,
         data = data_train,
-        kernel = kernel,
+        kernel = kernel_value,
         type = "C-classification",
         probability = TRUE,
         svm.gamma = gamma_value,
@@ -264,14 +268,19 @@ run_svm_mc <- function(y, L2.unit, form, loss.unit,
         dplyr::mutate_at(.vars = y, function(x) as.numeric(levels(x))[x])
 
       # Evaluate predictions based on loss function
-      perform_l <- loss.function(pred = pred_l, data.valid = data_valid,
+      perform_l <- loss_function(pred = pred_l, data.valid = data_valid,
                                  loss.unit = loss.unit,
                                  loss.fun = loss.fun,
-                                 y = y, L2.unit = L2.unit)
+                                 y = y, L2.unit = L2.eval.unit)
     })
 
-    # Mean over all k folds
-    mean(unlist(k_errors))
+    # Mean over loss functions
+    k_errors <- dplyr::bind_rows(k_errors) %>%
+      dplyr::group_by(measure) %>%
+      dplyr::summarise(value = mean(value), .groups = "drop") %>%
+      dplyr::mutate(gamma = gamma_value,
+                    cost = cost_value,
+                    kernel = kernel_value)
   }
 
   # De-register cluster

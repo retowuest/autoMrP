@@ -14,12 +14,9 @@ run_lasso_mc_lambda(
   loss.fun,
   data,
   cores,
-  loss.function,
-  verbose,
   L2.fe.form,
   L1.re,
-  lambda,
-  lasso.classifier
+  lambda
 )
 }
 \arguments{
@@ -61,14 +58,6 @@ cross-validation.}
 \item{cores}{The number of cores to be used. An integer indicating the number
 of processor cores used for parallel computing. Default is 1.}
 
-\item{loss.function}{Loss function. A character-valued scalar indicating
-whether prediction loss should be measured by the mean squared error
-(\code{MSE}) or the mean absolute error (\code{MAE}). The value is
-inherited from \code{auto_MrP}.}
-
-\item{verbose}{Verbose output. A logical argument indicating whether or not
-verbose output should be printed. Default is \code{FALSE}.}
-
 \item{L2.fe.form}{The fixed effects part of the Lasso classifier formula. The
 formula is inherited from \code{run_lasso}.}
 
@@ -83,8 +72,6 @@ thresholds of the intervals to which the step sizes apply. The penalty
 parameter controls the shrinkage of the context-level variables in the
 lasso model. Default is \code{1 / exp(- seq(from = -1, to = 4.5, length =
 100))}.}
-
-\item{lasso.classifier}{Lasso classifier. An \code{autoMrP} function.}
 }
 \value{
 The cross-validation errors for all models. A list.

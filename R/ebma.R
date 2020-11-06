@@ -50,7 +50,8 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, post.strat,
       dplyr::select(-one_of(y))
 
     # Training set outcomes
-    train_y <- dplyr::select(.data = post.strat$predictions$Level1, one_of(y))
+    train_y <- dplyr::pull(.data = post.strat$predictions$Level1, var = y)
+    #train_y <- dplyr::select(.data = post.strat$predictions$Level1, one_of(y))
 
     # Parallel tuning, if cores > 1
     if (cores > 1){
@@ -165,15 +166,16 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, post.strat,
             all(!is.na(x))})]
 
           # outcome on the test
-          test_y <- dplyr::select(.data = test, one_of(y))
+          # test_y <- dplyr::select(.data = test, one_of(y))
+          test_y <- dplyr::pull(.data = test, y)
 
           # EBMA
           if(verbose){
             forecast.data <- EBMAforecast::makeForecastData(
               .predCalibration = data.frame(train_preds),
-              .outcomeCalibration = as.numeric(unlist(train_y)),
+              .outcomeCalibration = train_y,
               .predTest = data.frame(test_preds),
-              .outcomeTest = as.numeric(unlist(test_y)))
+              .outcomeTest = test_y)
 
             forecast.out <- EBMAforecast::calibrateEnsemble(
               forecast.data,

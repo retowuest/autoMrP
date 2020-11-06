@@ -71,11 +71,9 @@ run_best_subset <- function(y, L1.x, L2.x, L2.unit, L2.reg,
 
     # Train all models in parallel
     m_errors <- run_best_subset_mc(
-      best.subset.classifier = best_subset_classifier,
       verbose = verbose,
       models = models,
       data = data,
-      loss.function = loss_function,
       loss.unit = loss.unit,
       loss.fun = loss.fun,
       y = y,
@@ -122,17 +120,24 @@ run_best_subset <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                                    L2.unit = L2.unit)
       })
 
-      # Mean over all k folds
-      mean(unlist(k_errors))
+      # Mean over loss functions
+      k_errors <- dplyr::bind_rows(k_errors) %>%
+        dplyr::group_by(measure) %>%
+        dplyr::summarise(value = mean(value), .groups = "drop") %>%
+        dplyr::mutate(model = m)
     })
   }
 
+  # Extract best tuning parameters
+  grid_cells <- dplyr::bind_rows(m_errors)
+  best_params <- dplyr::slice(loss_score_ranking(score = grid_cells, loss.fun = loss.fun), 1)
+
   # Choose best-performing model
-  min_m <- which.min(m_errors)
-  out <- models[[min_m]]
+  out <- models[[ dplyr::pull(.data = best_params, var = model) ]]
 
   # Function output
   return(out)
+
 }
 
 ################################################################################
@@ -171,12 +176,8 @@ run_best_subset <- function(y, L1.x, L2.x, L2.unit, L2.reg,
 #'   cross-validation.
 #' @param cores The number of cores to be used. An integer indicating the number
 #'   of processor cores used for parallel computing. Default is 1.
-#' @param best.subset.classifier Best subset classifier. An \code{autoMrP} function.
 #' @param models The models to perform best subset selection on. A list of model
 #'   formulas.
-#' @param loss.function The loss function used to evaluate model performance. An
-#'   \code{autoMrP} function which implements the loss functions specified in
-#'   \code{loss.fun}.
 #' @param verbose Verbose output. A logical argument indicating whether or not
 #'   verbose output should be printed. Default is \code{TRUE}.
 #' @return The cross-validation errors for all models. A list.
@@ -186,8 +187,7 @@ run_best_subset <- function(y, L1.x, L2.x, L2.unit, L2.reg,
 
 run_best_subset_mc <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                                loss.unit, loss.fun, data,
-                               cores, best.subset.classifier,
-                               models, loss.function, verbose){
+                               cores, models, verbose){
 
   # Binding for global variables
   m <- NULL
@@ -196,7 +196,7 @@ run_best_subset_mc <- function(y, L1.x, L2.x, L2.unit, L2.reg,
   cl <- multicore(cores = cores, type = "open", cl = NULL)
 
   # Train and evaluate each model
-  m_errors <- foreach::foreach(m = 1:length(models)) %dorng% {
+  m_errors <- foreach::foreach(m = 1:length(models), .packages = 'autoMrP' ) %dorng% {
 
     # Loop over each fold
     k_errors <- lapply(seq_along(data), function(k) {
@@ -205,7 +205,7 @@ run_best_subset_mc <- function(y, L1.x, L2.x, L2.unit, L2.reg,
       data_valid <- dplyr::bind_rows(data[k])
 
       # Train mth model on kth training set
-      model_m <- best.subset.classifier(
+      model_m <- best_subset_classifier(
         model = models[[m]],
         data.train = data_train,
         model.family = binomial(link = "probit"),
@@ -219,7 +219,7 @@ run_best_subset_mc <- function(y, L1.x, L2.x, L2.unit, L2.reg,
         type = "response", allow.new.levels = TRUE)
 
       # Evaluate predictions based on loss function
-      perform_m <- loss.function(
+      perform_m <- loss_function(
         pred = pred_m,
         data.valid = data_valid,
         loss.unit = loss.unit,
@@ -228,8 +228,11 @@ run_best_subset_mc <- function(y, L1.x, L2.x, L2.unit, L2.reg,
         L2.unit = L2.unit)
     })
 
-    # Mean over all k folds
-    mean(unlist(k_errors))
+    # Mean over loss functions
+    k_errors <- dplyr::bind_rows(k_errors) %>%
+      dplyr::group_by(measure) %>%
+      dplyr::summarise(value = mean(value), .groups = "drop") %>%
+      dplyr::mutate(model = m)
   }
 
   # De-register cluster

@@ -15,7 +15,7 @@ boot_auto_mrp <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
                           lasso.n.iter, gb.interaction.depth,
                           gb.shrinkage, gb.n.trees.init,
                           gb.n.trees.increase, gb.n.trees.max,
-                          gb.n.iter, gb.n.minobsinnode, svm.kernel,
+                          gb.n.minobsinnode, svm.kernel,
                           svm.gamma, svm.cost, ebma.tol, seed,
                           boot.iter, cores){
 
@@ -32,7 +32,16 @@ boot_auto_mrp <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
                                .packages = "autoMrP") %dorng% {
 
     # Bootstrapped survey sample
-    boot_sample <- dplyr::slice_sample(.data = survey, n = base::nrow(survey), replace = TRUE)
+    #boot_sample <- dplyr::slice_sample(.data = survey, n = base::nrow(survey), replace = TRUE)
+
+    boot_sample <- survey %>%
+      dplyr::group_by( !! rlang::sym(L2.unit) ) %>%
+      tidyr::nest() %>%
+      dplyr::mutate(data = purrr::map(data, function(x){
+        data = dplyr::slice_sample(.data = x, n = nrow(x), replace = TRUE)
+      })) %>%
+      tidyr::unnest(data) %>%
+      dplyr::ungroup()
 
     # Estimate on 1 sample in autoMrP
     boot_mrp <- auto_MrP(
@@ -79,7 +88,6 @@ boot_auto_mrp <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
       gb.n.trees.init = gb.n.trees.init,
       gb.n.trees.increase = gb.n.trees.increase,
       gb.n.trees.max = gb.n.trees.max,
-      gb.n.iter = gb.n.iter,
       gb.n.minobsinnode = gb.n.minobsinnode,
       svm.kernel = svm.kernel,
       svm.gamma = svm.gamma,
@@ -88,14 +96,14 @@ boot_auto_mrp <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
       seed = seed,
       boot.iter = NULL
     )
-  }
+                               }
 
   # Median and standard deviation of EBMA estimates
   if ( !any(boot_out[[1]]$ebma == "EBMA step skipped (only 1 classifier run)") ){
     ebma <- base::do.call(base::rbind, base::do.call(base::rbind, boot_out)[,"ebma"] ) #%>%
-      #dplyr::group_by(.dots = list(L2.unit)) %>%
-      #dplyr::summarise(median = median(ebma, na.rm = TRUE),
-      #                 sd = sd(ebma, na.rm = TRUE), .groups = "drop")
+    #dplyr::group_by(.dots = list(L2.unit)) %>%
+    #dplyr::summarise(median = median(ebma, na.rm = TRUE),
+    #                 sd = sd(ebma, na.rm = TRUE), .groups = "drop")
   } else {
     ebma <- "EBMA step skipped (only 1 classifier run)"
   }
@@ -103,48 +111,48 @@ boot_auto_mrp <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
   # Median and standard deviations for classifier estimates
   classifiers <- base::do.call(base::rbind, base::do.call(base::rbind, boot_out)[,"classifiers"] ) %>%
     dplyr::select(
-     one_of(L2.unit),
-     contains("best_subset"),
-     contains("pca"),
-     contains("lasso"),
-     contains("gb"),
-     contains("svm"),
-     contains("mrp")
+      one_of(L2.unit),
+      contains("best_subset"),
+      contains("pca"),
+      contains("lasso"),
+      contains("gb"),
+      contains("svm"),
+      contains("mrp")
     )
 
   #dplyr::group_by(.dots = list(L2.unit)) %>%
-    #dplyr::summarise_all(.funs = c(median = median, sd = sd), na.rm = TRUE) %>%
-    #dplyr::select(
-    #  state,
-    #  contains("best_subset"),
-    #  contains("pca"),
-    #  contains("lasso"),
-    #  contains("gb"),
-    #  contains("svm"),
-    #  contains("mrp")
-    #)
+  #dplyr::summarise_all(.funs = c(median = median, sd = sd), na.rm = TRUE) %>%
+  #dplyr::select(
+  #  state,
+  #  contains("best_subset"),
+  #  contains("pca"),
+  #  contains("lasso"),
+  #  contains("gb"),
+  #  contains("svm"),
+  #  contains("mrp")
+  #)
 
   # weights
   weights <- base::do.call(base::rbind, base::do.call(base::rbind, boot_out)[,"weights"] ) %>%
     dplyr::as_tibble() %>%
     dplyr::select(
-       contains("best_subset"),
-       contains("pca"),
-       contains("lasso"),
-       contains("gb"),
-       contains("svm"),
-       contains("mrp")
-      )
+      contains("best_subset"),
+      contains("pca"),
+      contains("lasso"),
+      contains("gb"),
+      contains("svm"),
+      contains("mrp")
+    )
 
-    #dplyr::summarise_all(.funs = c(median = median, sd = sd), na.rm = TRUE) %>%
-    #dplyr::select(
-    #  contains("best_subset"),
-    #  contains("pca"),
-    #  contains("lasso"),
-    #  contains("gb"),
-    #  contains("svm"),
-    #  contains("mrp")
-    #)
+  #dplyr::summarise_all(.funs = c(median = median, sd = sd), na.rm = TRUE) %>%
+  #dplyr::select(
+  #  contains("best_subset"),
+  #  contains("pca"),
+  #  contains("lasso"),
+  #  contains("gb"),
+  #  contains("svm"),
+  #  contains("mrp")
+  #)
 
   boot_out <- list(ebma = ebma, classifiers = classifiers, weights = weights)
 

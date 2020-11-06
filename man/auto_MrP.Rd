@@ -40,7 +40,7 @@ auto_MrP(
   gb.L2.reg = FALSE,
   svm.L2.unit = FALSE,
   svm.L2.reg = FALSE,
-  lasso.lambda = 1/exp(-seq(from = -1, to = 4.5, length = 100)),
+  lasso.lambda = NULL,
   lasso.n.iter = 70,
   gb.interaction.depth = c(1, 2, 3),
   gb.shrinkage = c(0.04, 0.01, 0.008, 0.005, 0.001),
@@ -318,6 +318,9 @@ whether uncertainty estimates should be computed. Default is \code{FALSE}.}
 indicating the number of bootstrap iterations to be computed. Will be
 ignored unless \code{uncertainty = TRUE}. Default is \code{200} if
 \code{uncertainty = TRUE} and \code{NULL} if \code{uncertainty = FALSE}.}
+
+\item{oversampling}{Over sample to create balance on the dependent variable.
+A logical argument. Default is \code{TRUE}.}
 }
 \value{
 The context-level predictions. A list with two elements. The first
