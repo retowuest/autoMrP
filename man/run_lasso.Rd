@@ -10,7 +10,7 @@ run_lasso(
   L2.x,
   L2.unit,
   L2.reg,
-  n.iter = NULL,
+  n.iter,
   loss.unit,
   loss.fun,
   lambda,

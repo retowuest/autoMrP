@@ -2,7 +2,8 @@
 % Please edit documentation in R/utils.R
 \name{binary_cross_entropy}
 \alias{binary_cross_entropy}
-\title{Estimates binary cross-entropy.}
+\title{Estimates the inverse binary cross-entropy, i.e. 0 is the best score and 1
+the worst.}
 \usage{
 binary_cross_entropy(
   pred,
@@ -31,6 +32,6 @@ of the geographic unit in \code{survey} and \code{census} at which outcomes
 should be aggregated.}
 }
 \description{
-\code{binary_cross_entropy()} estimates binary cross-entropy for the desired
-loss unit.
+\code{binary_cross_entropy()} estimates the inverse binary cross-entropy on
+the individual and state-level.
 }

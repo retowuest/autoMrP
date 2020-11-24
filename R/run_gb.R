@@ -83,7 +83,7 @@ run_gb <- function(y, L1.x, L2.x, L2.eval.unit, L2.unit, L2.reg,
   })
 
   # Number of trees
-  n_trees <- seq(from = 50, to = n.trees.max, by = n.trees.increase)
+  n_trees <- seq(from = n.trees.init, to = n.trees.max, by = n.trees.increase)
 
   # Search grid
   gb_grid <- expand.grid(interaction.depth, shrinkage, n_trees)

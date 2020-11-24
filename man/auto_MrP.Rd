@@ -21,14 +21,15 @@ auto_MrP(
   cores = 1,
   k.folds = 5,
   cv.sampling = "L2 units",
-  loss.unit = "individuals",
-  loss.fun = "MSE",
+  loss.unit = c("individuals", "L2 units"),
+  loss.fun = c("msfe", "cross-entropy", "f1", "MSE"),
   best.subset = TRUE,
   lasso = TRUE,
   pca = TRUE,
   gb = TRUE,
   svm = TRUE,
   mrp = FALSE,
+  oversampling = FALSE,
   forward.select = FALSE,
   best.subset.L2.x = NULL,
   lasso.L2.x = NULL,
@@ -36,20 +37,19 @@ auto_MrP(
   gb.L2.x = NULL,
   svm.L2.x = NULL,
   mrp.L2.x = NULL,
-  gb.L2.unit = FALSE,
+  gb.L2.unit = TRUE,
   gb.L2.reg = FALSE,
-  svm.L2.unit = FALSE,
+  svm.L2.unit = TRUE,
   svm.L2.reg = FALSE,
   lasso.lambda = NULL,
-  lasso.n.iter = 70,
+  lasso.n.iter = 100,
   gb.interaction.depth = c(1, 2, 3),
   gb.shrinkage = c(0.04, 0.01, 0.008, 0.005, 0.001),
   gb.n.trees.init = 50,
   gb.n.trees.increase = 50,
   gb.n.trees.max = 1000,
-  gb.n.iter = 70,
-  gb.n.minobsinnode = 5,
-  svm.kernel = "radial",
+  gb.n.minobsinnode = 20,
+  svm.kernel = c("radial"),
   svm.gamma = NULL,
   svm.cost = NULL,
   ebma.n.draws = 100,
@@ -173,6 +173,9 @@ classifier should be used for predicting outcome \code{y}. Default is
 MRP classifier should be used for predicting outcome \code{y}. Default is
 \code{FALSE}.}
 
+\item{oversampling}{Over sample to create balance on the dependent variable.
+A logical argument. Default is \code{TRUE}.}
+
 \item{forward.select}{Forward selection classifier. A logical argument
 indicating whether to use forward selection rather than best subset
 selection. Default is \code{FALSE}. \emph{Note:} forward selection is
@@ -273,10 +276,6 @@ vector of length \code{length(gb.shrinkage)} with each of its values being
 associated with a learning rate and an increase in the total number of
 trees. Default is \eqn{1000}.}
 
-\item{gb.n.iter}{GB number of iterations without improvement. A numeric
-scalar specifying the maximum number of iterations without performance
-improvement the algorithm runs before stopping. Default is \eqn{70}.}
-
 \item{gb.n.minobsinnode}{GB minimum number of observations in the terminal
 nodes. An integer-valued scalar specifying the minimum number of
 observations that each terminal node of the trees must contain. Default is
@@ -318,9 +317,6 @@ whether uncertainty estimates should be computed. Default is \code{FALSE}.}
 indicating the number of bootstrap iterations to be computed. Will be
 ignored unless \code{uncertainty = TRUE}. Default is \code{200} if
 \code{uncertainty = TRUE} and \code{NULL} if \code{uncertainty = FALSE}.}
-
-\item{oversampling}{Over sample to create balance on the dependent variable.
-A logical argument. Default is \code{TRUE}.}
 }
 \value{
 The context-level predictions. A list with two elements. The first

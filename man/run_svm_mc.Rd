@@ -13,7 +13,6 @@ run_svm_mc(
   loss.fun,
   data,
   cores,
-  kernel,
   svm.grid,
   verbose
 )
@@ -44,14 +43,14 @@ cross-validation.}
 \item{cores}{The number of cores to be used. An integer indicating the number
 of processor cores used for parallel computing. Default is 1.}
 
-\item{kernel}{SVM kernel. A character-valued scalar specifying the kernel to
-be used by SVM. The possible values are \code{linear}, \code{polynomial},
-\code{radial}, and \code{sigmoid}. Default is \code{radial}.}
-
 \item{svm.grid}{The tuning grid for SVM. A data.frame.}
 
 \item{verbose}{Verbose output. A logical argument indicating whether or not
 verbose output should be printed. Default is \code{TRUE}.}
+
+\item{kernel}{SVM kernel. A character-valued scalar specifying the kernel to
+be used by SVM. The possible values are \code{linear}, \code{polynomial},
+\code{radial}, and \code{sigmoid}. Default is \code{radial}.}
 }
 \value{
 The cross-validation errors for all models. A list.

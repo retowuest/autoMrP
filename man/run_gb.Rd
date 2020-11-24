@@ -18,7 +18,6 @@ run_gb(
   n.trees.init,
   n.trees.increase,
   n.trees.max,
-  n.iter,
   cores = cores,
   n.minobsinnode,
   data,
@@ -83,10 +82,6 @@ vector of length \code{length(shrinkage)} with each of its values being
 associated with a learning rate and an increase in the total number of
 trees. Default is \eqn{1000}.}
 
-\item{n.iter}{GB number of iterations without improvement. A numeric scalar
-specifying the maximum number of iterations without performance
-improvement the algorithm runs before stopping. Default is \eqn{70}.}
-
 \item{cores}{The number of cores to be used. An integer indicating the number
 of processor cores used for parallel computing. Default is 1.}
 
@@ -115,29 +110,6 @@ and chooses the best-performing model.
 }
 \examples{
 \dontrun{
-# create list of cross-validation folds
-cv_folds <- list(
-  `1` = survey_item[1:200, ],
-  `2` = survey_item[201:400, ],
-  `3` = survey_item[401:1500, ])
-
-# run gradient boosting classifier
-out <- run_gb(
-  y = "YES",
-  L1.x = c("L1x1", "L1x2"),
-  L2.x = c("L2.x1", "L2.x2"),
-  L2.unit = NULL,
-  L2.reg = "region",
-  loss.unit = "individuals",
-  loss.fun = "MSE",
-  interaction.depth = c(1, 2, 3),
-  shrinkage = c(0.04, 0.01),
-  n.trees.init = 50,
-  n.trees.increase = 50,
-  n.trees.max = 1000,
-  n.iter = 70,
-  n.minobsinnode = 5,
-  data = cv_folds,
-  verbose = TRUE)
+not yet
 }
 }

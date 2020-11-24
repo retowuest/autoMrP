@@ -44,7 +44,6 @@ boot_auto_mrp(
   gb.n.trees.init,
   gb.n.trees.increase,
   gb.n.trees.max,
-  gb.n.iter,
   gb.n.minobsinnode,
   svm.kernel,
   svm.gamma,
@@ -256,10 +255,6 @@ specifying the maximum number of trees to fit by GB or an integer-valued
 vector of length \code{length(gb.shrinkage)} with each of its values being
 associated with a learning rate and an increase in the total number of
 trees. Default is \eqn{1000}.}
-
-\item{gb.n.iter}{GB number of iterations without improvement. A numeric
-scalar specifying the maximum number of iterations without performance
-improvement the algorithm runs before stopping. Default is \eqn{70}.}
 
 \item{gb.n.minobsinnode}{GB minimum number of observations in the terminal
 nodes. An integer-valued scalar specifying the minimum number of
