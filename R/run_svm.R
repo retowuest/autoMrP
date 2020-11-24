@@ -107,7 +107,10 @@ run_svm <- function(y, L1.x, L2.x, L2.eval.unit, L2.unit, L2.reg,
       loss.unit = loss.unit,
       loss.fun = loss.fun,
       y = y,
+      L1.x = L1.x,
+      L2.x = L2.x,
       L2.unit = L2.unit,
+      L2.reg = L2.reg,
       form = form,
       cores = cores)
 
@@ -126,9 +129,14 @@ run_svm <- function(y, L1.x, L2.x, L2.eval.unit, L2.unit, L2.reg,
 
         # Split data in training and validation sets and factorize DV
         data_train <- dplyr::bind_rows(data[-k]) %>%
-          dplyr::mutate_at(.vars = y, as.factor)
+          dplyr::mutate_at(.vars = y, as.factor) %>%
+          dplyr::select( dplyr::all_of(c(y, L1.x, L2.x, L2.eval.unit, L2.reg)) ) %>%
+          tidyr::drop_na()
+
         data_valid <- dplyr::bind_rows(data[k]) %>%
-          dplyr::mutate_at(.vars = y, as.factor)
+          dplyr::mutate_at(.vars = y, as.factor) %>%
+          dplyr::select( dplyr::all_of(c(y, L1.x, L2.x, L2.eval.unit, L2.reg)) ) %>%
+          tidyr::drop_na()
 
         # Svm classifier
         model_l <- svm_classifier(
@@ -219,8 +227,8 @@ run_svm <- function(y, L1.x, L2.x, L2.eval.unit, L2.unit, L2.reg,
 #' # not yet
 #' }
 
-run_svm_mc <- function(y, L2.eval.unit, L2.unit, form, loss.unit,
-                       loss.fun, data, cores, svm.grid, verbose){
+run_svm_mc <- function(y, L1.x, L2.x, L2.eval.unit, L2.unit, L2.reg, form,
+                       loss.unit, loss.fun, data, cores, svm.grid, verbose){
 
   # Binding for global variables
   g <- NULL
@@ -242,9 +250,14 @@ run_svm_mc <- function(y, L2.eval.unit, L2.unit, form, loss.unit,
 
       # Split data in training and validation sets and factorize DV
       data_train <- dplyr::bind_rows(data[-k]) %>%
-        dplyr::mutate_at(.vars = y, as.factor)
+        dplyr::mutate_at(.vars = y, as.factor) %>%
+        dplyr::select( dplyr::all_of(c(y, L1.x, L2.x, L2.eval.unit, L2.reg)) ) %>%
+        tidyr::drop_na()
+
       data_valid <- dplyr::bind_rows(data[k]) %>%
-        dplyr::mutate_at(.vars = y, as.factor)
+        dplyr::mutate_at(.vars = y, as.factor) %>%
+        dplyr::select( dplyr::all_of(c(y, L1.x, L2.x, L2.eval.unit, L2.reg)) ) %>%
+        tidyr::drop_na()
 
       # Svm classifier
       model_l <- svm_classifier(

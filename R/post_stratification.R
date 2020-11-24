@@ -53,11 +53,18 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
   # Copy L2.unit b/c it is needed twice but might be reset depending on call
   L2_unit <- L2.unit
 
+  # post-stratification without level 2 variables
+  if (L2.x == "") L2.x <- NULL
+
   # model container for EBMA
   models <- list()
 
   # data that is used for models that will not enter EBMA
   no_ebma_data <- dplyr::bind_rows(data, ebma.fold)
+
+  # remove missing values
+  data <- tidyr::drop_na(data = data, dplyr::all_of(c(y, L1.x, L2.x, L2.unit, L2.reg)))
+  no_ebma_data <- tidyr::drop_na(data = no_ebma_data, dplyr::all_of(c(y, L1.x, L2.x, L2.unit, L2.reg)))
 
   # ----- Fit optimal model and make prediction for individual classifiers -----
 
@@ -119,7 +126,7 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
       L2.fix = L2_fe_form,
       L1.re = L1_re,
       data.train = data,
-      lambda = dplyr::pull(.data = lasso.opt, var = lambda),
+      lambda = lasso.opt,
       model.family = binomial(link = "probit"),
       verbose = verbose)
 
@@ -128,7 +135,7 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
       L2.fix = L2_fe_form,
       L1.re = L1_re,
       data.train = no_ebma_data,
-      lambda = dplyr::pull(.data = lasso.opt, var = lambda),
+      lambda = lasso.opt,
       model.family = binomial(link = "probit"),
       verbose = verbose)
 
@@ -275,10 +282,13 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
 
     # Prepare data
     svm_data <- data %>%
-      dplyr::mutate_at(.vars = y, .funs = list(y_svm = ~as.factor(.)))
+      dplyr::mutate_at(.vars = y, .funs = list(y_svm = ~as.factor(.))) %>%
+      dplyr::select( y_svm, dplyr::all_of(c(y, L1.x, svm.L2.x, L2.unit, L2.reg)) )
+
     svm_data_no_ebma <- data %>%
       dplyr::bind_rows(ebma.fold) %>%
-      dplyr::mutate_at(.vars = y, .funs = list(y_svm = ~as.factor(.)))
+      dplyr::mutate_at(.vars = y, .funs = list(y_svm = ~as.factor(.))) %>%
+      dplyr::select( y_svm, dplyr::all_of(c(y, L1.x, svm.L2.x, L2.unit, L2.reg)) )
 
     # Create model formula
     x <- paste(c(L1.x, svm.L2.x, svm.L2.unit, svm.L2.reg), collapse = " + ")
@@ -318,7 +328,7 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
       dplyr::summarize(svm = weighted.mean(x = svm, w = .data$prop), .groups = "keep")
 
     # individual level predictions for EBMA
-    svm_ind <- attr(stats::predict(object = svm_opt_ebma, newdata = data, probability = TRUE),"probabilities")[,"1"]
+    svm_ind <- attr(stats::predict(object = svm_opt_ebma, newdata = svm_data, probability = TRUE),"probabilities")[,"1"]
 
     # model for EBMA
     models$svm <- svm_opt_ebma
@@ -412,6 +422,7 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
   # individual predictions for EBMA
   L1_preds <- data %>%
     dplyr::select(one_of(y)) %>%
+    tidyr::drop_na() %>%
     # add best subset
     dplyr::mutate(
       best_subset = if(exists("bs_ind")){

@@ -11,6 +11,7 @@ ebma(
   L2.x,
   L2.unit,
   L2.reg,
+  pc.names,
   post.strat,
   n.draws,
   tol,

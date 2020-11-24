@@ -373,7 +373,7 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE, p
 
     # If not provided in survey and census data, compute the principal components
     # of context-level variables
-    if (is.null(pcs)) {
+    if (is.null(pcs) & L2.x != "") {
       # Determine context-level covariates whose principal components are to be
       # computed
       if (is.null(pca.L2.x)) {
@@ -403,9 +403,9 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE, p
     }
 
     # Scale context-level variables in survey and census data
-    if (isTRUE(L2.x.scale)) {
-      survey[, L2.x] <- scale(survey[, L2.x], center = TRUE, scale = TRUE)
-      census[, L2.x] <- scale(census[, L2.x], center = TRUE, scale = TRUE)
+    if (isTRUE(L2.x.scale) & L2.x != "") {
+      survey[, L2.x] <- as.numeric(scale(survey[, L2.x], center = TRUE, scale = TRUE))
+      census[, L2.x] <- as.numeric(scale(census[, L2.x], center = TRUE, scale = TRUE))
     }
 
     # Convert survey and census data to tibble
@@ -435,6 +435,8 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE, p
       survey <- dplyr::bind_rows(survey, add_rows)
     }
 
+# Remove NAs from DV ------------------------------------------------------
+    survey <- tidyr::drop_na(survey, dplyr::all_of(y) )
 
 # Create folds ------------------------------------------------------------
 
@@ -509,7 +511,7 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE, p
     }
 
     # Classifier 2: Lasso
-    if (isTRUE(lasso)) {
+    if (isTRUE(lasso) & L2.x != "") {
 
       message("Starting multilevel regression with L1 regularization tuning")
 
@@ -537,7 +539,7 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE, p
     }
 
     # Classifier 3: PCA
-    if (isTRUE(pca)) {
+    if (isTRUE(pca) & L2.x != "") {
 
       message("Starting multilevel regression with principal components as context level variables tuning")
 
@@ -567,6 +569,9 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE, p
       if (is.null(gb.L2.x)) {
         gb.L2.x <- L2.x
       }
+
+      # GB without L2 variables
+      if (L2.x == "") gb.L2.x <- NULL
 
       # Evaluate inclusion of L2.unit in GB
       if (isTRUE(gb.L2.unit)) {
@@ -614,6 +619,9 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE, p
       if (is.null(svm.L2.x)) {
         svm.L2.x <- L2.x
       }
+
+      # SVM without L2 variables
+      if (L2.x == "") svm.L2.x <- NULL
 
       # Evaluate inclusion of L2.unit in GB
       if (isTRUE(svm.L2.unit)) {
@@ -695,12 +703,13 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE, p
       L2.x = L2.x,
       L2.unit = L2.unit,
       L2.reg = L2.reg,
+      pc.names = pc_names,
       post.strat = ps_out,
       n.draws = ebma.n.draws,
       tol = ebma.tol,
       best.subset.opt = best_subset_out,
       pca.opt = pca_out,
-      lasso.opt = dplyr::pull(.data = lasso_out, var = lambda),
+      lasso.opt = lasso_out,
       gb.opt = gb_out,
       svm.opt = svm_out,
       verbose = verbose,

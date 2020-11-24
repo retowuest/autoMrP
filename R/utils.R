@@ -59,20 +59,22 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                " be used to predict y, must be a character vector.", sep = ""))
   }
 
-  # Check if L2.x is in survey data
-  if (!all(L2.x %in% colnames(survey))) {
-    stop(cat(paste("Context-level variable '",
-                   L2.x[which(!(L2.x %in% colnames(survey)))],
-                   "', specified in argument 'L2.x', is not in your survey",
-                   " data.\n", sep = ""), sep = ""))
-  }
+  # Check if L2.x is in survey data (unless it is empty)
+  if (L2.x != ""){
+    if (!all(L2.x %in% colnames(survey))) {
+      stop(cat(paste("Context-level variable '",
+                     L2.x[which(!(L2.x %in% colnames(survey)))],
+                     "', specified in argument 'L2.x', is not in your survey",
+                     " data.\n", sep = ""), sep = ""))
+    }
 
-  # Check if L2.x is in census data
-  if (!all(L2.x %in% colnames(census))) {
-    stop(cat(paste("Context-level variable '",
-                   L2.x[which(!(L2.x %in% colnames(census)))],
-                   "', specified in argument 'L2.x', is not in your census",
-                   " data.\n", sep = ""), sep = ""))
+    # Check if L2.x is in census data
+    if (!all(L2.x %in% colnames(census))) {
+      stop(cat(paste("Context-level variable '",
+                     L2.x[which(!(L2.x %in% colnames(census)))],
+                     "', specified in argument 'L2.x', is not in your census",
+                     " data.\n", sep = ""), sep = ""))
+    }
   }
 
   # Check if L2.unit is a character scalar

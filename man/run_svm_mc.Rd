@@ -6,8 +6,11 @@
 \usage{
 run_svm_mc(
   y,
+  L1.x,
+  L2.x,
   L2.eval.unit,
   L2.unit,
+  L2.reg,
   form,
   loss.unit,
   loss.fun,

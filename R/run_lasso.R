@@ -55,7 +55,12 @@ run_lasso <- function(y, L1.x, L2.x, L2.unit, L2.reg,
 
   # Context-level fixed effects
   L2_fe <- paste(L2.x, collapse = " + ")
-  L2_fe_form <- as.formula(paste(y, " ~ ", L2_fe, sep = ""))
+  if (L2_fe == ""){
+    L2_fe_form <- as.formula(paste(y, " ~ 1", sep = ""))
+    L2.x <- NULL
+  } else{
+    L2_fe_form <- as.formula(paste(y, " ~ ", L2_fe, sep = ""))
+  }
 
   # Individual-level random effects as named list
   L1_re <- setNames(
@@ -91,10 +96,14 @@ run_lasso <- function(y, L1.x, L2.x, L2.unit, L2.reg,
         # Convert individual-level, geographic unit, and geographic region
         # covariates to factor variables in training and validation sets
         data_train <- data_train %>%
-          dplyr::mutate_at(.vars = c(L1.x, L2.unit, L2.reg), as.factor)
+          dplyr::mutate_at(.vars = c(L1.x, L2.unit, L2.reg), as.factor) %>%
+          dplyr::select( dplyr::all_of(c(y, L1.x, L2.x, L2.unit, L2.reg)) ) %>%
+          tidyr::drop_na()
 
         data_valid <- data_valid %>%
-          dplyr::mutate_at(.vars = c(L1.x, L2.unit, L2.reg), as.factor)
+          dplyr::mutate_at(.vars = c(L1.x, L2.unit, L2.reg), as.factor) %>%
+          dplyr::select( dplyr::all_of(c(y, L1.x, L2.x, L2.unit, L2.reg)) ) %>%
+          tidyr::drop_na()
 
         # Train model using lambda value on kth training set
         model_l <- lasso_classifier(L2.fix = L2_fe_form,
@@ -124,6 +133,12 @@ run_lasso <- function(y, L1.x, L2.x, L2.unit, L2.reg,
   # Extract best tuning parameters
   grid_cells <- dplyr::bind_rows(lambda_errors)
   best_params <- dplyr::slice(loss_score_ranking(score = grid_cells, loss.fun = loss.fun), 1)
+
+  # Choose best-performing model
+  out <- dplyr::pull(.data = best_params, var = lambda)
+
+  return(out)
+
 }
 
 
@@ -173,10 +188,14 @@ run_lasso_mc_lambda <- function(
       # Convert individual-level, geographic unit, and geographic region
       # covariates to factor variables in training and validation sets
       data_train <- data_train %>%
-        dplyr::mutate_at(.vars = c(L1.x, L2.unit, L2.reg), as.factor)
+        dplyr::mutate_at(.vars = c(L1.x, L2.unit, L2.reg), as.factor) %>%
+        dplyr::select( dplyr::all_of(c(y, L1.x, L2.x, L2.unit, L2.reg)) ) %>%
+        tidyr::drop_na()
 
       data_valid <- data_valid %>%
-        dplyr::mutate_at(.vars = c(L1.x, L2.unit, L2.reg), as.factor)
+        dplyr::mutate_at(.vars = c(L1.x, L2.unit, L2.reg), as.factor) %>%
+        dplyr::select( dplyr::all_of(c(y, L1.x, L2.x, L2.unit, L2.reg)) ) %>%
+        tidyr::drop_na()
 
       # Train model using lambda value on kth training set
       model_l <- lasso_classifier(L2.fix = L2.fe.form,

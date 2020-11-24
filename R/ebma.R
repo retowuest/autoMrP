@@ -28,14 +28,17 @@
 #' @param svm.opt Tuned support vector machine parameters. A list returned from
 #'   \code{run_svm()}.
 
-ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, post.strat,
-                 n.draws, tol, best.subset.opt, pca.opt, lasso.opt,
-                 gb.opt, svm.opt, verbose, cores){
+ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
+                 post.strat, n.draws, tol, best.subset.opt, pca.opt,
+                 lasso.opt, gb.opt, svm.opt, verbose, cores){
 
   # Run EBMA if at least two classifiers selected
   if (sum(unlist(lapply(X = post.strat$models, FUN = function(x) !is.null(x)))) > 1){
 
     message("Starting bayesian ensemble model averaging tuning")
+
+    # EBMA wihtout L2.x variables
+    if (L2.x == "") L2.x <- NULL
 
     # Models
     model_bs <- post.strat$models$best_subset
@@ -51,7 +54,6 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, post.strat,
 
     # Training set outcomes
     train_y <- dplyr::pull(.data = post.strat$predictions$Level1, var = y)
-    #train_y <- dplyr::select(.data = post.strat$predictions$Level1, one_of(y))
 
     # Parallel tuning, if cores > 1
     if (cores > 1){
@@ -65,8 +67,10 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, post.strat,
           ebma.fold = ebma.fold,
           y = y,
           L1.x = L1.x,
+          L2.x = L2.x,
           L2.unit = L2.unit,
           L2.reg = L2.reg,
+          pc.names = pc.names,
           model.bs = model_bs,
           model.pca = model_pca,
           model.lasso = model_lasso,
@@ -85,8 +89,10 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, post.strat,
           ebma.fold = ebma.fold,
           y = y,
           L1.x = L1.x,
+          L2.x = L2.x,
           L2.unit = L2.unit,
           L2.reg = L2.reg,
+          pc.names = pc.names,
           model.bs = model_bs,
           model.pca = model_pca,
           model.lasso = model_lasso,
@@ -138,7 +144,8 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, post.strat,
             dplyr::group_by_at( .vars = L2.unit ) %>%
             dplyr::sample_n( n_per_group, replace = TRUE) %>%
             dplyr::ungroup() %>%
-            dplyr::mutate_at(.vars = c( L1.x, L2.unit, L2.reg), .funs = as.factor)
+            dplyr::mutate_at(.vars = c( L1.x, L2.unit, L2.reg), .funs = as.factor) %>%
+            dplyr::select( dplyr::one_of(c(y, L1.x, L2.x, L2.unit, L2.reg, pc.names)))
 
           # predict outcomes in test set
           test_preds <- dplyr::tibble(
@@ -162,8 +169,7 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, post.strat,
             } else{NA}
           )
           # remove NA's
-          test_preds <- test_preds[,apply(X = test_preds, MARGIN = 2, FUN = function(x){
-            all(!is.na(x))})]
+          test_preds <- tidyr::drop_na(data = test_preds)
 
           # outcome on the test
           # test_y <- dplyr::select(.data = test, one_of(y))
@@ -243,7 +249,7 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, post.strat,
 
     # L2 preds object
     L2_preds <- dplyr::tibble(
-      state = post.strat$predictions$Level2$state,
+      state = dplyr::pull(.data = post.strat$predictions$Level2, var = L2.unit),
       ebma = w_avg
     )
 
@@ -291,10 +297,10 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, post.strat,
 #' }
 
 ebma_mc_tol <- function(train.preds, train.y, ebma.fold,
-                        y, L1.x, L2.unit, L2.reg, model.bs,
-                        model.pca, model.lasso, model.gb,
-                        model.svm, model.mrp, tol, n.draws,
-                        cores){
+                        y, L1.x, L2.x, L2.unit, L2.reg,
+                        pc.names, model.bs, model.pca,
+                        model.lasso, model.gb, model.svm,
+                        model.mrp, tol, n.draws, cores){
 
   # Binding for global variables
   `%>%` <- dplyr::`%>%`
@@ -314,7 +320,8 @@ ebma_mc_tol <- function(train.preds, train.y, ebma.fold,
       dplyr::group_by_at( .vars = L2.unit ) %>%
       dplyr::sample_n( n_per_group, replace = TRUE) %>%
       dplyr::ungroup() %>%
-      dplyr::mutate_at(.vars = c( L1.x, L2.unit, L2.reg), .funs = as.factor)
+      dplyr::mutate_at(.vars = c( L1.x, L2.unit, L2.reg), .funs = as.factor) %>%
+      dplyr::select( dplyr::one_of(c(y, L1.x, L2.x, L2.unit, L2.reg, pc.names)))
 
     # predict outcomes in test set
     test_preds <- dplyr::tibble(
@@ -437,10 +444,10 @@ ebma_mc_tol <- function(train.preds, train.y, ebma.fold,
 
 ebma_mc_draws <- function(
   train.preds, train.y, ebma.fold,
-  y, L1.x, L2.unit, L2.reg, model.bs,
-  model.pca, model.lasso, model.gb,
-  model.svm, model.mrp, tol, n.draws,
-  cores){
+  y, L1.x, L2.x, L2.unit, L2.reg,
+  pc.names, model.bs, model.pca,
+  model.lasso, model.gb, model.svm,
+  model.mrp, tol, n.draws, cores){
 
   # Binding for global variables
   `%>%` <- dplyr::`%>%`
@@ -458,7 +465,8 @@ ebma_mc_draws <- function(
       dplyr::group_by_at( .vars = L2.unit ) %>%
       dplyr::sample_n( n_per_group, replace = TRUE) %>%
       dplyr::ungroup() %>%
-      dplyr::mutate_at(.vars = c( L1.x, L2.unit, L2.reg), .funs = as.factor)
+      dplyr::mutate_at(.vars = c( L1.x, L2.unit, L2.reg), .funs = as.factor) %>%
+      dplyr::select( dplyr::one_of(c(y, L1.x, L2.x, L2.unit, L2.reg, pc.names)))
 
     # predict outcomes in test set
     test_preds <- dplyr::tibble(
