@@ -322,7 +322,7 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
     svm_preds <- census %>%
       dplyr::filter(dplyr::pull(.data = census, !!L2.unit) %in% dplyr::pull(.data = svm_data_no_ebma, !!L2.unit)) %>%
       dplyr::mutate(svm = attr(stats::predict(object = svm_opt_poststrat_only,
-                                              newdata = census, allow.new.levels = TRUE,
+                                              newdata = ., allow.new.levels = TRUE,
                                               probability = TRUE),"probabilities")[,"1"]) %>%
       dplyr::group_by(.dots = list(L2_unit)) %>%
       dplyr::summarize(svm = weighted.mean(x = svm, w = .data$prop), .groups = "keep")
