@@ -248,8 +248,32 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
 
     # weighted average
     model_preds <- as.matrix(post.strat$predictions$Level2[,names(final_model_weights)])
-    model_preds[is.na(model_preds)] <- 0
     w_avg <- as.numeric(model_preds %*% final_model_weights)
+
+    # deal with missings
+    if (any(is.na(w_avg))){
+
+      # missing row indexes
+      m_idx <- which(is.na(w_avg))
+
+      # which classifiers contain missings
+      NA_classifiers <- which(apply(model_preds, 2, function(x) any(is.na(x))))
+
+      # readjust weights without that classifier
+      NA_adj_weights <- final_model_weights[-NA_classifiers] / sum(final_model_weights[-NA_classifiers])
+
+      # remove columns with NAs
+      no_Na_preds <- model_preds[
+        m_idx, # rows
+        apply(X = model_preds, MARGIN = 2, FUN = function(x){all(!is.na(x))}) # columns
+        ]
+
+      # predictions for rows with NAs on at least 1 classifier
+      no_NA_avg <- as.numeric(no_Na_preds %*% NA_adj_weights)
+
+      # replace predictions
+      w_avg[m_idx] <- no_NA_avg
+    }
 
     # L2 preds object
     L2_preds <- dplyr::tibble(
