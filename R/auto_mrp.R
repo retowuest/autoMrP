@@ -373,7 +373,7 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE, p
 
     # If not provided in survey and census data, compute the principal components
     # of context-level variables
-    if (is.null(pcs) & L2.x != "") {
+    if (is.null(pcs) & all(L2.x != "")) {
       # Determine context-level covariates whose principal components are to be
       # computed
       if (is.null(pca.L2.x)) {
@@ -403,7 +403,7 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE, p
     }
 
     # Scale context-level variables in survey and census data
-    if (isTRUE(L2.x.scale) & L2.x != "") {
+    if (isTRUE(L2.x.scale) & all(L2.x != "")) {
       survey[, L2.x] <- as.numeric(scale(survey[, L2.x], center = TRUE, scale = TRUE))
       census[, L2.x] <- as.numeric(scale(census[, L2.x], center = TRUE, scale = TRUE))
     }
@@ -511,7 +511,7 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE, p
     }
 
     # Classifier 2: Lasso
-    if (isTRUE(lasso) & L2.x != "") {
+    if (isTRUE(lasso) & all(L2.x != "")) {
 
       message("Starting multilevel regression with L1 regularization tuning")
 
@@ -539,7 +539,7 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE, p
     }
 
     # Classifier 3: PCA
-    if (isTRUE(pca) & L2.x != "") {
+    if (isTRUE(pca) & all(L2.x != "")) {
 
       message("Starting multilevel regression with principal components as context level variables tuning")
 
@@ -571,7 +571,7 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE, p
       }
 
       # GB without L2 variables
-      if (L2.x == "") gb.L2.x <- NULL
+      if (all(L2.x == "")) gb.L2.x <- NULL
 
       # Evaluate inclusion of L2.unit in GB
       if (isTRUE(gb.L2.unit)) {
@@ -621,7 +621,7 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE, p
       }
 
       # SVM without L2 variables
-      if (L2.x == "") svm.L2.x <- NULL
+      if (all(L2.x == "")) svm.L2.x <- NULL
 
       # Evaluate inclusion of L2.unit in GB
       if (isTRUE(svm.L2.unit)) {

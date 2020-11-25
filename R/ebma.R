@@ -38,7 +38,7 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
     message("Starting bayesian ensemble model averaging tuning")
 
     # EBMA wihtout L2.x variables
-    if (L2.x == "") L2.x <- NULL
+    if (all(L2.x == "")) L2.x <- NULL
 
     # Models
     model_bs <- post.strat$models$best_subset
@@ -169,7 +169,8 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
             } else{NA}
           )
           # remove NA's
-          test_preds <- tidyr::drop_na(data = test_preds)
+          test_preds <- test_preds[,apply(X = test_preds, MARGIN = 2, FUN = function(x){
+            all(!is.na(x))})]
 
           # outcome on the test
           # test_y <- dplyr::select(.data = test, one_of(y))

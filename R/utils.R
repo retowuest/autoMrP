@@ -60,7 +60,7 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
   }
 
   # Check if L2.x is in survey data (unless it is empty)
-  if (L2.x != ""){
+  if (all(L2.x != "")){
     if (!all(L2.x %in% colnames(survey))) {
       stop(cat(paste("Context-level variable '",
                      L2.x[which(!(L2.x %in% colnames(survey)))],

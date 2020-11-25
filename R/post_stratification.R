@@ -54,7 +54,7 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
   L2_unit <- L2.unit
 
   # post-stratification without level 2 variables
-  if (L2.x == "") L2.x <- NULL
+  if (all(L2.x == "")) L2.x <- NULL
 
   # model container for EBMA
   models <- list()
