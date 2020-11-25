@@ -145,7 +145,8 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
             dplyr::sample_n( n_per_group, replace = TRUE) %>%
             dplyr::ungroup() %>%
             dplyr::mutate_at(.vars = c( L1.x, L2.unit, L2.reg), .funs = as.factor) %>%
-            dplyr::select( dplyr::one_of(c(y, L1.x, L2.x, L2.unit, L2.reg, pc.names)))
+            dplyr::select( dplyr::one_of(c(y, L1.x, L2.x, L2.unit, L2.reg, pc.names))) %>%
+            tidyr::drop_na()
 
           # predict outcomes in test set
           test_preds <- dplyr::tibble(
@@ -156,7 +157,7 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
               predict(object = model_pca, newdata = test, type = "response", allow.new.levels = TRUE)
             } else{NA},
             lasso = if(!is.null(model_lasso)){
-              as.numeric(predict(object = model_lasso, newdata = data.frame(test), type = "response"))
+              predict_glmmLasso(census = test, m = model_lasso, L1.x = L1.x, lasso.L2.x = L2.x, L2.unit = L2.unit, L2.reg = L2.reg)
             } else{NA},
             gb = if(!is.null(model_gb)){
               gbm::predict.gbm(object = model_gb, newdata = test, n.trees = model_gb$n.trees, type = "response")
@@ -246,7 +247,9 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
     }
 
     # weighted average
-    w_avg <- as.numeric(as.matrix(post.strat$predictions$Level2[,names(final_model_weights)]) %*% final_model_weights)
+    model_preds <- as.matrix(post.strat$predictions$Level2[,names(final_model_weights)])
+    model_preds[is.na(model_preds)] <- 0
+    w_avg <- as.numeric(model_preds %*% final_model_weights)
 
     # L2 preds object
     L2_preds <- dplyr::tibble(
@@ -322,7 +325,8 @@ ebma_mc_tol <- function(train.preds, train.y, ebma.fold,
       dplyr::sample_n( n_per_group, replace = TRUE) %>%
       dplyr::ungroup() %>%
       dplyr::mutate_at(.vars = c( L1.x, L2.unit, L2.reg), .funs = as.factor) %>%
-      dplyr::select( dplyr::one_of(c(y, L1.x, L2.x, L2.unit, L2.reg, pc.names)))
+      dplyr::select( dplyr::one_of(c(y, L1.x, L2.x, L2.unit, L2.reg, pc.names))) %>%
+      tidyr::drop_na()
 
     # predict outcomes in test set
     test_preds <- dplyr::tibble(
@@ -333,7 +337,7 @@ ebma_mc_tol <- function(train.preds, train.y, ebma.fold,
         predict(object = model.pca, newdata = test, type = "response", allow.new.levels = TRUE)
       } else{NA},
       lasso = if(!is.null(model.lasso)){
-        as.numeric(predict(object = model.lasso, newdata = data.frame(test), type = "response"))
+        predict_glmmLasso(census = test, m = model.lasso, L1.x = L1.x, lasso.L2.x = L2.x, L2.unit = L2.unit, L2.reg = L2.reg)
       } else{NA},
       gb = if(!is.null(model.gb)){
         gbm::predict.gbm(object = model.gb, newdata = test, n.trees = model.gb$n.trees, type = "response")
@@ -467,7 +471,8 @@ ebma_mc_draws <- function(
       dplyr::sample_n( n_per_group, replace = TRUE) %>%
       dplyr::ungroup() %>%
       dplyr::mutate_at(.vars = c( L1.x, L2.unit, L2.reg), .funs = as.factor) %>%
-      dplyr::select( dplyr::one_of(c(y, L1.x, L2.x, L2.unit, L2.reg, pc.names)))
+      dplyr::select( dplyr::one_of(c(y, L1.x, L2.x, L2.unit, L2.reg, pc.names))) %>%
+      tidyr::drop_na()
 
     # predict outcomes in test set
     test_preds <- dplyr::tibble(
@@ -478,7 +483,7 @@ ebma_mc_draws <- function(
         predict(object = model.pca, newdata = test, type = "response", allow.new.levels = TRUE)
       } else{NA},
       lasso = if(!is.null(model.lasso)){
-        as.numeric(predict(object = model.lasso, newdata = data.frame(test), type = "response"))
+        predict_glmmLasso(census = test, m = model.lasso, L1.x = L1.x, lasso.L2.x = L2.x, L2.unit = L2.unit, L2.reg = L2.reg)
       } else{NA},
       gb = if(!is.null(model.gb)){
         gbm::predict.gbm(object = model.gb, newdata = test, n.trees = model.gb$n.trees, type = "response")
