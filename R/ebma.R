@@ -277,9 +277,9 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
 
     # L2 preds object
     L2_preds <- dplyr::tibble(
-      state = dplyr::pull(.data = post.strat$predictions$Level2, var = L2.unit),
-      ebma = w_avg
-    )
+      !! rlang::sym(L2.unit) := dplyr::pull(.data = post.strat$predictions$Level2, var = L2.unit),
+      ebma = w_avg)
+
 
     # function output
     return(list(ebma = L2_preds, classifiers = post.strat$predictions$Level2, weights = final_model_weights))
