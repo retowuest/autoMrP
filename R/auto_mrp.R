@@ -404,8 +404,18 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE, p
 
     # Scale context-level variables in survey and census data
     if (isTRUE(L2.x.scale) & all(L2.x != "")) {
-      survey[, L2.x] <- as.numeric(scale(survey[, L2.x], center = TRUE, scale = TRUE))
-      census[, L2.x] <- as.numeric(scale(census[, L2.x], center = TRUE, scale = TRUE))
+
+      # scale context-level variables in survey
+      survey <- dplyr::mutate_at(
+        .tbl = survey,
+        .vars = L2.x,
+        .funs = function(x) base::as.numeric(base::scale(x = x, center = TRUE, scale = TRUE)))
+
+      # scale context-level variables in census
+      census <- dplyr::mutate_at(
+        .tbl = census,
+        .vars = L2.x,
+        .funs = function(x) base::as.numeric(base::scale(x = x, center = TRUE, scale = TRUE)))
     }
 
     # Convert survey and census data to tibble
