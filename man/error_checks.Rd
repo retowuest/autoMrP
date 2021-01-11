@@ -122,12 +122,21 @@ sampling individual respondents (\code{individuals}) or geographic units
 
 \item{loss.unit}{Loss function unit. A character-valued scalar indicating
 whether performance loss should be evaluated at the level of individual
-respondents (\code{individuals}) or geographic units (\code{L2 units}).
-Default is \code{individuals}.}
+respondents (\code{individuals}), geographic units (\code{L2 units}) or at
+both levels. Default is \code{c("individuals", "L2 units")}. With multiple
+loss units, parameters are ranked for each loss unit and the loss unit with
+the lowest rank sum is chosen. Ties are broken according to the order in
+the search grid.}
 
 \item{loss.fun}{Loss function. A character-valued scalar indicating whether
-prediction loss should be measured by the mean squared error (\code{MSE})
-or the mean absolute error (\code{MAE}). Default is \code{MSE}.}
+prediction loss should be measured by the mean squared error (\code{MSE}),
+the mean absolute error (\code{MAE}), binary cross-entropy
+(\code{cross-entropy}), mean squared false error (\code{msfe}), the f1
+score (\code{f1}), or a combination thereof. Default is \code{c("MSE",
+"cross-entropy","msfe", "f1")}. With multiple loss functions, parameters
+are ranked for each loss function and the parameter combination with the
+lowest rank sum is chosen. Ties are broken according to the order in the
+search grid.}
 
 \item{best.subset}{Best subset classifier. A logical argument indicating
 whether the best subset classifier should be used for predicting outcome
@@ -156,7 +165,8 @@ MRP classifier should be used for predicting outcome \code{y}. Default is
 \item{forward.select}{Forward selection classifier. A logical argument
 indicating whether to use forward selection rather than best subset
 selection. Default is \code{FALSE}. \emph{Note:} forward selection is
-recommended if there are more than \eqn{8} context-level variables.}
+recommended if there are more than \eqn{8} context-level variables.
+\emph{Note:} forward selection is not implemented yet.}
 
 \item{best.subset.L2.x}{Best subset context-level covariates. A character
 vector containing the column names of the context-level variables in
@@ -198,18 +208,15 @@ uses the variables specified in \code{L2.x}. Default is \code{NULL}.}
 \code{FALSE}.}
 
 \item{lasso.lambda}{Lasso penalty parameter. A numeric \code{vector} of
-non-negative values or a \code{list} of two numeric vectors of equal size,
-with the first vector containing the step sizes by which the penalty
-parameter should increase and the second vector containing the upper
-thresholds of the intervals to which the step sizes apply. The penalty
-parameter controls the shrinkage of the context-level variables in the
-lasso model. Default is \code{1 / exp(- seq(from = -1, to = 4.5, length.out
-= 100))}.}
+non-negative values. The penalty parameter controls the shrinkage of the
+context-level variables in the lasso model. Default is a sequence with
+minimum 0.1 and maximum 250 that is equally spaced on the log-scale. The
+number of values is controlled by the \code{lasso.n.iter} parameter.}
 
-\item{lasso.n.iter}{Lasso number of iterations without improvement. Either
-\code{NULL} or an integer-valued scalar specifying the maximum number of
-iterations without performance improvement the algorithm runs before
-stopping. Default is \eqn{70}.}
+\item{lasso.n.iter}{Lasso number of lambda values. An integer-valued scalar
+specifying the number of lambda values to search over. Default is \eqn{100}.
+\emph{Note:} Is ignored if a vector of \code{lasso.lambda} values is
+provided.}
 
 \item{uncertainty}{Uncertainty estimates. A logical argument indicating
 whether uncertainty estimates should be computed. Default is \code{FALSE}.}

@@ -6,17 +6,14 @@
 #'
 #' @inheritParams auto_MrP
 #' @param lambda Lasso penalty parameter. A numeric \code{vector} of
-#'   non-negative values or a \code{list} of two numeric vectors of equal size,
-#'   with the first vector containing the step sizes by which the penalty
-#'   parameter should increase and the second vector containing the upper
-#'   thresholds of the intervals to which the step sizes apply. The penalty
-#'   parameter controls the shrinkage of the context-level variables in the
-#'   lasso model. Default is \code{1 / exp(- seq(from = -1, to = 4.5, length =
-#'   100))}.
-#' @param n.iter Lasso number of iterations without improvement. Either
-#'   \code{NULL} or an integer-valued scalar specifying the maximum number of
-#'   iterations without performance improvement the algorithm runs before
-#'   stopping. Default is \eqn{70}.
+#'   non-negative values. The penalty parameter controls the shrinkage of the
+#'   context-level variables in the lasso model. Default is a sequence with
+#'   minimum 0.1 and maximum 250 that is equally spaced on the log-scale. The
+#'   number of values is controlled by the \code{lasso.n.iter} parameter.
+#' @param n.iter Lasso number of lambda values. An integer-valued scalar
+#'   specifying the number of lambda values to search over. Default is \eqn{100}.
+#'   \emph{Note:} Is ignored if a vector of \code{lasso.lambda} values is
+#'   provided.
 #' @param data Data for cross-validation. A \code{list} of \eqn{k}
 #'   \code{data.frames}, one for each fold to be used in \eqn{k}-fold
 #'   cross-validation.

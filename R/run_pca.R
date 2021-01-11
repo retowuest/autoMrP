@@ -4,7 +4,7 @@
 #' provided by the user, evaluates prediction performance, and chooses the
 #' best-performing model.
 #'
-#' @inheritParams auto_mrp
+#' @inheritParams auto_MrP
 #' @param data Data for cross-validation. A \code{list} of \eqn{k}
 #'   \code{data.frames}, one for each fold to be used in \eqn{k}-fold
 #'   cross-validation.

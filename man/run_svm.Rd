@@ -22,25 +22,72 @@ run_svm(
 )
 }
 \arguments{
+\item{y}{Outcome variable. A character vector containing the column names of
+the outcome variable. A character scalar containing the column name of
+the outcome variable in \code{survey}.}
+
+\item{L1.x}{Individual-level covariates. A character vector containing the
+column names of the individual-level variables in \code{survey} and
+\code{census} used to predict outcome \code{y}. Note that geographic unit
+is specified in argument \code{L2.unit}.}
+
+\item{L2.x}{Context-level covariates. A character vector containing the
+column names of the context-level variables in \code{survey} and
+\code{census} used to predict outcome \code{y}.}
+
 \item{L2.eval.unit}{Geographic unit. A character scalar containing the column
 name of the geographic unit in \code{survey} and \code{census} at which
 outcomes should be aggregated.}
+
+\item{L2.unit}{Geographic unit. A character scalar containing the column
+name of the geographic unit in \code{survey} and \code{census} at which
+outcomes should be aggregated.}
+
+\item{L2.reg}{Geographic region. A character scalar containing the column
+name of the geographic region in \code{survey} and \code{census} by which
+geographic units are grouped (\code{L2.unit} must be nested within
+\code{L2.reg}). Default is \code{NULL}.}
 
 \item{kernel}{SVM kernel. A character-valued scalar specifying the kernel to
 be used by SVM. The possible values are \code{linear}, \code{polynomial},
 \code{radial}, and \code{sigmoid}. Default is \code{radial}.}
 
-\item{gamma}{SVM kernel parameter. A numeric vector whose values specify
-the gamma parameter in the SVM kernel. This parameter is needed for all
-kernel types except linear. Default is
-\eqn{c(0.3, 0.5, 0.55, 0.6, 0.65, 0.7, 0.8, 0.9, 1, 2, 3, 4)}.}
+\item{loss.fun}{Loss function. A character-valued scalar indicating whether
+prediction loss should be measured by the mean squared error (\code{MSE}),
+the mean absolute error (\code{MAE}), binary cross-entropy
+(\code{cross-entropy}), mean squared false error (\code{msfe}), the f1
+score (\code{f1}), or a combination thereof. Default is \code{c("MSE",
+"cross-entropy","msfe", "f1")}. With multiple loss functions, parameters
+are ranked for each loss function and the parameter combination with the
+lowest rank sum is chosen. Ties are broken according to the order in the
+search grid.}
+
+\item{loss.unit}{Loss function unit. A character-valued scalar indicating
+whether performance loss should be evaluated at the level of individual
+respondents (\code{individuals}), geographic units (\code{L2 units}) or at
+both levels. Default is \code{c("individuals", "L2 units")}. With multiple
+loss units, parameters are ranked for each loss unit and the loss unit with
+the lowest rank sum is chosen. Ties are broken according to the order in
+the search grid.}
+
+\item{gamma}{SVM kernel parameter. A numeric vector whose values specify the
+gamma parameter in the SVM kernel. This parameter is needed for all kernel
+types except linear. Default is a sequence with minimum = 1e-5, maximum =
+1e-1, and length = 20 that is equally spaced on the log-scale.}
 
 \item{cost}{SVM cost parameter. A numeric vector whose values specify the
-cost of constraints violation in SVM. Default is \eqn{c(1, 10)}.}
+cost of constraints violation in SVM. Default is a sequence with minimum =
+0.5, maximum = 10, and length = 5 that is equally spaced on the log-scale.}
 
 \item{data}{Data for cross-validation. A \code{list} of \eqn{k}
 \code{data.frames}, one for each fold to be used in \eqn{k}-fold
 cross-validation.}
+
+\item{verbose}{Verbose output. A logical argument indicating whether or not
+verbose output should be printed. Default is \code{FALSE}.}
+
+\item{cores}{The number of cores to be used. An integer indicating the number
+of processor cores used for parallel computing. Default is 1.}
 }
 \value{
 The support vector machine tuned parameters. A list.

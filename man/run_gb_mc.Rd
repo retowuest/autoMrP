@@ -56,12 +56,21 @@ observations that each terminal node of the trees must contain. Default is
 
 \item{loss.unit}{Loss function unit. A character-valued scalar indicating
 whether performance loss should be evaluated at the level of individual
-respondents (\code{individuals}) or geographic units (\code{L2 units}).
-Default is \code{individuals}.}
+respondents (\code{individuals}), geographic units (\code{L2 units}) or at
+both levels. Default is \code{c("individuals", "L2 units")}. With multiple
+loss units, parameters are ranked for each loss unit and the loss unit with
+the lowest rank sum is chosen. Ties are broken according to the order in
+the search grid.}
 
 \item{loss.fun}{Loss function. A character-valued scalar indicating whether
-prediction loss should be measured by the mean squared error (\code{MSE})
-or the mean absolute error (\code{MAE}). Default is \code{MSE}.}
+prediction loss should be measured by the mean squared error (\code{MSE}),
+the mean absolute error (\code{MAE}), binary cross-entropy
+(\code{cross-entropy}), mean squared false error (\code{msfe}), the f1
+score (\code{f1}), or a combination thereof. Default is \code{c("MSE",
+"cross-entropy","msfe", "f1")}. With multiple loss functions, parameters
+are ranked for each loss function and the parameter combination with the
+lowest rank sum is chosen. Ties are broken according to the order in the
+search grid.}
 
 \item{data}{Data for cross-validation. A \code{list} of \eqn{k}
 \code{data.frames}, one for each fold to be used in \eqn{k}-fold

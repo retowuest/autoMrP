@@ -1348,8 +1348,6 @@ loss_score_ranking <- function(score, loss.fun){
 #' \code{quiet()} suppresses cat output.
 #'
 #' @param x Input. It can be any kind.
-#' @source The author is Hadley Wickham. We found the function here:
-#' \url{https://r.789695.n4.nabble.com/Suppressing-output-e-g-from-cat-td859876.html}.
 
 quiet <- function(x) {
   sink(tempfile())
@@ -1892,6 +1890,8 @@ output_table <- function(object, col.names, format, digits){
 #                 Equal spacing on the log scale                               #
 ################################################################################
 
+#' A sequence of values with equal spacing on the log-scale.
+#'
 #' @param min The minimum value of the sequence. A positive numeric scalar (min
 #'   > 0).
 #' @param max The maximum value of the sequence. a positive numeric scalar (max

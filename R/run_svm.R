@@ -4,19 +4,20 @@
 #' classifier to data provided by the user, evaluates prediction performance,
 #' and chooses the best-performing model.
 #'
-#' @inheritParams auto_mrp
+#' @inheritParams auto_MrP
 #' @param L2.eval.unit Geographic unit. A character scalar containing the column
 #'   name of the geographic unit in \code{survey} and \code{census} at which
 #'   outcomes should be aggregated.
 #' @param kernel SVM kernel. A character-valued scalar specifying the kernel to
 #'   be used by SVM. The possible values are \code{linear}, \code{polynomial},
 #'   \code{radial}, and \code{sigmoid}. Default is \code{radial}.
-#' @param gamma SVM kernel parameter. A numeric vector whose values specify
-#'   the gamma parameter in the SVM kernel. This parameter is needed for all
-#'   kernel types except linear. Default is
-#'   \eqn{c(0.3, 0.5, 0.55, 0.6, 0.65, 0.7, 0.8, 0.9, 1, 2, 3, 4)}.
+#' @param gamma SVM kernel parameter. A numeric vector whose values specify the
+#'   gamma parameter in the SVM kernel. This parameter is needed for all kernel
+#'   types except linear. Default is a sequence with minimum = 1e-5, maximum =
+#'   1e-1, and length = 20 that is equally spaced on the log-scale.
 #' @param cost SVM cost parameter. A numeric vector whose values specify the
-#'   cost of constraints violation in SVM. Default is \eqn{c(1, 10)}.
+#'   cost of constraints violation in SVM. Default is a sequence with minimum =
+#'   0.5, maximum = 10, and length = 5 that is equally spaced on the log-scale.
 #' @param data Data for cross-validation. A \code{list} of \eqn{k}
 #'   \code{data.frames}, one for each fold to be used in \eqn{k}-fold
 #'   cross-validation.

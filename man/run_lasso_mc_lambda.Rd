@@ -44,12 +44,21 @@ geographic units are grouped (\code{L2.unit} must be nested within
 
 \item{loss.unit}{Loss function unit. A character-valued scalar indicating
 whether performance loss should be evaluated at the level of individual
-respondents (\code{individuals}) or geographic units (\code{L2 units}).
-Default is \code{individuals}.}
+respondents (\code{individuals}), geographic units (\code{L2 units}) or at
+both levels. Default is \code{c("individuals", "L2 units")}. With multiple
+loss units, parameters are ranked for each loss unit and the loss unit with
+the lowest rank sum is chosen. Ties are broken according to the order in
+the search grid.}
 
 \item{loss.fun}{Loss function. A character-valued scalar indicating whether
-prediction loss should be measured by the mean squared error (\code{MSE})
-or the mean absolute error (\code{MAE}). Default is \code{MSE}.}
+prediction loss should be measured by the mean squared error (\code{MSE}),
+the mean absolute error (\code{MAE}), binary cross-entropy
+(\code{cross-entropy}), mean squared false error (\code{msfe}), the f1
+score (\code{f1}), or a combination thereof. Default is \code{c("MSE",
+"cross-entropy","msfe", "f1")}. With multiple loss functions, parameters
+are ranked for each loss function and the parameter combination with the
+lowest rank sum is chosen. Ties are broken according to the order in the
+search grid.}
 
 \item{data}{Data for cross-validation. A \code{list} of \eqn{k}
 \code{data.frames}, one for each fold to be used in \eqn{k}-fold
@@ -65,13 +74,10 @@ formula is inherited from \code{run_lasso}.}
 formula is inherited from \code{run_lasso}.}
 
 \item{lambda}{Lasso penalty parameter. A numeric \code{vector} of
-non-negative values or a \code{list} of two numeric vectors of equal size,
-with the first vector containing the step sizes by which the penalty
-parameter should increase and the second vector containing the upper
-thresholds of the intervals to which the step sizes apply. The penalty
-parameter controls the shrinkage of the context-level variables in the
-lasso model. Default is \code{1 / exp(- seq(from = -1, to = 4.5, length =
-100))}.}
+non-negative values. The penalty parameter controls the shrinkage of the
+context-level variables in the lasso model. Default is a sequence with
+minimum 0.1 and maximum 250 that is equally spaced on the log-scale. The
+number of values is controlled by the \code{lasso.n.iter} parameter.}
 }
 \value{
 The cross-validation errors for all models. A list.
@@ -79,9 +85,4 @@ The cross-validation errors for all models. A list.
 \description{
 \code{run_lasso_mc_lambda} is called from within \code{run_lasso}. It
 tunes using multiple cores.
-}
-\examples{
-\dontrun{
-# not yet
-}
 }
