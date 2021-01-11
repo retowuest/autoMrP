@@ -5,6 +5,8 @@
 #' @inheritParams auto_MrP
 #' @param ebma.fold New data for EBMA tuning. A list containing the the data
 #'   that must not have been used in classifier training.
+#' @param pc.names Principal Component Variable names. A character vector
+#'   containing the names of the context-level principal components variables.
 #' @param post.strat Post-stratification results. A list containing the best
 #'   models for each of the tuned classifiers, the individual level predictions
 #'   on the data classifier trainig data and the post-stratified context-level

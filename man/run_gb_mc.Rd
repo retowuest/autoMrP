@@ -20,13 +20,18 @@ run_gb_mc(
 )
 }
 \arguments{
-\item{y}{Outcome variable. A character scalar containing the column name of
+\item{y}{Outcome variable. A character vector containing the column names of
+the outcome variable. A character scalar containing the column name of
 the outcome variable in \code{survey}.}
 
 \item{L1.x}{Individual-level covariates. A character vector containing the
 column names of the individual-level variables in \code{survey} and
 \code{census} used to predict outcome \code{y}. Note that geographic unit
 is specified in argument \code{L2.unit}.}
+
+\item{L2.eval.unit}{Geographic unit. A character scalar containing the column
+name of the geographic unit in \code{survey} and \code{census} at which
+outcomes should be aggregated.}
 
 \item{L2.unit}{Geographic unit. A character scalar containing the column
 name of the geographic unit in \code{survey} and \code{census} at which
@@ -36,6 +41,13 @@ outcomes should be aggregated.}
 name of the geographic region in \code{survey} and \code{census} by which
 geographic units are grouped (\code{L2.unit} must be nested within
 \code{L2.reg}). Default is \code{NULL}.}
+
+\item{form}{Model formula. A two-sided linear formula describing
+the model to be fit, with the outcome on the LHS and the covariates
+separated by + operators on the RHS.}
+
+\item{gb_grid}{Search grid. A data.frame object where columns are parameters
+and rows are search iterations.}
 
 \item{n.minobsinnode}{GB minimum number of observations in the terminal
 nodes. An integer-valued scalar specifying the minimum number of
@@ -65,9 +77,4 @@ The tuning parameter combinations and there associated loss function
 \description{
 \code{run_gb_mc} is called from within \code{run_gb}. It tunes using
 multiple cores.
-}
-\examples{
-\dontrun{
-# not yet
-}
 }

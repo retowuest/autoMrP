@@ -18,45 +18,9 @@ run_best_subset(
 )
 }
 \arguments{
-\item{y}{Outcome variable. A character scalar containing the column name of
-the outcome variable in \code{survey}.}
-
-\item{L1.x}{Individual-level covariates. A character vector containing the
-column names of the individual-level variables in \code{survey} and
-\code{census} used to predict outcome \code{y}. Note that geographic unit
-is specified in argument \code{L2.unit}.}
-
-\item{L2.x}{Context-level covariates. A character vector containing the
-column names of the context-level variables in \code{survey} and
-\code{census} used to predict outcome \code{y}.}
-
-\item{L2.unit}{Geographic unit. A character scalar containing the column
-name of the geographic unit in \code{survey} and \code{census} at which
-outcomes should be aggregated.}
-
-\item{L2.reg}{Geographic region. A character scalar containing the column
-name of the geographic region in \code{survey} and \code{census} by which
-geographic units are grouped (\code{L2.unit} must be nested within
-\code{L2.reg}). Default is \code{NULL}.}
-
-\item{loss.unit}{Loss function unit. A character-valued scalar indicating
-whether performance loss should be evaluated at the level of individual
-respondents (\code{individuals}) or geographic units (\code{L2 units}).
-Default is \code{individuals}.}
-
-\item{loss.fun}{Loss function. A character-valued scalar indicating whether
-prediction loss should be measured by the mean squared error (\code{MSE})
-or the mean absolute error (\code{MAE}). Default is \code{MSE}.}
-
 \item{data}{Data for cross-validation. A \code{list} of \eqn{k}
 \code{data.frames}, one for each fold to be used in \eqn{k}-fold
 cross-validation.}
-
-\item{verbose}{Verbose output. A logical argument indicating whether or not
-verbose output should be printed. Default is \code{TRUE}.}
-
-\item{cores}{The number of cores to be used. An integer indicating the number
-of processor cores used for parallel computing. Default is 1.}
 }
 \value{
 A model formula of the winning best subset classifier model.
@@ -65,25 +29,4 @@ A model formula of the winning best subset classifier model.
 \code{run_best_subset} is a wrapper function that applies the best subset
 classifier to a list of models provided by the user, evaluates the models'
 prediction performance, and chooses the best-performing model.
-}
-\examples{
-\dontrun{
-# create list of cross-validation folds
-cv_folds <- list(
-  `1` = survey_item[1:200, ],
-  `2` = survey_item[201:400, ],
-  `3` = survey_item[401:1500, ])
-
-# run best subset classifier
-out <- run_best_subset(
-  y = "YES",
-  L1.x = c("L1x1", "L1x2", "L1x3"),
-  L2.x = c("L2.x1", "L2.x2"),
-  L2.unit = "state",
-  L2.reg = "region",
-  loss.unit = "individuals",
-  loss.fun = "MSE",
-  data = cv_folds,
-  verbose = TRUE)
-}
 }

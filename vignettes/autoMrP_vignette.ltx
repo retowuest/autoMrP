@@ -1,11 +1,3 @@
-%\VignetteIndexEntry{autoMrP: Multilevel Models and Post-Stratification (MrP) Combined with Machine Learning in R}
-%\VignetteEngine{R.rsp::tex}
-%\VignetteKeyword{R}
-%\VignetteKeyword{package}
-%\VignetteKeyword{vignette}
-%\VignetteKeyword{LaTeX}
-%\VignetteEncoding{UTF-8}
-
 \documentclass[nojss]{jss}
 
 %% -- LaTeX packages and custom commands ---------------------------------------
@@ -50,7 +42,7 @@ In the past twenty years we have witnessed a surge in methodological innovations
 %% - \Plainkeywords{} without LaTeX markup (if necessary)
 %% - Should be comma-separated and in sentence case.
 \Keywords{Multilevel modeling, machine learning, mixed effects, MrP, MrsP, \proglang{R}, survey research}
-\Plainkeywords{MrP, MrsP, Machine Learning, Survey research, hierarchical modeling, mixed effects,  R}
+\Plainkeywords{MrP, MrsP, machine learning, survey research, multilevel modeling, mixed effects, R}
 
 %% - \Address{} of at least one author
 %% - May contain multiple affiliations for each author
@@ -70,7 +62,7 @@ In the past twenty years we have witnessed a surge in methodological innovations
   Lucas Leemann \\
   Department of Political Science\\
   University of Z\"urich\\
-  Affolternstrasse.~56\\
+  Affolternstrasse 56\\
   8050 Z\"urich, Switzerland\\
   E-mail: \email{leemann@ipz.uzh.ch}\\
   URL: \url{https://lucasleemann.ch}\\
@@ -82,8 +74,8 @@ In the past twenty years we have witnessed a surge in methodological innovations
   5007 Bergen, Norway\\
   E-mail: \email{reto.wueest@uib.no}\\
   URL: \url{https://retowuest.net/}\\
-  
 }
+
 
 \begin{document}
 
@@ -102,74 +94,60 @@ In the past twenty years we have witnessed a surge in methodological innovations
 %%   "generalized linear models" below).
 
 
+\section[Introduction: Multilevel Regression and Post-Stratification]{Introduction: Multilevel Regression and Post-Stratification} \label{sec:1}
 
-\section[Introduction: Multilevel Model with Post-Stratification]{Introduction: Multilevel Model with Post-Stratification} \label{sec:1}
+A frequent problem that arises in various disciplines is that researchers have population-representative data and want to draw inferences for sub-populations from these data. This problem may be encountered by political scientists who wish to estimate sub-national, e.g., state-level, support for public policies based on national survey data \citep{Lax:2009} or epidemiologists estimating state-level prevalence of health outcomes \citep{downes2018multilevel}. Common to all of these applications is that limited national data are being used to estimate outcomes at a lower level, such as the state level. 
 
-A frequent problem that arises in various disciplines is that we have a data set and want to draw inferences for sub-populations. This can be political scientists who have a national survey and want to estimate sub-national, e.g., state-level, support for a policy \citep{Lax:2009} or epidemiologists estimating state-level prevalences \citep{downes2018multilevel}. Common to all of these applications is limited national survey data being used to estimate outcomes on a lower level, e.g., the state level. 
+One `solution' that has been proposed to deal with this problem is disaggregation, which means taking the average value of the outcome for each lower-level unit as the estimate \citep[see, e.g.,][]{erikson1993statehouse}. This approach performs badly for small units with few data and is generally not efficient when data are sparse. We can achieve better estimates by modeling the individual-level outcome as a function of individual-level variables and variables at higher levels in a multilevel model and then post-stratify these predictions \citep{gelman1997poststratification,warshaw2012should,lax2009should}. 
 
-One `solution' to this problem is disaggregation, which means taking the average value per lower-level unit as the estimate \citep[see, e.g.,][]{erikson1993statehouse}. This approach performs badly for small units and is not efficient. We can achieve better estimates by modeling the individual-level outcome as a function of individual-level variables and variables on higher levels in a multilevel model and then post-stratify these predictions \citep{gelman1997poststratification,warshaw2012should,lax2009should}. 
+\cite{gelman1997poststratification} propose a procedure, multilevel regression and post-stratification (MrP), that allows researchers to model an individual outcome as a function of individual-level variables as well as variables at higher levels, e.g., the state or regional level. Based on the multilevel model researchers can create predictions for all demographic-geographic ideal types (defined as the combinations of the values of individual-level variables and sub-national units) and then weigh these predictions by the frequency of the ideal types within the sub-national units. Since the publication of this article many studies have demonstrated the superiority of MrP over disaggregation \citep[see, e.g.,][]{warshaw2012should,lax2009should,leemannwasserfallen2016,hanretty2018comparing}.
 
-\cite{gelman1997poststratification} propose a procedure, multilevel modeling and post-stratification (MrP), that allows researchers to model an individual outcome as a function of individual-level variables as well as variables at higher levels, e.g., state or district levels. Based on the multilevel model we can create predictions for each ideal type and then weigh each prediction by the frequency of an ideal type within a given unit. Since this early first paper many publications have demonstrated the superiority of MrP over disaggreation \citep[see e.g.][]{warshaw2012should,lax2009should,leemannwasserfallen2016,hanretty2018comparing}.
-
-Recently, a number of contributions have shown how standard models from the statistical learning literature can be fruitfully employed to improve MrP \citep{bisbee2019barp,ornstein2020stacked,bronieckietal2020}. In this article we present one of these approaches and the \pkg{autoMrP} package that allows users to harvest the fruits of combining classic MrP models with statistical learning algorithms to create improved prediction models. 
-
+Recently, a number of contributions have shown how common models from the statistical learning literature can be fruitfully employed to improve MrP \citep{bisbee2019barp,ornstein2020stacked,bronieckietal2020}. In this article we present our approach proposed in \cite{bronieckietal2020} and the \pkg{autoMrP} package implementing this approach. The \pkg{autoMrP} package allows users to harvest the fruits of combining the standard MrP model with statistical learning algorithms to create improved prediction models.
 
 
+\subsection{Standard Multilevel Regression and Post-Stratification (MrP)}
 
-\subsection{Multilevel Regression with Post-Stratification (MrP)}
-
-MrP relies on national survey data to estimate, e.g., political preferences in sub-national units. MrP is carried out in two steps: first, we fit a multilevel model to the survey data. If we are interested in the support for a specific policy $Y$, we can fit a multilevel probit model as follows:
-
+MrP relies on national survey data to estimate outcomes, e.g., public opinion about government policy, in sub-national units. MrP is carried out in two steps. First, we fit a multilevel model to the survey data. If we are interested in estimating public support for a specific policy, $Y$, at the sub-national level, we can fit a multilevel probit model as follows:
 
 \begin{eqnarray}
 \label{mrpmodel}
-Pr(y_{i}=1) &=& \Phi\left(\beta_0 + \boldsymbol{\beta}\boldsymbol{X}_n+ \alpha_{k[i]}^{education} + \alpha_{j[i]}^{gender} + \alpha_{m[i]}^{age} + \alpha_{n[i]}^{unit}\right),\label{MinMrP}  \\
-\alpha_{k}^{education} &\sim & N(0,\sigma_{education}^2), \text{ for}  \text{ } k=1, ...., K, \nonumber\\
-\alpha_{j}^{gender} &\sim & N(0,\sigma_{gender}^2), \text{ for}  \text{ } j=1, ..., J, \nonumber\\
+Pr(y_{i}=1) &=& \Phi\left(\beta_0 + \mathbf{x}^{T}_{n[i]}\boldsymbol{\beta} + \alpha_{j[i]}^{education} + \alpha_{k[i]}^{gender} + \alpha_{m[i]}^{age} + \alpha_{n[i]}^{unit}\right),\label{MinMrP}  \\
+\alpha_{j}^{education} &\sim & N(0,\sigma_{education}^2), \text{ for}  \text{ } j=1, ...., J, \nonumber\\
+\alpha_{k}^{gender} &\sim & N(0,\sigma_{gender}^2), \text{ for}  \text{ } k=1, ..., K, \nonumber\\
 \alpha_{m}^{age} &\sim & N(0,\sigma_{age}^2), \text{ for}  \text{ } m=1, ..., M,  \nonumber\\
 \alpha_{n}^{unit} &\sim & N(0,\sigma_{unit}^2), \text{ for}  \text{ } n =1, ..., N.  \nonumber 
 \end{eqnarray}
 
-The model includes a set of random effects, here shown for $K$ education groups, $J$ gender groups, $M$ age categories, and $N$ sub-national units. In addition, there is a vector of further predictor variables $\boldsymbol{X}$ that vary across the sub-national units. Each combination of education, gender, age category, and unit provides a unique ideal type. We can now think of society as consisting of these different ideal types. 
+The model includes a set of random effects, here shown for $J$ education groups, $K$ gender groups, $M$ age categories, and $N$ sub-national units. In addition, there is a matrix of predictor variables $\mathbf{X}$ that vary across the sub-national units. Each combination of education, gender, age category, and sub-national unit provides a unique demographic-geographic ideal type. We can now think of society as consisting of these different ideal types. 
 
-
-In a second step, we can calculate the predicted support for each ideal type based on the estimates in \autoref{mrpmodel}. Each ideal type estimate is denoted as $\hat\pi_{kjmn}$. To produce an estimate of, e.g., the state-level support for policy $Y$ in state $n$, we calculate a weighted average of $\hat\pi_{kjmn}$, where the weights are determined by how prevalent the ideal types are in the population of state $n$. Since the predictions are not linearly additive in the random effects, we need to know the joint distribution of education, gender, and age in each unit for which we want to calculate a prediction. The very last step is to weigh these support estimates according to the prevalence of an ideal type (ideal type is here indexed by $g$) in unit $n$:
+In a second step, we can calculate the predicted support of each ideal type for the policy based on the estimates in \autoref{mrpmodel}. An ideal type's estimated support is denoted by $\hat\pi_{jkmn}$. To produce an estimate of the policy support in state $n$, we calculate the weighted average of $\hat\pi_{jkmn}$, where the weights are determined by how prevalent the ideal types are in the population of state $n$. Since the predictions are not linear in the random effects, we need to know the joint distribution of education, gender, and age in each unit for which we want to obtain an estimate of the public's support for the policy. We calculate the weighted average policy support according to the prevalence of the ideal types in state $n$ as follows (demographic ideal types in state $n$ are here indexed by $g$):
 
 \begin{equation}
-\hat\pi_n = \frac{\sum_{g= 1}^G \hat\pi_{gn} N_{gn}}{N_{n\cdot}} 
+\hat\pi_n = \frac{\sum_{g= 1}^G \hat\pi_{gn} N_{gn}}{\sum_{g= 1}^G N_{gn}}.
 \end{equation}
 
-Using MrP to generate an estimate for $\pi_n$ has been shown to outperform other alternatives \citep[e.g.,][]{lax2009should,warshaw2012should,leemann2020measuring}. MrP has also been used successfully in the US \citep[e.g.,][]{Lax:2012}, Germany \citep[e.g.,][]{selb2011estimating}, the UK \citep[e.g.,][]{claassen2018improving,hanretty2018comparing}, and Switzerland \citep[e.g.,][]{leemann2016democratic} among other countries.
+Using MrP to generate an estimate for $\pi_n$ has been shown to outperform other alternatives \citep[e.g.,][]{lax2009should,warshaw2012should,leemann2020measuring}. MrP has been used successfully in the US \citep[e.g.,][]{Lax:2012}, Germany \citep[e.g.,][]{selb2011estimating}, the UK \citep[e.g.,][]{claassen2018improving,hanretty2018comparing}, and Switzerland \citep[e.g.,][]{leemann2016democratic} among other countries.
 
 
-\subsection{Improvements to MrP}
+\subsection{Improvements to the Standard MrP Approach}
 
-Since early on authors have suggested various improvements to the standard MrP approach. \cite{ghitza2013deep} propose to include interactions of random effects to provide the model with much more flexibility, which in turn provides more precise estimates for different ideal types. \cite{selb2011estimating} show that if there are many sub-national units, such as in the case of legislative elections in Germany, spatially correlated random effects can be included to improve the estimates. Many models are under-specified in the response model (see \autoref{mrpmodel}) because there is no joint distribution of variables available, which is needed in the post-stratification step. \cite{leemannwasserfallen2016} show how variables for which the joint distribution is unknown can nevertheless be included by creating a synthetic joint distribution.\footnote{An important contribution, albeit not aiming at improving MrP \emph{per se} but rather using it in combination with item-response theory models to scale ideal points, has been put forward by \cite{caughey2015dynamic}. This allows \cite{caughey2016dynamics} to scale US states from 1936 to 2014 and provide new estimates of states' liberalism. } 
+Since the introduction of the standard MrP approach authors have suggested various ways of improving its prediction performance. \cite{ghitza2013deep} propose to include interactions of random effects to provide the model with more flexibility, which in turn provides more precise estimates for different ideal types. \cite{selb2011estimating} show that if there are many sub-national units, such as in the case of legislative elections in Germany, spatially correlated random effects can be included to improve the estimates. Many models are under-specified at the individual level of the response model (see \autoref{mrpmodel}) because there is no joint distribution of demographic variables available, which is needed in the post-stratification step. \cite{leemannwasserfallen2016} show how variables for which the joint distribution is unknown can nevertheless be included by creating a synthetic joint distribution.\footnote{An important contribution, albeit not aiming at improving MrP \emph{per se} but rather using it in combination with item-response theory models to scale ideal points, has been put forward by \cite{caughey2015dynamic}. This allows \cite{caughey2016dynamics} to scale US states from 1936 to 2014 and provide new estimates of states' liberalism. } 
 
-Finally, there has been some discussion in recent years about leveraging insights from the statistical learning literature for small-area estimation.\footnote{See \cite{montgomery2018tree} for, to our knowledge, the first application of machine learning methods to small-area estimation and also other applications of statistical learning in the political science survey literature \citep{caughey2017target}.} Several proposals have been made, some published while others remain as working papers \citep{goplerud2018sparse,bisbee2019barp,ornstein2020stacked,bronieckietal2020}. At a very basic level, all of these papers are similar in that they recognize that MrP is a prediction task and there is value to a principled selection of features and a more flexible selection of the functional form.
+Finally, there has been some discussion in recent years about leveraging insights from the statistical learning literature for small-area estimation.\footnote{See \cite{montgomery2018tree} for, to our knowledge, the first application of machine learning methods to small-area estimation and also other applications of statistical learning in the political science survey literature \citep{caughey2017target}.} Several proposals have been made, some of them are published while others are currently working papers \citep{goplerud2018sparse,bisbee2019barp,ornstein2020stacked,bronieckietal2020}. At a very basic level, all of these papers are similar in that they recognize that MrP is a prediction task and there is value to a principled selection of features and a more flexible selection of the functional form.
+
 
 \subsection{Statistical Learning and Small-Area Estimation}
 
-In a forthcoming paper, we propose an ensemble model approach that helps to provide better estimates \citep{bronieckietal2020}. We start by recognizing that information enters the model via context-level variables, $\boldsymbol{X}$, and individual-level variables. The latter are set up as random effects, $\alpha$, meaning that there is already a form of regularization, albeit a crude one, built into the model. The contextual information $\boldsymbol{X}$ is, however, just modeled as fixed effects and hence all the known problems of feature selection, over-fitting, and choice of functional form apply to context-level variables. This challenge is compounded by the fact that context-level variables have been shown by previous research to do the heavy lifting in MrP \citep{warshaw2012should}. We propose \textbf{autoMrP} as a remedy.
+In a forthcoming paper, we propose an ensemble modeling approach that helps to provide better small-area estimates \citep{bronieckietal2020}. We start by recognizing that information enters the standard MrP model via context-level variables, $\mathbf{X}$, and individual-level variables. The latter are set up as random effects, $\alpha$, which implies that for the coefficients of the individual-level variables there is a form of regularization, albeit a crude one, built into the model. The contextual information $\mathbf{X}$, however, is just modeled as fixed effects and hence all the known problems of feature selection, over-fitting, and choice of functional form apply to context-level variables. This challenge is compounded by the fact that context-level variables have been shown by previous research to do the heavy lifting in MrP \citep{warshaw2012should}. We propose \textbf{autoMrP} as a remedy.
 
 Our approach combines five candidate classifiers---multilevel regression with best subset selection of context-level predictors, multilevel regression with  principle components of context-level predictors (PCA), multilevel regression with L1 regularization (Lasso), gradient tree boosting, and support vector machine---via ensemble Bayesian model averaging \citep[EBMA,][]{montgomery2012improving} into one final mega-classifier. In \autoref{sec:illustration} we provide more details on this approach.
 
 
-
-
-
-
-
-
-
-
-
-
 \section[Multilevel Regression and Post-Stratification in R]{Multilevel Regression and Post-Stratification in \proglang{R}} \label{sec:2}
 
-Thus far analysts using MrP have written their own code since there is no widely used \proglang{R} package available. In particular an \proglang{R} package implementing MrP was created but never fully developed and the package was removed from CRAN in 2012 (see \url{https://cran.r-project.org/src/contrib/Archive/mrp/}).\footnote{Another exception is the package \pkg{swissMrP} \citep{swissMrP}, but its usability is very limited as it was mostly created for teaching purposes and is only applicable to Swiss data.} Primers and replication files have been the main source of how insights on implementation were shared. An early example is the (unpublished) primer by \cite{kastellec}, which was updated in 2019 and gathered 50 citations on Google Scholar (verified on July 29th, 2020). Recently, \cite{leemann2020measuring} published a handbook chapter containing a step-by-step account as well as a practical example that readers can replicate (\url{https://github.com/lleemann/MrP_chapter}). Finally, users interested in a Bayesian implementation can also access the primer by \cite{Kennedy:2020} on MrP in \pkg{rstanarm} (\url{https://cran.r-project.org/web/packages/rstanarm/vignettes/mrp.html#mrp-with-rstanarm}).
+Thus far, analysts have written their own code to perform MrP since there is no widely used \proglang{R} package available. Some years ago, an \proglang{R} package implementing MrP was created but never fully developed and the package was removed from CRAN in 2012 (see \url{https://cran.r-project.org/src/contrib/Archive/mrp/}).\footnote{Another exception is the \proglang{R} package \pkg{swissMrP} \citep{swissMrP}, but its usability is very limited as it was mostly created for teaching purposes and is only applicable to Swiss data.} Primers and replication files have been the main source of how insights on implementation were shared. An early example is the (unpublished) primer by \cite{kastellec}, which was updated in 2019 and gathered 50 citations on Google Scholar (verified on July 29th, 2020). Recently, \cite{leemann2020measuring} published a handbook chapter containing a step-by-step account as well as a practical example that readers can replicate (\url{https://github.com/lleemann/MrP_chapter}). Finally, users interested in a Bayesian implementation can also access the primer by \cite{Kennedy:2020} on MrP in \pkg{rstanarm} (\url{https://cran.r-project.org/web/packages/rstanarm/vignettes/mrp.html#mrp-with-rstanarm}).
 
-While these primers offer R code chunks there is as yet no package that allows researchers to freely estimate MrP models freely.\footnote{See \pkg{SRP} for a recent new package that allows users to estimate MrP models.} The main purpose of \pkg{autoMrP} is to allow users to easily apply the \emph{autoMrP} model \citep{bronieckietal2020} but it also enables the estimation of classic MrP models. This also distinguishes it from another recent package, \pkg{BARP} \citep{BARP}, which focuses on a specific model based on MrP and Bayesian additive trees.\footnote{\pkg{BARP} can also post-stratify other models that are implemented in the \pkg{SuperLearner} package \citep{SuperLearner}.}
+While these primers offer R code chunks there is as yet no package allowing researchers to freely estimate MrP models.\footnote{See \pkg{SRP} for a new package that allows users to estimate MrP models.} The main purpose of \pkg{autoMrP} is to allow users to easily apply the \emph{autoMrP} model \citep{bronieckietal2020}, but it also enables the estimation of standard MrP models. This distinguishes it from another recent package, \pkg{BARP} \citep{BARP}, which focuses on a specific model based on MrP and Bayesian additive regression trees.\footnote{\pkg{BARP} can also post-stratify other models that are implemented in the \pkg{SuperLearner} package \citep{SuperLearner}.}
 
 
 \section[Illustration of autoMrP]{Illustration of \pkg{autoMrP}} \label{sec:illustration}
@@ -178,30 +156,31 @@ While these primers offer R code chunks there is as yet no package that allows r
 
 %Show how \pkg{autoMrP} works with a concrete example. Similar to what we did in the appendix but not on the same item.
 
-In the following, we illustrate how to apply \pkg{autoMrP} to a typical survey item (item ``CBb01'' from the 2008 National Annenberg Election Studies). We first install the most recent version of the package (0.91) from GitHub.
+In the following, we show how to apply \pkg{autoMrP} to a typical survey item and use for our illustration item ``CBb01'' from the 2008 National Annenberg Election Studies (NAES). We first install the most recent version of the package (currently 0.97) from GitHub.
 
-\begin{verbatim}
+\begin{CodeInput}
 devtools::install_github("retowuest/autoMrP")
-\end{verbatim}
+\end{CodeInput}
 
-The 2008 NAES survey item CBb01 states ``I'm going to read you some options about federal income taxes. Please tell me which one comes closest to your view on what we should be doing about federal income taxes: (1) Cut taxes; (2) Keep taxes as they are; (3) Raise taxes if necessary; (4) None of these; (998) Don't know; (999) No answer. Category (3) was turned into a `raise taxes' response, and categories (1) and (2) were combined into a `do not raise taxes' response. The original survey item contains 50,483 responses favoring or opposing a tax hike. From these data, we include a sample of 1,500 respondents in \pkg{autoMrP} to represent the size of a typical national survey. Our sample is drawn at random with the condition that it includes at least five respondents from each state. The object name of the survey item is \code{taxes\_survey} and the codebook can be obtained via the help files:
+The 2008 NAES survey item CBb01 states ``I'm going to read you some options about federal income taxes. Please tell me which one comes closest to your view on what we should be doing about federal income taxes: (1) Cut taxes; (2) Keep taxes as they are; (3) Raise taxes if necessary; (4) None of these; (998) Don't know; (999) No answer. Category (3) was turned into a `raise taxes' response, and categories (1) and (2) were combined into a `do not raise taxes' response. The original survey data contain 50,483 responses favoring or opposing a tax hike. From these data, we include a sample of 1,500 respondents in \pkg{autoMrP} to represent the size of a typical national survey. Our sample is drawn at random with the condition that it includes at least five respondents from each state. The name referring to the object containing the survey data is \code{taxes\_survey} and the codebook can be obtained via the help files:
 
-\begin{verbatim}
+\begin{CodeInput}
 library(autoMrP)
 ?taxes_survey
-\end{verbatim}
+\end{CodeInput}
 
-The dependent variable \code{YES} is 1 if an individual supports raising taxes and 0 otherwise. The individual-level variables \code{L1x1}, \code{L1x2}, and \code{L1x3} represent age, education, and gender-race combinations respectively and they are stored as factors. The factor variables \code{state} and \code{L2.unit} identify the geographical units, i.e., the U.S. states in our survey. Furthermore, the factor \code{region} divides U.S. states into the Northeast, Midwest, South, and West. %Finally, the variables \emph{L2.x1}, \emph{L2.x2}, \emph{L2.x3}, \emph{L2.x4}, \emph{L2.x5}, and \emph{L2.x6} capture state level variation.
+The dependent variable \code{YES} takes the value 1 if an individual supports raising taxes and 0 otherwise. The individual-level variables \code{L1x1}, \code{L1x2}, and \code{L1x3} represent age, education, and gender-race combinations, respectively, and they are stored as factors. The factor variables \code{state} and \code{L2.unit} identify the geographical units, i.e., the US states in our survey. Furthermore, the factor \code{region} divides US states into the Northeast, Midwest, South, and West. %Finally, the variables \emph{L2.x1}, \emph{L2.x2}, \emph{L2.x3}, \emph{L2.x4}, \emph{L2.x5}, and \emph{L2.x6} capture state level variation.
 
-In addition to the survey data, we require census data to carry out post-stratification. The object name of the census data that accompanies the taxation item is named \code{taxes\_census} and the codebook can be obtained via the help files. The census data is structured such that one row represents a combination of the individual-level variables in a given state. For instance, the first row in \code{taxes\_census} represents white males aged 18--29 without a high school diploma in Alabama. The variable \code{proportion} identifies the proportion of this ideal type---white males aged 18--29 without a high school degree---in the population of Alabama and is required to post-stratify estimates.
+In addition to the survey data, we require census data to carry out post-stratification. The object name of the census data that accompany the taxation survey data is \code{taxes\_census} and the codebook can be obtained via the help files. The census data are structured such that one row represents a combination of the individual-level variables in a given state. For instance, the first row in \code{taxes\_census} represents white males aged 18--29 without a high school diploma in Alabama. The variable \code{proportion} identifies the proportions of the demographic ideal types in the state populations---hence, in the first row, the proportion of white males aged 18--29 without a high school degree in the population of Alabama---and it is required to post-stratify estimates.
 
-\subsection[MrP in autoMrP]{Multilevel Regression with Post-Stratification in \pkg{autoMrP}} \label{sec:MrP}
 
-The standard multilevel regression with post-stratification model can be conveniently estimated with \pkg{autoMrP}. Here, we illustrate how to achieve this using the item on raising taxes.
+\subsection[MrP in autoMrP]{Multilevel Regression and Post-Stratification in \pkg{autoMrP}} \label{sec:MrP}
+
+The standard multilevel regression and post-stratification model can be conveniently estimated with \pkg{autoMrP}. Here, we illustrate how to do so using the item on raising taxes.
 
 In our MrP model, we make use of all six context-level variables that are included in the survey data (\code{L2.x1}, \code{L2.x2}, \code{L2.x3}, \code{L2.x4}, \code{L2.x5}, and \code{L2.x6}). These are: (i) \emph{share of votes for the Republican candidate in the previous presidential election}, (ii) \emph{percentage of Evangelical Protestant and Mormon respondents}, (iii) \emph{state percentage of the population living in urban areas}, (iv) \emph{state unemployment rate}, (v) \emph{state share of Hispanics}, and (vi) \emph{state share of whites}. Note that this model over-fits the data and we demonstrate in \autoref{sec:ML} that we can outperform it using the machine learning capabilities of \pkg{autoMrP}. 
 
-\begin{verbatim}
+\begin{CodeInput}
 mrp_out <- auto_MrP(
   y = "YES", 
   L1.x = c("L1x1", "L1x2", "L1x3"),
@@ -220,23 +199,25 @@ mrp_out <- auto_MrP(
   svm = FALSE,
   mrp = TRUE
 )
-\end{verbatim}
+\end{CodeInput}
 
-In lme4 notation, this function call estimates the following model:
+In \pkg{lme4} notation, this function call estimates the following model:
 
-\begin{verbatim}
+\begin{CodeInput}
 YES ~ (1 | L1x1) + (1 | L1x2) + (1 | L1x3) + (1 | region/state) + L2.x1 
     + L2.x2 + L2.x3 + L2.x4 + L2.x5 + L2.x6 
-\end{verbatim}
+\end{CodeInput}
 
-Based on this model, \pkg{autoMrP} computes estimates for each ideal type in each state. These estimates are then post-stratified and create the final state-level estimates. We inspect the state-level estimates via the \code{summary()} function. Note, that \code{summary()} returns 10 rows by default. To view all state estimates, we would call \code{summary(mrp_out, n = 48)}.
+Based on this model, \pkg{autoMrP} computes estimates for each ideal type in each state. These estimates are then post-stratified and create the final state-level estimates. We inspect the state-level estimates via the \code{summary()} function. Note that \code{summary()} returns the first 10 rows by default. To view all state estimates, we would call \code{summary(mrp_out, n = 48)}.
 
-\begin{verbatim}
-> summary(mrp_out)
+\begin{CodeInput}
+summary(mrp_out)
+\end{CodeInput}
 
- #  mrp  estimates:
+\begin{CodeOutput}
+ # estimates of:  mrp
 
-state    Median
+state    median
 ------  -------
 AL       0.1136
 AR       0.1126
@@ -248,22 +229,23 @@ DE       0.2259
 FL       0.1885
 GA       0.1324
 IA       0.1905
-... with 38  more rows
-\end{verbatim}
+... with 38  more rows 
+\end{CodeOutput}
 
-To estimate only the standard MrP model, we need to turn off the machine learning classifiers by setting the classifier arguments \code{best.subset}, \code{lasso}, \code{pca}, \code{gb}, and \code{svm} to FALSE. The argument \code{mrp} controls whether the standard MrP model should be estimated and hence must be set to TRUE. Furthermore, the argument \code{ebma.size} is the proportion of the sample that will be used for tuning EBMA. Whenever we use only one classifier, \code{ebma.size} should be set to 0 to use all available information to fit the classifier.
+In order to estimate only the standard MrP model, we deactivated the machine learning classifiers by setting the classifier arguments \code{best.subset}, \code{lasso}, \code{pca}, \code{gb}, and \code{svm} to FALSE. The argument \code{mrp} controls whether the standard MrP model should be estimated and we hence set it to TRUE. Furthermore, the argument \code{ebma.size} is the proportion of the sample that will be used for tuning EBMA. Whenever we use only one classifier, \code{ebma.size} should be set to 0 to use all available information to fit the classifier.
+
 
 \subsection[ML in autoMrP]{Improved Predictions with Machine Learning in \pkg{autoMrP}} \label{sec:ML}
 
-In the following, we use \pkg{autoMrP} to improve prediction accuracy by estimating state-level opinion using all five classifiers as well as the overall prediction, combining the five classifiers via EBMA. We strongly recommend to make use of the implemented parallel processing capabilities to speed up the estimation. To do so, we first determine how many cores there are available in the system:
+In the following, we improve prediction accuracy by estimating state-level opinion using the five machine learning classifiers implemented in \pkg{autoMrP} and combining their predictions into an overall prediction via EBMA. We strongly recommend the utilization of parallel processing capabilities to speed up the estimation process. To do so, we first determine how many cores there are available in the system:
 
-\begin{verbatim}
+\begin{CodeInput}
 max_cores <- parallel::detectCores()
-\end{verbatim}
+\end{CodeInput}
 
-In the function call to \pkg{autoMrP}, we accept the default settings for the tuning parameters.
+In the function call to \pkg{autoMrP}, we decide to accept the default settings for the tuning parameters.
 
-\begin{verbatim}
+\begin{CodeInput}
 ml_out <- auto_MrP(
   y = "YES", 
   L1.x = c("L1x1", "L1x2", "L1x3"),
@@ -276,113 +258,104 @@ ml_out <- auto_MrP(
   gb.L2.reg = TRUE,
   svm.L2.reg = TRUE,
   cores = max_cores)
-\end{verbatim}
+\end{CodeInput}
 
+An \pkg{autoMrP} object is a list with three elements that can be accessed via the \code{\$} operator. First, \code{\$ebma} returns the second-level estimates of the EBMA ensemble. Second, \code{\$classifiers} returns the second-level estimates of the individual classifiers. Third, \code{\$weights} returns the weighting of the individual classifiers in the EBMA ensemble. To obtain a summary of the EBMA state-level predictions, we use \code{summary()} on our \pkg{autoMrP} object.
 
+\begin{CodeInput}
+summary(ml_out)
+\end{CodeInput}
 
-
-An \pkg{autoMrP} object contains three objects that can be accessed via the \code{\$} operator. First, \code{\$ebma} returns second-level estimates of the EBMA ensemble. Second, \code{\$classifiers} returns second-level estimates of the individual classifiers. Third, \code{\$weights} returns the weighting of the individual classifiers for the EBMA ensemble. To obtain a summary of the EBMA state-level predictions, we use \code{summary()} on our autoMrP object.
-
-\begin{verbatim}
-> summary(ML_out)
-
+\begin{CodeOutput}
  # EBMA estimates:
 
 state    Median
 ------  -------
-AL       0.1337
-AR       0.1211
-AZ       0.2091
-CA       0.2870
-CO       0.1904
-CT       0.2308
-DE       0.2239
-FL       0.1825
-GA       0.1533
-IA       0.1737
+AL       0.1530
+AR       0.1387
+AZ       0.2097
+CA       0.2658
+CO       0.1808
+CT       0.2120
+DE       0.2120
+FL       0.1778
+GA       0.1571
+IA       0.1792
 ... with 38  more rows
-\end{verbatim}
+\end{CodeOutput}
 
-Using \code{summary()} on an \pkg{autoMrP} object returns the estimates of the EBMA ensemble. We demonstrate that the EBMA estimates outperform those of any individual classifier across 89 survey items in \citet{bronieckietal2020}. Nonetheless, we may wish to inspect the predictions from individual classifiers which we achieve by calling \code{summary()} on the \code{\$classifiers} object.
+Using \code{summary()} on an \pkg{autoMrP} object returns the estimates of the EBMA ensemble. In \citet{bronieckietal2020}, we demonstrate based on US public opinion data compiled by \citet{buttice2013does} for 89 survey items that the EBMA estimates outperform those of any individual classifier. Nonetheless, we may wish to inspect the predictions from individual classifiers. We can do so by calling \code{summary()} on the \code{\$classifiers} element.
 
-\begin{verbatim}
-> summary(ML_out$classifiers)
+\begin{CodeInput}
+summary(ML_out$classifiers)
+\end{CodeInput}
 
+\begin{CodeOutput}
  # estimates of classifiers:  best_subset, lasso, pca, gb, svm
 
 state    best_subset    lasso      pca       gb      svm
 ------  ------------  -------  -------  -------  -------
-AL            0.1153   0.1240   0.1283   0.1472   0.1865
-AR            0.1097   0.1072   0.1011   0.1427   0.1867
-AZ            0.2128   0.2117   0.2348   0.1845   0.1853
-CA            0.3017   0.3063   0.3063   0.2745   0.1850
-CO            0.2010   0.2015   0.1734   0.1807   0.1861
-CT            0.2379   0.2275   0.2168   0.2719   0.1859
-DE            0.2295   0.2325   0.2192   0.2305   0.1856
-FL            0.1858   0.1777   0.1875   0.1793   0.1862
-GA            0.1342   0.1502   0.1521   0.1618   0.1869
-IA            0.1874   0.1794   0.1464   0.1716   0.1869
+AL            0.1328   0.1173   0.1491   0.1753   0.2042
+AR            0.1123   0.1043   0.1189   0.1750   0.2002
+AZ            0.2016   0.2343   0.2472   0.1783   0.1746
+CA            0.3006   0.3197   0.2956   0.2174   0.1696
+CO            0.1768   0.1965   0.1693   0.1819   0.1782
+CT            0.2260   0.2341   0.1969   0.2131   0.1843
+DE            0.2455   0.2321   0.1764   0.2109   0.1912
+FL            0.1790   0.1861   0.1653   0.1784   0.1806
+GA            0.1508   0.1310   0.1407   0.1759   0.1985
+IA            0.1769   0.1850   0.1651   0.1789   0.1917
 ... with 38  more rows
-\end{verbatim}
+\end{CodeOutput}
 
-In addition, we obtain information on the classifier weights by calling \code{summary()} on the \code{\$weights} object.
+In addition, we can obtain information on the classifier weights in EBMA by calling \code{summary()} on the \code{\$weights} element.
 
-\begin{verbatim}
-> summary(ML_out$weights)
+\begin{CodeInput}
+summary(ML_out$weights)
+\end{CodeInput}
 
+\begin{CodeOutput}
  # EBMA classifier weights:
 
 Classifier     Weight
 ------------  -------
-lasso          0.3139
-pca            0.2034
-best_subset    0.2023
-gb             0.1752
-svm            0.1053 
-\end{verbatim}
+lasso          0.2258
+pca            0.2116
+best_subset    0.2058
+gb             0.1809
+svm            0.1759
+\end{CodeOutput}
 
 For additional information on the \pkg{autoMrP} summary method, refer to the help files using \code{?summary.autoMrP}.
 
-How does the \pkg{autoMrP} machine learning approach fare compared to the standard MrP model? In most real-world applications, researchers do not know the true state (or lower-level unit) estimates. In our example, however, the survey data is a sample from a super-survey with 50,483 respondents. Using disaggregation on the super-survey, we obtain state estimates that should be close to the population truth and treat them as the state-level ``truth'' \citep[see][]{buttice2013does,bisbee2019barp,bronieckietal2020}. We use these values as the ground truth in the following comparison where we illustrate that by using machine learning we obtain more precise estimates than when relying on the standard MrP model.
+How does the \pkg{autoMrP} machine learning approach fare compared to the standard MrP model? In most real-world applications, researchers do not know the true state (or lower-level unit) estimates. In our example, however, the survey data is a sample from a super-survey with 50,483 respondents. Using disaggregation on the super-survey, we obtain state estimates that should be close to the population truth and, therefore, treat them as the state-level ``truth'' \citep[see][]{buttice2013does,bisbee2019barp,bronieckietal2020}. We use these values as the ground truth in the following comparison, where we illustrate that by using machine learning we obtain more precise estimates than by relying on the standard MrP model.
 
 \begin{figure}[h!]
 \begin{center}
 \caption{Comparison of \pkg{autoMrP} Predictions with and without Machine Learning }
 \vspace{-4mm}
-\includegraphics[width=.7\textwidth]{figure1.pdf}
+\includegraphics[width=.9\textwidth]{figure1.pdf}
 \label{ebma_v_mrp}
 \end{center}
 \vspace{-6mm}
-{\small \emph{Note:} State-level \pkg{autoMrP} predictions with machine learning (EBMA) and without (MrP). Both approaches use all context-level information. EBMA reduces mean squared prediction error by $42\%$.}
+{\small \emph{Note:} State-level \pkg{autoMrP} predictions with machine learning (EBMA) and without (MrP). Both approaches use all context-level information. EBMA reduces the mean squared prediction error by $57\%$.}
 %\vspace{0.2cm}
 \end{figure}
 
-The \pkg{autoMrP} package uses up to five implemented machine learning classifiers: (i) the multilevel model with best subset selection of context-level variables, (ii) the multilevel model with principal components of context-level variables, (iii) the multilevel model with L1 regularization (lasso), (iv) gradient tree boosting, and (v) support vector machine.
+The \pkg{autoMrP} package can produce estimates based on any combination of the five implemented machine learning classifiers: (i) the multilevel model with best subset selection of context-level variables, (ii) the multilevel model with principal components of context-level variables, (iii) the multilevel model with L1 regularization (lasso), (iv) gradient tree boosting, and (v) support vector machine.
 
-In the following, we discuss how \pkg{autoMrP} obtains the state estimates. In our example data set, context-level variables are not on the same scale. As a first step, \pkg{autoMrP} normalizes context-level variables. Second, it adds the principal components of context-level variables to the survey and census data. Third, it splits the 1,500 observations into two parts. The first part is used for classifier training while the second is used for tuning EBMA. %By default, the classifier training data contains 2/3 of the observations and the EBMA tuning data contains 1/3.
+We now describe how \pkg{autoMrP} obtains the overall state estimates. In our example data set, context-level variables are not on the same scale. As a first step, \pkg{autoMrP} normalizes context-level variables. Second, it adds the principal components of context-level variables to the survey and census data. Third, it splits the 1,500 observations in the sample into two parts. The first part is used for classifier training while the second is used for tuning EBMA. %By default, the classifier training data contains 2/3 of the observations and the EBMA tuning data contains 1/3.
 
-Subsequently, all five classifiers are tuned using cross-validation based on the first part of the observations. The individuals in our data are nested within states. The folds are constructed in a way so that all individuals from the same state are assigned to the same fold.\footnote{The user may override this behavior so that individuals are assigned to folds at random. However, We show in the appendix to \cite{bronieckietal2020} on pages 5--7 why our approach is superior and provide empirical evidence.} %The user may provide custom folds to override this behavior.
+All individual classifiers are tuned using cross-validation based on the first part of the observations. The survey respondents in our data are nested within states. The folds are constructed in a way so that all respondents from the same state are assigned to the same fold.\footnote{The user may override this behavior so that observations are assigned to folds at random. However, We show in the appendix to \cite{bronieckietal2020} on pages 5--7 why our approach is superior and provide empirical evidence.} %The user may provide custom folds to override this behavior.
 
-
-
-
-
-
-
-
-In the next step \pkg{autoMrP} post-stratifies the state estimates of the winning model specifications of all five classifiers using the census data. Finally, we generate overall state-level predictions by averaging the results of all classifiers to an ensemble, using the Bayesian model averaging implemented in the R package \pkg{EBMAforecast} \citep{Montgomery2016}. We tune the EBMA model based on the second part of the observations. %The weights are determined based on prediction accuracy and the uniqueness of the candidate models' predictions \citep{montgomery2012improving}. We tune the tolerance using the following values: 1e-2, 5e-3, 1e-3, 5e-4, 1e-4, 5e-5, 1e-5. By default, we draw 100 samples from the EBMA fold, that has not been used for classifier training. We use a boostrapping approach where we draw the same number of respondents from each state and end up with 100 samples that are about the same size as the original EBMA fold. The number of EBMA samples can be controlled via the \pkg{ebma.n.draws} arugment and the tolerance values via \pkg{ebma.tol}. Please refer to \citep{Montgomery2016} for advise on the candidate values for the tolerance parameter (\pkg{autoMrP} searches a wider grid than the recommendation by \citet{Montgomery2016}). EBMA tuning is time consuming and reducing the number of samples to be drawn or reducing the search grid will substantially speed up the estimation.
-
-
-
-
-
+In the next step \pkg{autoMrP} post-stratifies the state estimates of the winning model specifications of the individual classifiers using the census data. Finally, overall state-level predictions are generated by averaging the results of the individual classifiers to an ensemble, using the Bayesian model averaging implemented in the R package \pkg{EBMAforecast} \citep{Montgomery2016}. In this last step, \pkg{autoMrP} tunes the EBMA model based on the second part of the observations. %The weights are determined based on prediction accuracy and the uniqueness of the candidate models' predictions \citep{montgomery2012improving}. We tune the tolerance using the following values: 1e-2, 5e-3, 1e-3, 5e-4, 1e-4, 5e-5, 1e-5. By default, we draw 100 samples from the EBMA fold, that has not been used for classifier training. We use a boostrapping approach where we draw the same number of respondents from each state and end up with 100 samples that are about the same size as the original EBMA fold. The number of EBMA samples can be controlled via the \pkg{ebma.n.draws} arugment and the tolerance values via \pkg{ebma.tol}. Please refer to \citep{Montgomery2016} for advise on the candidate values for the tolerance parameter (\pkg{autoMrP} searches a wider grid than the recommendation by \citet{Montgomery2016}). EBMA tuning is time consuming and reducing the number of samples to be drawn or reducing the search grid will substantially speed up the estimation.
 
 
 \subsection[Uncertainty in autoMrP]{Uncertainty Estimates in \pkg{autoMrP}} \label{sec:boot}
 
-We implement uncertainty estimates via bootstrapping. Bootstrapping is computationally expensive. On a standard Windows machine with an i5-8400U with six cores and six threads, the following example took twelve hours to complete. 
+We implement uncertainty estimates via bootstrapping. Bootstrapping is computationally expensive. On a standard Windows machine with an i5-8400U processor with six cores and six threads, the following example took twelve hours to complete. 
 
-\begin{verbatim}
+\begin{CodeInput}
 # Detect the number of cores
 max_cores <- parallel::detectCores()
 
@@ -400,27 +373,47 @@ boot_out <- auto_MrP(
   svm.L2.reg = TRUE,
   cores = max_cores,
   uncertainty = TRUE)  
-\end{verbatim}
+\end{CodeInput}
 
-In this example, we set the argument \code{uncertainty = TRUE} to carry out bootstrapping. In addition, the user may specify the argument \code{boot.iter} to set the number of bootstrap iterations. The argument defaults to 200 iterations. Running \pkg{autoMrP} with uncertainty estimates returns a point estimate for each method, the combined ensemble as well as the standard deviation across all bootstrap iterations.
+In this example, we set the argument \code{uncertainty = TRUE} to carry out bootstrapping. In addition, the user may specify the argument \code{boot.iter} to set the number of bootstrap iterations. The argument defaults to 200 iterations. Running \pkg{autoMrP} with uncertainty estimates returns an object that contains estimates and weights for each bootstrap iteration. Calling \code{summary()} on this \pkg{autoMrP} object returns EBMA state-level median estimates, the lower and upper 95\% confidence bounds as well as the minimum and maximum estimates by default. The user may specify the confidence level with the \code{ci.lvl} argument (default is \code{ci.lvl = 0.95}). Specific classifiers can be inspected by setting the \code{classifiers} argument to one of the following: \code{"best_subset"}, \code{"lasso"}, \code{"pca"}, \code{"gb"}, \code{"svm"}, or \code{"mrp"} (please refer to the help files via \code{?summary.autoMrP} for additional information).
 
-\begin{verbatim}
-> boot_out$ebma
-# A tibble: 48 x 3
-   state ebma_median ebma_sd
-   <fct>       <dbl>   <dbl>
- 1 AL          0.158  0.0160
- 2 AR          0.154  0.0156
- 3 AZ          0.198  0.0321
- 4 CA          0.199  0.0353
- 5 CO          0.180  0.0270
- 6 CT          0.205  0.0436
- 7 DE          0.186  0.0219
- 8 FL          0.169  0.0242
- 9 GA          0.157  0.0187
-10 IA          0.176  0.0200
-# ... with 38 more rows
-\end{verbatim}
+\begin{CodeInput}
+summary(boot_out)
+\end{CodeInput}
+
+\begin{CodeOutput}
+ # EBMA estimates:
+
+state      Min.   Lower bound   Median   Upper bound      Max
+------  -------  ------------  -------  ------------  -------
+AL       0.0593        0.0897   0.1441        0.2118   0.2673
+AR       0.0408        0.0488   0.1118        0.1609   0.1965
+AZ       0.1298        0.1678   0.2457        0.3618   0.4261
+CA       0.1961        0.2312   0.2970        0.3848   0.4091
+CO       0.0690        0.0989   0.1618        0.2231   0.2369
+CT       0.1113        0.1376   0.2053        0.2769   0.3115
+DE       0.1315        0.1419   0.2173        0.3368   0.4088
+FL       0.1145        0.1344   0.1835        0.2356   0.2519
+GA       0.0529        0.0877   0.1406        0.1877   0.2623
+IA       0.0733        0.1076   0.1589        0.2189   0.2543
+... with 38  more rows 
+\end{CodeOutput}
+
+\pkg{autoMrP} has a plot method. Calling the \code{plot()} function on an \code{autoMrP} object returns EBMA state-level estimates as well as uncertainty bars if they were estimated via bootstrapping. The confidence level can be set with the \code{ci.lvl} argument (default is \code{ci.lvl = 0.95}) and estimates for individual classifiers can be plotted by setting the \code{algorithm} argument to one of the follwing: \code{"best_subset"}, \code{"lasso"}, \code{"pca"}, \code{"gb"}, \code{"svm"}, or \code{"mrp"} (please refer to the help files via \code{?plot.autoMrP} for additional information).
+
+\begin{figure}[h!]
+\begin{center}
+\caption{State-Level EBMA Estimates with 95\% Confidence Intervals}
+%\vspace{+4mm}
+\includegraphics[width = 1\textwidth]{new_figure.pdf}
+\label{plotmethod}
+\end{center}
+\vspace{-4mm}\hspace{2cm}
+%{\small \emph{Note:} State-level \pkg{autoMrP} point estimates and 95\% confidence intervals.}
+%\vspace{0.2cm}
+\end{figure}
+
+In \autoref{ebma_v_mrp2} we plot our model predictions and the 95\% confidence intervals on the x-axis against the true state-level opinion on the y-axis.\footnote{True state-level opinion is based on disaggregation of the super survey. Please refer to \autoref{sec:horserace} for more detail.} The confidence intervals for almost all state-level estimates overlap the diagonal, i.e., the true state-level opinion falls within the 95\% confidence intervals for those estimates.
 
 \begin{figure}[h!]
 \begin{center}
@@ -436,8 +429,6 @@ In this example, we set the argument \code{uncertainty = TRUE} to carry out boot
 
 \section[Implementation of autoMrP]{Implementation of autoMrP} \label{sec:impl}
 
-
-
 As illustrated by the above example, the \code{auto_MrP()} function provided by the \pkg{autoMrP} package relies on four steps to produce small-area estimates: data preparation, training and tuning of individual classifiers, post-stratification of individual classifiers' predictions, and aggregation of individual classifiers' predictions via EBMA. Each step requires the user to make a number of decisions and pass them to the function via its arguments.
 
 
@@ -445,7 +436,7 @@ As illustrated by the above example, the \code{auto_MrP()} function provided by 
 
 The survey and census data sets are passed to the \code{auto_MrP()} function as \code{data.frame}s via the arguments \code{survey} and \code{census}. The survey \code{data.frame} must include the individual-level outcome variable specified by function argument \code{y}, the individual-level covariates specified by argument \code{L1.x}, the context-level covariates specified by argument \code{L2.x}, and the context-level unit specified by argument \code{L2.unit}, at which the outcome variable should be aggregated. Optionally, the survey \code{data.frame} can also include a variable, specified by \code{L2.reg}, that captures the hierarchical grouping of the context-level units (e.g., the geographic regions in which the subnational units are nested), a set of variables, specified by \code{pcs}, representing the principal components of the context-level covariates, and a variable, specified by \code{folds}, that determines the fold to which each observation in the survey data set is to be allocated (this can be either the EBMA fold or one of the $K$ CV folds).
 
-Setting \code{folds = NULL} implies that the user does not wish to provide a variable for the partitioning of the survey data into different folds. In that case, the user must specify the arguments \code{ebma.size}, \code{k.folds}, and \code{cv.sampling} in order for \code{auto_MrP()} to perform the partitioning. Argument \code{ebma.size} is a number in the (closed) unit interval indicating the proportion of survey respondents to be allocated to the EBMA fold. It defaults to $1/3$. Argument \code{k.folds} is an integer indicating the number of folds, $K$, to be used in cross-validation. Its default value is $K = 5$. Argument \code{cv.sampling}, finally, specifies whether the $K$ cross-validation folds should be created by sampling context-level units, in which case the user must set \code{cv.sampling = "L2 units"}, or by sampling respondents, in which case the set used is \code{cv.sampling = "individuals"}. The default setting is \code{cv.sampling = "L2 units"}.
+Setting \code{folds = NULL} implies that the user does not wish to provide a variable for the partitioning of the survey data into different folds. In that case, the user must specify the arguments \code{ebma.size}, \code{k.folds}, and \code{cv.sampling} in order for \code{auto_MrP()} to perform the partitioning. Argument \code{ebma.size} is a number in the (closed) unit interval indicating the proportion of survey respondents to be allocated to the EBMA fold. It defaults to $1/3$. Argument \code{k.folds} is an integer indicating the number of folds, $K$, to be used in the cross-validation of individual classifiers. Its default value is $K = 5$. Argument \code{cv.sampling}, finally, specifies whether the $K$ cross-validation folds should be created by sampling context-level units, in which case the user sets \code{cv.sampling = "L2 units"}, or by sampling respondents, in which case the argument is set to \code{cv.sampling = "individuals"}. The default setting is \code{cv.sampling = "L2 units"}.
 
 Like the survey \code{data.frame}, the census \code{data.frame} must include the variables specified by \code{L1.x}, \code{L2.x}, and \code{L2.unit} and, optionally, can include the variables specified by \code{L2.reg} and \code{pcs}. In addition, the census \code{data.frame} must include either the \code{bin.proportion}, which is a variable containing the population proportion of individuals by ideal type and context-level unit, or the \code{bin.size}, which is a variable indicating the population bin size of ideal types by context-level unit.
 
@@ -456,28 +447,21 @@ By default, \code{auto_MrP()} normalizes all context-level variables to have a m
 
 \subsection{Training and Tuning of Individual Classifiers}
 
-The \pkg{autoMrP} package allows the user to fit either a single classifier or set of classifiers to the survey data. The predictions of the fitted classifier or classifiers are then post-stratified based on the census data and, if there are multiple classifiers, combined via EBMA. The classifiers currently supported by \pkg{autoMrP} are (i) multilevel regression with best subset selection of context-level covariates (Best Subset), (ii) multilevel regression with best subset selection of principal components of context-level covariates (PCA), (iii) multilevel regression with $L1$ regularization of context-level covariates (Lasso), (iv) gradient boosting (GB), (v) support vector machine (SVM), and (vi) standard multilevel regression (MRP). More classifiers may be added in future versions of the package. The user can choose to rely on any combination of these classifiers. For each individual classifier there is a logical argument that indicates, if set to \code{TRUE}, that the classifier should be used for prediction of the outcome or, if set to \code{FALSE}, that it should not be used in the prediction task. These arguments are \code{best.subset}, \code{pca}, \code{lasso}, \code{gb}, \code{svm}, and \code{mrp}. The arguments \code{best.subset}, \code{pca}, \code{lasso}, \code{gb}, and \code{svm} default to \code{TRUE}, while the argument \code{mrp} defaults to \code{FALSE}. The user can also control which context-level covariates should be considered by a classifier to predict the outcome. This can be done via the arguments \code{best.subset.L2.x}, \code{pca.L2.x}, \code{lasso.L2.x}, \code{gb.L2.x}, \code{svm.L2.x}, and \code{mrp.L2.x}. If these arguments are set to \code{NULL}, which is the default option, the respective classifier relies on all available context-level variables (i.e., all variables specified by \code{L2.x}). For GB and SVM, the user can additionally specify the logical arguments \code{gb.L2.unit}, \code{gb.L2.reg}, \code{svm.L2.unit}, and \code{svm.L2.reg}. These arguments control whether the classifier should include dummy variables for the context-level units \code{L2.unit} and the groupings of context-level units \code{L2.reg}, respectively. Our tests showed that both GB and SVM do not benefit from including indicators for \code{L2.unit}. We recommend leaving them out if the number of context-level units is high relative to the number of observations in the data (such as in our example, where there are 50 states and 1,500 respondents).
+The \pkg{autoMrP} package allows the user to fit either a single classifier or set of classifiers to the survey data. The predictions of the fitted classifier or classifiers are then post-stratified based on the census data and, if there are multiple classifiers, combined via EBMA. The classifiers currently supported by \pkg{autoMrP} are (i) multilevel regression with best subset selection of context-level covariates (Best Subset), (ii) multilevel regression with best subset selection of principal components of context-level covariates (PCA), (iii) multilevel regression with $L1$ regularization of context-level covariates (Lasso), (iv) gradient boosting (GB), (v) support vector machine (SVM), and (vi) standard multilevel regression (MRP). More classifiers may be added in future versions of the package. The user can choose to rely on any combination of these classifiers. For each individual classifier there is a logical argument that indicates, if set to \code{TRUE}, that the classifier should be used for prediction of the outcome or, if set to \code{FALSE}, that it should not be used in the prediction task. These arguments are \code{best.subset}, \code{pca}, \code{lasso}, \code{gb}, \code{svm}, and \code{mrp}. The arguments \code{best.subset}, \code{pca}, \code{lasso}, \code{gb}, and \code{svm} default to \code{TRUE}, while the argument \code{mrp} defaults to \code{FALSE}. The user can also control which context-level covariates should be considered by a classifier to predict the outcome. This can be done via the arguments \code{best.subset.L2.x}, \code{pca.L2.x}, \code{lasso.L2.x}, \code{gb.L2.x}, \code{svm.L2.x}, and \code{mrp.L2.x}. If these arguments are set to \code{NULL}, which is the default option, the respective classifier relies on all available context-level variables (i.e., all variables specified by \code{L2.x}). For GB and SVM, the user can additionally specify the logical arguments \code{gb.L2.unit}, \code{gb.L2.reg}, \code{svm.L2.unit}, and \code{svm.L2.reg}. These arguments control whether the classifier should include dummy variables for the context-level units \code{L2.unit} and the groupings of context-level units \code{L2.reg}, respectively.
 
 \pkg{autoMrP} draws on a number of existing packages to implement the above classifiers. The multilevel models in Best Subset and PCA are fit using the \code{glmer()} function from the \pkg{lme4} package \citep{glmer}. Lasso uses the \code{glmmLasso()} function from the \pkg{glmmLasso} package \citep{glmmLasso}. GB relies on the \code{gbm()} function from the \pkg{gbm} package \citep{Ridgeway:2007}. And SVM, finally, makes use of the \code{svm()} function from the \pkg{e1071} package \citep{e1071}. Please refer to the respective package reference manual for more information on these functions.
 
-If included in the prediction task, classifiers Best Subset, PCA, Lasso, GB, and SVM are trained and tuned using $K$-fold cross-validation. This means that for each fold $k \in \{1, \dotsc, K\}$, the classifiers are trained on all folds but the $k$th, which is used to evaluate the classifiers' prediction performance. To evaluate prediction performance, the user must specify the loss function and the unit for which prediction loss is calculated. The loss function is defined by the argument \code{loss.fun} and the user can choose between the mean squared error, by setting \code{loss.fun = "MSE"}, or the mean absolute error, by setting \code{loss.fun = "MAE"}. The default setting is \code{loss.fun = "MSE"}. The unit for calculating prediction loss can be controlled via the argument \code{loss.unit}. Setting \code{loss.unit = "individuals"} means that performance loss is evaluated at the level of individual survey respondents and \code{unit = "L2 units"} means that it is evaluated at the level of context-level units. The default is \code{loss.unit = "individuals"}.
+If included in the prediction task, classifiers Best Subset, PCA, Lasso, GB, and SVM are trained and tuned using $K$-fold cross-validation. This means that for each fold $k \in \{1, \dotsc, K\}$, the classifiers are trained on all folds but the $k$th, which is used to evaluate the classifiers' prediction performance. To evaluate prediction performance, the user must specify the loss function and the unit for which prediction loss is calculated. The loss function is defined by the argument \code{loss.fun} and the user can choose between the mean squared error, by setting \code{loss.fun = "MSE"}, the mean absolute error, by setting \code{loss.fun = "MAE"}, binary cross-entropy loss, by setting \code{loss.fun = "cross-entropy"}, the mean squared false error \citep{Wang2016}, by setting \code{loss.fun = "msfe"}, the f1 score, by setting \code{loss.fun = "f1"}, or any combination of those loss functions. The default setting is to use multiple loss functions with the setting \code{loss.fun = c("MSE", "cross-entropy", "msfe", "f1")}. The unit for calculating prediction loss can be controlled via the argument \code{loss.unit}. Setting \code{loss.unit = "individuals"} means that performance loss is evaluated at the level of individual survey respondents and \code{unit = "L2 units"} means that it is evaluated at the level of context-level units. The default is to evaluate at both levels: \code{loss.unit = c("individuals", "L2 units")}. With evaluation based on multiple loss functions or both loss units, candidate tuning values are ranked according to their performance in each loss function or loss unit. The candidate tuning parameters with the lowest rank sum are chosen in classifier tuning. Ties are broken according to the order of the search grid.
 
 Classifier tuning requires the user to specify grids of candidate values for the classifiers' tuning parameters. Best Subset and PCA do not have tuning parameters. For Best Subset, \code{auto_MrP()} simply fits as many models as there are combinations of context-level variables (i.e., $2^k$). For PCA, \code{auto_MrP()} proceeds in a similar way but replaces the context-level variables with their principal components and then estimates $k + 1$ models: the first model empty while the following models successively add the principal components.
 
-The tuning parameter of Lasso is the penalty parameter $\lambda$, which controls the shrinkage of the coefficients of context-level variables. Its grid of candidate values is specified by the argument \code{lasso.lambda}. The argument \code{lasso.lambda} can be either a numeric vector of non-negative values or a list of two numeric vectors of equal size. If \code{lasso.lambda} is a list, then the first vector specifies a set of step sizes by which $\lambda$ is to be increased while the second vector determines the upper thresholds of the intervals to which these step sizes are applied.
+The tuning parameter of Lasso is the penalty parameter $\lambda$, which controls the shrinkage of the coefficients of context-level variables. Its grid of candidate values is specified by the argument \code{lasso.lambda}. The argument \code{lasso.lambda} is a numeric vector of non-negative values.
 
-
-
-GB comes with five tuning parameters: the interaction depth, which defines the maximum depth of each tree grown, the learning rate or step-size reduction, the initial tree number fit  by GB, the increase in trees fit, and the maximum fit number. The argument \code{gb.interaction.depth} is a vector of integers that are candidate values for the interaction depth. Argument \code{gb.shrinkage} is a numeric vector whose values are candidates for the learning rate. Note that a smaller learning rate typically requires a larger number of trees. Argument \code{gb.n.trees.init} is an integer-valued scalar specifying the initial number of trees to fit by GB. Argument \code{gb.n.trees.increase} is either an integer-valued scalar that specifies the step increase in the number of trees to fit (until the maximum number of trees has been reached) or an integer-valued vector of the same length as \code{gb.shrinkage}, with each element defining a step increase for the corresponding learning rate value in \code{gb.shrinkage}. Argument \code{gb.n.trees.max} defines the maximum number of trees to fit by GB. Like \code{gb.n.trees.increase}, it can be either an integer-valued scalar or an integer-valued vector of the same length as \code{gb.shrinkage}, with each value corresponding to a learning rate and, if \code{gb.n.trees.increase} is a vector, a step increase in the number of trees to fit.
-
-
+GB comes with five tuning parameters: the interaction depth, which defines the maximum depth of each tree grown, the learning rate or step-size reduction, the initial tree number fit  by GB, the increase in trees fit, and the maximum fit number. The argument \code{gb.interaction.depth} is a vector of positive integers that are candidate values for the interaction depth. Argument \code{gb.shrinkage} is a numeric vector whose (positive) values are candidates for the learning rate. Note that a smaller learning rate typically requires a larger number of trees. Argument \code{gb.n.trees.init} is an integer-valued scalar specifying the initial number of trees to fit by GB. Argument \code{gb.n.trees.increase} is an integer-valued scalar that specifies the step increase in the number of trees to fit (until the maximum number of trees has been reached). Argument \code{gb.n.trees.max} is an integer-valued scalar defining the maximum number of trees to fit by GB.
 
 SVM requires the user to choose a kernel. The choice of the kernel is controlled by the argument \code{svm.kernel}, which can be set to any of the following values: \code{"linear"}, \code{"polynomial"}, \code{"radial"}, or \code{"sigmoid"}. Depending on which kernel the user has chosen, SVM has one or two tuning parameters: the SVM kernel parameter $\gamma$ (for all kernel types except the linear one) and a parameter controlling the cost of constraints violation in SVM. Argument \code{svm.gamma} is a numeric vector whose values are candidates for $\gamma$. Argument \code{svm.cost} is also a numeric vector and its values are the candidates for the SVM cost parameter.
 
-
-
-
-\pkg{autoMrP} allows the user to define stopping rules for the tuning of Lasso and GB by specifying the arguments \code{lasso.n.iter} and \code{gb.n.iter}. Each argument can be either \code{NULL} or a positive integer. If set to integer $Z$, then the respective algorithm stops after having run $Z$ iterations without any improvement in prediction performance. GB further requires specification of the minimum number of observations that must be contained by each terminal node of the trees. The user can control the minimum number of observations in the terminal nodes by setting argument \code{gb.n.minobsinnode} to any positive integer. Please consult the package reference manual for information on the default values used for the tuning parameters as well as the stopping rules.
+%\pkg{autoMrP} allows the user to define stopping rules for the tuning of Lasso and GB by specifying the arguments \code{lasso.n.iter} and \code{gb.n.iter}. Each argument can be either \code{NULL} or a positive integer. If set to integer $Z$, then the respective algorithm stops after having run $Z$ iterations without any improvement in prediction performance. GB further requires specification of the minimum number of observations that must be contained by each terminal node of the trees. The user can control the minimum number of observations in the terminal nodes by setting argument \code{gb.n.minobsinnode} to any positive integer. Please consult the package reference manual for information on the default values used for the tuning parameters as well as the stopping rules.
 
 We recommend that users of the package explicitly set all tuning parameters even when they accept \pkg{autoMrP} defaults because the default values may change in future package versions.
 
@@ -494,55 +478,46 @@ The final step in \code{auto_MrP()} is to generate overall predictions for subna
 
 \section[Horserace]{Comparison of \pkg{autoMrP} with Alternative Approaches} \label{sec:horserace}
 
-For users interested in using more advanced MrP models that benefit from techniques of the statistical learning literature, there are three options: the \pkg{SRP} package by \cite{ornstein2020stacked}, the \pkg{BARP} package by \cite{bisbee2019barp}, and the \pkg{autoMrP} package by \cite{bronieckietal2020}. All three packages are similar in that they rest on improved MrP models but differ in how exactly they improve upon classic MrP. In this section, we provide a comparison of the three packages. The comparison is carried out on a standard benchmark data set \citep{buttice2013does} and shows that \pkg{autoMrP} outperforms the other two alternatives (\pkg{SRP} and \pkg{BARP}). In the following, we describe the setup to evaluate prediction performance of the three approaches.
+For users interested in using more advanced MrP models that benefit from techniques of the statistical learning literature, there are currently three options: the \pkg{SRP} package by \cite{ornstein2020stacked}, the \pkg{BARP} package by \cite{bisbee2019barp}, and the \pkg{autoMrP} package by \cite{bronieckietal2020}. All three packages are similar in that they rest on improved MrP models, but they differ in how exactly they improve upon classic MrP. In this section, we provide a comparison of the performance of the three packages. The comparison is carried out on a standard benchmark data set \citep{buttice2013does} and shows that \pkg{autoMrP} outperforms the other two alternatives (\pkg{SRP} and \pkg{BARP}). In the following, we describe the setup to evaluate prediction performance of the three approaches.
 
-We evaluate the approaches based on real-world public opinion data from five waves of two large U.S. surveys. The data set was compiled by \citet{buttice2013does} who used it to evaluate the performance of MrP and we follow their assessment approach here \citep[see also][]{bisbee2019barp,bronieckietal2020}. The data set consists of 89 survey items from the National Annenberg Election Studies (2000, 2004, and 2008) and the Cooperative Congressional Election Studies (2006 and 2008).
+We evaluate the approaches based on real-world public opinion data from five waves of two large US surveys. The data set was compiled by \citet{buttice2013does} who used it to evaluate the performance of MrP and we follow their assessment approach here \citep[see also][]{bisbee2019barp,bronieckietal2020}. The data set consists of 89 survey items from the National Annenberg Election Studies (2000, 2004, and 2008) and the Cooperative Congressional Election Studies (2006 and 2008).
 
 Each survey item in the data set is binary; coded 1 if the respondent is in favor of the question asked and 0 otherwise. The three individual-level predictors are \emph{age group} (four categories), \emph{education level} (four categories), and \emph{gender-race combination} (six categories). In addition, \citet{buttice2013does} add two context-level predictors: (i) the state \emph{share of votes for the Republican candidate in the previous presidential election} and (ii) the \emph{percentage of Evangelical Protestant and Mormon respondents.} In addition, we added another four context-level variables: (i) the \emph{state percentage of the population living in urban areas}, (ii) the \emph{state unemployment rate}, (iii) the \emph{state share of Hispanics}, \emph{and} (iv) the \emph{state share of whites} \citep{bronieckietal2020}. 
 
-The survey items address issues such as internet absentee voting, gay marriage, taxes versus spending, and a fence at the border with Mexico. Each survey item has at least 25,000 individual responses. Following \citet{buttice2013does}, we treat the state average ``yes'' response as the population ``truth.'' We then draw a sample of 1,500 respondents from each item to represent the size of a typical national survey. Our samples are random draws where we ensure that we draw at least five respondents from each state.
+The survey items address issues such as internet absentee voting, gay marriage, taxes versus spending, and a fence at the border with Mexico. Each survey item has at least 25,000 individual responses. Following \citet{buttice2013does}, we treat the state average ``yes'' response as the population ``truth.'' We then draw a sample of 1,500 respondents for each item to represent the size of a typical national survey. Our samples are random draws where we ensure that we draw at least five respondents from each state.
 
 \begin{figure}[h!]
 \begin{center}
 \caption{Comparison of the Prediction Performance}
 \vspace{-4mm}
-\includegraphics[width=.8\textwidth]{figure3.png}\label{real_world_ranking}
+\includegraphics[width=.8\textwidth]{figure3.pdf}\label{real_world_ranking}
 \end{center}
-\vspace{-6mm}
+\vspace{-12mm}
 {\small \emph{Note:} Average MSE of state-level predictions over 89 survey items. \emph{MrP} is the standard MrP model with all context-level variables. SRP is the \citet{SRP} package and BARP is the \citet{BARP} package. Percentage numbers: Comparison to standard MrP model.}
 %\vspace{0.2cm}
 \end{figure}
 
-
 We use the samples to generate state-level predictions with \pkg{autoMrP}, \pkg{SRP}, and \pkg{BARP} for all 89 items. All packages make use of the same three individudal-level predictors, the six context-level variables as well as binary state and region variables.\footnote{The default behavior of \pkg{autoMrP} is not to use binary state variables in the gradient tree boosting and support vector machine classifiers because this tended to somewhat reduce prediction accuracy of those classifiers in our tests. Here, however, we override this behavior to ensure that all packages use all available information.} In addition, we also compare with a standard MrP model that uses all six context-level variables. The prediction accuracy is evaluated as the mean squared prediction error, comparing the state-level predictions of each package and the MrP model to the state-level ``truth.'' 
 
+The results show that \pkg{autoMrP} provides the largest gain over the baseline (the standard MrP model) among the three approaches implemented in these packages. There are some potential explanations for this behavior. Comparing the \pkg{autoMrP} package to the \pkg{BARP} package, we note that \pkg{BARP} does not tune parameters and only relies on one classifier (BART). \pkg{autoMrP} and \pkg{SRP} rely on a set of classifiers and then combine the predictions from these different classifiers with a superlearner. 
 
-The results show that \pkg{autoMrP} provides the largest gain over the baseline (the standard MrP model) among the three approaches implemented in the three packages. There are some potential explanations for this behavior. Comparing the \pkg{autoMrP} package to the \pkg{BARP} package, we note that \pkg{BARP} does not tune parameters and only relies on one classifier (BART). \pkg{autoMrP} and \pkg{SRP} rely on a set of classifiers and then combine the predictions from these different classifiers with a superlearner. 
-
-Comparing \pkg{autoMrP} with \pkg{SRP}, we see that we rely on EBMA while \pkg{SRP} relies on stacking. \pkg{autoMrP} engages more intensely in parameter tuning and does not just use default values in most classifiers. In addition, \pkg{autoMrP} also relies on a different approach for assigning observations to folds \citep[see p.6 in][]{bronieckietal2020}. Finally, unlike \pkg{SRP}, we avoid \emph{double-dipping} when tuning individual classifiers and aggregating the individual classifiers' predictions. We provide a first evaluation based on a very common data set and show that with these data under these circumstances \pkg{autoMrP} outperforms alternative packages improving upon standard MrP. While some of the highlighted differences indicate superior performance of \pkg{autoMrP}, we emphasize that the empirical evaluation is limited to a data set on U.S. public opinion commonly used for assessing MrP models. 
-
-
-
+Comparing \pkg{autoMrP} with \pkg{SRP}, we see that we rely on EBMA while \pkg{SRP} relies on stacking. \pkg{autoMrP} engages more intensely in parameter tuning and does not just use default values in most classifiers. In addition, \pkg{autoMrP} also relies on a different approach for assigning observations to folds \citep[see p.6 in][]{bronieckietal2020}. Finally, unlike \pkg{SRP}, we avoid \emph{double-dipping} when tuning individual classifiers and aggregating the individual classifiers' predictions via the superlearner. Our comparison provides a first evaluation based on a very common data set and shows that with these data and under these circumstances \pkg{autoMrP} outperforms alternative packages improving upon standard MrP. While some of the highlighted differences indicate superior performance of \pkg{autoMrP}, we emphasize that the empirical evaluation is limited to a data set on US public opinion commonly used for assessing MrP models. 
 
 
 \section[Summary and Discussion]{Summary and Discussion} \label{sec:summ}
 
-This article provided an introduction to \pkg{autoMrP}, which is a new \proglang{R} package allowing users to estimate classic MrP models as well as autoMrP models that rely on statistical learning methods. We first showed how using newer versions of MrP that rely on statistical learning outperform the classic model. We then moved on to a benchmark test between three packages that offer advanced MrP models and showed that \pkg{autoMrP} outperforms the two other approaches in terms of prediction accuracy on an often-used test data set. 
+This article provided an introduction to \pkg{autoMrP}, which is a new \proglang{R} package allowing users to estimate classic MrP models as well as \pkg{autoMrP} models that rely on statistical learning methods. We first showed how using newer versions of MrP that rely on statistical learning outperform the classic model. We then moved on to a benchmark test between three packages that offer advanced MrP models and showed that \pkg{autoMrP} outperforms the two other approaches in terms of prediction accuracy on an often-used test data set. 
 
-Going forward, we want to make it possible to estimate some models via \pkg{rstanarm} rather than to rely on \emph{glmer} models. In addition, we want to make it possible for users to include additional classifiers. The autoMrP procedure is in principle open to the inclusion of other classification methods and having this option will provide more flexibility and less dependency on package maintainers. 
-
+Going forward, we want to make it possible to estimate some models in \pkg{autoMrP} via \pkg{rstanarm} rather than to rely on \code{glmer} models. In addition, we want to make it possible for users to include additional classifiers. The \pkg{autoMrP} procedure is in principle open to the inclusion of other classification methods and having this option will provide more flexibility and less dependency on package maintainers. 
 
 
 \section*{Computational details}
-
-
 
 The results in this paper were obtained using
 \proglang{R}~4.0.2 with the \pkg{dplyr}~1.0.2, \pkg{foreach}~1.5.0, \pkg{doParallel}~1.0.15, \pkg{doRNG}~1.8.2, \pkg{magittr}~1.5, \pkg{lme4}~1.1-23, \pkg{glmnet}~4.0-2, \pkg{ranger}~0.12.1, \pkg{kknn}~1.3.1, \pkg{xgboost}~1.2.0.1, \pkg{caret}~6.0-86, \pkg{SRP}~0.1.1, \pkg{BARP}~0.0.1.0001 and \pkg{autoMrP}~0.91 packages. \proglang{R} itself and all packages except \pkg{SRP}, \pkg{BARP}, and \pkg{autoMrP} used are available from the Comprehensive \proglang{R} Archive Network (CRAN) at \url{https://CRAN.R-project.org/}. The \pkg{SRP} package is available on GitHub at \url{https://github.com/joeornstein/SRP}, \pkg{BARP} is available on GitHub at \url{https://github.com/jbisbee1/BARP}, and \pkg{autoMrP} is availalbe on GitHub at \url{https://github.com/retowuest/autoMrP}.
 
 
 \section*{Acknowledgments}
-
 
 The names of the authors are listed alphabetically. Philipp Broniecki would like to acknowledge the support of the Business and Local Government Data Research Centre (ES/S007156/1) funded by the Economic and Social Research Council (ESRC) for undertaking this work. Lucas Leemann acknowledges funding from the Swiss National Science Foundation (Grant no. 183120) and the University of Zürich (Einrichtingskredit). Reto W\"uest has received funding from the European Research Council (ERC) under the European Union’s Horizon 2020 research and innovation program (ERC StG 2018 CONSULTATIONEFFECTS, grant agreement No. [804288]).
 

@@ -54,6 +54,9 @@ name of the geographic region in \code{survey} and \code{census} by which
 geographic units are grouped (\code{L2.unit} must be nested within
 \code{L2.reg}). Default is \code{NULL}.}
 
+\item{pc.names}{Principal Component Variable names. A character vector
+containing the names of the context-level principal components variables.}
+
 \item{model.bs}{The tuned model from the multilevel regression with best
 subset selection classifier. An \code{\link[lme4]{glmer}} object.}
 

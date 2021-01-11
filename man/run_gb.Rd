@@ -25,7 +25,8 @@ run_gb(
 )
 }
 \arguments{
-\item{y}{Outcome variable. A character scalar containing the column name of
+\item{y}{Outcome variable. A character vector containing the column names of
+the outcome variable. A character scalar containing the column name of
 the outcome variable in \code{survey}.}
 
 \item{L1.x}{Individual-level covariates. A character vector containing the
@@ -36,6 +37,10 @@ is specified in argument \code{L2.unit}.}
 \item{L2.x}{Context-level covariates. A character vector containing the
 column names of the context-level variables in \code{survey} and
 \code{census} used to predict outcome \code{y}.}
+
+\item{L2.eval.unit}{Geographic unit. A character scalar containing the column
+name of the geographic unit in \code{survey} and \code{census} at which
+outcomes should be aggregated.}
 
 \item{L2.unit}{Geographic unit. A character scalar containing the column
 name of the geographic unit in \code{survey} and \code{census} at which

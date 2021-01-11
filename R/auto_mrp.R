@@ -217,42 +217,40 @@
 #' @examples
 #' \dontrun{
 #' # MrP model only:
-#' mrp_model <- autoMrP::auto_MrP(
-#'   y = "YES",
-#'   L1.x = c("L1x1", "L1x2", "L1x3"),
-#'   L2.x = c("L2.x1", "L2.x2"),
-#'   L2.unit = "state",
-#'   L2.reg = "region",
-#'   L2.x.scale = TRUE,
-#'   survey = survey,
-#'   census = census,
-#'   bin.proportion = "proportion",
-#'   best.subset = FALSE,
-#'   lasso = FALSE,
-#'   pca = FALSE,
-#'   gb = FALSE,
-#'   svm = FALSE,
-#'   mrp = TRUE)
-#'
-#' # Better predictions through machine learning
-#' out <- autoMrP::auto_MrP(
+#' mrp_out <- auto_MrP(
 #'   y = "YES",
 #'   L1.x = c("L1x1", "L1x2", "L1x3"),
 #'   L2.x = c("L2.x1", "L2.x2", "L2.x3", "L2.x4", "L2.x5", "L2.x6"),
 #'   L2.unit = "state",
 #'   L2.reg = "region",
-#'   L2.x.scale = TRUE,
-#'   survey = survey,
-#'   census = census,
 #'   bin.proportion = "proportion",
-#'   best.subset = TRUE,
-#'   lasso = TRUE,
-#'   pca = TRUE,
-#'   gb = TRUE,
-#'   svm = TRUE,
-#'   mrp = TRUE,
-#'   mrp.L2.x = c("L2.x1", "L2.x2")
-#'   )}
+#'   survey = taxes_survey,
+#'   census = taxes_census,
+#'   ebma.size = 0,
+#'   cores = max_cores,
+#'   best.subset = FALSE,
+#'   lasso = FALSE,
+#'   pca = FALSE,
+#'   gb = FALSE,
+#'   svm = FALSE,
+#'   mrp = TRUE
+#' )
+#'
+#' # Predictions through machine learning
+#' ml_out <- auto_MrP(
+#'   y = "YES",
+#'   L1.x = c("L1x1", "L1x2", "L1x3"),
+#'   L2.x = c("L2.x1", "L2.x2", "L2.x3", "L2.x4", "L2.x5", "L2.x6"),
+#'   L2.unit = "state",
+#'   L2.reg = "region",
+#'   bin.proportion = "proportion",
+#'   survey = taxes_survey,
+#'   census = taxes_census,
+#'   gb.L2.reg = TRUE,
+#'   svm.L2.reg = TRUE,
+#'   cores = max_cores
+#'   )
+#'   }
 #' @export
 #' @importFrom stats as.formula binomial predict setNames weighted.mean median sd
 #' @importFrom utils combn
@@ -427,7 +425,7 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE, p
       add_rows <- survey %>%
         dplyr::group_by( .dots = L2.unit ) %>%
         tidyr::nest() %>%
-        dplyr::mutate(os = purrr:::map(data, function( x ){
+        dplyr::mutate(os = purrr::map(data, function( x ){
           n <- nrow(x)
           os <- dplyr::group_by(.data = x, !! rlang::sym(y) )
           y_1 <- sum(dplyr::pull(.data = os, var = !! rlang::sym(y)))

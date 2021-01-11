@@ -4,69 +4,12 @@
 #' provided by the user, evaluates prediction performance, and chooses the
 #' best-performing model.
 #'
-#' @param y Outcome variable. A character scalar containing the column name of
-#'   the outcome variable in \code{survey}.
-#' @param L1.x Individual-level covariates. A character vector containing the
-#'   column names of the individual-level variables in \code{survey} and
-#'   \code{census} used to predict outcome \code{y}. Note that geographic unit
-#'   is specified in argument \code{L2.unit}.
-#' @param L2.x Context-level covariates. A character vector containing the
-#'   column names of the context-level variables in \code{survey} and
-#'   \code{census} used to predict outcome \code{y}.
-#' @param L2.unit Geographic unit. A character scalar containing the column
-#'   name of the geographic unit in \code{survey} and \code{census} at which
-#'   outcomes should be aggregated.
-#' @param L2.reg Geographic region. A character scalar containing the column
-#'   name of the geographic region in \code{survey} and \code{census} by which
-#'   geographic units are grouped (\code{L2.unit} must be nested within
-#'   \code{L2.reg}). Default is \code{NULL}.
-#' @param loss.unit Loss function unit. A character-valued scalar indicating
-#'   whether performance loss should be evaluated at the level of individual
-#'   respondents (\code{individuals}) or geographic units (\code{L2 units}).
-#'   Default is \code{individuals}.
-#' @param loss.fun Loss function. A character-valued scalar indicating whether
-#'   prediction loss should be measured by the mean squared error (\code{MSE})
-#'   or the mean absolute error (\code{MAE}). Default is \code{MSE}.
+#' @inheritParams auto_mrp
 #' @param data Data for cross-validation. A \code{list} of \eqn{k}
 #'   \code{data.frames}, one for each fold to be used in \eqn{k}-fold
 #'   cross-validation.
-#' @param cores The number of cores to be used. An integer indicating the number
-#'   of processor cores used for parallel computing. Default is 1.
-#' @param verbose Verbose output. A logical argument indicating whether or not
-#'   verbose output should be printed. Default is \code{TRUE}.
 #'
 #' @return A model formula of the winning best subset classifier model.
-#' @examples \dontrun{
-#' # generate principal components
-#' pca_out <- stats::prcomp(
-#'   survey[, pca.L2.x],
-#'   retx = TRUE,
-#'   center = TRUE,
-#'   scale. = TRUE,
-#'   tol = NULL)
-#'
-#' # Add PCs to survey data
-#' survey_item <- survey_item %>%
-#'   dplyr::bind_cols(as.data.frame(pca_out$x))
-#'
-#' # create list of cross-validation folds
-#' cv_folds <- list(
-#'   `1` = survey_item[1:200, ],
-#'   `2` = survey_item[201:400, ],
-#'   `3` = survey_item[401:1500, ])
-#'
-#' # run pca classifier
-#' pca_out <- run_pca(
-#'   y = "YES",
-#'   L1.x = c("L1x1", "L1x2"),
-#'   L2.x = c("PC1", "PC2"),
-#'   L2.unit = "state",
-#'   L2.reg = "region",
-#'   loss.unit = "individuals",
-#'   loss.fun = "MSE",
-#'   data = cv_folds,
-#'   verbose = TRUE)
-#' }
 
 run_pca <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                     loss.unit, loss.fun, data, cores,

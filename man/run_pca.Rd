@@ -18,45 +18,9 @@ run_pca(
 )
 }
 \arguments{
-\item{y}{Outcome variable. A character scalar containing the column name of
-the outcome variable in \code{survey}.}
-
-\item{L1.x}{Individual-level covariates. A character vector containing the
-column names of the individual-level variables in \code{survey} and
-\code{census} used to predict outcome \code{y}. Note that geographic unit
-is specified in argument \code{L2.unit}.}
-
-\item{L2.x}{Context-level covariates. A character vector containing the
-column names of the context-level variables in \code{survey} and
-\code{census} used to predict outcome \code{y}.}
-
-\item{L2.unit}{Geographic unit. A character scalar containing the column
-name of the geographic unit in \code{survey} and \code{census} at which
-outcomes should be aggregated.}
-
-\item{L2.reg}{Geographic region. A character scalar containing the column
-name of the geographic region in \code{survey} and \code{census} by which
-geographic units are grouped (\code{L2.unit} must be nested within
-\code{L2.reg}). Default is \code{NULL}.}
-
-\item{loss.unit}{Loss function unit. A character-valued scalar indicating
-whether performance loss should be evaluated at the level of individual
-respondents (\code{individuals}) or geographic units (\code{L2 units}).
-Default is \code{individuals}.}
-
-\item{loss.fun}{Loss function. A character-valued scalar indicating whether
-prediction loss should be measured by the mean squared error (\code{MSE})
-or the mean absolute error (\code{MAE}). Default is \code{MSE}.}
-
 \item{data}{Data for cross-validation. A \code{list} of \eqn{k}
 \code{data.frames}, one for each fold to be used in \eqn{k}-fold
 cross-validation.}
-
-\item{cores}{The number of cores to be used. An integer indicating the number
-of processor cores used for parallel computing. Default is 1.}
-
-\item{verbose}{Verbose output. A logical argument indicating whether or not
-verbose output should be printed. Default is \code{TRUE}.}
 }
 \value{
 A model formula of the winning best subset classifier model.
@@ -65,37 +29,4 @@ A model formula of the winning best subset classifier model.
 \code{run_pca} is a wrapper function that applies the PCA classifier to data
 provided by the user, evaluates prediction performance, and chooses the
 best-performing model.
-}
-\examples{
-\dontrun{
-# generate principal components
-pca_out <- stats::prcomp(
-  survey[, pca.L2.x],
-  retx = TRUE,
-  center = TRUE,
-  scale. = TRUE,
-  tol = NULL)
-
-# Add PCs to survey data
-survey_item <- survey_item \%>\%
-  dplyr::bind_cols(as.data.frame(pca_out$x))
-
-# create list of cross-validation folds
-cv_folds <- list(
-  `1` = survey_item[1:200, ],
-  `2` = survey_item[201:400, ],
-  `3` = survey_item[401:1500, ])
-
-# run pca classifier
-pca_out <- run_pca(
-  y = "YES",
-  L1.x = c("L1x1", "L1x2"),
-  L2.x = c("PC1", "PC2"),
-  L2.unit = "state",
-  L2.reg = "region",
-  loss.unit = "individuals",
-  loss.fun = "MSE",
-  data = cv_folds,
-  verbose = TRUE)
-}
 }

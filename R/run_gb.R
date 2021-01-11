@@ -4,29 +4,10 @@
 #' classifier to data provided by the user, evaluates prediction performance,
 #' and chooses the best-performing model.
 #'
-#' @param y Outcome variable. A character scalar containing the column name of
-#'   the outcome variable in \code{survey}.
-#' @param L1.x Individual-level covariates. A character vector containing the
-#'   column names of the individual-level variables in \code{survey} and
-#'   \code{census} used to predict outcome \code{y}. Note that geographic unit
-#'   is specified in argument \code{L2.unit}.
-#' @param L2.x Context-level covariates. A character vector containing the
-#'   column names of the context-level variables in \code{survey} and
-#'   \code{census} used to predict outcome \code{y}.
-#' @param L2.unit Geographic unit. A character scalar containing the column
+#' @inheritParams auto_MrP
+#' @param L2.eval.unit Geographic unit. A character scalar containing the column
 #'   name of the geographic unit in \code{survey} and \code{census} at which
 #'   outcomes should be aggregated.
-#' @param L2.reg Geographic region. A character scalar containing the column
-#'   name of the geographic region in \code{survey} and \code{census} by which
-#'   geographic units are grouped (\code{L2.unit} must be nested within
-#'   \code{L2.reg}). Default is \code{NULL}.
-#' @param loss.unit Loss function unit. A character-valued scalar indicating
-#'   whether performance loss should be evaluated at the level of individual
-#'   respondents (\code{individuals}) or geographic units (\code{L2 units}).
-#'   Default is \code{individuals}.
-#' @param loss.fun Loss function. A character-valued scalar indicating whether
-#'   prediction loss should be measured by the mean squared error (\code{MSE})
-#'   or the mean absolute error (\code{MAE}). Default is \code{MSE}.
 #' @param interaction.depth GB interaction depth. An integer-valued vector
 #'   whose values specify the interaction depth of GB. The interaction depth
 #'   defines the maximum depth of each tree grown (i.e., the maximum level of
@@ -64,9 +45,6 @@
 #'   \code{interaction_depth} contains the interaction depth parameter,
 #'   \code{shrinkage} contains the learning rate, \code{n_trees} the number of
 #'   trees to be grown.
-#' @examples \dontrun{
-#' not yet
-#' }
 
 run_gb <- function(y, L1.x, L2.x, L2.eval.unit, L2.unit, L2.reg,
                    loss.unit, loss.fun, interaction.depth, shrinkage,
@@ -186,11 +164,13 @@ run_gb <- function(y, L1.x, L2.x, L2.eval.unit, L2.unit, L2.reg,
 #' multiple cores.
 #'
 #' @inheritParams run_gb
+#' @param form Model formula. A two-sided linear formula describing
+#'   the model to be fit, with the outcome on the LHS and the covariates
+#'   separated by + operators on the RHS.
+#' @param gb_grid Search grid. A data.frame object where columns are parameters
+#'   and rows are search iterations.
 #' @return The tuning parameter combinations and there associated loss function
 #'   scores. A list.
-#' @examples \dontrun{
-#' # not yet
-#' }
 
 run_gb_mc <- function(y, L1.x, L2.eval.unit, L2.unit, L2.reg, form, gb_grid,
                       n.minobsinnode, loss.unit, loss.fun, data, cores){
