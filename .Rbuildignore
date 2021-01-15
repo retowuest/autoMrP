@@ -5,5 +5,5 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^make-data\.R$
-^doc$
 ^Meta$
+^doc$
