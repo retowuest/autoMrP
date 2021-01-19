@@ -15,6 +15,10 @@ log_spaced(min, max, n)
 
 \item{n}{The length of the sequence. An integer valued scalar.}
 }
+\value{
+Returns a numeric vector with length specified in argument \code{n}.
+  The vector elements are equally spaced on the log-scale.
+}
 \description{
 A sequence of values with equal spacing on the log-scale.
 }

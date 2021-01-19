@@ -333,14 +333,12 @@ regression with post-stratification (MrP) by combining a number of machine
 learning methods through ensemble Bayesian model averaging (EBMA).
 }
 \examples{
-\dontrun{
-# MrP model only:
-mrp_out <- auto_MrP(
+# Minimal example without machine learning
+m <- auto_MrP(
   y = "YES",
-  L1.x = c("L1x1", "L1x2", "L1x3"),
-  L2.x = c("L2.x1", "L2.x2", "L2.x3", "L2.x4", "L2.x5", "L2.x6"),
+  L1.x = c("L1x1"),
+  L2.x = c("L2.x1", "L2.x2"),
   L2.unit = "state",
-  L2.reg = "region",
   bin.proportion = "proportion",
   survey = taxes_survey,
   census = taxes_census,
@@ -354,7 +352,36 @@ mrp_out <- auto_MrP(
   mrp = TRUE
 )
 
+# summarize and plot results
+summary(m)
+plot(m)
+
+\donttest{
+# MrP model only:
+mrp_out <- auto_MrP(
+  y = "YES",
+  L1.x = c("L1x1", "L1x2", "L1x3"),
+  L2.x = c("L2.x1", "L2.x2", "L2.x3", "L2.x4", "L2.x5", "L2.x6"),
+  L2.unit = "state",
+  L2.reg = "region",
+  bin.proportion = "proportion",
+  survey = taxes_survey,
+  census = taxes_census,
+  ebma.size = 0,
+  best.subset = FALSE,
+  lasso = FALSE,
+  pca = FALSE,
+  gb = FALSE,
+  svm = FALSE,
+  mrp = TRUE
+)
+
 # Predictions through machine learning
+
+# detect number of available cores
+max_cores <- parallel::detectCores()
+
+# autoMrP with machine learning
 ml_out <- auto_MrP(
   y = "YES",
   L1.x = c("L1x1", "L1x2", "L1x3"),

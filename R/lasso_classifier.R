@@ -16,15 +16,6 @@
 #' @param verbose Verbose output. A logical vector indicating whether or not
 #'   verbose output should be printed.
 #' @return A multilevel lasso model. An \code{\link[glmmLasso]{glmmLasso}} object.
-#' @examples \dontrun{
-#' m <- lasso_classifier(
-#'   L2.fix = YES ~ L2.x1 + L2.x2,
-#'   L1.re = list(L1x1 = ~1, L1x2 = ~1, state = ~1, region = ~1),
-#'   data.train = survey_item,
-#'   lambda = 5,
-#'   model.family = binomial(link = "probit"),
-#'   verbose = TRUE)
-#' }
 
 lasso_classifier <- function(L2.fix, L1.re, data.train,
                              lambda, model.family,

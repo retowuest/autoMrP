@@ -17,15 +17,6 @@
 #' @param verbose Verbose output. A logical vector indicating whether or not
 #'   verbose output should be printed.
 #' @return The multilevel model. An \code{\link[lme4]{glmer}} object.
-#' @examples \dontrun{
-#' m <- best_subset_classifier(
-#'   model = YES ~ (1 | L1x1) + (1 | L1x2) + (1 | L1x3) + (1 | region/state) + L2.x1,
-#'   data.train = survey_item,
-#'   model.family = binomial(link = "probit"),
-#'   model.optimizer = "bobyqa",
-#'   n.iter = 1000000,
-#'   verbose = TRUE)
-#' }
 
 best_subset_classifier <- function(model, data.train,
                                    model.family, model.optimizer,

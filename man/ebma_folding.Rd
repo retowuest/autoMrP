@@ -17,6 +17,12 @@ should be aggregated.}
 indicating the proportion of respondents to be allocated to the EBMA fold.
 Default is \eqn{1/3}.}
 }
+\value{
+Returns a list with two elements which are both tibble. List element
+  one is named \code{ebma_fold} and contains the tibble used in Ensemble
+  Bayesian Model Averaging Tuning. List element two is named \code{cv_data}
+  and contains the tibble used for classifier tuning.
+}
 \description{
 #' \code{ebma_folding()} generates a data fold that will not be used in
 classifier tuning. It is data that is needed to determine the optimal

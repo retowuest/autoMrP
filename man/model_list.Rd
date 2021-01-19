@@ -28,6 +28,10 @@ name of the geographic region in \code{survey} and \code{census} by which
 geographic units are grouped (\code{L2.unit} must be nested within
 \code{L2.reg}). Default is \code{NULL}.}
 }
+\value{
+Returns a list with the number of elements equal to 2^k where k is
+  the number context-level variables. Each element is of class formula.
+}
 \description{
 \code{model_list()} generates an exhaustive list of lme4 model formulas from
 the individual level and context level variables as well as geographic unit

@@ -469,9 +469,6 @@ ebma_mc_tol <- function(train.preds, train.y, ebma.fold,
 #' @inheritParams ebma
 #' @inheritParams ebma_mc_tol
 #' @return The classifier weights. A numeric vector.
-#' @examples \dontrun{
-#' # not yet
-#' }
 
 ebma_mc_draws <- function(
   train.preds, train.y, ebma.fold,

@@ -8,6 +8,7 @@
 #' call.
 #'
 #' @inheritParams auto_MrP
+#' @return No return value, called for detection of errors in autoMrP() call.
 
 error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                          folds, bin.proportion, bin.size, survey, census,
@@ -705,6 +706,10 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
 #' @param ebma.size EBMA fold size. A number in the open unit interval
 #'   indicating the proportion of respondents to be allocated to the EBMA fold.
 #'   Default is \eqn{1/3}.
+#' @return Returns a list with two elements which are both tibble. List element
+#'   one is named \code{ebma_fold} and contains the tibble used in Ensemble
+#'   Bayesian Model Averaging Tuning. List element two is named \code{cv_data}
+#'   and contains the tibble used for classifier tuning.
 
 ebma_folding <- function(data, L2.unit, ebma.size) {
   # Add row number to data frame
@@ -774,6 +779,8 @@ ebma_folding <- function(data, L2.unit, ebma.size) {
 #'   sampling individual respondents (\code{individuals}) or geographic units
 #'   (\code{L2 units}). Default is \code{L2 units}. \emph{Note:} ignored if
 #'   \code{folds} is provided, but must be specified otherwise.
+#' @return Returns a list with length specified by \code{k.folds} argument. Each
+#'   element is a tibble with a fold used in k-fold cross-validation.
 
 cv_folding <- function(data, L2.unit, k.folds,
                        cv.sampling = c("individuals", "L2 units")) {
@@ -864,6 +871,8 @@ cv_folding <- function(data, L2.unit, k.folds,
 #'   name of the geographic region in \code{survey} and \code{census} by which
 #'   geographic units are grouped (\code{L2.unit} must be nested within
 #'   \code{L2.reg}). Default is \code{NULL}.
+#' @return Returns a list with the number of elements equal to 2^k where k is
+#'   the number context-level variables. Each element is of class formula.
 
 model_list <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL) {
   # Individual-level random effects
@@ -927,6 +936,10 @@ model_list <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL) {
 #'   name of the geographic region in \code{survey} and \code{census} by which
 #'   geographic units are grouped (\code{L2.unit} must be nested within
 #'   \code{L2.reg}). Default is \code{NULL}.
+#' @return Returns a list with the number of elements k+1 where k is the number
+#'   of context-level variables. Each element is of class formula. The first
+#'   element is a model with context-level variables and the following models
+#'   iteratively add the principal components as context-level variables.
 
 model_list_pca <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL) {
   # Individual-level random effects
@@ -983,6 +996,11 @@ model_list_pca <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL) {
 #' @param L2.unit Geographic unit. A character scalar containing the column name
 #'   of the geographic unit in \code{survey} and \code{census} at which outcomes
 #'   should be aggregated.
+#' @return Returns a tibble with number of rows equal to the number of loss
+#'   functions tested (defaults to 4 for cross-entropy, f1, MSE, and msfe). The
+#'   number of columns is 2 where the first is called measure and contains the
+#'   names of the loss-functions and the second is called value and contains the
+#'   loss-function scores.
 
 loss_function <- function(pred, data.valid,
                           loss.unit = c("individuals", "L2 units"),
@@ -1043,6 +1061,10 @@ loss_function <- function(pred, data.valid,
 #' \code{mean_squared_error()} estimates the mean squared error for the desired
 #' loss unit.
 #' @inheritParams loss_function
+#' @return Returns a tibble containing two mean squared prediction errors. The
+#'   first is measured at the level of individuals and the second is measured at
+#'   the context level. The tibble dimensions are 2x3 with variables: measure,
+#'   value and level.
 
 mean_squared_error <- function(pred, data.valid, y, L2.unit){
 
@@ -1085,6 +1107,11 @@ mean_squared_error <- function(pred, data.valid, y, L2.unit){
 #' \code{mean_absolute_error()} estimates the mean absolute error for the
 #' desired loss unit.
 #' @inheritParams loss_function
+#' @return Returns a tibble containing two mean absolute prediction errors. The
+#'   first is measured at the level of individuals and the second is measured at
+#'   the context level. The tibble dimensions are 2x3 with variables: measure,
+#'   value and level.
+
 
 mean_absolute_error <- function(pred, data.valid, y, L2.unit){
 
@@ -1127,6 +1154,11 @@ mean_absolute_error <- function(pred, data.valid, y, L2.unit){
 #' \code{binary_cross_entropy()} estimates the inverse binary cross-entropy on
 #' the individual and state-level.
 #' @inheritParams loss_function
+#' @return Returns a tibble containing two binary cross-entropy prediction
+#'   errors. The first is measured at the level of individuals and the second is
+#'   measured at the context level. The tibble dimensions are 2x3 with
+#'   variables: measure, value and level.
+
 
 binary_cross_entropy <- function(pred, data.valid,
                                  loss.unit = c("individuals", "L2 units"),
@@ -1169,6 +1201,11 @@ binary_cross_entropy <- function(pred, data.valid,
 #' \code{f1_score()} estimates the inverse f1 scores on the individual and state
 #' levels.
 #' @inheritParams loss_function
+#' @return Returns a tibble containing two f1 prediction errors. The first is
+#'   measured at the level of individuals and the second is measured at the
+#'   context level. The tibble dimensions are 2x3 with variables: measure, value
+#'   and level.
+
 
 
 f1_score <- function(pred, data.valid, y, L2.unit){
@@ -1260,6 +1297,11 @@ f1_score <- function(pred, data.valid, y, L2.unit){
 #' \code{msfe()} estimates the inverse f1 scores on the individual and state
 #' levels.
 #' @inheritParams loss_function
+#' @return Returns a tibble containing two mean squared false prediction errors.
+#'   The first is measured at the level of individuals and the second is
+#'   measured at the context level. The tibble dimensions are 2x3 with
+#'   variables: measure, value and level.
+
 
 
 mean_squared_false_error <- function(pred, data.valid, y, L2.unit){
@@ -1317,6 +1359,9 @@ mean_squared_false_error <- function(pred, data.valid, y, L2.unit){
 #' @inheritParams loss_function
 #' @param score A data set containing loss function names, the loss function
 #'   values, and the tuning parameter values.
+#' @return Returns a tibble containing the parameter grid as well as a rank
+#'   column that corresponds to the cross-validation rank of a parameter
+#'   combination across all loss function scores.
 
 loss_score_ranking <- function(score, loss.fun){
 
@@ -1348,6 +1393,7 @@ loss_score_ranking <- function(score, loss.fun){
 #' \code{quiet()} suppresses cat output.
 #'
 #' @param x Input. It can be any kind.
+#' @return No return value, called to suppress cat output to the console.
 
 quiet <- function(x) {
   sink(tempfile())
@@ -1367,6 +1413,8 @@ quiet <- function(x) {
 #' @param type Whether to start or end parallel processing. A character string.
 #'   The possible values are \code{open}, \code{close}.
 #' @param cl The registered cluster. Default is \code{NULL}
+#' @return No return value, called to register or un-register clusters for
+#'   parallel processing.
 
 multicore <- function(cores = 1, type, cl = NULL) {
 
@@ -1400,6 +1448,8 @@ multicore <- function(cores = 1, type, cl = NULL) {
 #'
 #' @inheritParams auto_MrP
 #' @param m A \code{glmmLasso()} object.
+#' @return Returns a numeric vector of predictions from a \code{glmmLasso()}
+#'   object.
 
 predict_glmmLasso <- function(census, m, L1.x, lasso.L2.x, L2.unit, L2.reg) {
 
@@ -1874,6 +1924,7 @@ summary.autoMrP <- function(object, ci.lvl = 0.95, digits = 4, format = "simple"
 #'
 #' @inheritParams summary.autoMrP
 #' @param col.names The column names of the table. A
+#' @return No return value, prints a table to the console.
 
 output_table <- function(object, col.names, format, digits){
 
@@ -1897,6 +1948,8 @@ output_table <- function(object, col.names, format, digits){
 #' @param max The maximum value of the sequence. a positive numeric scalar (max
 #'   > 0).
 #' @param n The length of the sequence. An integer valued scalar.
+#' @return Returns a numeric vector with length specified in argument \code{n}.
+#'   The vector elements are equally spaced on the log-scale.
 
 # Sequence that is equally spaced on the log scale
 log_spaced <- function(min, max, n){

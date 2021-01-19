@@ -21,6 +21,10 @@ sampling individual respondents (\code{individuals}) or geographic units
 (\code{L2 units}). Default is \code{L2 units}. \emph{Note:} ignored if
 \code{folds} is provided, but must be specified otherwise.}
 }
+\value{
+Returns a list with length specified by \code{k.folds} argument. Each
+  element is a tibble with a fold used in k-fold cross-validation.
+}
 \description{
 \code{cv_folding} creates folds used in classifier training within the survey
 data.

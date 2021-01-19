@@ -35,6 +35,13 @@ the outcome variable.}
 of the geographic unit in \code{survey} and \code{census} at which outcomes
 should be aggregated.}
 }
+\value{
+Returns a tibble with number of rows equal to the number of loss
+  functions tested (defaults to 4 for cross-entropy, f1, MSE, and msfe). The
+  number of columns is 2 where the first is called measure and contains the
+  names of the loss-functions and the second is called value and contains the
+  loss-function scores.
+}
 \description{
 \code{loss_function()} estimates the loss based on a loss function.
 }

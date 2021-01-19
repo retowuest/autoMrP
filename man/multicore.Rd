@@ -14,6 +14,10 @@ The possible values are \code{open}, \code{close}.}
 
 \item{cl}{The registered cluster. Default is \code{NULL}}
 }
+\value{
+No return value, called to register or un-register clusters for
+  parallel processing.
+}
 \description{
 \code{multicore()} registers cores for parallel processing.
 }

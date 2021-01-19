@@ -28,6 +28,12 @@ name of the geographic region in \code{survey} and \code{census} by which
 geographic units are grouped (\code{L2.unit} must be nested within
 \code{L2.reg}). Default is \code{NULL}.}
 }
+\value{
+Returns a list with the number of elements k+1 where k is the number
+  of context-level variables. Each element is of class formula. The first
+  element is a model with context-level variables and the following models
+  iteratively add the principal components as context-level variables.
+}
 \description{
 \code{model_list_pca()} generates an exhaustive list of lme4 model formulas
 from the individual level and context level principal components as well as

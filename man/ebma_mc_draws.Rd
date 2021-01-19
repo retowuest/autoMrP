@@ -96,8 +96,3 @@ The classifier weights. A numeric vector.
 \code{ebma_mc_draws} is called from within \code{ebma}. It tunes using
 multiple cores.
 }
-\examples{
-\dontrun{
-# not yet
-}
-}

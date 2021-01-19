@@ -16,11 +16,12 @@ run_pca <- function(y, L1.x, L2.x, L2.unit, L2.reg,
                     verbose) {
 
   # List of all models to be evaluated
-  models <- model_list(y = y,
-                       L1.x = L1.x,
-                       L2.x = L2.x,
-                       L2.unit = L2.unit,
-                       L2.reg = L2.reg)
+  models <- model_list_pca(
+      y = y,
+      L1.x = L1.x,
+      L2.x = L2.x,
+      L2.unit = L2.unit,
+      L2.reg = L2.reg)
 
   # prallel tuning if cores > 1
   if( cores > 1 ){

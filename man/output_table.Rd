@@ -17,6 +17,9 @@ output_table(object, col.names, format, digits)
 \item{digits}{The number of digits to be displayed. An integer scalar.
 Default is \code{4}.}
 }
+\value{
+No return value, prints a table to the console.
+}
 \description{
 \code{output_table()} ...
 }

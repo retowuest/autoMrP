@@ -230,6 +230,9 @@ ignored unless \code{uncertainty = TRUE}. Default is \code{200} if
 random number generation. If \code{NULL}, then the seed is set to
 \eqn{546213978}. Default is \code{NULL}.}
 }
+\value{
+No return value, called for detection of errors in autoMrP() call.
+}
 \description{
 \code{error_checks()} checks for incorrect data entry in \code{autoMrP()}
 call.

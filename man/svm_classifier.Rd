@@ -54,22 +54,3 @@ The support vector machine model. An \code{\link[e1071]{svm}} object.
 \code{svm_classifier} applies support vector machine classification to a
 data set.
 }
-\examples{
-\dontrun{
-# Prepare data
-survey_item <- dplyr::bind_rows(survey_item) \%>\%
-  dplyr::mutate_at(.vars = y, as.factor)
-
-# Svm classifier
-m <- svm_classifier(
-  form = YES ~ L1x1 + L1x2 + L2.x1 + L2.x2 + state + region,
-  data = survey_item,
-  kernel = "radial",
-  type = "C-classification",
-  probability = TRUE,
-  svm.gamma = 0.3,
-  svm.cost = 1,
-  verbose = TRUE
-  )
-}
-}

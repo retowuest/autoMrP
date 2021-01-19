@@ -21,11 +21,3 @@ An updated gradient tree boosting model. A \code{\link[gbm]{gbm.more}} object.
 \code{gb_classifier_update()} grows additional trees in gradient tree
 boosting ensemble.
 }
-\examples{
-\dontrun{
-m <- gb_classifier_update(
-  object = m,
-  n.new.trees = 50,
-  verbose = TRUE)
-}
-}

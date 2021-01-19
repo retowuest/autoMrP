@@ -33,6 +33,10 @@ name of the geographic region in \code{survey} and \code{census} by which
 geographic units are grouped (\code{L2.unit} must be nested within
 \code{L2.reg}). Default is \code{NULL}.}
 }
+\value{
+Returns a numeric vector of predictions from a \code{glmmLasso()}
+  object.
+}
 \description{
 \code{glmmLasso()} predicts on newdata objects from a glmmLasso object.
 }
