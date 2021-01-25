@@ -187,6 +187,17 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                    " respondents to be allocated to the EBMA fold, must take a",
                    " number in the open unit interval.", sep = ""))
       }
+      # Check if ebma.size is 0
+      if (ebma.size == 0){
+        # Check if all classifiers are turned off and mrp is turned on
+        if (sum(isTRUE(best.subset), isTRUE(lasso), isTRUE(pca), isTRUE(gb),
+                isTRUE(svm),isTRUE(mrp)) > 1){
+          stop(paste("If ebma.size = 0, then only 1 classifier out of best.subset,",
+                     " lasso, pca, gb, svm, and mrp can be set to TRUE and all",
+                     " other classifiers must be set to FALSE. Try setting these",
+                     " explicitly.", sep = ""))
+        }
+       }
     }
 
     # Check if k.folds is NULL
