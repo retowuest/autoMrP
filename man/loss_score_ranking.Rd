@@ -14,11 +14,14 @@ values, and the tuning parameter values.}
 prediction loss should be measured by the mean squared error (\code{MSE})
 or the mean absolute error (\code{MAE}). Default is \code{MSE}.}
 }
+<<<<<<< Updated upstream
 \value{
 Returns a tibble containing the parameter grid as well as a rank
   column that corresponds to the cross-validation rank of a parameter
   combination across all loss function scores.
 }
+=======
+>>>>>>> Stashed changes
 \description{
 \code{loss_score_ranking()} ranks tuning parameters according to the scores
 received in multiple loss functions.

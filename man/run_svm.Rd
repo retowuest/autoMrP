@@ -35,9 +35,15 @@ is specified in argument \code{L2.unit}.}
 column names of the context-level variables in \code{survey} and
 \code{census} used to predict outcome \code{y}.}
 
+<<<<<<< Updated upstream
 \item{L2.eval.unit}{Geographic unit. A character scalar containing the column
 name of the geographic unit in \code{survey} and \code{census} at which
 outcomes should be aggregated.}
+=======
+\item{L2.eval.unit}{Geographic unit for the loss function. A character scalar
+containing the column name of the geographic unit in \code{survey} and
+\code{census}.}
+>>>>>>> Stashed changes
 
 \item{L2.unit}{Geographic unit. A character scalar containing the column
 name of the geographic unit in \code{survey} and \code{census} at which

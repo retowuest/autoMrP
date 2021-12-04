@@ -37,7 +37,9 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
   # Run EBMA if at least two classifiers selected
   if (sum(unlist(lapply(X = post.strat$models, FUN = function(x) !is.null(x)))) > 1){
 
-    message("Starting bayesian ensemble model averaging tuning")
+    if (verbose) {
+      message("Starting bayesian ensemble model averaging tuning")
+    }
 
     # EBMA wihtout L2.x variables
     if (all(L2.x == "")) L2.x <- NULL
@@ -287,7 +289,9 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
     return(list(ebma = L2_preds, classifiers = post.strat$predictions$Level2, weights = final_model_weights))
 
   } else{
-   message("\n Skipping EBMA (only 1 classifier selected) \n")
+    if (verbose) {
+      message("\n Skipping EBMA (only 1 classifier selected) \n")
+    }
 
     # function output
     return(list(ebma = "EBMA step skipped (only 1 classifier run)", classifiers = post.strat$predictions$Level2))

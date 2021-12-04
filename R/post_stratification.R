@@ -92,10 +92,10 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
     # post-stratification
     bs_preds <- census %>%
       dplyr::mutate(best_subset = stats::predict(object = best_subset_opt_poststrat_only,
-                                                 newdata = census, allow.new.levels = TRUE,
+                                                 newdata = ., allow.new.levels = TRUE,
                                                  type = "response")) %>%
-      dplyr::group_by(.dots = list(L2_unit)) %>%
-      dplyr::summarize(best_subset = weighted.mean(x = best_subset, w = .data$prop), .groups = "keep")
+      dplyr::group_by( !! rlang::sym(L2.unit)) %>%
+      dplyr::summarize(best_subset = stats::weighted.mean(x = best_subset, w = prop), .groups = "keep")
 
     # individual level predictions for EBMA
     bs_ind <- stats::predict(object = best_subset_opt_ebma, type = "response")
@@ -151,8 +151,8 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
     # post-stratification
     lasso_preds <- census %>%
       dplyr::mutate(lasso = lasso_ests) %>%
-      dplyr::group_by(.dots = list(L2_unit)) %>%
-      dplyr::summarize(lasso = weighted.mean(x = lasso, w = .data$prop), .groups = "keep")
+      dplyr::group_by( !! rlang::sym(L2.unit)) %>%
+      dplyr::summarize(lasso = stats::weighted.mean(x = lasso, w = prop), .groups = "keep")
 
     # individual level predictions for EBMA
     lasso_ind <- stats::predict(object = lasso_opt_ebma, type = "response")
@@ -185,11 +185,11 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
     # post-stratification
     pca_preds <- census %>%
       dplyr::mutate(pca = stats::predict(object = pca_opt_poststrat_only,
-                                         newdata = census,
+                                         newdata = .,
                                          allow.new.levels = TRUE,
                                          type = "response")) %>%
-      dplyr::group_by(.dots = list(L2_unit)) %>%
-      dplyr::summarize(pca = weighted.mean(x = pca, w = .data$prop), .groups = "keep")
+      dplyr::group_by( !! rlang::sym(L2.unit)) %>%
+      dplyr::summarize(pca = stats::weighted.mean(x = pca, w = prop), .groups = "keep")
 
     # individual level predictions for EBMA
     pca_ind <- stats::predict(object = pca_opt_ebma, type = "response")
@@ -244,11 +244,11 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
     # post-stratification
     gb_preds <- census %>%
       dplyr::mutate(gb = gbm::predict.gbm(object = gb_opt_poststrat_only,
-                                          newdata = census,
+                                          newdata = .,
                                           n.trees = gb.opt$n_trees,
                                           type = "response")) %>%
-      dplyr::group_by(.dots = list(L2_unit)) %>%
-      dplyr::summarize(gb = weighted.mean(x = gb, w = .data$prop), .groups = "keep")
+      dplyr::group_by( !! rlang::sym(L2.unit)) %>%
+      dplyr::summarize(gb = stats::weighted.mean(x = gb, w = prop), .groups = "keep")
 
     # individual level predictions for EBMA
     gb_ind <- gbm::predict.gbm(object = gb_opt_ebma, n.trees = gb.opt$n_trees, type = "response")
@@ -324,8 +324,8 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
       dplyr::mutate(svm = attr(stats::predict(object = svm_opt_poststrat_only,
                                               newdata = ., allow.new.levels = TRUE,
                                               probability = TRUE),"probabilities")[,"1"]) %>%
-      dplyr::group_by(.dots = list(L2_unit)) %>%
-      dplyr::summarize(svm = weighted.mean(x = svm, w = .data$prop), .groups = "keep")
+      dplyr::group_by( !! rlang::sym(L2.unit)) %>%
+      dplyr::summarize(svm = stats::weighted.mean(x = svm, w = prop), .groups = "keep")
 
     # individual level predictions for EBMA
     svm_ind <- attr(stats::predict(object = svm_opt_ebma, newdata = svm_data, probability = TRUE),"probabilities")[,"1"]
@@ -373,30 +373,44 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
     form_mrp <- as.formula(paste(y, " ~ ", L2_fe, " + ", all_re, sep = ""))
 
     # fit model for EBMA
+    # mrp_model_ebma <- best_subset_classifier(
+    #   model = form_mrp,
+    #   data.train = data,
+    #   model.family = binomial(link = "probit"),
+    #   model.optimizer = "bobyqa",
+    #   n.iter = 1000000,
+    #   verbose = verbose)
     mrp_model_ebma <- best_subset_classifier(
       model = form_mrp,
       data.train = data,
       model.family = binomial(link = "probit"),
-      model.optimizer = "bobyqa",
-      n.iter = 1000000,
+      model.optimizer = "nloptwrap",
+      n.iter = NULL,
       verbose = verbose)
 
-    # # fit MrP model for post-stratification only
+    # fit MrP model for post-stratification only
+    # mrp_model_poststrat_only <- best_subset_classifier(
+    #   model = form_mrp,
+    #   data.train = no_ebma_data,
+    #   model.family = binomial(link = "probit"),
+    #   model.optimizer = "bobyqa",
+    #   n.iter = 1000000,
+    #   verbose = verbose)
     mrp_model_poststrat_only <- best_subset_classifier(
       model = form_mrp,
       data.train = no_ebma_data,
       model.family = binomial(link = "probit"),
-      model.optimizer = "bobyqa",
-      n.iter = 1000000,
+      model.optimizer = "nloptwrap",
+      n.iter = NULL,
       verbose = verbose)
 
     # post-stratification
     mrp_preds <- census %>%
       dplyr::mutate(mrp = stats::predict(object = mrp_model_poststrat_only,
-                                         newdata = census, allow.new.levels = TRUE,
+                                         newdata = ., allow.new.levels = TRUE,
                                          type = "response")) %>%
-      dplyr::group_by(.dots = list(L2_unit)) %>%
-      dplyr::summarize(mrp = weighted.mean(x = mrp, w = .data$prop), .groups = "keep")
+      dplyr::group_by( !! rlang::sym(L2.unit)) %>%
+      dplyr::summarize(mrp = stats::weighted.mean(x = mrp, w = prop), .groups = "keep")
 
     # individual level predictions for EBMA
     mrp_ind <- stats::predict(object = mrp_model_ebma, type = "response")

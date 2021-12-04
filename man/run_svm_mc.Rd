@@ -6,8 +6,11 @@
 \usage{
 run_svm_mc(
   y,
+<<<<<<< Updated upstream
   L1.x,
   L2.x,
+=======
+>>>>>>> Stashed changes
   L2.eval.unit,
   L2.unit,
   L2.reg,
@@ -25,6 +28,7 @@ run_svm_mc(
 the outcome variable. A character scalar containing the column name of
 the outcome variable in \code{survey}.}
 
+<<<<<<< Updated upstream
 \item{L1.x}{Individual-level covariates. A character vector containing the
 column names of the individual-level variables in \code{survey} and
 \code{census} used to predict outcome \code{y}. Note that geographic unit
@@ -37,17 +41,26 @@ column names of the context-level variables in \code{survey} and
 \item{L2.eval.unit}{Geographic unit. A character scalar containing the column
 name of the geographic unit in \code{survey} and \code{census} at which
 outcomes should be aggregated.}
+=======
+\item{L2.eval.unit}{Geographic unit for the loss function. A character scalar
+containing the column name of the geographic unit in \code{survey} and
+\code{census}.}
+>>>>>>> Stashed changes
 
 \item{L2.unit}{Geographic unit. A character scalar containing the column
 name of the geographic unit in \code{survey} and \code{census} at which
 outcomes should be aggregated.}
 
+<<<<<<< Updated upstream
 \item{L2.reg}{Geographic region. A character scalar containing the column
 name of the geographic region in \code{survey} and \code{census} by which
 geographic units are grouped (\code{L2.unit} must be nested within
 \code{L2.reg}). Default is \code{NULL}.}
 
 \item{form}{The SVM model formula.}
+=======
+\item{form}{The model formula. A formula object.}
+>>>>>>> Stashed changes
 
 \item{loss.unit}{Loss function unit. A character-valued scalar indicating
 whether performance loss should be evaluated at the level of individual
@@ -57,6 +70,7 @@ loss units, parameters are ranked for each loss unit and the loss unit with
 the lowest rank sum is chosen. Ties are broken according to the order in
 the search grid.}
 
+<<<<<<< Updated upstream
 \item{loss.fun}{Loss function. A character-valued scalar indicating whether
 prediction loss should be measured by the mean squared error (\code{MSE}),
 the mean absolute error (\code{MAE}), binary cross-entropy
@@ -66,6 +80,12 @@ score (\code{f1}), or a combination thereof. Default is \code{c("MSE",
 are ranked for each loss function and the parameter combination with the
 lowest rank sum is chosen. Ties are broken according to the order in the
 search grid.}
+=======
+\item{loss.fun}{SVM loss function. If \code{NULL}, then SVM uses the
+misclassification error to measure the loss of categorical predictions and
+the mean squared error to measure the loss of numeric predictions. Default
+is \code{NULL}.}
+>>>>>>> Stashed changes
 
 \item{data}{Data for cross-validation. A \code{list} of \eqn{k}
 \code{data.frames}, one for each fold to be used in \eqn{k}-fold
@@ -74,8 +94,13 @@ cross-validation.}
 \item{cores}{The number of cores to be used. An integer indicating the number
 of processor cores used for parallel computing. Default is 1.}
 
+<<<<<<< Updated upstream
 \item{svm.grid}{Search grid. A data.frame object where columns are parameters
 and rows are search iterations.}
+=======
+\item{svm.grid}{The hyper-parameter search grid. A matrix of all
+hyper-parameter combinations.}
+>>>>>>> Stashed changes
 
 \item{verbose}{Verbose output. A logical argument indicating whether or not
 verbose output should be printed. Default is \code{FALSE}.}

@@ -1,7 +1,11 @@
 Package: autoMrP
 Type: Package
 Title: Improving MrP with Ensemble Learning
+<<<<<<< Updated upstream
 Version: 0.98
+=======
+Version: 0.99
+>>>>>>> Stashed changes
 Authors@R: c(
     person(given = "Reto",
 		   family = "Wüest",
@@ -31,6 +35,7 @@ Description: A tool that improves the prediction performance of multilevel
 	<https://lucasleemann.files.wordpress.com/2020/07/automrp-r2pa.pdf>.
 URL: https://github.com/retowuest/autoMrP
 BugReports: https://github.com/retowuest/autoMrP/issues
+<<<<<<< Updated upstream
 Depends:
     R (>= 3.6)
 Imports:
@@ -52,8 +57,17 @@ Imports:
 Suggests:
     rmarkdown,
 	R.rsp
+=======
+Depends: R (>= 3.6)
+Imports: rlang (>= 0.4.5), dplyr (>= 1.0.2), lme4 (>= 1.1), gbm (>=
+        2.1.5), e1071 (>= 1.7-3), tibble (>= 3.0.1), glmmLasso (>=
+        1.5.1), EBMAforecast (>= 1.0.0), foreach (>= 1.5.0), doParallel
+        (>= 1.0.15), doRNG (>= 1.8.2), ggplot2 (>= 3.3.2), knitr (>=
+        1.29), tidyr (>= 1.1.2), purrr (>= 0.3.4)
+Suggests: rmarkdown, R.rsp
+>>>>>>> Stashed changes
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2
 VignetteBuilder: R.rsp

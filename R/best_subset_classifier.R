@@ -23,19 +23,48 @@ best_subset_classifier <- function(model, data.train,
                                    n.iter, verbose = c(TRUE, FALSE)) {
   # Train model on training data
   if (isTRUE(verbose == TRUE)) {
-    out <- lme4::glmer(formula =  model,
-                       data = data.train,
-                       family = model.family,
-                       lme4::glmerControl(optimizer = model.optimizer,
-                                          optCtrl = list(maxfun = n.iter)))
+    # optimizer
+    if (model.optimizer == 'bobyqa'){
+      out <- lme4::glmer(formula =  model,
+                         data = data.train,
+                         family = model.family,
+                         lme4::glmerControl(
+                           optimizer = model.optimizer,
+                           optCtrl = list(maxfun = n.iter)))
+    } else if (model.optimizer == 'nloptwrap') {
+      out <- lme4::glmer(formula =  model,
+                         data = data.train,
+                         family = model.family,
+                         lme4::glmerControl(
+                           calc.derivs = FALSE,
+                           optimizer = model.optimizer,
+                           optCtrl = list(
+                             method = "NLOPT_LN_NELDERMEAD",
+                             starttests = TRUE, kkt = TRUE)))
+    }
   } else {
-    out <- suppressMessages(suppressWarnings(
-      lme4::glmer(formula =  model,
-                  data = data.train,
-                  family = model.family,
-                  lme4::glmerControl(optimizer = model.optimizer,
-                                     optCtrl = list(maxfun = n.iter)))
-    ))
+    # optimizer
+    if (model.optimizer == 'bobyqa') {
+      out <- suppressMessages(suppressWarnings(
+        lme4::glmer(formula =  model,
+                    data = data.train,
+                    family = model.family,
+                    lme4::glmerControl(optimizer = model.optimizer,
+                                       optCtrl = list(maxfun = n.iter)))
+      ))
+    } else if (model.optimizer == 'nloptwrap') {
+      out <- suppressMessages(suppressWarnings(
+       lme4::glmer(formula =  model,
+                   data = data.train,
+                   family = model.family,
+                   lme4::glmerControl(
+                     calc.derivs = FALSE,
+                     optimizer = model.optimizer,
+                     optCtrl = list(
+                       method = "NLOPT_LN_NELDERMEAD",
+                       starttests = TRUE, kkt = TRUE)))
+      ))
+    }
   }
 
   # Function output

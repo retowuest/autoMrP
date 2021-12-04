@@ -262,10 +262,17 @@
 #' )
 #'
 #' # Predictions through machine learning
+<<<<<<< Updated upstream
 #'
 #' # detect number of available cores
 #' max_cores <- parallel::detectCores()
 #'
+=======
+#'
+#' # detect number of available cores
+#' max_cores <- parallel::detectCores()
+#'
+>>>>>>> Stashed changes
 #' # autoMrP with machine learning
 #' ml_out <- auto_MrP(
 #'   y = "YES",
@@ -288,6 +295,7 @@
 #' @importFrom rlang .data
 #' @importFrom foreach %dopar%
 #' @importFrom doRNG %dorng%
+
 
 auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE, pcs = NULL,
                      folds = NULL, bin.proportion = NULL, bin.size = NULL, survey, census,
@@ -355,20 +363,7 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE, p
                lasso.lambda = lasso.lambda,
                lasso.n.iter = lasso.n.iter,
                uncertainty = uncertainty,
-               boot.iter = boot.iter,
-               seed = seed)
-
-
-# Seed --------------------------------------------------------------------
-
-  # Check seed argument and set seed
-  if (is.null(seed)) { seed <- 546213978 }
-  set.seed(seed)
-
-
-# No bootstrapping --------------------------------------------------------
-
-  if (!uncertainty){
+               boot.iter = boot.iter)
 
 
 # Prepare data ------------------------------------------------------------
@@ -401,7 +396,11 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE, p
 
     # If not provided in survey and census data, compute the principal components
     # of context-level variables
+<<<<<<< Updated upstream
     if (is.null(pcs) & all(L2.x != "")) {
+=======
+    if (is.null(pcs) & !is.null(L2.x)) {
+>>>>>>> Stashed changes
       # Determine context-level covariates whose principal components are to be
       # computed
       if (is.null(pca.L2.x)) {
@@ -473,8 +472,15 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE, p
       survey <- dplyr::bind_rows(survey, add_rows)
     }
 
+<<<<<<< Updated upstream
 # Remove NAs from DV ------------------------------------------------------
     survey <- tidyr::drop_na(survey, dplyr::all_of(y) )
+=======
+# No bootstrapping --------------------------------------------------------
+
+    if (!uncertainty){
+
+>>>>>>> Stashed changes
 
 # Create folds ------------------------------------------------------------
 
@@ -517,9 +523,9 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE, p
         dplyr::group_split(.data[[folds]])
     }
 
-
 # Optimal individual classifiers ------------------------------------------
 
+<<<<<<< Updated upstream
 
 
     # Classifier 1: Best Subset
@@ -755,6 +761,31 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE, p
     )
 
 
+=======
+      ebma_out <- run_classifiers(
+        y = y, L1.x = L1.x, L2.x = L2.x, mrp.L2.x = mrp.L2.x,
+        L2.unit = L2.unit, L2.reg = L2.reg, pcs = pcs,
+        folds = folds, cv.folds = cv_folds, cv.data = cv_data,
+        ebma.fold = ebma_fold, census = census, k.folds = k.folds,
+        cv.sampling = cv.sampling,
+        loss.unit = loss.unit, loss.fun = loss.fun,
+        best.subset = best.subset, lasso = lasso, pca = pca,
+        gb = gb, svm = svm, mrp = mrp, forward.select = forward.select,
+        best.subset.L2.x = best.subset.L2.x,
+        lasso.L2.x = lasso.L2.x, pca.L2.x = pca.L2.x,
+        gb.L2.x = gb.L2.x, svm.L2.x = svm.L2.x,
+        gb.L2.unit = gb.L2.unit, gb.L2.reg = gb.L2.reg,
+        lasso.lambda = lasso.lambda, lasso.n.iter = lasso.n.iter,
+        gb.interaction.depth = gb.interaction.depth,
+        gb.shrinkage = gb.shrinkage,
+        gb.n.trees.init = gb.n.trees.init,
+        gb.n.trees.increase = gb.n.trees.increase,
+        gb.n.trees.max = gb.n.trees.max,
+        gb.n.minobsinnode = gb.n.minobsinnode,
+        svm.kernel = svm.kernel, svm.gamma = svm.gamma,
+        svm.cost = svm.cost, ebma.tol = ebma.tol, cores = cores,
+        verbose = verbose)
+>>>>>>> Stashed changes
 
 # Boostrapping wrapper ----------------------------------------------------
 
@@ -786,7 +817,7 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE, p
       gb.n.trees.max = gb.n.trees.max,
       gb.n.minobsinnode = gb.n.minobsinnode,
       svm.kernel = svm.kernel, svm.gamma = svm.gamma,
-      svm.cost = svm.cost, ebma.tol = ebma.tol, seed = seed,
+      svm.cost = svm.cost, ebma.tol = ebma.tol,
       boot.iter = boot.iter, cores = cores)
   }
 

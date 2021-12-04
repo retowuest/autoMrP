@@ -19,12 +19,15 @@ the outcome variable.}
 of the geographic unit in \code{survey} and \code{census} at which outcomes
 should be aggregated.}
 }
+<<<<<<< Updated upstream
 \value{
 Returns a tibble containing two mean absolute prediction errors. The
   first is measured at the level of individuals and the second is measured at
   the context level. The tibble dimensions are 2x3 with variables: measure,
   value and level.
 }
+=======
+>>>>>>> Stashed changes
 \description{
 \code{mean_absolute_error()} estimates the mean absolute error for the
 desired loss unit.

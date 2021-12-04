@@ -16,7 +16,7 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                          best.subset, lasso, pca, gb, svm, mrp, forward.select,
                          best.subset.L2.x, lasso.L2.x, gb.L2.x, svm.L2.x,
                          mrp.L2.x, gb.L2.unit, gb.L2.reg, lasso.lambda,
-                         lasso.n.iter, uncertainty, boot.iter, seed) {
+                         lasso.n.iter, uncertainty, boot.iter) {
 
 
   # Check if y is a character scalar
@@ -55,7 +55,7 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
   }
 
   # Check if L2.x is a character vector
-  if (!is.character(L2.x)) {
+  if (!is.character(L2.x) & !is.null(L2.x)) {
     stop(paste("The argument 'L2.x', specifying the context-level variables to",
                " be used to predict y, must be a character vector.", sep = ""))
   }
@@ -691,12 +691,12 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
     }
   }
 
-  # Check if supplied seed is integer
-  if (!is.null(seed)){
-    if (isFALSE(dplyr::near(seed, as.integer(seed)))) {
-      stop("Seed must be either NULL or an integer-valued scalar.")
-    }
-  }
+  # # Check if supplied seed is integer
+  # if (!is.null(seed)){
+  #   if (isFALSE(dplyr::near(seed, as.integer(seed)))) {
+  #     stop("Seed must be either NULL or an integer-valued scalar.")
+  #   }
+  # }
 }
 
 
@@ -1098,7 +1098,7 @@ mean_squared_error <- function(pred, data.valid, y, L2.unit){
     dplyr::rowwise() %>%
     dplyr::mutate(sqe = (.data[[y]] - pred)^2 ) %>%
     dplyr::ungroup() %>%
-    dplyr::group_by(.dots = list(L2.unit)) %>%
+    dplyr::group_by(!! rlang::sym(L2.unit)) %>%
     dplyr::summarise(mse = mean(sqe), .groups = "drop")
 
   values[2] <- mean(dplyr::pull(.data = l2, var = mse))
@@ -1144,7 +1144,7 @@ mean_absolute_error <- function(pred, data.valid, y, L2.unit){
     dplyr::rowwise() %>%
     dplyr::mutate(ae = abs(.data[[y]] - pred)) %>%
     dplyr::ungroup() %>%
-    dplyr::group_by(.dots = list(L2.unit)) %>%
+    dplyr::group_by(!! rlang::sym(L2.unit)) %>%
     dplyr::summarise(mae = mean(ae), .groups = "drop")
 
   values[2] <- mean(dplyr::pull(.data = l2, var = mae))
@@ -1194,7 +1194,7 @@ binary_cross_entropy <- function(pred, data.valid,
     dplyr::rowwise() %>%
     dplyr::mutate(ce = .data[[y]] * log(pred) + (1 - .data[[y]]) * log(1 - pred) ) %>%
     dplyr::ungroup() %>%
-    dplyr::group_by(.dots = list(L2.unit)) %>%
+    dplyr::group_by(!! rlang::sym(L2.unit)) %>%
     dplyr::summarise(bce = mean(ce), .groups = "drop")
 
   values[2] <- mean(dplyr::pull(.data = l2, var = bce)) *-1
@@ -1387,7 +1387,7 @@ loss_score_ranking <- function(score, loss.fun){
   })
 
   ranking <- dplyr::bind_rows(ranking) %>%
-    dplyr::group_by(.dots = params) %>%
+    dplyr::group_by( !!!rlang::syms(params) ) %>%
     dplyr::summarise(rank = sum(rank), .groups = "drop") %>%
     dplyr::arrange(rank)
 
@@ -1404,7 +1404,10 @@ loss_score_ranking <- function(score, loss.fun){
 #' \code{quiet()} suppresses cat output.
 #'
 #' @param x Input. It can be any kind.
+<<<<<<< Updated upstream
 #' @return No return value, called to suppress cat output to the console.
+=======
+>>>>>>> Stashed changes
 
 quiet <- function(x) {
   sink(tempfile())
@@ -1543,7 +1546,7 @@ plot.autoMrP <- function(x, algorithm = "ebma", ci.lvl = 0.95, ...){
   # plot data
   if(algorithm == "ebma"){
     plot_data <- x$ebma %>%
-      dplyr::group_by(.dots = list(L2.unit)) %>%
+      dplyr::group_by(!! rlang::sym(L2.unit)) %>%
       dplyr::summarise(median = stats::median(ebma, na.rm = TRUE),
                        lb = stats::quantile(x = ebma, p = (1 - ci.lvl)*.5, na.rm = TRUE),
                        ub = stats::quantile(x = ebma, p = ci.lvl + (1 - ci.lvl)*.5, na.rm = TRUE),
@@ -1553,7 +1556,7 @@ plot.autoMrP <- function(x, algorithm = "ebma", ci.lvl = 0.95, ...){
       dplyr::mutate(rank = as.factor(rank))
   } else{
     plot_data <- x$classifiers %>%
-      dplyr::group_by(.dots = list(L2.unit)) %>%
+      dplyr::group_by(!! rlang::sym(L2.unit)) %>%
       dplyr::select(all_of(L2.unit), contains(algorithm)) %>%
       dplyr::summarise_all(.funs = list(median = ~ stats::quantile(x = ., probs = 0.5, na.rm = TRUE),
                                         lb = ~ stats::quantile(x = ., probs = (1 - ci.lvl) *.5, na.rm = TRUE),
@@ -1681,7 +1684,7 @@ summary.autoMrP <- function(object, ci.lvl = 0.95, digits = 4, format = "simple"
 
     # summary statistics
     s_data <- object %>%
-      dplyr::group_by(.dots = list(L2.unit)) %>%
+      dplyr::group_by(!! rlang::sym(L2.unit)) %>%
       dplyr::summarise(
         min = base::min(ebma, na.rm = TRUE),
         lb = stats::quantile(x = ebma, probs = (1 - ci.lvl)*.5, na.rm = TRUE),
@@ -1732,7 +1735,7 @@ summary.autoMrP <- function(object, ci.lvl = 0.95, digits = 4, format = "simple"
 
       # point estimates for all classifiers
       s_data <- object %>%
-        dplyr::group_by(.dots = list(L2.unit)) %>%
+        dplyr::group_by(!! rlang::sym(L2.unit)) %>%
         dplyr::summarise_all(.funs = median )
 
       # output table
@@ -1749,7 +1752,7 @@ summary.autoMrP <- function(object, ci.lvl = 0.95, digits = 4, format = "simple"
       # summary statistics
       s_data <- object %>%
         dplyr::select(dplyr::one_of(L2.unit,classifiers)) %>%
-        dplyr::group_by(.dots = list(L2.unit)) %>%
+        dplyr::group_by(!! rlang::sym(L2.unit)) %>%
         dplyr::summarise_all(.funs = list(
           min = ~ base::min(x = ., na.rm = TRUE),
           lb = ~ stats::quantile(x = ., probs = (1 - ci.lvl)*.5, na.rm = TRUE),
@@ -1791,6 +1794,10 @@ summary.autoMrP <- function(object, ci.lvl = 0.95, digits = 4, format = "simple"
   # autoMrP list object
   else if ( all(c("autoMrP", "list") %in% class(object)) ){
 
+    # remove missing values on point estimates
+    object$classifiers <- object$classifiers %>%
+      dplyr::filter(!is.na(mrp))
+
     # unit identifier
     L2.unit <- names(object$classifiers)[1]
 
@@ -1811,7 +1818,7 @@ summary.autoMrP <- function(object, ci.lvl = 0.95, digits = 4, format = "simple"
 
       # summary statistics
       s_data <- s_data %>%
-        dplyr::group_by(.dots = list(L2.unit)) %>%
+        dplyr::group_by(!! rlang::sym(L2.unit)) %>%
         dplyr::summarise_all(.funs = list(
           min = ~ base::min(x = ., na.rm = TRUE),
           lb = ~ stats::quantile(x = ., probs = (1 - ci.lvl)*.5, na.rm = TRUE),
@@ -1854,7 +1861,7 @@ summary.autoMrP <- function(object, ci.lvl = 0.95, digits = 4, format = "simple"
 
       # summary statistics
       s_data <- s_data %>%
-        dplyr::group_by(.dots = list(L2.unit)) %>%
+        dplyr::group_by(!! rlang::sym(L2.unit)) %>%
         dplyr::summarise_all(.funs = list(
           min = ~ base::min(x = ., na.rm = TRUE),
           lb = ~ stats::quantile(x = ., probs = (1 - ci.lvl)*.5, na.rm = TRUE),
@@ -1952,7 +1959,11 @@ output_table <- function(object, col.names, format, digits){
 #                 Equal spacing on the log scale                               #
 ################################################################################
 
+<<<<<<< Updated upstream
 #' A sequence of values with equal spacing on the log-scale.
+=======
+#' Sequence that is equally spaced on the log scale
+>>>>>>> Stashed changes
 #'
 #' @param min The minimum value of the sequence. A positive numeric scalar (min
 #'   > 0).
@@ -1962,7 +1973,286 @@ output_table <- function(object, col.names, format, digits){
 #' @return Returns a numeric vector with length specified in argument \code{n}.
 #'   The vector elements are equally spaced on the log-scale.
 
-# Sequence that is equally spaced on the log scale
 log_spaced <- function(min, max, n){
   return(base::exp( base::seq(from = base::log(min), to = base::log(max), length.out = n)))
+}
+
+
+
+################################################################################
+#         Runs operations inside bootstrapping loop                            #
+################################################################################
+
+#' @inheritParams summary.autoMrP
+
+# Bootstrap function run inside the foreach loop
+
+boot_fun <- function(survey, L2.unit,
+                     y, L1.x, L2.x, mrp.L2.x, L2.reg, L2.x.scale,
+                     pcs, folds, bin.proportion, bin.size, census,
+                     k.folds, cv.sampling, loss.unit, loss.fun, best.subset,
+                     lasso, pca, gb, svm, mrp, forward.select, best.subset.L2.x,
+                     lasso.L2.x, pca.L2.x, gb.L2.x, svm.L2.x, gb.L2.unit, gb.L2.reg,
+                     lasso.lambda, lasso.n.iter, gb.interaction.depth,
+                     gb.shrinkage, gb.n.trees.init, gb.n.trees.increase,
+                     gb.n.trees.max, gb.n.minobsinnode, svm.kernel,
+                     svm.gamma, svm.cost, ebma.tol, ebma.size, cores, verbose) {
+
+  # Bootstrap sample --------------------------------------------------------
+
+  # simple sampling with replacement
+  # boot_sample <- dplyr::slice_sample(
+  #   .data = survey, n = nrow(survey), replace = TRUE)
+
+  # number of states to draw in cluster balanced bootstrap
+  avg_n <- survey %>% dplyr::mutate(nrows = dplyr::n()) %>%
+    dplyr::group_by(!!rlang::sym(L2.unit)) %>%
+    dplyr::mutate(state_n = dplyr::n(),
+                  state_proportion =  (dplyr::n() / nrows))%>%
+    dplyr::summarise(state_n = mean(state_n),
+                     state_proportion = mean(state_proportion),
+                     .groups = 'drop') %>%
+    dplyr::summarise(n = weighted.mean(x = state_n, w = state_proportion)) %>%
+    as.numeric
+
+  #avg_n <- floor(x = (nrow(survey) / avg_n) )
+  avg_n <- round(x = (nrow(survey) / avg_n), digits = 0)
+
+  # balanced cluster bootstrap
+  boot_sample <- survey %>%
+    dplyr::group_by(!!rlang::sym(L2.unit)) %>%
+    tidyr::nest() %>%
+    dplyr::left_join(
+      y = survey %>%
+        dplyr::mutate(nrows = dplyr::n()) %>%
+        dplyr::group_by(!!rlang::sym(L2.unit)) %>%
+        dplyr::mutate(state_proportion =  (dplyr::n() / nrows)) %>%
+        dplyr::summarise(state_proportion = mean(state_proportion),
+                         .groups = 'drop'), by = L2.unit) %>%
+    dplyr::ungroup() %>%
+    dplyr::slice_sample(n = avg_n, weight_by = state_proportion,
+                        replace = TRUE) %>%
+    dplyr::select(-state_proportion) %>%
+    tidyr::unnest(data)
+
+  # # drop observations if the bootstrap sample is too large
+  # if (nrow(boot_sample) > nrow(survey)){
+  #   boot_sample <- dplyr::slice_sample(.data = boot_sample, n = nrow(survey),
+  #                                      replace = TRUE)
+  # }
+
+  # # Sample 1) regions; 2) states; 3) individuals
+  # if (!is.null(L2.reg)) {
+  #   # Step 1: Sample regions but sample at least 2 different regions
+  #   boot_sample <- dplyr::bind_rows(
+  #       # Sample at least 2 different regions
+  #       dplyr::slice_sample(.data = survey %>%
+  #                             dplyr::group_by(!!rlang::sym(L2.reg)) %>%
+  #                             tidyr::nest() %>%
+  #                             dplyr::ungroup()
+  #                           , n = 2, replace = FALSE),
+  #       # Sample from all regions with replacement
+  #       dplyr::slice_sample(.data = survey %>%
+  #                             dplyr::group_by(!!rlang::sym(L2.reg)) %>%
+  #                             tidyr::nest() %>%
+  #                             dplyr::ungroup(),
+  #                           n = (length(unique(unlist(survey[, L2.reg]))) - 2),
+  #                           replace = TRUE)) %>%
+  #     tidyr::unnest(data) %>%
+  #     dplyr::ungroup() %>%
+  #   # Step 2: sample states with replacement
+  #     dplyr::group_by(!!rlang::sym(L2.unit)) %>%
+  #     tidyr::nest() %>%
+  #     dplyr::ungroup() %>%
+  #     dplyr::slice_sample(n = nrow(.), replace = TRUE) %>%
+  #     tidyr::unnest(data) %>%
+  #     dplyr::ungroup() %>%
+  #     # Step 3: Sample individuals with replacement
+  #     dplyr::group_by(!!rlang::sym(L2.unit)) %>%
+  #     tidyr::nest() %>%
+  #     dplyr::mutate(data = purrr::map(data, function(x){
+  #       data = dplyr::slice_sample(.data = x, n = nrow(x), replace = TRUE)})) %>%
+  #     tidyr::unnest(data) %>%
+  #     dplyr::ungroup()
+  # } else {
+  #   # Step 1: sample states with replacement
+  #   boot_sample <- survey %>%
+  #     dplyr::group_by(!!rlang::sym(L2.unit)) %>%
+  #     tidyr::nest() %>%
+  #     dplyr::ungroup() %>%
+  #     dplyr::slice_sample(n = nrow(.), replace = TRUE) %>%
+  #     tidyr::unnest(data) %>%
+  #     dplyr::ungroup() %>%
+  #     # Step 2: Sample individuals with replacement within states
+  #     dplyr::group_by(!!rlang::sym(L2.unit)) %>%
+  #     tidyr::nest() %>%
+  #     dplyr::mutate(data = purrr::map(data, function(x){
+  #       data = dplyr::slice_sample(.data = x, n = nrow(x), replace = TRUE)})) %>%
+  #     tidyr::unnest(data) %>%
+  #     dplyr::ungroup()
+  # }
+
+  # sample states with replacement & within states sample individuals with
+  # replacement
+  # Step 1: sample states with replacement
+  # boot_sample <- survey %>%
+  #   dplyr::group_by(!!rlang::sym(L2.unit)) %>%
+  #   tidyr::nest() %>%
+  #   dplyr::ungroup() %>%
+  #   dplyr::slice_sample(n = nrow(.), replace = TRUE) %>%
+  #   tidyr::unnest(data) %>%
+  #   dplyr::ungroup() %>%
+  #   # Step 2: Sample individuals with replacement within states
+  #   dplyr::group_by(!!rlang::sym(L2.unit)) %>%
+  #   tidyr::nest() %>%
+  #   dplyr::mutate(data = purrr::map(data, function(x){
+  #     data = dplyr::slice_sample(.data = x, n = nrow(x), replace = TRUE)})) %>%
+  #   tidyr::unnest(data) %>%
+  #   dplyr::ungroup()
+
+  # sample states with replacement
+  # boot_sample <- survey %>%
+  #   dplyr::group_by(!!rlang::sym(L2.unit)) %>%
+  #   tidyr::nest() %>%
+  #   dplyr::ungroup() %>%
+  #   dplyr::slice_sample(n = nrow(.), replace = TRUE) %>%
+  #   tidyr::unnest(data) %>%
+  #   dplyr::ungroup()
+
+  # state stratified sample
+  # boot_sample <- survey %>%
+  #   dplyr::group_by( !! rlang::sym(L2.unit) ) %>%
+  #   tidyr::nest() %>%
+  #   dplyr::mutate(data = purrr::map(data, function(x){
+  #     data = dplyr::slice_sample(.data = x, n = nrow(x), replace = TRUE)
+  #   })) %>%
+  #   tidyr::unnest(data) %>%
+  #   dplyr::ungroup()
+
+  # at least one observation per state and simple sample
+  # boot_sample <- survey %>%
+  #   dplyr::group_by(!! rlang::sym(L2.unit)) %>%
+  #   dplyr::mutate(state_pick = ifelse(
+  #     test = dplyr::row_number() == sample(x = 1:dplyr::n(), size = 1),
+  #     yes = 1, no = 0)) %>%
+  #   dplyr::ungroup() %>%
+  #   dplyr::group_by(state_pick) %>%
+  #   tidyr::nest() %>%
+  #   dplyr::mutate(data = ifelse(
+  #     test = state_pick == 0,
+  #     yes = purrr::map(data, function(x){
+  #       dplyr::slice_sample(.data = x, n = nrow(x), replace = TRUE)
+  #     }),
+  #     no = data
+  #   )) %>%
+  #   tidyr::unnest(data) %>%
+  #   dplyr::ungroup()
+
+  # no-bootstrapping (same data as original survey (for testing only))
+  # boot_sample <- survey
+
+
+  # do not predict outcomes for states that are not in boot_sample ----------
+  # boot_census <- census %>%
+  #   dplyr::filter( !!rlang::sym(L2.unit) %in% unique(dplyr::pull(
+  #     .data = boot_sample, var = !!rlang::sym(L2.unit))) )
+
+  # Create folds ------------------------------------------------------------
+
+  if (is.null(folds)) {
+
+    # EBMA hold-out fold
+    ebma.size <- round(nrow(boot_sample) * ebma.size, digits = 0)
+
+    if(ebma.size>0){
+      ebma_folding_out <- ebma_folding(data = boot_sample,
+                                       L2.unit = L2.unit,
+                                       ebma.size = ebma.size)
+      ebma_fold <- ebma_folding_out$ebma_fold
+      cv_data <- ebma_folding_out$cv_data
+    } else{
+      ebma_fold <- NULL
+      cv_data <- boot_sample
+    }
+
+    # K folds for cross-validation
+    cv_folds <- cv_folding(
+      data = cv_data,
+      L2.unit = L2.unit,
+      k.folds = k.folds,
+      cv.sampling = cv.sampling)
+  } else {
+
+    if (ebma.size > 0){
+      # EBMA hold-out fold
+      ebma_fold <- boot_sample %>%
+        dplyr::filter_at(dplyr::vars(dplyr::one_of(folds)),
+                         dplyr::any_vars(. == k.folds + 1))
+    }
+
+    # K folds for cross-validation
+    cv_data <- boot_sample %>%
+      dplyr::filter_at(dplyr::vars(dplyr::one_of(folds)),
+                       dplyr::any_vars(. != k.folds + 1))
+
+    cv_folds <- cv_data %>%
+      dplyr::group_split(.data[[folds]])
+  }
+
+
+
+  # Run classifiers ---------------------------------------------------------
+
+  # Estimate on 1 sample in autoMrP
+  boot_mrp <- run_classifiers(
+    census = census,
+    cv.folds = cv_folds,
+    cv.data = cv_data,
+    ebma.fold = ebma_fold,
+    ebma.n.draws = 1,
+    verbose = FALSE,
+    cores = 1,
+    y = y,
+    L1.x = L1.x,
+    L2.x = L2.x,
+    mrp.L2.x = mrp.L2.x,
+    L2.unit = L2.unit,
+    L2.reg = L2.reg,
+    L2.x.scale = L2.x.scale,
+    pcs = pcs,
+    folds = folds,
+    bin.proportion = bin.proportion,
+    bin.size = bin.size,
+    ebma.size = ebma.size,
+    k.folds = k.folds,
+    cv.sampling = cv.sampling,
+    loss.unit = loss.unit,
+    loss.fun = loss.fun,
+    best.subset = best.subset,
+    lasso = lasso,
+    pca = pca,
+    gb = gb,
+    svm = svm,
+    mrp = mrp,
+    forward.select = forward.select,
+    best.subset.L2.x = best.subset.L2.x,
+    lasso.L2.x = lasso.L2.x,
+    pca.L2.x = pca.L2.x,
+    gb.L2.x = gb.L2.x,
+    svm.L2.x = svm.L2.x,
+    gb.L2.unit = gb.L2.unit,
+    gb.L2.reg = gb.L2.reg,
+    lasso.lambda = lasso.lambda,
+    lasso.n.iter = lasso.n.iter,
+    gb.interaction.depth = gb.interaction.depth,
+    gb.shrinkage = gb.shrinkage,
+    gb.n.trees.init = gb.n.trees.init,
+    gb.n.trees.increase = gb.n.trees.increase,
+    gb.n.trees.max = gb.n.trees.max,
+    gb.n.minobsinnode = gb.n.minobsinnode,
+    svm.kernel = svm.kernel,
+    svm.gamma = svm.gamma,
+    svm.cost = svm.cost,
+    ebma.tol = ebma.tol
+  )
 }
