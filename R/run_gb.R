@@ -5,11 +5,6 @@
 #' and chooses the best-performing model.
 #'
 #' @inheritParams auto_MrP
-#' @param L2.eval.unit Geographic unit. A character scalar containing the column
-#'   name of the geographic unit in \code{survey} and \code{census} at which
-#'   outcomes should be aggregated.
-<<<<<<< Updated upstream
-=======
 #' @param L2.eval.unit Geographic unit for the loss function. A character scalar
 #'   containing the column name of the geographic unit in \code{survey} and
 #'   \code{census}.
@@ -24,7 +19,6 @@
 #' @param loss.fun Loss function. A character-valued scalar indicating whether
 #'   prediction loss should be measured by the mean squared error (\code{MSE})
 #'   or the mean absolute error (\code{MAE}). Default is \code{MSE}.
->>>>>>> Stashed changes
 #' @param interaction.depth GB interaction depth. An integer-valued vector
 #'   whose values specify the interaction depth of GB. The interaction depth
 #'   defines the maximum depth of each tree grown (i.e., the maximum level of
@@ -181,17 +175,9 @@ run_gb <- function(y, L1.x, L2.x, L2.eval.unit, L2.unit, L2.reg,
 #' multiple cores.
 #'
 #' @inheritParams run_gb
-<<<<<<< Updated upstream
-#' @param form Model formula. A two-sided linear formula describing
-#'   the model to be fit, with the outcome on the LHS and the covariates
-#'   separated by + operators on the RHS.
-#' @param gb_grid Search grid. A data.frame object where columns are parameters
-#'   and rows are search iterations.
-=======
 #' @param form The model formula. A formula object.
 #' @param gb.grid The hyper-parameter search grid. A matrix of all
 #'   hyper-parameter combinations.
->>>>>>> Stashed changes
 #' @return The tuning parameter combinations and there associated loss function
 #'   scores. A list.
 

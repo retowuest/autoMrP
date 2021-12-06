@@ -1404,10 +1404,6 @@ loss_score_ranking <- function(score, loss.fun){
 #' \code{quiet()} suppresses cat output.
 #'
 #' @param x Input. It can be any kind.
-<<<<<<< Updated upstream
-#' @return No return value, called to suppress cat output to the console.
-=======
->>>>>>> Stashed changes
 
 quiet <- function(x) {
   sink(tempfile())
@@ -1959,11 +1955,7 @@ output_table <- function(object, col.names, format, digits){
 #                 Equal spacing on the log scale                               #
 ################################################################################
 
-<<<<<<< Updated upstream
-#' A sequence of values with equal spacing on the log-scale.
-=======
 #' Sequence that is equally spaced on the log scale
->>>>>>> Stashed changes
 #'
 #' @param min The minimum value of the sequence. A positive numeric scalar (min
 #'   > 0).

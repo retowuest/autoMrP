@@ -74,20 +74,10 @@ formula is inherited from \code{run_lasso}.}
 formula is inherited from \code{run_lasso}.}
 
 \item{lambda}{Lasso penalty parameter. A numeric \code{vector} of
-<<<<<<< Updated upstream
 non-negative values. The penalty parameter controls the shrinkage of the
 context-level variables in the lasso model. Default is a sequence with
 minimum 0.1 and maximum 250 that is equally spaced on the log-scale. The
 number of values is controlled by the \code{lasso.n.iter} parameter.}
-=======
-non-negative values or a \code{list} of two numeric vectors of equal size,
-with the first vector containing the step sizes by which the penalty
-parameter should increase and the second vector containing the upper
-thresholds of the intervals to which the step sizes apply. The penalty
-parameter controls the shrinkage of the context-level variables in the
-lasso model. Default is \code{1 / exp(- seq(from = -1, to = 4.5, length =
-100))}.}
->>>>>>> Stashed changes
 }
 \value{
 The cross-validation errors for all models. A list.

@@ -333,11 +333,7 @@ regression with post-stratification (MrP) by combining a number of machine
 learning methods through ensemble Bayesian model averaging (EBMA).
 }
 \examples{
-<<<<<<< Updated upstream
-# Minimal example without machine learning
-=======
 # An MrP model without machine learning
->>>>>>> Stashed changes
 m <- auto_MrP(
   y = "YES",
   L1.x = c("L1x1"),
