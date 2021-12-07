@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{log_spaced}
 \alias{log_spaced}
-\title{A sequence of values with equal spacing on the log-scale.}
+\title{Sequence that is equally spaced on the log scale}
 \usage{
 log_spaced(min, max, n)
 }
@@ -20,5 +20,5 @@ Returns a numeric vector with length specified in argument \code{n}.
   The vector elements are equally spaced on the log-scale.
 }
 \description{
-A sequence of values with equal spacing on the log-scale.
+Sequence that is equally spaced on the log scale
 }

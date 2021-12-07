@@ -38,9 +38,9 @@ is specified in argument \code{L2.unit}.}
 column names of the context-level variables in \code{survey} and
 \code{census} used to predict outcome \code{y}.}
 
-\item{L2.eval.unit}{Geographic unit. A character scalar containing the column
-name of the geographic unit in \code{survey} and \code{census} at which
-outcomes should be aggregated.}
+\item{L2.eval.unit}{Geographic unit for the loss function. A character scalar
+containing the column name of the geographic unit in \code{survey} and
+\code{census}.}
 
 \item{L2.unit}{Geographic unit. A character scalar containing the column
 name of the geographic unit in \code{survey} and \code{census} at which
@@ -53,21 +53,12 @@ geographic units are grouped (\code{L2.unit} must be nested within
 
 \item{loss.unit}{Loss function unit. A character-valued scalar indicating
 whether performance loss should be evaluated at the level of individual
-respondents (\code{individuals}), geographic units (\code{L2 units}) or at
-both levels. Default is \code{c("individuals", "L2 units")}. With multiple
-loss units, parameters are ranked for each loss unit and the loss unit with
-the lowest rank sum is chosen. Ties are broken according to the order in
-the search grid.}
+respondents (\code{individuals}) or geographic units (\code{L2 units}).
+Default is \code{individuals}.}
 
 \item{loss.fun}{Loss function. A character-valued scalar indicating whether
-prediction loss should be measured by the mean squared error (\code{MSE}),
-the mean absolute error (\code{MAE}), binary cross-entropy
-(\code{cross-entropy}), mean squared false error (\code{msfe}), the f1
-score (\code{f1}), or a combination thereof. Default is \code{c("MSE",
-"cross-entropy","msfe", "f1")}. With multiple loss functions, parameters
-are ranked for each loss function and the parameter combination with the
-lowest rank sum is chosen. Ties are broken according to the order in the
-search grid.}
+prediction loss should be measured by the mean squared error (\code{MSE})
+or the mean absolute error (\code{MAE}). Default is \code{MSE}.}
 
 \item{interaction.depth}{GB interaction depth. An integer-valued vector
 whose values specify the interaction depth of GB. The interaction depth

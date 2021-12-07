@@ -9,9 +9,6 @@ quiet(x)
 \arguments{
 \item{x}{Input. It can be any kind.}
 }
-\value{
-No return value, called to suppress cat output to the console.
-}
 \description{
 \code{quiet()} suppresses cat output.
 }

@@ -1,3 +1,7 @@
+# autoMrP 0.93
+
++ block sampling in bootstrapping instead of state-stratified sampling
+
 # autoMrP 0.91
 
 + bootstrapping returns GB prediction

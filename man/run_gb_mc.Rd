@@ -11,7 +11,7 @@ run_gb_mc(
   L2.unit,
   L2.reg,
   form,
-  gb_grid,
+  gb.grid,
   n.minobsinnode,
   loss.unit,
   loss.fun,
@@ -29,9 +29,9 @@ column names of the individual-level variables in \code{survey} and
 \code{census} used to predict outcome \code{y}. Note that geographic unit
 is specified in argument \code{L2.unit}.}
 
-\item{L2.eval.unit}{Geographic unit. A character scalar containing the column
-name of the geographic unit in \code{survey} and \code{census} at which
-outcomes should be aggregated.}
+\item{L2.eval.unit}{Geographic unit for the loss function. A character scalar
+containing the column name of the geographic unit in \code{survey} and
+\code{census}.}
 
 \item{L2.unit}{Geographic unit. A character scalar containing the column
 name of the geographic unit in \code{survey} and \code{census} at which
@@ -42,12 +42,10 @@ name of the geographic region in \code{survey} and \code{census} by which
 geographic units are grouped (\code{L2.unit} must be nested within
 \code{L2.reg}). Default is \code{NULL}.}
 
-\item{form}{Model formula. A two-sided linear formula describing
-the model to be fit, with the outcome on the LHS and the covariates
-separated by + operators on the RHS.}
+\item{form}{The model formula. A formula object.}
 
-\item{gb_grid}{Search grid. A data.frame object where columns are parameters
-and rows are search iterations.}
+\item{gb.grid}{The hyper-parameter search grid. A matrix of all
+hyper-parameter combinations.}
 
 \item{n.minobsinnode}{GB minimum number of observations in the terminal
 nodes. An integer-valued scalar specifying the minimum number of
@@ -56,21 +54,12 @@ observations that each terminal node of the trees must contain. Default is
 
 \item{loss.unit}{Loss function unit. A character-valued scalar indicating
 whether performance loss should be evaluated at the level of individual
-respondents (\code{individuals}), geographic units (\code{L2 units}) or at
-both levels. Default is \code{c("individuals", "L2 units")}. With multiple
-loss units, parameters are ranked for each loss unit and the loss unit with
-the lowest rank sum is chosen. Ties are broken according to the order in
-the search grid.}
+respondents (\code{individuals}) or geographic units (\code{L2 units}).
+Default is \code{individuals}.}
 
 \item{loss.fun}{Loss function. A character-valued scalar indicating whether
-prediction loss should be measured by the mean squared error (\code{MSE}),
-the mean absolute error (\code{MAE}), binary cross-entropy
-(\code{cross-entropy}), mean squared false error (\code{msfe}), the f1
-score (\code{f1}), or a combination thereof. Default is \code{c("MSE",
-"cross-entropy","msfe", "f1")}. With multiple loss functions, parameters
-are ranked for each loss function and the parameter combination with the
-lowest rank sum is chosen. Ties are broken according to the order in the
-search grid.}
+prediction loss should be measured by the mean squared error (\code{MSE})
+or the mean absolute error (\code{MAE}). Default is \code{MSE}.}
 
 \item{data}{Data for cross-validation. A \code{list} of \eqn{k}
 \code{data.frames}, one for each fold to be used in \eqn{k}-fold

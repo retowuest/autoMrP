@@ -34,9 +34,9 @@ is specified in argument \code{L2.unit}.}
 column names of the context-level variables in \code{survey} and
 \code{census} used to predict outcome \code{y}.}
 
-\item{L2.eval.unit}{Geographic unit. A character scalar containing the column
-name of the geographic unit in \code{survey} and \code{census} at which
-outcomes should be aggregated.}
+\item{L2.eval.unit}{Geographic unit for the loss function. A character scalar
+containing the column name of the geographic unit in \code{survey} and
+\code{census}.}
 
 \item{L2.unit}{Geographic unit. A character scalar containing the column
 name of the geographic unit in \code{survey} and \code{census} at which
@@ -47,7 +47,7 @@ name of the geographic region in \code{survey} and \code{census} by which
 geographic units are grouped (\code{L2.unit} must be nested within
 \code{L2.reg}). Default is \code{NULL}.}
 
-\item{form}{The SVM model formula.}
+\item{form}{The model formula. A formula object.}
 
 \item{loss.unit}{Loss function unit. A character-valued scalar indicating
 whether performance loss should be evaluated at the level of individual
@@ -58,14 +58,8 @@ the lowest rank sum is chosen. Ties are broken according to the order in
 the search grid.}
 
 \item{loss.fun}{Loss function. A character-valued scalar indicating whether
-prediction loss should be measured by the mean squared error (\code{MSE}),
-the mean absolute error (\code{MAE}), binary cross-entropy
-(\code{cross-entropy}), mean squared false error (\code{msfe}), the f1
-score (\code{f1}), or a combination thereof. Default is \code{c("MSE",
-"cross-entropy","msfe", "f1")}. With multiple loss functions, parameters
-are ranked for each loss function and the parameter combination with the
-lowest rank sum is chosen. Ties are broken according to the order in the
-search grid.}
+prediction loss should be measured by the mean squared error (\code{MSE})
+or the mean absolute error (\code{MAE}). Default is \code{MSE}.}
 
 \item{data}{Data for cross-validation. A \code{list} of \eqn{k}
 \code{data.frames}, one for each fold to be used in \eqn{k}-fold
@@ -74,8 +68,8 @@ cross-validation.}
 \item{cores}{The number of cores to be used. An integer indicating the number
 of processor cores used for parallel computing. Default is 1.}
 
-\item{svm.grid}{Search grid. A data.frame object where columns are parameters
-and rows are search iterations.}
+\item{svm.grid}{The hyper-parameter search grid. A matrix of all
+hyper-parameter combinations.}
 
 \item{verbose}{Verbose output. A logical argument indicating whether or not
 verbose output should be printed. Default is \code{FALSE}.}

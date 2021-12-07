@@ -289,6 +289,7 @@
 #' @importFrom foreach %dopar%
 #' @importFrom doRNG %dorng%
 
+
 auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE, pcs = NULL,
                      folds = NULL, bin.proportion = NULL, bin.size = NULL, survey, census,
                      ebma.size = 1/3, cores = 1, k.folds = 5, cv.sampling = "L2 units",
@@ -355,20 +356,7 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE, p
                lasso.lambda = lasso.lambda,
                lasso.n.iter = lasso.n.iter,
                uncertainty = uncertainty,
-               boot.iter = boot.iter,
-               seed = seed)
-
-
-# Seed --------------------------------------------------------------------
-
-  # Check seed argument and set seed
-  if (is.null(seed)) { seed <- 546213978 }
-  set.seed(seed)
-
-
-# No bootstrapping --------------------------------------------------------
-
-  if (!uncertainty){
+               boot.iter = boot.iter)
 
 
 # Prepare data ------------------------------------------------------------
@@ -401,7 +389,8 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE, p
 
     # If not provided in survey and census data, compute the principal components
     # of context-level variables
-    if (is.null(pcs) & all(L2.x != "")) {
+    if (is.null(pcs) & !is.null(L2.x)) {
+
       # Determine context-level covariates whose principal components are to be
       # computed
       if (is.null(pca.L2.x)) {
@@ -473,8 +462,9 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE, p
       survey <- dplyr::bind_rows(survey, add_rows)
     }
 
-# Remove NAs from DV ------------------------------------------------------
-    survey <- tidyr::drop_na(survey, dplyr::all_of(y) )
+# No bootstrapping --------------------------------------------------------
+
+    if (!uncertainty){
 
 # Create folds ------------------------------------------------------------
 
@@ -517,244 +507,31 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE, p
         dplyr::group_split(.data[[folds]])
     }
 
-
 # Optimal individual classifiers ------------------------------------------
 
-
-
-    # Classifier 1: Best Subset
-    if (isTRUE(best.subset)) {
-
-      message("Starting multilevel regression with best subset selection classifier tuning")
-
-      # Determine context-level covariates
-      if (is.null(best.subset.L2.x)) {
-        best.subset.L2.x <- L2.x
-      }
-
-      # Run classifier
-      set.seed(seed)
-      best_subset_out <- run_best_subset(y = y,
-                                         L1.x = L1.x,
-                                         L2.x = best.subset.L2.x,
-                                         L2.unit = L2.unit,
-                                         L2.reg = L2.reg,
-                                         loss.unit = loss.unit,
-                                         loss.fun = loss.fun,
-                                         data = cv_folds,
-                                         verbose = verbose,
-                                         cores = cores)
-    } else {
-      best_subset_out <- NULL
-    }
-
-    # Classifier 2: Lasso
-    if (isTRUE(lasso) & all(L2.x != "")) {
-
-      message("Starting multilevel regression with L1 regularization tuning")
-
-      # Determine context-level covariates
-      if (is.null(lasso.L2.x)) {
-        lasso.L2.x <- L2.x
-      }
-
-      # Run classifier
-      set.seed(seed)
-      lasso_out <- run_lasso(y = y,
-                             L1.x = L1.x,
-                             L2.x = lasso.L2.x,
-                             L2.unit = L2.unit,
-                             L2.reg = L2.reg,
-                             loss.unit = loss.unit,
-                             loss.fun = loss.fun,
-                             lambda = lasso.lambda,
-                             n.iter = lasso.n.iter,
-                             data = cv_folds,
-                             verbose = verbose,
-                             cores = cores)
-    } else {
-      lasso_out <- NULL
-    }
-
-    # Classifier 3: PCA
-    if (isTRUE(pca) & all(L2.x != "")) {
-
-      message("Starting multilevel regression with principal components as context level variables tuning")
-
-      set.seed(seed)
-      pca_out <- run_pca(
-        y = y,
-        L1.x = L1.x,
-        L2.x = pc_names,
-        L2.unit = L2.unit,
-        L2.reg = L2.reg,
-        loss.unit = loss.unit,
-        loss.fun = loss.fun,
-        data = cv_folds,
-        verbose = verbose,
-        cores = cores)
-
-    } else {
-      pca_out <- NULL
-    }
-
-    # Classifier 4: GB
-    if (isTRUE(gb)) {
-
-      message("Starting gradient tree boosting tuning")
-
-      # Determine context-level covariates
-      if (is.null(gb.L2.x)) {
-        gb.L2.x <- L2.x
-      }
-
-      # GB without L2 variables
-      if (all(L2.x == "")) gb.L2.x <- NULL
-
-      # Evaluate inclusion of L2.unit in GB
-      if (isTRUE(gb.L2.unit)) {
-        gb.L2.unit <- L2.unit
-      } else {
-        gb.L2.unit <- NULL
-      }
-
-      # Evaluate inclusion of L2.reg in GB
-      if (isTRUE(gb.L2.reg)) {
-        gb.L2.reg <- L2.reg
-      } else {
-        gb.L2.reg <- NULL
-      }
-
-      # Run classifier
-      set.seed(seed)
-      gb_out <- run_gb(y = y,
-                       L1.x = L1.x,
-                       L2.x = gb.L2.x,
-                       L2.eval.unit = L2.unit,
-                       L2.unit = gb.L2.unit,
-                       L2.reg = gb.L2.reg,
-                       loss.unit = loss.unit,
-                       loss.fun = loss.fun,
-                       interaction.depth = gb.interaction.depth,
-                       shrinkage = gb.shrinkage,
-                       n.trees.init = gb.n.trees.init,
-                       n.trees.increase = gb.n.trees.increase,
-                       n.trees.max = gb.n.trees.max,
-                       n.minobsinnode = gb.n.minobsinnode,
-                       data = cv_folds,
-                       cores = cores,
-                       verbose = verbose)
-    } else {
-      gb_out <- NULL
-    }
-
-    # Classifier 5: SVM
-    if ( isTRUE(svm) ) {
-
-      message("Starting support vector machine tuning")
-
-      # Determine context-level covariates
-      if (is.null(svm.L2.x)) {
-        svm.L2.x <- L2.x
-      }
-
-      # SVM without L2 variables
-      if (all(L2.x == "")) svm.L2.x <- NULL
-
-      # Evaluate inclusion of L2.unit in GB
-      if (isTRUE(svm.L2.unit)) {
-        svm.L2.unit <- L2.unit
-      } else {
-        svm.L2.unit <- NULL
-      }
-
-      # Evaluate inclusion of L2.reg in GB
-      if (isTRUE(svm.L2.reg)) {
-        svm.L2.reg <- L2.reg
-      } else {
-        svm.L2.reg <- NULL
-      }
-
-      # Run classifier
-      set.seed(seed)
-      svm_out <- run_svm(
-        y = y,
-        L1.x = L1.x,
-        L2.x = svm.L2.x,
-        L2.eval.unit = L2.unit,
-        L2.unit = svm.L2.unit,
-        L2.reg = svm.L2.reg,
-        kernel = svm.kernel,
-        loss.fun = loss.fun,
-        loss.unit = loss.unit,
-        gamma = svm.gamma,
-        cost = svm.cost,
-        data = cv_folds,
-        verbose = verbose,
-        cores = cores)
-    } else {
-      svm_out <- NULL
-    }
-
-
-# Post-stratification -----------------------------------------------------
-
-    message("Starting post-stratification")
-
-    set.seed(seed)
-    ps_out <- post_stratification(
-      y = y,
-      L1.x = L1.x,
-      L2.x = L2.x,
-      L2.unit = L2.unit,
-      L2.reg = L2.reg,
-      best.subset.opt = best_subset_out,
-      lasso.opt = lasso_out,
-      lasso.L2.x = lasso.L2.x,
-      pca.opt = pca_out,
-      gb.opt = gb_out,
-      svm.opt = svm_out,
-      svm.L2.reg = svm.L2.reg,
-      svm.L2.unit = svm.L2.unit,
-      svm.L2.x = svm.L2.x,
-      mrp.include = mrp,
-      n.minobsinnode = gb.n.minobsinnode,
-      L2.unit.include = gb.L2.unit,
-      L2.reg.include = gb.L2.reg,
-      kernel = svm.kernel,
-      mrp.L2.x = mrp.L2.x,
-      data = cv_data,
-      ebma.fold = ebma_fold,
-      census = census,
-      verbose = verbose
-    )
-
-
-# EBMA --------------------------------------------------------------------
-
-
-    set.seed(seed)
-    ebma_out <- ebma(
-      ebma.fold = ebma_fold,
-      y = y,
-      L1.x = L1.x,
-      L2.x = L2.x,
-      L2.unit = L2.unit,
-      L2.reg = L2.reg,
-      pc.names = pc_names,
-      post.strat = ps_out,
-      n.draws = ebma.n.draws,
-      tol = ebma.tol,
-      best.subset.opt = best_subset_out,
-      pca.opt = pca_out,
-      lasso.opt = lasso_out,
-      gb.opt = gb_out,
-      svm.opt = svm_out,
-      verbose = verbose,
-      cores = cores
-    )
-
-
+      ebma_out <- run_classifiers(
+        y = y, L1.x = L1.x, L2.x = L2.x, mrp.L2.x = mrp.L2.x,
+        L2.unit = L2.unit, L2.reg = L2.reg, pcs = pcs,
+        folds = folds, cv.folds = cv_folds, cv.data = cv_data,
+        ebma.fold = ebma_fold, census = census, k.folds = k.folds,
+        cv.sampling = cv.sampling,
+        loss.unit = loss.unit, loss.fun = loss.fun,
+        best.subset = best.subset, lasso = lasso, pca = pca,
+        gb = gb, svm = svm, mrp = mrp, forward.select = forward.select,
+        best.subset.L2.x = best.subset.L2.x,
+        lasso.L2.x = lasso.L2.x, pca.L2.x = pca.L2.x,
+        gb.L2.x = gb.L2.x, svm.L2.x = svm.L2.x,
+        gb.L2.unit = gb.L2.unit, gb.L2.reg = gb.L2.reg,
+        lasso.lambda = lasso.lambda, lasso.n.iter = lasso.n.iter,
+        gb.interaction.depth = gb.interaction.depth,
+        gb.shrinkage = gb.shrinkage,
+        gb.n.trees.init = gb.n.trees.init,
+        gb.n.trees.increase = gb.n.trees.increase,
+        gb.n.trees.max = gb.n.trees.max,
+        gb.n.minobsinnode = gb.n.minobsinnode,
+        svm.kernel = svm.kernel, svm.gamma = svm.gamma,
+        svm.cost = svm.cost, ebma.tol = ebma.tol, cores = cores,
+        verbose = verbose)
 
 # Boostrapping wrapper ----------------------------------------------------
 
@@ -786,7 +563,7 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE, p
       gb.n.trees.max = gb.n.trees.max,
       gb.n.minobsinnode = gb.n.minobsinnode,
       svm.kernel = svm.kernel, svm.gamma = svm.gamma,
-      svm.cost = svm.cost, ebma.tol = ebma.tol, seed = seed,
+      svm.cost = svm.cost, ebma.tol = ebma.tol,
       boot.iter = boot.iter, cores = cores)
   }
 

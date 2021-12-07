@@ -5,9 +5,16 @@
 #' and chooses the best-performing model.
 #'
 #' @inheritParams auto_MrP
-#' @param L2.eval.unit Geographic unit. A character scalar containing the column
-#'   name of the geographic unit in \code{survey} and \code{census} at which
-#'   outcomes should be aggregated.
+#' @param L2.eval.unit Geographic unit for the loss function. A character scalar
+#'   containing the column name of the geographic unit in \code{survey} and
+#'   \code{census}.
+#' @param L2.reg Geographic region. A character scalar containing the column
+#'   name of the geographic region in \code{survey} and \code{census} by which
+#'   geographic units are grouped (\code{L2.unit} must be nested within
+#'   \code{L2.reg}). Default is \code{NULL}.
+#' @param loss.fun Loss function. A character-valued scalar indicating whether
+#'   prediction loss should be measured by the mean squared error (\code{MSE})
+#'   or the mean absolute error (\code{MAE}). Default is \code{MSE}.
 #' @param kernel SVM kernel. A character-valued scalar specifying the kernel to
 #'   be used by SVM. The possible values are \code{linear}, \code{polynomial},
 #'   \code{radial}, and \code{sigmoid}. Default is \code{radial}.
@@ -151,9 +158,9 @@ run_svm <- function(y, L1.x, L2.x, L2.eval.unit, L2.unit, L2.reg,
 #' multiple cores.
 #'
 #' @inheritParams run_svm
-#' @param form The SVM model formula.
-#' @param svm.grid Search grid. A data.frame object where columns are parameters
-#'   and rows are search iterations.
+#' @param form The model formula. A formula object.
+#' @param svm.grid The hyper-parameter search grid. A matrix of all
+#'   hyper-parameter combinations.
 #' @return The cross-validation errors for all models. A list.
 
 run_svm_mc <- function(y, L1.x, L2.x, L2.eval.unit, L2.unit, L2.reg, form,

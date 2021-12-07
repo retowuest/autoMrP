@@ -5,9 +5,20 @@
 #' and chooses the best-performing model.
 #'
 #' @inheritParams auto_MrP
-#' @param L2.eval.unit Geographic unit. A character scalar containing the column
-#'   name of the geographic unit in \code{survey} and \code{census} at which
-#'   outcomes should be aggregated.
+#' @param L2.eval.unit Geographic unit for the loss function. A character scalar
+#'   containing the column name of the geographic unit in \code{survey} and
+#'   \code{census}.
+#' @param L2.reg Geographic region. A character scalar containing the column
+#'   name of the geographic region in \code{survey} and \code{census} by which
+#'   geographic units are grouped (\code{L2.unit} must be nested within
+#'   \code{L2.reg}). Default is \code{NULL}.
+#' @param loss.unit Loss function unit. A character-valued scalar indicating
+#'   whether performance loss should be evaluated at the level of individual
+#'   respondents (\code{individuals}) or geographic units (\code{L2 units}).
+#'   Default is \code{individuals}.
+#' @param loss.fun Loss function. A character-valued scalar indicating whether
+#'   prediction loss should be measured by the mean squared error (\code{MSE})
+#'   or the mean absolute error (\code{MAE}). Default is \code{MSE}.
 #' @param interaction.depth GB interaction depth. An integer-valued vector
 #'   whose values specify the interaction depth of GB. The interaction depth
 #'   defines the maximum depth of each tree grown (i.e., the maximum level of
@@ -73,7 +84,7 @@ run_gb <- function(y, L1.x, L2.x, L2.eval.unit, L2.unit, L2.reg,
     # 1) multiple cores
     grid_cells <- run_gb_mc(
       y = y, L1.x = L1.x, L2.eval.unit = L2.eval.unit, L2.unit = L2.unit,
-      L2.reg = L2.reg, form = form, gb_grid = gb_grid,
+      L2.reg = L2.reg, form = form, gb.grid = gb_grid,
       n.minobsinnode = n.minobsinnode,  loss.unit = loss.unit,
       loss.fun = loss.fun, data = data, cores = cores)
   } else{
@@ -164,15 +175,13 @@ run_gb <- function(y, L1.x, L2.x, L2.eval.unit, L2.unit, L2.reg,
 #' multiple cores.
 #'
 #' @inheritParams run_gb
-#' @param form Model formula. A two-sided linear formula describing
-#'   the model to be fit, with the outcome on the LHS and the covariates
-#'   separated by + operators on the RHS.
-#' @param gb_grid Search grid. A data.frame object where columns are parameters
-#'   and rows are search iterations.
+#' @param form The model formula. A formula object.
+#' @param gb.grid The hyper-parameter search grid. A matrix of all
+#'   hyper-parameter combinations.
 #' @return The tuning parameter combinations and there associated loss function
 #'   scores. A list.
 
-run_gb_mc <- function(y, L1.x, L2.eval.unit, L2.unit, L2.reg, form, gb_grid,
+run_gb_mc <- function(y, L1.x, L2.eval.unit, L2.unit, L2.reg, form, gb.grid,
                       n.minobsinnode, loss.unit, loss.fun, data, cores){
 
   # Binding for global variables
@@ -183,13 +192,13 @@ run_gb_mc <- function(y, L1.x, L2.eval.unit, L2.unit, L2.reg, form, gb_grid,
   cl <- multicore(cores = cores, type = "open", cl = NULL)
 
   # Train and evaluate each model
-  grid_cells <- foreach::foreach(g = 1:nrow(gb_grid), .packages = 'autoMrP',
+  grid_cells <- foreach::foreach(g = 1:nrow(gb.grid), .packages = 'autoMrP',
                                  .errorhandling = "pass") %dorng% {
 
     # Set tuning parameters
-    depth <- as.numeric( gb_grid[g, "depth"] )
-    shrinkage_value <- as.numeric( gb_grid[g, "shrinkage"] )
-    ntrees <- as.numeric( gb_grid[g, "ntrees"] )
+    depth <- as.numeric( gb.grid[g, "depth"] )
+    shrinkage_value <- as.numeric( gb.grid[g, "shrinkage"] )
+    ntrees <- as.numeric( gb.grid[g, "ntrees"] )
 
     # Loop over each fold
     k_errors <- lapply(seq_along(data), function(k) {
