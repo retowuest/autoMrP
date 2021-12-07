@@ -1997,35 +1997,35 @@ boot_fun <- function(survey, L2.unit,
   #   .data = survey, n = nrow(survey), replace = TRUE)
 
   # number of states to draw in cluster balanced bootstrap
-  avg_n <- survey %>% dplyr::mutate(nrows = dplyr::n()) %>%
-    dplyr::group_by(!!rlang::sym(L2.unit)) %>%
-    dplyr::mutate(state_n = dplyr::n(),
-                  state_proportion =  (dplyr::n() / nrows))%>%
-    dplyr::summarise(state_n = mean(state_n),
-                     state_proportion = mean(state_proportion),
-                     .groups = 'drop') %>%
-    dplyr::summarise(n = weighted.mean(x = state_n, w = state_proportion)) %>%
-    as.numeric
-
-  #avg_n <- floor(x = (nrow(survey) / avg_n) )
-  avg_n <- round(x = (nrow(survey) / avg_n), digits = 0)
-
-  # balanced cluster bootstrap
-  boot_sample <- survey %>%
-    dplyr::group_by(!!rlang::sym(L2.unit)) %>%
-    tidyr::nest() %>%
-    dplyr::left_join(
-      y = survey %>%
-        dplyr::mutate(nrows = dplyr::n()) %>%
-        dplyr::group_by(!!rlang::sym(L2.unit)) %>%
-        dplyr::mutate(state_proportion =  (dplyr::n() / nrows)) %>%
-        dplyr::summarise(state_proportion = mean(state_proportion),
-                         .groups = 'drop'), by = L2.unit) %>%
-    dplyr::ungroup() %>%
-    dplyr::slice_sample(n = avg_n, weight_by = state_proportion,
-                        replace = TRUE) %>%
-    dplyr::select(-state_proportion) %>%
-    tidyr::unnest(data)
+  # avg_n <- survey %>% dplyr::mutate(nrows = dplyr::n()) %>%
+  #   dplyr::group_by(!!rlang::sym(L2.unit)) %>%
+  #   dplyr::mutate(state_n = dplyr::n(),
+  #                 state_proportion =  (dplyr::n() / nrows))%>%
+  #   dplyr::summarise(state_n = mean(state_n),
+  #                    state_proportion = mean(state_proportion),
+  #                    .groups = 'drop') %>%
+  #   dplyr::summarise(n = weighted.mean(x = state_n, w = state_proportion)) %>%
+  #   as.numeric
+  #
+  # #avg_n <- floor(x = (nrow(survey) / avg_n) )
+  # avg_n <- round(x = (nrow(survey) / avg_n), digits = 0)
+  #
+  # # balanced cluster bootstrap
+  # boot_sample <- survey %>%
+  #   dplyr::group_by(!!rlang::sym(L2.unit)) %>%
+  #   tidyr::nest() %>%
+  #   dplyr::left_join(
+  #     y = survey %>%
+  #       dplyr::mutate(nrows = dplyr::n()) %>%
+  #       dplyr::group_by(!!rlang::sym(L2.unit)) %>%
+  #       dplyr::mutate(state_proportion =  (dplyr::n() / nrows)) %>%
+  #       dplyr::summarise(state_proportion = mean(state_proportion),
+  #                        .groups = 'drop'), by = L2.unit) %>%
+  #   dplyr::ungroup() %>%
+  #   dplyr::slice_sample(n = avg_n, weight_by = state_proportion,
+  #                       replace = TRUE) %>%
+  #   dplyr::select(-state_proportion) %>%
+  #   tidyr::unnest(data)
 
   # # drop observations if the bootstrap sample is too large
   # if (nrow(boot_sample) > nrow(survey)){
@@ -2102,14 +2102,14 @@ boot_fun <- function(survey, L2.unit,
   #   tidyr::unnest(data) %>%
   #   dplyr::ungroup()
 
-  # sample states with replacement
-  # boot_sample <- survey %>%
-  #   dplyr::group_by(!!rlang::sym(L2.unit)) %>%
-  #   tidyr::nest() %>%
-  #   dplyr::ungroup() %>%
-  #   dplyr::slice_sample(n = nrow(.), replace = TRUE) %>%
-  #   tidyr::unnest(data) %>%
-  #   dplyr::ungroup()
+  # cluster bootstrap - sample L2 units with replacement
+  boot_sample <- survey %>%
+    dplyr::group_by(!!rlang::sym(L2.unit)) %>%
+    tidyr::nest() %>%
+    dplyr::ungroup() %>%
+    dplyr::slice_sample(n = nrow(.), replace = TRUE) %>%
+    tidyr::unnest(data) %>%
+    dplyr::ungroup()
 
   # state stratified sample
   # boot_sample <- survey %>%
