@@ -215,6 +215,14 @@
 #'   element, \code{EBMA}, contains the post-stratified ensemble bayesian model
 #'   avaeraging (EBMA) predictions. The second element, \code{classifiers},
 #'   contains the post-stratified predictions from all estimated classifiers.
+#' @details Bootstrapping samples the level two units, sometimes referred to as
+#'   the cluster bootstrap. For the multilevel model, for example, when running
+#'   MrP only, the bootstrapped median level two predictions will differ from
+#'   the level two predictions without bootstrapping. We recommend assessing the
+#'   difference by running autoMrP without bootstrapping alongside autoMrP with
+#'   bootstrapping and then comparing level two predictions from the model
+#'   without bootstrapping to the median level two predictions from the model
+#'   with bootstrapping.
 #' @keywords MRP multilevel regression post-stratification machine learning
 #'   EBMA ensemble Bayesian model averaging
 #' @examples
@@ -280,7 +288,7 @@
 #'   svm.L2.reg = TRUE,
 #'   cores = max_cores
 #'   )
-#'   }
+#' }
 #' @export
 #' @importFrom stats as.formula binomial predict setNames weighted.mean median sd
 #' @importFrom utils combn

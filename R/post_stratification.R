@@ -373,36 +373,36 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
     form_mrp <- as.formula(paste(y, " ~ ", L2_fe, " + ", all_re, sep = ""))
 
     # fit model for EBMA
-    # mrp_model_ebma <- best_subset_classifier(
-    #   model = form_mrp,
-    #   data.train = data,
-    #   model.family = binomial(link = "probit"),
-    #   model.optimizer = "bobyqa",
-    #   n.iter = 1000000,
-    #   verbose = verbose)
     mrp_model_ebma <- best_subset_classifier(
       model = form_mrp,
       data.train = data,
       model.family = binomial(link = "probit"),
-      model.optimizer = "nloptwrap",
-      n.iter = NULL,
+      model.optimizer = "bobyqa",
+      n.iter = 1000000,
       verbose = verbose)
+    # mrp_model_ebma <- best_subset_classifier(
+    #   model = form_mrp,
+    #   data.train = data,
+    #   model.family = binomial(link = "probit"),
+    #   model.optimizer = "nloptwrap",
+    #   n.iter = NULL,
+    #   verbose = verbose)
 
     # fit MrP model for post-stratification only
-    # mrp_model_poststrat_only <- best_subset_classifier(
-    #   model = form_mrp,
-    #   data.train = no_ebma_data,
-    #   model.family = binomial(link = "probit"),
-    #   model.optimizer = "bobyqa",
-    #   n.iter = 1000000,
-    #   verbose = verbose)
     mrp_model_poststrat_only <- best_subset_classifier(
       model = form_mrp,
       data.train = no_ebma_data,
       model.family = binomial(link = "probit"),
-      model.optimizer = "nloptwrap",
-      n.iter = NULL,
+      model.optimizer = "bobyqa",
+      n.iter = 1000000,
       verbose = verbose)
+    # mrp_model_poststrat_only <- best_subset_classifier(
+    #   model = form_mrp,
+    #   data.train = no_ebma_data,
+    #   model.family = binomial(link = "probit"),
+    #   model.optimizer = "nloptwrap",
+    #   n.iter = NULL,
+    #   verbose = verbose)
 
     # post-stratification
     mrp_preds <- census %>%
