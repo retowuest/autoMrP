@@ -10,16 +10,18 @@
 #'   training.
 #' @param ebma.fold A data.frame containing the data not used in classifier
 #'   training.
+#' @param pc.names A character vector of the principal component variable names
+#'   in the data.
 
 run_classifiers <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
-                            L2.x.scale, pcs, folds, bin.proportion,
+                            L2.x.scale, pcs, pc.names, folds, bin.proportion,
                             bin.size, cv.folds, cv.data, ebma.fold, census, ebma.size,
                             ebma.n.draws, k.folds, cv.sampling, loss.unit,
                             loss.fun, best.subset, lasso, pca, gb, svm, mrp,
                             forward.select, best.subset.L2.x,
                             lasso.L2.x, pca.L2.x, gb.L2.x, svm.L2.x,
-                            gb.L2.unit, gb.L2.reg, lasso.lambda,
-                            lasso.n.iter, gb.interaction.depth,
+                            gb.L2.unit, gb.L2.reg, svm.L2.unit, svm.L2.reg,
+                            lasso.lambda, lasso.n.iter, gb.interaction.depth,
                             gb.shrinkage, gb.n.trees.init,
                             gb.n.trees.increase, gb.n.trees.max,
                             gb.n.minobsinnode, svm.kernel,
@@ -84,16 +86,14 @@ run_classifiers <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
                            data = cv.folds,
                            verbose = verbose,
                            cores = cores)
-    lasso_opt <- dplyr::pull(.data = lasso_out, var = lambda)
   } else {
     lasso_out <- NULL
-    lasso_opt <-  NULL
   }
 
   # Classifier 3: PCA
 
   # message if pca is TRUE but no level 2 variables or pc_names provided
-  if (isTRUE(pca) & !is.null(pca.L2.x)) {
+  if (isTRUE(pca) & is.null(pca.L2.x)) {
     message(paste0('PCA requires that L2.x variables are specified or alternatively',
                    ' that the pcs argument is specified.'))
   }
@@ -106,7 +106,7 @@ run_classifiers <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
     pca_out <- run_pca(
       y = y,
       L1.x = L1.x,
-      L2.x = pc_names,
+      L2.x = pc.names,
       L2.unit = L2.unit,
       L2.reg = L2.reg,
       loss.unit = loss.unit,
@@ -266,6 +266,7 @@ run_classifiers <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
     lasso.opt = lasso_opt,
     gb.opt = gb_out,
     svm.opt = svm_out,
+    pc.names = pc.names,
     verbose = verbose,
     cores = cores
   )

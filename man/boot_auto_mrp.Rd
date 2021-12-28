@@ -33,8 +33,11 @@ boot_auto_mrp(
   best.subset.L2.x,
   lasso.L2.x,
   pca.L2.x,
+  pc.names,
   gb.L2.x,
   svm.L2.x,
+  svm.L2.unit,
+  svm.L2.reg,
   gb.L2.unit,
   gb.L2.reg,
   lasso.lambda,
@@ -204,6 +207,9 @@ classifier. If \code{NULL} and \code{pca} is set to \code{TRUE}, then PCA
 uses the principal components of the variables specified in \code{L2.x}.
 Default is \code{NULL}.}
 
+\item{pc.names}{A character vector of the principal component variable names
+in the data.}
+
 \item{gb.L2.x}{GB context-level covariates. A character vector containing the
 column names of the context-level variables in \code{survey} and
 \code{census} to be used by the GB classifier. If \code{NULL} and \code{gb}
@@ -215,6 +221,14 @@ the column names of the context-level variables in \code{survey} and
 \code{census} to be used by the SVM classifier. If \code{NULL} and
 \code{svm} is set to \code{TRUE}, then SVM uses the variables specified in
 \code{L2.x}. Default is \code{NULL}.}
+
+\item{svm.L2.unit}{SVM L2.unit. A logical argument indicating whether
+\code{L2.unit} should be included in the SVM classifier. Default is
+\code{FALSE}.}
+
+\item{svm.L2.reg}{SVM L2.reg. A logical argument indicating whether
+\code{L2.reg} should be included in the SVM classifier. Default is
+\code{FALSE}.}
 
 \item{gb.L2.unit}{GB L2.unit. A logical argument indicating whether
 \code{L2.unit} should be included in the GB classifier. Default is

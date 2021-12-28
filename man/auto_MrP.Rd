@@ -366,7 +366,7 @@ m <- auto_MrP(
 summary(m)
 plot(m)
 
-\donttest{
+\dontrun{
 # MrP model only:
 mrp_out <- auto_MrP(
   y = "YES",
@@ -387,7 +387,6 @@ mrp_out <- auto_MrP(
 )
 
 # Predictions through machine learning
-try(
 
 # detect number of available cores
 max_cores <- parallel::detectCores()
@@ -406,7 +405,6 @@ ml_out <- auto_MrP(
   svm.L2.reg = TRUE,
   cores = max_cores
   )
-)
 }
 }
 \keyword{Bayesian}

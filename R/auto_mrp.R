@@ -249,7 +249,7 @@
 #' summary(m)
 #' plot(m)
 #'
-#' \donttest{
+#' \dontrun{
 #' # MrP model only:
 #' mrp_out <- auto_MrP(
 #'   y = "YES",
@@ -522,24 +522,22 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE, p
         L2.unit = L2.unit, L2.reg = L2.reg, pcs = pcs,
         folds = folds, cv.folds = cv_folds, cv.data = cv_data,
         ebma.fold = ebma_fold, census = census, k.folds = k.folds,
-        cv.sampling = cv.sampling,
-        loss.unit = loss.unit, loss.fun = loss.fun,
+        cv.sampling = cv.sampling, loss.unit = loss.unit, loss.fun = loss.fun,
         best.subset = best.subset, lasso = lasso, pca = pca,
         gb = gb, svm = svm, mrp = mrp, forward.select = forward.select,
-        best.subset.L2.x = best.subset.L2.x,
-        lasso.L2.x = lasso.L2.x, pca.L2.x = pca.L2.x,
-        gb.L2.x = gb.L2.x, svm.L2.x = svm.L2.x,
+        best.subset.L2.x = best.subset.L2.x, lasso.L2.x = lasso.L2.x,
+        pca.L2.x = pca.L2.x, pc.names = pc_names, gb.L2.x = gb.L2.x,
+        svm.L2.x = svm.L2.x, svm.L2.unit = svm.L2.unit, svm.L2.reg = svm.L2.reg,
         gb.L2.unit = gb.L2.unit, gb.L2.reg = gb.L2.reg,
         lasso.lambda = lasso.lambda, lasso.n.iter = lasso.n.iter,
         gb.interaction.depth = gb.interaction.depth,
-        gb.shrinkage = gb.shrinkage,
-        gb.n.trees.init = gb.n.trees.init,
+        gb.shrinkage = gb.shrinkage, gb.n.trees.init = gb.n.trees.init,
         gb.n.trees.increase = gb.n.trees.increase,
         gb.n.trees.max = gb.n.trees.max,
         gb.n.minobsinnode = gb.n.minobsinnode,
-        svm.kernel = svm.kernel, svm.gamma = svm.gamma,
-        svm.cost = svm.cost, ebma.tol = ebma.tol, cores = cores,
-        verbose = verbose)
+        svm.kernel = svm.kernel, svm.gamma = svm.gamma, svm.cost = svm.cost,
+        ebma.tol = ebma.tol, ebma.n.draws = ebma.n.draws,
+        cores = cores, verbose = verbose)
 
 # Boostrapping wrapper ----------------------------------------------------
 
@@ -560,9 +558,9 @@ auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE, p
       lasso = lasso, pca = pca, gb = gb, svm = svm, mrp = mrp,
       forward.select = forward.select,
       best.subset.L2.x = best.subset.L2.x,
-      lasso.L2.x = lasso.L2.x, pca.L2.x = pca.L2.x,
-      gb.L2.x = gb.L2.x, svm.L2.x = svm.L2.x,
-      gb.L2.unit = gb.L2.unit, gb.L2.reg = gb.L2.reg,
+      lasso.L2.x = lasso.L2.x, pca.L2.x = pca.L2.x, pc.names = pc_names,
+      gb.L2.x = gb.L2.x, svm.L2.x = svm.L2.x, svm.L2.unit = svm.L2.unit,
+      svm.L2.reg = svm.L2.reg, gb.L2.unit = gb.L2.unit, gb.L2.reg = gb.L2.reg,
       lasso.lambda = lasso.lambda, lasso.n.iter = lasso.n.iter,
       gb.interaction.depth = gb.interaction.depth,
       gb.shrinkage = gb.shrinkage,

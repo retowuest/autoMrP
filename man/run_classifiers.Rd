@@ -13,6 +13,7 @@ run_classifiers(
   L2.reg,
   L2.x.scale,
   pcs,
+  pc.names,
   folds,
   bin.proportion,
   bin.size,
@@ -40,6 +41,8 @@ run_classifiers(
   svm.L2.x,
   gb.L2.unit,
   gb.L2.reg,
+  svm.L2.unit,
+  svm.L2.reg,
   lasso.lambda,
   lasso.n.iter,
   gb.interaction.depth,
@@ -95,6 +98,9 @@ context-level covariates should be normalized prior to calling
 \item{pcs}{Principal components. A character vector containing the column
 names of the principal components of the context-level variables in
 \code{survey} and \code{census}. Default is \code{NULL}.}
+
+\item{pc.names}{A character vector of the principal component variable names
+in the data.}
 
 \item{folds}{EBMA and cross-validation folds. A character scalar containing
 the column name of the variable in \code{survey} that specifies the fold
@@ -235,6 +241,14 @@ the column names of the context-level variables in \code{survey} and
 
 \item{gb.L2.reg}{GB L2.reg. A logical argument indicating whether
 \code{L2.reg} should be included in the GB classifier. Default is
+\code{FALSE}.}
+
+\item{svm.L2.unit}{SVM L2.unit. A logical argument indicating whether
+\code{L2.unit} should be included in the SVM classifier. Default is
+\code{FALSE}.}
+
+\item{svm.L2.reg}{SVM L2.reg. A logical argument indicating whether
+\code{L2.reg} should be included in the SVM classifier. Default is
 \code{FALSE}.}
 
 \item{lasso.lambda}{Lasso penalty parameter. A numeric \code{vector} of
