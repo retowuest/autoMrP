@@ -249,7 +249,7 @@
 #' summary(m)
 #' plot(m)
 #'
-#' \dontrun{
+#' \donttest{
 #' # MrP model only:
 #' mrp_out <- auto_MrP(
 #'   y = "YES",

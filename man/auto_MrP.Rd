@@ -366,7 +366,7 @@ m <- auto_MrP(
 summary(m)
 plot(m)
 
-\dontrun{
+\donttest{
 # MrP model only:
 mrp_out <- auto_MrP(
   y = "YES",
