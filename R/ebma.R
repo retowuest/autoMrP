@@ -162,7 +162,7 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
             } else{NA},
             lasso = if(!is.null(model_lasso)){
               #predict_glmmLasso(census = test, m = model_lasso, L1.x = L1.x, lasso.L2.x = L2.x, L2.unit = L2.unit, L2.reg = L2.reg)
-              predict(object = model.lasso, newdata = as.data.frame(test), type = "response",
+              predict(object = model_lasso, newdata = as.data.frame(test), type = "response",
                       allow.new.levels = TRUE)
             } else{NA},
             gb = if(!is.null(model_gb)){
