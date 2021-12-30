@@ -161,9 +161,10 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
               predict(object = model_pca, newdata = test, type = "response", allow.new.levels = TRUE)
             } else{NA},
             lasso = if(!is.null(model_lasso)){
-              #predict_glmmLasso(census = test, m = model_lasso, L1.x = L1.x, lasso.L2.x = L2.x, L2.unit = L2.unit, L2.reg = L2.reg)
-              predict(object = model_lasso, newdata = as.data.frame(test), type = "response",
-                      allow.new.levels = TRUE)
+              predict_glmmLasso(census = test, m = model_lasso, L1.x = L1.x,
+                                lasso.L2.x = L2.x, L2.unit = L2.unit, L2.reg = L2.reg)
+              #predict(object = model_lasso, newdata = as.data.frame(test), type = "response",
+              #        allow.new.levels = TRUE)
             } else{NA},
             gb = if(!is.null(model_gb)){
               gbm::predict.gbm(object = model_gb, newdata = test, n.trees = model_gb$n.trees, type = "response")
@@ -387,9 +388,10 @@ ebma_mc_tol <- function(train.preds, train.y, ebma.fold,
         predict(object = model.pca, newdata = test, type = "response", allow.new.levels = TRUE)
       } else{NA},
       lasso = if(!is.null(model.lasso)){
-        #predict_glmmLasso(census = test, m = model.lasso, L1.x = L1.x, lasso.L2.x = L2.x, L2.unit = L2.unit, L2.reg = L2.reg)
-        predict(object = model.lasso, newdata = as.data.frame(test), type = "response",
-                allow.new.levels = TRUE)
+        predict_glmmLasso(census = test, m = model.lasso, L1.x = L1.x,
+                          lasso.L2.x = L2.x, L2.unit = L2.unit, L2.reg = L2.reg)
+        #predict(object = model.lasso, newdata = as.data.frame(test), type = "response",
+        #        allow.new.levels = TRUE)
       } else{NA},
       gb = if(!is.null(model.gb)){
         gbm::predict.gbm(object = model.gb, newdata = test, n.trees = model.gb$n.trees, type = "response")
@@ -541,9 +543,10 @@ ebma_mc_draws <- function(
         predict(object = model.pca, newdata = test, type = "response", allow.new.levels = TRUE)
       } else{NA},
       lasso = if(!is.null(model.lasso)){
-        predict(object = model.lasso, newdata = as.data.frame(test), type = "response",
-                allow.new.levels = TRUE)
-        #predict_glmmLasso(census = test, m = model.lasso, L1.x = L1.x, lasso.L2.x = L2.x, L2.unit = L2.unit, L2.reg = L2.reg)
+        #predict(object = model.lasso, newdata = as.data.frame(test), type = "response",
+        #        allow.new.levels = TRUE)
+        predict_glmmLasso(census = test, m = model.lasso, L1.x = L1.x,
+                          lasso.L2.x = L2.x, L2.unit = L2.unit, L2.reg = L2.reg)
       } else{NA},
       gb = if(!is.null(model.gb)){
         gbm::predict.gbm(object = model.gb, newdata = test, n.trees = model.gb$n.trees, type = "response")
