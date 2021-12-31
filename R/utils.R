@@ -1708,7 +1708,7 @@ summary.autoMrP <- function(object, ci.lvl = 0.95, digits = 4, format = "simple"
       if (n < nrow(s_data)) cat( paste("... with", nrow(s_data)-n, " more rows", "\n", "\n"), sep = "")
 
     } else{
-      s_data <- dplyr::select(.data = s_data, one_of(L2.unit), median)
+      s_data <- dplyr::select(.data = s_data, dplyr::one_of(L2.unit), median)
       n <- ifelse(n <= nrow(s_data), yes = n, no = nrow(s_data) )
       cat( paste("\n", "# EBMA estimates:"), sep = "")
       output_table(
@@ -1809,7 +1809,7 @@ summary.autoMrP <- function(object, ci.lvl = 0.95, digits = 4, format = "simple"
           stop( classifiers, " was not fitted. Summary available for: ", paste(names(object$classifiers)[-1], collapse = ", "))
         }
         s_data <- object$classifiers %>%
-          dplyr::select( one_of(L2.unit, classifiers) )
+          dplyr::select( dplyr::one_of(L2.unit, classifiers) )
       }
 
       # summary statistics
@@ -1852,7 +1852,7 @@ summary.autoMrP <- function(object, ci.lvl = 0.95, digits = 4, format = "simple"
         s_data <- object$classifiers
       } else{
         s_data <- object$classifiers %>%
-          dplyr::select( one_of(L2.unit, classifiers) )
+          dplyr::select(dplyr::one_of(L2.unit, classifiers) )
       }
 
       # summary statistics
@@ -1868,8 +1868,9 @@ summary.autoMrP <- function(object, ci.lvl = 0.95, digits = 4, format = "simple"
 
       # with or without uncertainty
       comparison <- s_data %>%
-        dplyr::select(one_of(grep(pattern = "median", x = names(s_data), value = "TRUE")[1],
-                             grep(pattern = "lb", x = names(s_data), value = "TRUE")[1]))
+        dplyr::select(dplyr::one_of(grep(
+          pattern = "median", x = names(s_data), value = "TRUE")[1],
+          grep(pattern = "lb", x = names(s_data), value = "TRUE")[1]))
 
         # summarize one classifier
         if ( sum(grepl(pattern = "best_subset|pca|lasso|gb|svm|mrp", x = names(s_data))) < 4 ){
@@ -1895,7 +1896,7 @@ summary.autoMrP <- function(object, ci.lvl = 0.95, digits = 4, format = "simple"
             n <- ifelse(n <= nrow(s_data), yes = n, no = nrow(s_data) )
             cat( paste("\n", "# estimates of: ", paste(names(object$classifiers)[-1], collapse = ", ")), sep = "")
             s_data <- s_data %>%
-              dplyr::select(one_of( L2.unit), contains("median"))
+              dplyr::select(dplyr::one_of( L2.unit), contains("median"))
             output_table(
               object = s_data[1:n, ],
               col.names = names(s_data),
@@ -1915,7 +1916,7 @@ summary.autoMrP <- function(object, ci.lvl = 0.95, digits = 4, format = "simple"
         } else{
           n <- ifelse(n <= nrow(s_data), yes = n, no = nrow(s_data) )
           s_data <- s_data %>%
-            dplyr::select(one_of( L2.unit), contains("median"))
+            dplyr::select(dplyr::one_of( L2.unit), contains("median"))
           output_table(
             object = s_data[1:n, ],
             col.names = names(s_data),

@@ -54,7 +54,7 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
 
     # Training predictions
     train_preds <- post.strat$predictions$Level1 %>%
-      dplyr::select(-one_of(y))
+      dplyr::select(-dplyr::one_of(y))
 
     # Training set outcomes
     train_y <- dplyr::pull(.data = post.strat$predictions$Level1, var = y)
@@ -181,7 +181,7 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
             all(!is.na(x))})]
 
           # outcome on the test
-          # test_y <- dplyr::select(.data = test, one_of(y))
+          # test_y <- dplyr::select(.data = test, dplyr::one_of(y))
           test_y <- dplyr::pull(.data = test, y)
 
           # EBMA
@@ -408,7 +408,7 @@ ebma_mc_tol <- function(train.preds, train.y, ebma.fold,
       all(!is.na(x))})]
 
     # Outcome on the test
-    test_y <- dplyr::select(.data = test, one_of(y))
+    test_y <- dplyr::select(.data = test, dplyr::one_of(y))
 
     # Register cores
     cl <- multicore(cores = cores, type = "open", cl = NULL)
@@ -563,7 +563,7 @@ ebma_mc_draws <- function(
       all(!is.na(x))})]
 
     # Outcome on the test
-    test_y <- dplyr::select(.data = test, one_of(y))
+    test_y <- dplyr::select(.data = test, dplyr::one_of(y))
 
     # Container of MSEs per tolerance value and draw combination
     mse_collector <- NA
