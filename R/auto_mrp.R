@@ -243,7 +243,7 @@
 #' summary(m)
 #' plot(m)
 #'
-#' # The empty MrP model
+#' # An MrP model without context-level predictors
 #' m <- auto_MrP(
 #'   y = "YES",
 #'   L1.x = "L1x1",
