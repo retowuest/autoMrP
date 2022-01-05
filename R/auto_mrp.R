@@ -243,13 +243,12 @@
 #' summary(m)
 #' plot(m)
 #'
-#' The empty MrP model
+#' # The empty MrP model
 #' m <- auto_MrP(
 #'   y = "YES",
 #'   L1.x = "L1x1",
 #'   L2.x = NULL,
 #'   mrp.L2.x = "",
-#'
 #'   L2.unit = "state",
 #'   bin.proportion = "proportion",
 #'   survey = taxes_survey,
