@@ -13,7 +13,8 @@
 #'   is specified in argument \code{L2.unit}.
 #' @param L2.x Context-level covariates. A character vector containing the
 #'   column names of the context-level variables in \code{survey} and
-#'   \code{census} used to predict outcome \code{y}.
+#'   \code{census} used to predict outcome \code{y}. Note: For the empty MrP
+#'   model, set \code{L2.x = NULL} and \code{mrp.L2.x = ""}.
 #' @param L2.unit Geographic unit. A character scalar containing the column
 #'   name of the geographic unit in \code{survey} and \code{census} at which
 #'   outcomes should be aggregated.
@@ -139,7 +140,8 @@
 #'   \code{census} to be used by the MRP classifier. The character vector
 #'   \emph{empty} if no context-level variables should be used by the MRP
 #'   classifier. If \code{NULL} and \code{mrp} is set to \code{TRUE}, then MRP
-#'   uses the variables specified in \code{L2.x}. Default is \code{NULL}.
+#'   uses the variables specified in \code{L2.x}. Default is \code{NULL}. Note:
+#'   For the empty MrP model, set \code{L2.x = NULL} and \code{mrp.L2.x = ""}.
 #' @param gb.L2.unit GB L2.unit. A logical argument indicating whether
 #'   \code{L2.unit} should be included in the GB classifier. Default is
 #'   \code{FALSE}.
@@ -240,6 +242,27 @@
 #' # summarize and plot results
 #' summary(m)
 #' plot(m)
+#'
+#' The empty MrP model
+#' m <- auto_MrP(
+#'   y = "YES",
+#'   L1.x = "L1x1",
+#'   L2.x = NULL,
+#'   mrp.L2.x = "",
+#'
+#'   L2.unit = "state",
+#'   bin.proportion = "proportion",
+#'   survey = taxes_survey,
+#'   census = taxes_census,
+#'   ebma.size = 0,
+#'   cores = 1,
+#'   best.subset = FALSE,
+#'   lasso = FALSE,
+#'   pca = FALSE,
+#'   gb = FALSE,
+#'   svm = FALSE,
+#'   mrp = TRUE
+#'   )
 #'
 #' \donttest{
 #' # MrP model only:

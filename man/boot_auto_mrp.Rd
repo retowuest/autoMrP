@@ -65,14 +65,16 @@ is specified in argument \code{L2.unit}.}
 
 \item{L2.x}{Context-level covariates. A character vector containing the
 column names of the context-level variables in \code{survey} and
-\code{census} used to predict outcome \code{y}.}
+\code{census} used to predict outcome \code{y}. Note: For the empty MrP
+model, set \code{L2.x = NULL} and \code{mrp.L2.x = ""}.}
 
 \item{mrp.L2.x}{MRP context-level covariates. A character vector containing
 the column names of the context-level variables in \code{survey} and
 \code{census} to be used by the MRP classifier. The character vector
 \emph{empty} if no context-level variables should be used by the MRP
 classifier. If \code{NULL} and \code{mrp} is set to \code{TRUE}, then MRP
-uses the variables specified in \code{L2.x}. Default is \code{NULL}.}
+uses the variables specified in \code{L2.x}. Default is \code{NULL}. Note:
+For the empty MrP model, set \code{L2.x = NULL} and \code{mrp.L2.x = ""}.}
 
 \item{L2.unit}{Geographic unit. A character scalar containing the column
 name of the geographic unit in \code{survey} and \code{census} at which
