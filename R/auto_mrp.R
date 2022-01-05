@@ -264,26 +264,7 @@
 #'   )
 #'
 #' \donttest{
-#' # MrP model only:
-#' mrp_out <- auto_MrP(
-#'   y = "YES",
-#'   L1.x = c("L1x1", "L1x2", "L1x3"),
-#'   L2.x = c("L2.x1", "L2.x2", "L2.x3", "L2.x4", "L2.x5", "L2.x6"),
-#'   L2.unit = "state",
-#'   L2.reg = "region",
-#'   bin.proportion = "proportion",
-#'   survey = taxes_survey,
-#'   census = taxes_census,
-#'   ebma.size = 0,
-#'   best.subset = FALSE,
-#'   lasso = FALSE,
-#'   pca = FALSE,
-#'   gb = FALSE,
-#'   svm = FALSE,
-#'   mrp = TRUE
-#' )
-#'
-#' # Predictions through machine learning
+#' # Predictions with machine learning
 #'
 #' # detect number of available cores
 #' max_cores <- parallel::detectCores()
