@@ -1541,6 +1541,7 @@ plot.autoMrP <- function(x, algorithm = "ebma", ci.lvl = 0.95, ...){
 
   # plot data
   if(algorithm == "ebma"){
+    # EBMA summary
     plot_data <- x$ebma %>%
       dplyr::group_by(!! rlang::sym(L2.unit)) %>%
       dplyr::summarise(median = stats::median(ebma, na.rm = TRUE),
@@ -1549,8 +1550,10 @@ plot.autoMrP <- function(x, algorithm = "ebma", ci.lvl = 0.95, ...){
                        .groups = "drop") %>%
       dplyr::arrange(median) %>%
       dplyr::mutate(rank = dplyr::row_number()) %>%
-      dplyr::mutate(rank = as.factor(rank))
+      dplyr::mutate(rank = as.factor(rank)) %>%
+      dplyr::mutate(!!rlang::sym(L2.unit) := forcats::fct_reorder(!!rlang::sym(L2.unit), median))
   } else{
+    # One of the classifiers
     plot_data <- x$classifiers %>%
       dplyr::group_by(!! rlang::sym(L2.unit)) %>%
       dplyr::select(all_of(L2.unit), contains(algorithm)) %>%
@@ -1558,8 +1561,7 @@ plot.autoMrP <- function(x, algorithm = "ebma", ci.lvl = 0.95, ...){
                                         lb = ~ stats::quantile(x = ., probs = (1 - ci.lvl) *.5, na.rm = TRUE),
                                         ub = ~ stats::quantile(x = ., probs = ci.lvl + (1 - ci.lvl) *.5, na.rm = TRUE))) %>%
       dplyr::arrange(median) %>%
-      dplyr::mutate(rank = dplyr::row_number()) %>%
-      dplyr::mutate(rank = as.factor(rank))
+      dplyr::mutate(!!rlang::sym(L2.unit) := forcats::fct_reorder(!!rlang::sym(L2.unit), median))
   }
 
   # y axis tick labels
@@ -1567,15 +1569,17 @@ plot.autoMrP <- function(x, algorithm = "ebma", ci.lvl = 0.95, ...){
 
   # plot (with/ without error bars)
   if(all(plot_data$median == plot_data$lb)){
-    ggplot2::ggplot(data = plot_data, mapping = ggplot2::aes_string(x = "median", y = "rank", label = L2.unit)) +
+    ggplot2::ggplot(
+      data = plot_data,
+      mapping = ggplot2::aes_string(x = 'median', y = L2.unit)) +
       ggplot2::geom_point() +
-      ggplot2::labs(x = "Estimates") +
-      ggplot2::scale_y_discrete(breaks = rank, labels = ylabs, name = "States")
+      ggplot2::labs(x = 'Estimates')
   } else{
-    ggplot2::ggplot(data = plot_data, mapping = ggplot2::aes_string(x = "median", y = "rank", label = L2.unit)) +
+    ggplot2::ggplot(
+      data = plot_data,
+      mapping = ggplot2::aes_string(x = 'median', y = L2.unit)) +
       ggplot2::geom_point() +
-      ggplot2::labs(x = "Estimates") +
-      ggplot2::scale_y_discrete(breaks = rank, labels = ylabs, name = "States") +
+      ggplot2::labs(x = 'Estimates') +
       ggplot2::geom_errorbarh(mapping = ggplot2::aes(xmin = lb, xmax = ub))
   }
 }
