@@ -1794,10 +1794,6 @@ summary.autoMrP <- function(object, ci.lvl = 0.95, digits = 4, format = "simple"
   # autoMrP list object
   else if ( all(c("autoMrP", "list") %in% class(object)) ){
 
-    # remove missing values on point estimates
-    object$classifiers <- object$classifiers %>%
-      dplyr::filter(!is.na(mrp))
-
     # unit identifier
     L2.unit <- names(object$classifiers)[1]
 
