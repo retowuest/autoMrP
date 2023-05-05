@@ -1434,6 +1434,7 @@ multicore <- function(cores = 1, type, cl = NULL) {
     if( Sys.info()["sysname"] == "Windows" ){
       cl <- parallel::makeCluster(cores)
       doParallel::registerDoParallel(cl)
+      parallel::clusterCall(cl, function(x) .libPaths(x), .libPaths())
     } else {
       cl <- parallel::makeForkCluster(cores)
       doParallel::registerDoParallel(cl)
