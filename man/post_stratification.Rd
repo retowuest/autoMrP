@@ -28,7 +28,8 @@ post_stratification(
   data,
   ebma.fold,
   census,
-  verbose
+  verbose,
+  gb.weights
 )
 }
 \arguments{
@@ -131,6 +132,10 @@ training.}
 
 \item{verbose}{Verbose output. A logical argument indicating whether or not
 verbose output should be printed. Default is \code{FALSE}.}
+
+\item{gb.weights}{GB weights. Logical argument indicating whether the
+observations should be weighted by the inverse of the sampling
+probabilities. Default is \code{FALSE}.}
 }
 \description{
 Apply post-stratification to classifiers.

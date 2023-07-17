@@ -18,14 +18,23 @@
 #'   terminal nodes of the trees.
 #' @param shrinkage Learning rate. A numeric scalar specifying the shrinkage or
 #'   learning rate applied to each tree in the expansion.
+#' @param gbm_weights_xyz Weights. A numeric vector of weights to be applied to
+#'   the training data. Note: Due to a bug in the gbm package, this argument
+#'   is assigned to the global environemnt and then removed after the model is
+#'   fit. Please make sure that you do not have an object named
+#'   "gbm_weights_xyz" in your global environment.
 #' @param verbose Verbose output. A logical vector indicating whether or not
 #'   verbose output should be printed.
 #' @return A gradient tree boosting model. A \code{\link[gbm]{gbm}} object.
 
-gb_classifier <- function(form, distribution, data.train,
-                          n.trees, interaction.depth,
-                          n.minobsinnode, shrinkage,
-                          verbose = c(TRUE, FALSE)) {
+gb_classifier <- function(
+  form, distribution, data.train, n.trees, interaction.depth, n.minobsinnode,
+  shrinkage, gbm_weights_xyz, verbose = c(TRUE, FALSE)) {
+
+  # assign gbm_weights_xyz to parent environment
+  # this is a temporary fix of a bug within the gbm package
+  assign("gbm_weights_xyz", gbm_weights_xyz, envir = .GlobalEnv)
+
   # Train model on training data with number of total trees, interaction depth,
   # and learning rate as tuning parameters
   if (isTRUE(verbose == TRUE)) {
@@ -34,7 +43,9 @@ gb_classifier <- function(form, distribution, data.train,
                     interaction.depth = interaction.depth,
                     n.minobsinnode = n.minobsinnode,
                     shrinkage = shrinkage,
-                    train.fraction = 1, n.cores = 1)
+                    weights = gbm_weights_xyz,
+                    train.fraction = 1, n.cores = 1,
+                    keep.data = TRUE)
   } else {
     out <- suppressMessages(suppressWarnings(
       gbm::gbm(formula = form, distribution = distribution,
@@ -42,9 +53,15 @@ gb_classifier <- function(form, distribution, data.train,
                interaction.depth = interaction.depth,
                n.minobsinnode = n.minobsinnode,
                shrinkage = shrinkage,
-               train.fraction = 1, n.cores = 1)
+               weights = gbm_weights_xyz,
+               train.fraction = 1, n.cores = 1,
+               keep.data = TRUE)
     ))
   }
+
+  # remove gbm_weights_xyz from parent environment
+  # this is a temporary fix of a bug within the gbm package
+  rm("gbm_weights_xyz", envir = .GlobalEnv)
 
   # Function output
   return(out)
@@ -59,7 +76,8 @@ gb_classifier <- function(form, distribution, data.train,
 #' @param n.new.trees Number of additional trees to grow. A numeric scalar.
 #' @param verbose Verbose output. A logical vector indicating whether or not
 #'   verbose output should be printed.
-#' @return An updated gradient tree boosting model. A \code{\link[gbm]{gbm.more}} object.
+#' @return An updated gradient tree boosting model.
+#'   A \code{\link[gbm]{gbm.more}} object.
 
 gb_classifier_update <- function(object, n.new.trees,
                                  verbose = c(TRUE, FALSE)) {

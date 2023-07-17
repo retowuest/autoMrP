@@ -20,6 +20,7 @@ run_gb(
   n.trees.max,
   cores = cores,
   n.minobsinnode,
+  gb.weights,
   data,
   verbose
 )
@@ -94,6 +95,10 @@ of processor cores used for parallel computing. Default is 1.}
 nodes. An integer-valued scalar specifying the minimum number of
 observations that each terminal node of the trees must contain. Default is
 \eqn{5}.}
+
+\item{gb.weights}{GB weights. Logical argument indicating whether the
+observations should be weighted by the inverse of the sampling
+probabilities. Default is \code{FALSE}.}
 
 \item{data}{Data for cross-validation. A \code{list} of \eqn{k}
 \code{data.frames}, one for each fold to be used in \eqn{k}-fold

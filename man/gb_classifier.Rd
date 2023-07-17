@@ -12,6 +12,7 @@ gb_classifier(
   interaction.depth,
   n.minobsinnode,
   shrinkage,
+  gbm_weights_xyz,
   verbose = c(TRUE, FALSE)
 )
 }
@@ -38,6 +39,12 @@ terminal nodes of the trees.}
 
 \item{shrinkage}{Learning rate. A numeric scalar specifying the shrinkage or
 learning rate applied to each tree in the expansion.}
+
+\item{gbm_weights_xyz}{Weights. A numeric vector of weights to be applied to
+the training data. Note: Due to a bug in the gbm package, this argument
+is assigned to the global environemnt and then removed after the model is
+fit. Please make sure that you do not have an object named
+"gbm_weights_xyz" in your global environment.}
 
 \item{verbose}{Verbose output. A logical vector indicating whether or not
 verbose output should be printed.}

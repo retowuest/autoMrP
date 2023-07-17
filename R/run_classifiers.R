@@ -24,13 +24,14 @@ run_classifiers <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
                             lasso.lambda, lasso.n.iter, gb.interaction.depth,
                             gb.shrinkage, gb.n.trees.init,
                             gb.n.trees.increase, gb.n.trees.max,
-                            gb.n.minobsinnode, svm.kernel,
+                            gb.n.minobsinnode, gb.weights, svm.kernel,
                             svm.gamma, svm.cost, ebma.tol, cores, verbose) {
 
   # Classifier 1: Best Subset
   if (isTRUE(best.subset)) {
     if (verbose) {
-      message("Starting multilevel regression with best subset selection classifier tuning")
+      message("Starting multilevel regression with best subset ",
+        "selection classifier tuning")
     }
 
     # Determine context-level covariates
@@ -56,13 +57,14 @@ run_classifiers <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
   # Classifier 2: Lasso
 
   # message if Lasso is set to TRUE but no context level variables provided
-  if (isTRUE(lasso) & is.null(L2.x)) {
+  if (isTRUE(lasso) && is.null(L2.x)) {
     if (verbose) {
-      message('Lasso requires L2.x variables to be specified. Skipping Lasso.')
+      message('Lasso requires L2.x variables to be specified.",
+        " Skipping Lasso.')
     }
   }
 
-  if (isTRUE(lasso) & !is.null(L2.x)) {
+  if (isTRUE(lasso) && !is.null(L2.x)) {
 
     if (verbose) {
       message("Starting multilevel regression with L1 regularization tuning")
@@ -93,14 +95,15 @@ run_classifiers <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
   # Classifier 3: PCA
 
   # message if pca is TRUE but no level 2 variables or pc_names provided
-  if (isTRUE(pca) & is.null(pca.L2.x)) {
-    message(paste0('PCA requires that L2.x variables are specified or alternatively',
-                   ' that the pcs argument is specified.'))
+  if (isTRUE(pca) && is.null(pca.L2.x)) {
+    message("PCA requires that L2.x variables are specified or alternatively",
+      " that the pcs argument is specified.")
   }
-  if (isTRUE(pca) & !is.null(pca.L2.x)) {
+  if (isTRUE(pca) && !is.null(pca.L2.x)) {
 
     if (verbose) {
-      message("Starting multilevel regression with principal components as context level variables tuning")
+      message("Starting multilevel regression with principal components",
+        " as context level variables tuning")
     }
 
     pca_out <- run_pca(
@@ -160,6 +163,7 @@ run_classifiers <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
                      n.trees.increase = gb.n.trees.increase,
                      n.trees.max = gb.n.trees.max,
                      n.minobsinnode = gb.n.minobsinnode,
+                     gb.weights = gb.weights,
                      data = cv.folds,
                      cores = cores,
                      verbose = verbose)
@@ -168,7 +172,7 @@ run_classifiers <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
   }
 
   # Classifier 5: SVM
-  if ( isTRUE(svm) ) {
+  if (isTRUE(svm)) {
 
     if (verbose) {
       message("Starting support vector machine tuning")
@@ -231,6 +235,7 @@ run_classifiers <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
     lasso.L2.x = lasso.L2.x,
     pca.opt = pca_out,
     gb.opt = gb_out,
+    gb.weights = gb.weights,
     svm.opt = svm_out,
     svm.L2.reg = svm.L2.reg,
     svm.L2.unit = svm.L2.unit,

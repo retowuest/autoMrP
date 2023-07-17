@@ -60,7 +60,8 @@
 run_gb <- function(y, L1.x, L2.x, L2.eval.unit, L2.unit, L2.reg,
                    loss.unit, loss.fun, interaction.depth, shrinkage,
                    n.trees.init, n.trees.increase, n.trees.max,
-                   cores = cores, n.minobsinnode, data, verbose) {
+                   cores = cores, n.minobsinnode, gb.weights,
+                   data, verbose) {
 
   # Create model formula
   x <- paste(c(L1.x, L2.x, L2.unit, L2.reg), collapse = " + ")
@@ -79,19 +80,19 @@ run_gb <- function(y, L1.x, L2.x, L2.eval.unit, L2.unit, L2.reg,
   names(gb_grid) <- c("depth", "shrinkage", "ntrees")
 
   ## tuning with 1) multiple cores; 2) a single core
-  if (cores > 1){
+  if (cores > 1) {
 
     # 1) multiple cores
     grid_cells <- run_gb_mc(
       y = y, L1.x = L1.x, L2.eval.unit = L2.eval.unit, L2.unit = L2.unit,
-      L2.reg = L2.reg, form = form, gb.grid = gb_grid,
+      L2.reg = L2.reg, form = form, gb.grid = gb_grid, gb.weights = gb.weights,
       n.minobsinnode = n.minobsinnode,  loss.unit = loss.unit,
       loss.fun = loss.fun, data = data, cores = cores)
-  } else{
+  } else {
 
     # 2) single core
     # loop over tuning grid
-    grid_cells <- apply( gb_grid, 1, function(g) {
+    grid_cells <- apply(gb_grid, 1, function(g) {
 
       # Set tuning parameters
       depth <- as.numeric(g["depth"])
@@ -100,13 +101,15 @@ run_gb <- function(y, L1.x, L2.x, L2.eval.unit, L2.unit, L2.reg,
 
       # Print tuning parameters
       if (isTRUE(verbose)) {
-        cat(paste("GB: Running interaction depth ", depth,
-                  ", learning rate ", shrinkage_value,
-                  ", and number of total trees ", ntrees, "\n", sep = ""))
+        message(
+          "GB: Running interaction depth ", depth,
+          ", learning rate ", shrinkage_value,
+          ", and number of total trees ", ntrees, "\n", sep = "")
       }
 
       # Loop over each fold
       k_errors <- lapply(seq_along(data), function(k) {
+
         # Split data in training and validation sets
         data_train <- dplyr::bind_rows(data[-k])
         data_valid <- dplyr::bind_rows(data[k])
@@ -119,6 +122,18 @@ run_gb <- function(y, L1.x, L2.x, L2.eval.unit, L2.unit, L2.reg,
         data_valid <- data_valid %>%
           dplyr::mutate_at(.vars = c(L1.x, L2.unit, L2.reg), as.factor)
 
+        # gb weights
+        if (gb.weights) {
+          gb_w <- ifelse(
+              test = (data_train$YES == 1),
+              yes = length(data_train$YES[data_train$YES == 0]) /
+                length(data_train$YES[data_train$YES == 1]),
+              no = length(data_train$YES[data_train$YES == 1]) /
+                length(data_train$YES[data_train$YES == 0]))
+        } else {
+          gb_w <- rep(1, nrow(data_train))
+        }
+
         # Train model using tuning parameters on kth training set
         model_l <- gb_classifier(form = form,
                                  distribution = "bernoulli",
@@ -126,6 +141,7 @@ run_gb <- function(y, L1.x, L2.x, L2.eval.unit, L2.unit, L2.reg,
                                  n.trees = ntrees,
                                  interaction.depth = depth,
                                  n.minobsinnode = n.minobsinnode,
+                                 gbm_weights_xyz = gb_w,
                                  shrinkage = shrinkage_value,
                                  verbose = verbose)
 
@@ -141,21 +157,23 @@ run_gb <- function(y, L1.x, L2.x, L2.eval.unit, L2.unit, L2.reg,
                                    loss.fun = loss.fun,
                                    y = y,
                                    L2.unit = L2.eval.unit)
-
+        return(perform_l)
       })
 
       # Mean over loss functions
       k_errors <- dplyr::bind_rows(k_errors) %>%
         dplyr::group_by(measure) %>%
         dplyr::summarise(value = mean(value), .groups = "drop") %>%
-        dplyr::mutate(ntrees = ntrees, depth = depth, shrinkage = shrinkage_value)
+        dplyr::mutate(
+          ntrees = ntrees, depth = depth, shrinkage = shrinkage_value)
 
     })
   }
 
   # Extract best tuning parameters
   grid_cells <- dplyr::bind_rows(grid_cells)
-  best_params <- dplyr::slice(loss_score_ranking(score = grid_cells, loss.fun = loss.fun), 1)
+  best_params <- dplyr::slice(
+    loss_score_ranking(score = grid_cells, loss.fun = loss.fun), 1)
 
   out <- list(interaction_depth = dplyr::pull(.data = best_params, var = depth),
               shrinkage = dplyr::pull(.data = best_params, var = shrinkage),
@@ -182,7 +200,8 @@ run_gb <- function(y, L1.x, L2.x, L2.eval.unit, L2.unit, L2.reg,
 #'   scores. A list.
 
 run_gb_mc <- function(y, L1.x, L2.eval.unit, L2.unit, L2.reg, form, gb.grid,
-                      n.minobsinnode, loss.unit, loss.fun, data, cores){
+                      n.minobsinnode, loss.unit, loss.fun, gb.weights, data,
+                      cores) {
 
   # Binding for global variables
   g <- NULL
@@ -192,13 +211,13 @@ run_gb_mc <- function(y, L1.x, L2.eval.unit, L2.unit, L2.reg, form, gb.grid,
   cl <- multicore(cores = cores, type = "open", cl = NULL)
 
   # Train and evaluate each model
-  grid_cells <- foreach::foreach(g = 1:nrow(gb.grid), .packages = 'autoMrP',
+  grid_cells <- foreach::foreach(g = 1:nrow(gb.grid), .packages = "autoMrP",
                                  .errorhandling = "pass") %dorng% {
 
     # Set tuning parameters
-    depth <- as.numeric( gb.grid[g, "depth"] )
-    shrinkage_value <- as.numeric( gb.grid[g, "shrinkage"] )
-    ntrees <- as.numeric( gb.grid[g, "ntrees"] )
+    depth <- as.numeric(gb.grid[g, "depth"])
+    shrinkage_value <- as.numeric(gb.grid[g, "shrinkage"])
+    ntrees <- as.numeric(gb.grid[g, "ntrees"])
 
     # Loop over each fold
     k_errors <- lapply(seq_along(data), function(k) {
@@ -215,20 +234,35 @@ run_gb_mc <- function(y, L1.x, L2.eval.unit, L2.unit, L2.reg, form, gb.grid,
       data_valid <- data_valid %>%
         dplyr::mutate_at(.vars = c(L1.x, L2.unit, L2.reg), as.factor)
 
+      # gb weights
+      if (gb.weights) {
+        gb_w <- ifelse(
+          test = (data_train$YES == 1),
+          yes = length(data_train$YES[data_train$YES == 0]) /
+            length(data_train$YES[data_train$YES == 1]),
+          no = length(data_train$YES[data_train$YES == 1]) /
+            length(data_train$YES[data_train$YES == 0]))
+      } else {
+        gb_w <- rep(1, nrow(data_train))
+      }
+
       # Train model using tuning parameters on kth training set
-      model_l <- gb_classifier(form = form,
-                               distribution = "bernoulli",
-                               data.train = data_train,
-                               n.trees = ntrees,
-                               interaction.depth = depth,
-                               n.minobsinnode = n.minobsinnode,
-                               shrinkage = shrinkage_value,
-                               verbose = FALSE)
+      model_l <- gb_classifier(
+        form = form,
+        distribution = "bernoulli",
+        data.train = data_train,
+        n.trees = ntrees,
+        interaction.depth = depth,
+        n.minobsinnode = n.minobsinnode,
+        shrinkage = shrinkage_value,
+        gbm_weights_xyz = gb_w,
+        verbose = FALSE)
 
       # Use trained model to make predictions for kth validation set
-      pred_l <- gbm::predict.gbm(model_l, newdata = data_valid,
-                                 n.trees = model_l$n.trees,
-                                 type = "response")
+      pred_l <- gbm::predict.gbm(
+        model_l, newdata = data_valid,
+        n.trees = model_l$n.trees,
+        type = "response")
 
       # Evaluate predictions based on loss function
       perform_l <- loss_function(pred = pred_l,

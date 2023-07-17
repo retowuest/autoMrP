@@ -18,6 +18,7 @@ auto_MrP(
   survey,
   census,
   ebma.size = 1/3,
+  stacking = FALSE,
   cores = 1,
   k.folds = 5,
   cv.sampling = "L2 units",
@@ -49,6 +50,7 @@ auto_MrP(
   gb.n.trees.increase = 50,
   gb.n.trees.max = 1000,
   gb.n.minobsinnode = 20,
+  gb.weights = FALSE,
   svm.kernel = c("radial"),
   svm.gamma = NULL,
   svm.cost = NULL,
@@ -125,6 +127,11 @@ otherwise.}
 indicating the proportion of respondents to be allocated to the EBMA fold.
 Default is \eqn{1/3}. \emph{Note:} ignored if \code{folds} is provided, but
 must be specified otherwise.}
+
+\item{stacking}{Model averaging via stacking. Stacking is an alternative to
+EBMA. Default is \code{FALSE}. If set to TRUE a model ensemble is generated
+via stacking. \code{ebma.size} must be set to 0 if stacking is \code{TRUE}.
+Stacking is faster than EBMA.}
 
 \item{cores}{The number of cores to be used. An integer indicating the number
 of processor cores used for parallel computing. Default is 1.}
@@ -252,7 +259,8 @@ minimum 0.1 and maximum 250 that is equally spaced on the log-scale. The
 number of values is controlled by the \code{lasso.n.iter} parameter.}
 
 \item{lasso.n.iter}{Lasso number of lambda values. An integer-valued scalar
-specifying the number of lambda values to search over. Default is \eqn{100}.
+specifying the number of lambda values to search over. Default is
+\eqn{100}.
 \emph{Note:} Is ignored if a vector of \code{lasso.lambda} values is
 provided.}
 
@@ -283,8 +291,13 @@ nodes. An integer-valued scalar specifying the minimum number of
 observations that each terminal node of the trees must contain. Default is
 \eqn{20}.}
 
+\item{gb.weights}{GB weights. Logical argument indicating whether the
+observations should be weighted by the inverse of the sampling
+probabilities. Default is \code{FALSE}.}
+
 \item{svm.kernel}{SVM kernel. A character-valued scalar specifying the kernel
-to be used by SVM. The possible values are \code{linear}, \code{polynomial},
+to be used by SVM. The possible values are \code{linear},
+\code{polynomial},
 \code{radial}, and \code{sigmoid}. Default is \code{radial}.}
 
 \item{svm.gamma}{SVM kernel parameter. A numeric vector whose values specify

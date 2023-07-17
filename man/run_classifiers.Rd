@@ -51,6 +51,7 @@ run_classifiers(
   gb.n.trees.increase,
   gb.n.trees.max,
   gb.n.minobsinnode,
+  gb.weights,
   svm.kernel,
   svm.gamma,
   svm.cost,
@@ -258,7 +259,8 @@ minimum 0.1 and maximum 250 that is equally spaced on the log-scale. The
 number of values is controlled by the \code{lasso.n.iter} parameter.}
 
 \item{lasso.n.iter}{Lasso number of lambda values. An integer-valued scalar
-specifying the number of lambda values to search over. Default is \eqn{100}.
+specifying the number of lambda values to search over. Default is
+\eqn{100}.
 \emph{Note:} Is ignored if a vector of \code{lasso.lambda} values is
 provided.}
 
@@ -289,8 +291,13 @@ nodes. An integer-valued scalar specifying the minimum number of
 observations that each terminal node of the trees must contain. Default is
 \eqn{20}.}
 
+\item{gb.weights}{GB weights. Logical argument indicating whether the
+observations should be weighted by the inverse of the sampling
+probabilities. Default is \code{FALSE}.}
+
 \item{svm.kernel}{SVM kernel. A character-valued scalar specifying the kernel
-to be used by SVM. The possible values are \code{linear}, \code{polynomial},
+to be used by SVM. The possible values are \code{linear},
+\code{polynomial},
 \code{radial}, and \code{sigmoid}. Default is \code{radial}.}
 
 \item{svm.gamma}{SVM kernel parameter. A numeric vector whose values specify
