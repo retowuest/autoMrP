@@ -162,8 +162,7 @@
 #'   minimum 0.1 and maximum 250 that is equally spaced on the log-scale. The
 #'   number of values is controlled by the \code{lasso.n.iter} parameter.
 #' @param lasso.n.iter Lasso number of lambda values. An integer-valued scalar
-#'   specifying the number of lambda values to search over. Default is
-#'   \eqn{100}.
+#'   specifying the number of lambda values to search over. Default is \eqn{100}.
 #'   \emph{Note:} Is ignored if a vector of \code{lasso.lambda} values is
 #'   provided.
 #' @param gb.interaction.depth GB interaction depth. An integer-valued vector
@@ -187,12 +186,8 @@
 #'   nodes. An integer-valued scalar specifying the minimum number of
 #'   observations that each terminal node of the trees must contain. Default is
 #'   \eqn{20}.
-#' @param gb.weights GB weights. Logical argument indicating whether the
-#'   observations should be weighted by the inverse of the sampling
-#'   probabilities. Default is \code{FALSE}.
 #' @param svm.kernel SVM kernel. A character-valued scalar specifying the kernel
-#'   to be used by SVM. The possible values are \code{linear},
-#'   \code{polynomial},
+#'   to be used by SVM. The possible values are \code{linear}, \code{polynomial},
 #'   \code{radial}, and \code{sigmoid}. Default is \code{radial}.
 #' @param svm.gamma SVM kernel parameter. A numeric vector whose values specify
 #'   the gamma parameter in the SVM kernel. This parameter is needed for all
@@ -245,7 +240,7 @@
 #'   survey = taxes_survey,
 #'   census = taxes_census,
 #'   ebma.size = 0,
-#'   cores = max_cores,
+#'   cores = 2,
 #'   best.subset = FALSE,
 #'   lasso = FALSE,
 #'   pca = FALSE,
@@ -295,52 +290,47 @@
 #'   census = taxes_census,
 #'   gb.L2.reg = TRUE,
 #'   svm.L2.reg = TRUE,
-#'   cores = max_cores
+#'   cores = min(2, max_cores)
 #'   )
 #' }
 #' @export
-#' @importFrom stats as.formula binomial predict setNames
-#' @importFrom stats weighted.mean median sd
+#' @importFrom stats as.formula binomial predict setNames weighted.mean median sd
 #' @importFrom utils combn
 #' @importFrom dplyr %>%
 #' @importFrom rlang .data
 #' @importFrom foreach %dopar%
 #' @importFrom doRNG %dorng%
 
-auto_MrP <- function(
-  y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE, pcs = NULL,
-  folds = NULL, bin.proportion = NULL, bin.size = NULL, survey, census,
-  ebma.size = 1 / 3, stacking = FALSE, cores = 1, k.folds = 5,
-  cv.sampling = "L2 units",
-  loss.unit = c("individuals", "L2 units"),
-  loss.fun = c("msfe", "cross-entropy", "f1", "MSE"),
-  best.subset = TRUE, lasso = TRUE, pca = TRUE, gb = TRUE, svm = TRUE,
-  mrp = FALSE, oversampling = FALSE, forward.select = FALSE,
-  best.subset.L2.x = NULL, lasso.L2.x = NULL, pca.L2.x = NULL,
-  gb.L2.x = NULL, svm.L2.x = NULL, mrp.L2.x = NULL, gb.L2.unit = TRUE,
-  gb.L2.reg = FALSE, svm.L2.unit = TRUE, svm.L2.reg = FALSE,
-  lasso.lambda = NULL,
-  lasso.n.iter = 100,
-  gb.interaction.depth = c(1, 2, 3),
-  gb.shrinkage = c(0.04, 0.01, 0.008, 0.005, 0.001),
-  gb.n.trees.init = 50,
-  gb.n.trees.increase = 50,
-  gb.n.trees.max = 1000,
-  gb.n.minobsinnode = 20,
-  gb.weights = FALSE,
-  svm.kernel = c("radial"),
-  svm.gamma = NULL,
-  svm.cost = NULL,
-  ebma.n.draws = 100,
-  ebma.tol = c(0.01, 0.005, 0.001, 0.0005, 0.0001, 0.00005, 0.00001),
-  seed = NULL,
-  verbose = FALSE,
-  uncertainty = FALSE,
-  boot.iter = NULL) {
 
-  # initial binding for globals
-  `%>%` <- dplyr::`%>%`
-  n <- one_of <- all_of <- os <- .data <- . <- NULL
+auto_MrP <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE, pcs = NULL,
+                     folds = NULL, bin.proportion = NULL, bin.size = NULL, survey, census,
+                     ebma.size = 1/3, stacking = FALSE, cores = 1, k.folds = 5,
+                     cv.sampling = "L2 units",
+                     loss.unit = c("individuals", "L2 units"),
+                     loss.fun = c("msfe", "cross-entropy", "f1", "MSE"),
+                     best.subset = TRUE, lasso = TRUE, pca = TRUE, gb = TRUE, svm = TRUE,
+                     mrp = FALSE, oversampling = FALSE, forward.select = FALSE,
+                     best.subset.L2.x = NULL, lasso.L2.x = NULL, pca.L2.x = NULL,
+                     gb.L2.x = NULL, svm.L2.x = NULL, mrp.L2.x = NULL, gb.L2.unit = TRUE,
+                     gb.L2.reg = FALSE, svm.L2.unit = TRUE, svm.L2.reg = FALSE,
+                     lasso.lambda = NULL,
+                     lasso.n.iter = 100,
+                     gb.interaction.depth = c(1, 2, 3),
+                     gb.shrinkage = c(0.04, 0.01, 0.008, 0.005, 0.001),
+                     gb.n.trees.init = 50,
+                     gb.n.trees.increase = 50,
+                     gb.n.trees.max = 1000,
+                     gb.n.minobsinnode = 20,
+                     svm.kernel = c("radial"),
+                     svm.gamma = NULL,
+                     svm.cost = NULL,
+                     ebma.n.draws = 100,
+                     ebma.tol = c(0.01, 0.005, 0.001, 0.0005, 0.0001, 0.00005, 0.00001),
+                     seed = NULL,
+                     verbose = FALSE,
+                     uncertainty = FALSE,
+                     boot.iter = NULL) {
+
 
 # Error checks ------------------------------------------------------------
 
@@ -410,9 +400,9 @@ auto_MrP <- function(
         dplyr::rename(prop = one_of(bin.proportion))
     }
 
-    # If not provided in survey and census data, compute the principal
-    # components of context-level variables
-    if (is.null(pcs) && !is.null(L2.x)) {
+    # If not provided in survey and census data, compute the principal components
+    # of context-level variables
+    if (is.null(pcs) & !is.null(L2.x)) {
 
       # Determine context-level covariates whose principal components are to be
       # computed
@@ -443,23 +433,19 @@ auto_MrP <- function(
     }
 
     # Scale context-level variables in survey and census data
-    if (isTRUE(L2.x.scale) && all(L2.x != "")) {
+    if (isTRUE(L2.x.scale) & all(L2.x != "")) {
 
       # scale context-level variables in survey
       survey <- dplyr::mutate_at(
         .tbl = survey,
         .vars = L2.x,
-        .funs = function(x) {
-          base::as.numeric(base::scale(x = x, center = TRUE, scale = TRUE))
-        })
+        .funs = function(x) base::as.numeric(base::scale(x = x, center = TRUE, scale = TRUE)))
 
       # scale context-level variables in census
       census <- dplyr::mutate_at(
         .tbl = census,
         .vars = L2.x,
-        .funs = function(x) {
-          base::as.numeric(base::scale(x = x, center = TRUE, scale = TRUE))
-        })
+        .funs = function(x) base::as.numeric(base::scale(x = x, center = TRUE, scale = TRUE)))
     }
 
     # Convert survey and census data to tibble
@@ -467,20 +453,19 @@ auto_MrP <- function(
     census <- tibble::as_tibble(x = census)
 
     # Random over-sampling
-    if (isTRUE(oversampling)) {
+    if ( isTRUE(oversampling) ){
       add_rows <- survey %>%
-        dplyr::group_by(.dots = L2.unit) %>%
+        dplyr::group_by( .dots = L2.unit ) %>%
         tidyr::nest() %>%
-        dplyr::mutate(os = purrr::map(data, function(x) {
+        dplyr::mutate(os = purrr::map(data, function( x ){
           n <- nrow(x)
-          os <- dplyr::group_by(.data = x, !! rlang::sym(y))
+          os <- dplyr::group_by(.data = x, !! rlang::sym(y) )
           y_1 <- sum(dplyr::pull(.data = os, var = !! rlang::sym(y)))
           y_0 <- n - y_1
-          if (y_1 > 0 & y_0 > 0) {
+          if (y_1 > 0 & y_0 > 0){
             y_needed <- ifelse(test = y_1 > y_0, yes = 0, no = 1)
-            n_needed <- ifelse(
-              test = y_needed == 0, yes = y_1 - y_0, no = y_0 - y_1)
-            os <- dplyr::filter(.data = os, !! rlang::sym(y) == y_needed)
+            n_needed <- ifelse(test = y_needed == 0, yes = y_1 - y_0, no = y_0 - y_1)
+            os <- dplyr::filter(.data = os, !! rlang::sym(y) == y_needed )
             os <- dplyr::slice_sample(.data = os, replace = TRUE, n = n_needed)
           }
           return(os)
@@ -492,7 +477,7 @@ auto_MrP <- function(
 
 # No bootstrapping --------------------------------------------------------
 
-    if (!uncertainty) {
+    if (!uncertainty){
 
 # Create folds ------------------------------------------------------------
 
@@ -501,13 +486,13 @@ auto_MrP <- function(
       # EBMA hold-out fold
       ebma.size <- round(nrow(survey) * ebma.size, digits = 0)
 
-      if (ebma.size > 0) {
+      if(ebma.size>0){
         ebma_folding_out <- ebma_folding(data = survey,
                                          L2.unit = L2.unit,
                                          ebma.size = ebma.size)
         ebma_fold <- ebma_folding_out$ebma_fold
         cv_data <- ebma_folding_out$cv_data
-      } else {
+      } else{
         ebma_fold <- NULL
         cv_data <- survey
       }
@@ -519,7 +504,7 @@ auto_MrP <- function(
                              cv.sampling = cv.sampling)
     } else {
 
-      if (ebma.size > 0) {
+      if (ebma.size > 0){
         # EBMA hold-out fold
         ebma_fold <- survey %>%
           dplyr::filter_at(dplyr::vars(dplyr::one_of(folds)),
@@ -554,16 +539,16 @@ auto_MrP <- function(
         gb.shrinkage = gb.shrinkage, gb.n.trees.init = gb.n.trees.init,
         gb.n.trees.increase = gb.n.trees.increase,
         gb.n.trees.max = gb.n.trees.max,
-        gb.n.minobsinnode = gb.n.minobsinnode, gb.weights = gb.weights,
+        gb.n.minobsinnode = gb.n.minobsinnode,
         svm.kernel = svm.kernel, svm.gamma = svm.gamma, svm.cost = svm.cost,
         ebma.tol = ebma.tol, ebma.n.draws = ebma.n.draws,
         cores = cores, verbose = verbose)
 
 # Boostrapping wrapper ----------------------------------------------------
 
-  } else {
+  } else{
 
-    if (is.null(boot.iter)) {
+    if (is.null(boot.iter)){
       boot.iter <- 200
     }
 
@@ -587,7 +572,7 @@ auto_MrP <- function(
       gb.n.trees.init = gb.n.trees.init,
       gb.n.trees.increase = gb.n.trees.increase,
       gb.n.trees.max = gb.n.trees.max,
-      gb.n.minobsinnode = gb.n.minobsinnode, gb.weights = gb.weights,
+      gb.n.minobsinnode = gb.n.minobsinnode,
       svm.kernel = svm.kernel, svm.gamma = svm.gamma,
       svm.cost = svm.cost, ebma.tol = ebma.tol,
       boot.iter = boot.iter, cores = cores)
@@ -598,9 +583,8 @@ auto_MrP <- function(
 
   class(ebma_out) <- c("autoMrP", "list")
   class(ebma_out$ebma) <- c("autoMrP", "ensemble", class(ebma_out$ebma))
-  class(ebma_out$classifiers) <- c(
-    "autoMrP", "classifiers", class(ebma_out$classifiers))
-  if ("weights" %in% names(ebma_out)) {
+  class(ebma_out$classifiers) <- c("autoMrP", "classifiers", class(ebma_out$classifiers))
+  if ("weights" %in% names(ebma_out)){
     class(ebma_out$weights) <- c("autoMrP", "weights", class(ebma_out$weights))
   } else{
     ebma_out$weights <- "EBMA step skipped (only 1 classifier run)"

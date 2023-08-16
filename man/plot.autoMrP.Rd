@@ -20,6 +20,10 @@ will not be printed if bootstrapping was not carried out.}
 
 \item{...}{Additional arguments affecting the summary produced.}
 }
+\value{
+Returns a \code{ggplot2} object of the preference estimates for the
+selected classifier.
+}
 \description{
 \code{plot.autoMrP()} plots unit-level preference estimates and error bars.
 }

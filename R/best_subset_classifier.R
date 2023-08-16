@@ -24,14 +24,14 @@ best_subset_classifier <- function(model, data.train,
   # Train model on training data
   if (isTRUE(verbose == TRUE)) {
     # optimizer
-    if (model.optimizer == "bobyqa") {
+    if (model.optimizer == 'bobyqa'){
       out <- lme4::glmer(formula =  model,
                          data = data.train,
                          family = model.family,
                          lme4::glmerControl(
                            optimizer = model.optimizer,
                            optCtrl = list(maxfun = n.iter)))
-    } else if (model.optimizer == "nloptwrap") {
+    } else if (model.optimizer == 'nloptwrap') {
       out <- lme4::glmer(formula =  model,
                          data = data.train,
                          family = model.family,
@@ -44,7 +44,7 @@ best_subset_classifier <- function(model, data.train,
     }
   } else {
     # optimizer
-    if (model.optimizer == "bobyqa") {
+    if (model.optimizer == 'bobyqa') {
       out <- suppressMessages(suppressWarnings(
         lme4::glmer(formula =  model,
                     data = data.train,
@@ -52,7 +52,7 @@ best_subset_classifier <- function(model, data.train,
                     lme4::glmerControl(optimizer = model.optimizer,
                                        optCtrl = list(maxfun = n.iter)))
       ))
-    } else if (model.optimizer == "nloptwrap") {
+    } else if (model.optimizer == 'nloptwrap') {
       out <- suppressMessages(suppressWarnings(
        lme4::glmer(formula =  model,
                    data = data.train,
