@@ -170,7 +170,7 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                  "' must contain integer numbers only.", sep = ""))
     }
 
-    if (!(folds_var == 1:max(folds_var))) {
+    if (!any((folds_var == 1:max(folds_var)))) {
       stop(paste("Fold variable '", folds,
                  "' must contain a sequence of integers running from 1 to ",
                  max(folds_var), ".", sep = ""))
