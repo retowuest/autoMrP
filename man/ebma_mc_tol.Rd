@@ -20,6 +20,7 @@ ebma_mc_tol(
   model.gb,
   model.svm,
   model.mrp,
+  model_deep,
   tol,
   n.draws,
   cores

@@ -13,19 +13,16 @@
 #' @param pc.names A character vector of the principal component variable names
 #'   in the data.
 
-run_classifiers <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
-                            L2.x.scale, pcs, pc.names, folds, bin.proportion,
-                            bin.size, cv.folds, cv.data, ebma.fold, census, ebma.size,
-                            ebma.n.draws, k.folds, cv.sampling, loss.unit,
-                            loss.fun, best.subset, lasso, pca, gb, svm, mrp,
-                            forward.select, best.subset.L2.x,
-                            lasso.L2.x, pca.L2.x, gb.L2.x, svm.L2.x,
-                            gb.L2.unit, gb.L2.reg, svm.L2.unit, svm.L2.reg,
-                            lasso.lambda, lasso.n.iter, gb.interaction.depth,
-                            gb.shrinkage, gb.n.trees.init,
-                            gb.n.trees.increase, gb.n.trees.max,
-                            gb.n.minobsinnode, svm.kernel,
-                            svm.gamma, svm.cost, ebma.tol, cores, verbose) {
+run_classifiers <- function(
+  y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg, L2.x.scale, pcs, pc.names, folds,
+  bin.proportion, bin.size, cv.folds, cv.data, ebma.fold, census, ebma.size,
+  ebma.n.draws, k.folds, cv.sampling, loss.unit, loss.fun, best.subset,
+  lasso, pca, gb, svm, mrp, deep.mrp, forward.select, best.subset.L2.x,
+  lasso.L2.x, pca.L2.x, gb.L2.x, svm.L2.x, gb.L2.unit, gb.L2.reg,
+  svm.L2.unit, svm.L2.reg, deep.L2.x, deep.L2.reg, deep.splines,
+  lasso.lambda, lasso.n.iter, gb.interaction.depth, gb.shrinkage,
+  gb.n.trees.init, gb.n.trees.increase, gb.n.trees.max, gb.n.minobsinnode,
+  svm.kernel, svm.gamma, svm.cost, ebma.tol, cores, verbose) {
 
   # Classifier 1: Best Subset
   if (isTRUE(best.subset)) {
@@ -213,7 +210,6 @@ run_classifiers <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
     svm_out <- NULL
   }
 
-
   # Post-stratification -----------------------------------------------------
 
   if (verbose) {
@@ -241,15 +237,17 @@ run_classifiers <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
     L2.reg.include = gb.L2.reg,
     kernel = svm.kernel,
     mrp.L2.x = mrp.L2.x,
+    deep.mrp = deep.mrp,
+    deep.L2.x = deep.L2.x,
+    deep.L2.reg = deep.L2.reg,
+    deep.splines = deep.splines,
     data = cv.data,
     ebma.fold = ebma.fold,
     census = census,
     verbose = verbose
   )
 
-
   # EBMA --------------------------------------------------------------------
-
 
   ebma_out <- ebma(
     ebma.fold = ebma.fold,
@@ -266,6 +264,7 @@ run_classifiers <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
     lasso.opt = lasso_out,
     gb.opt = gb_out,
     svm.opt = svm_out,
+    deep.mrp = deep.mrp,
     pc.names = pc.names,
     verbose = verbose,
     cores = cores

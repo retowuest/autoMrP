@@ -30,6 +30,7 @@ auto_MrP(
   gb = TRUE,
   svm = TRUE,
   mrp = FALSE,
+  deep.mrp = FALSE,
   oversampling = FALSE,
   forward.select = FALSE,
   best.subset.L2.x = NULL,
@@ -42,6 +43,9 @@ auto_MrP(
   gb.L2.reg = FALSE,
   svm.L2.unit = TRUE,
   svm.L2.reg = FALSE,
+  deep.L2.x = NULL,
+  deep.L2.reg = NULL,
+  deep.splines = TRUE,
   lasso.lambda = NULL,
   lasso.n.iter = 100,
   gb.interaction.depth = c(1, 2, 3),
@@ -188,6 +192,10 @@ classifier should be used for predicting outcome \code{y}. Default is
 MRP classifier should be used for predicting outcome \code{y}. Default is
 \code{FALSE}.}
 
+\item{deep.mrp}{Deep MRP classifier. A logical argument indicating whether
+the deep MRP classifier should be used for predicting outcome \code{y}.
+Default is \code{FALSE}.}
+
 \item{oversampling}{Over sample to create balance on the dependent variable.
 A logical argument. Default is \code{FALSE}.}
 
@@ -251,6 +259,19 @@ uses the variables specified in \code{L2.x}. Default is \code{NULL}.}
 \code{L2.reg} should be included in the SVM classifier. Default is
 \code{FALSE}.}
 
+\item{deep.L2.x}{Deep MRP context-level covariates. A character vector
+containing the column names of the context-level variables in \code{survey}
+and \code{census} to be used by the deep MRP classifier. If \code{NULL} and
+\code{deep.mrp} is set to \code{TRUE}, then deep MRP uses the variables
+specified in \code{L2.x}. Default is \code{NULL}.}
+
+\item{deep.L2.reg}{Deep MRP L2.reg. A logical argument indicating whether
+\code{L2.reg} should be included in the deep MRP classifier. Default is
+\code{FALSE}.}
+
+\item{deep.splines}{Deep MRP splines. A logical argument indicating whether
+splines should be used in the deep MRP classifier. Default is \code{TRUE}.}
+
 \item{lasso.lambda}{Lasso penalty parameter. A numeric \code{vector} of
 non-negative values. The penalty parameter controls the shrinkage of the
 context-level variables in the lasso model. Default is a sequence with
@@ -258,9 +279,9 @@ minimum 0.1 and maximum 250 that is equally spaced on the log-scale. The
 number of values is controlled by the \code{lasso.n.iter} parameter.}
 
 \item{lasso.n.iter}{Lasso number of lambda values. An integer-valued scalar
-specifying the number of lambda values to search over. Default is \eqn{100}.
-\emph{Note:} Is ignored if a vector of \code{lasso.lambda} values is
-provided.}
+specifying the number of lambda values to search over. Default is
+\eqn{100}. \emph{Note:} Is ignored if a vector of \code{lasso.lambda}
+values is provided.}
 
 \item{gb.interaction.depth}{GB interaction depth. An integer-valued vector
 whose values specify the interaction depth of GB. The interaction depth
@@ -290,8 +311,9 @@ observations that each terminal node of the trees must contain. Default is
 \eqn{20}.}
 
 \item{svm.kernel}{SVM kernel. A character-valued scalar specifying the kernel
-to be used by SVM. The possible values are \code{linear}, \code{polynomial},
-\code{radial}, and \code{sigmoid}. Default is \code{radial}.}
+to be used by SVM. The possible values are \code{linear},
+\code{polynomial}, \code{radial}, and \code{sigmoid}. Default is
+\code{radial}.}
 
 \item{svm.gamma}{SVM kernel parameter. A numeric vector whose values specify
 the gamma parameter in the SVM kernel. This parameter is needed for all

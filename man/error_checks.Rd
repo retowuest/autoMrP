@@ -213,9 +213,9 @@ minimum 0.1 and maximum 250 that is equally spaced on the log-scale. The
 number of values is controlled by the \code{lasso.n.iter} parameter.}
 
 \item{lasso.n.iter}{Lasso number of lambda values. An integer-valued scalar
-specifying the number of lambda values to search over. Default is \eqn{100}.
-\emph{Note:} Is ignored if a vector of \code{lasso.lambda} values is
-provided.}
+specifying the number of lambda values to search over. Default is
+\eqn{100}. \emph{Note:} Is ignored if a vector of \code{lasso.lambda}
+values is provided.}
 
 \item{uncertainty}{Uncertainty estimates. A logical argument indicating
 whether uncertainty estimates should be computed. Default is \code{FALSE}.}

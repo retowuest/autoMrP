@@ -34,13 +34,12 @@
 #' @param ebma.fold A data.frame containing the data not used in classifier
 #'   training.
 
-post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
-                                best.subset.opt, lasso.opt, lasso.L2.x,
-                                pca.opt, gb.opt, svm.opt, svm.L2.reg,
-                                svm.L2.unit, svm.L2.x, mrp.include,
-                                n.minobsinnode, L2.unit.include,
-                                L2.reg.include, kernel, mrp.L2.x,
-                                data, ebma.fold, census, verbose){
+post_stratification <- function(
+  y, L1.x, L2.x, L2.unit, L2.reg, best.subset.opt, lasso.opt, lasso.L2.x,
+  pca.opt, gb.opt, svm.opt, svm.L2.reg, svm.L2.unit, svm.L2.x, mrp.include,
+  n.minobsinnode, L2.unit.include, L2.reg.include, kernel, mrp.L2.x,
+  data, ebma.fold, census, verbose, deep.mrp, deep.L2.x, deep.L2.reg,
+  deep.splines){
 
   # globals
   lasso <- NULL
@@ -380,13 +379,6 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
       model.optimizer = "bobyqa",
       n.iter = 1000000,
       verbose = verbose)
-    # mrp_model_ebma <- best_subset_classifier(
-    #   model = form_mrp,
-    #   data.train = data,
-    #   model.family = binomial(link = "probit"),
-    #   model.optimizer = "nloptwrap",
-    #   n.iter = NULL,
-    #   verbose = verbose)
 
     # fit MrP model for post-stratification only
     mrp_model_poststrat_only <- best_subset_classifier(
@@ -396,13 +388,6 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
       model.optimizer = "bobyqa",
       n.iter = 1000000,
       verbose = verbose)
-    # mrp_model_poststrat_only <- best_subset_classifier(
-    #   model = form_mrp,
-    #   data.train = no_ebma_data,
-    #   model.family = binomial(link = "probit"),
-    #   model.optimizer = "nloptwrap",
-    #   n.iter = NULL,
-    #   verbose = verbose)
 
     # post-stratification
     mrp_preds <- census %>%
@@ -419,6 +404,184 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
     models$mrp <- mrp_model_ebma
   }
 
+  # Classifier 7: deep MRP
+  # Fit model
+  if (deep.mrp) {
+
+    # custom L2x 
+    if (!is.null(deep.L2.x)) {
+      L2.x <- deep.L2.x
+    }
+
+    # custom L2.reg
+    if (!is.null(deep.L2.reg)) {
+      L2.reg <- deep.L2.reg
+    }
+
+    # generate all interactions of L1.x
+    l1_comb <- unlist(lapply(2:length(L1.x), function(x) {
+      apply(combn(L1.x, x), 2, paste, collapse = ".")
+    }))
+
+    # generate all interactions of L1.x with L2.unit
+    l1_state <- paste(L1.x, L2.unit, sep = ".")
+
+    # generate all interactions of L1.x with L2.reg
+    if (!is.null(L2.reg)) {
+      l1_region <- paste(L1.x, L2.reg, sep = ".")
+    } else {
+      l1_region <- NULL
+    }  
+
+    # model formula
+    if (!deep.splines) {
+      form <- paste0(
+        # DV
+        y, " ~ ",
+        # L2x
+        paste(L2.x, collapse = " + "), " + ",
+        # individual level variables
+        paste("(1 | ", L1.x, ")", collapse = " + "), " + ",
+        # interactions of L1x
+        paste("(1 | ", l1_comb, ")", collapse = " + "), " + ",
+        # interactions of L1x with L2.unit
+        paste("(1 | ", l1_state, ")", collapse = " + "), " + ",
+        # interactions of L1x with L2.reg
+        paste("(1 | ", l1_region, ")", collapse = " + ")
+      )
+    } else {
+      form <- paste0(
+      # DV
+      y, " ~ ",
+      # L2x
+      paste0("v_s(", L2.x, ")", collapse = " + "), " + ",
+      # individual level variables
+      paste("(1 | ", L1.x, ")", collapse = " + "), " + ",
+      # interactions of L1x
+      paste("(1 | ", l1_comb, ")", collapse = " + "), " + ",
+      # interactions of L1x with L2.unit
+      paste("(1 | ", l1_state, ")", collapse = " + "), " + ",
+      # interactions of L1x with L2.reg
+      paste("(1 | ", l1_region, ")", collapse = " + ")
+      )
+    }
+
+    # add the interactions to the data
+    all_interactions <- c(l1_comb, l1_state, l1_region)
+
+    # loop over all interactions for data object
+    x_data <- lapply(all_interactions, function(x) {
+
+      # break down interaction components
+      y <- stringr::str_split(string = x, pattern = "\\.") %>%
+        unlist()
+
+      # take each column of data and combine its values into a single string 
+      df_x <- data %>%
+        dplyr::select({{y}}) %>%
+        dplyr::rowwise() %>%
+        dplyr::mutate({{x}} := paste(dplyr::c_across(
+          dplyr::everything()), collapse = "-")) %>%
+        dplyr::ungroup() %>%
+        dplyr::select(ncol(.))
+      
+      return(df_x)
+    }) %>%
+      dplyr::bind_cols()
+
+    # combine data and interactions
+    data <- dplyr::bind_cols(data, x_data)
+
+    # loop over all interactions for data no_ebma_data object
+    x_no_ebma <- lapply(all_interactions, function(x) {
+
+      # break down interaction components
+      y <- stringr::str_split(string = x, pattern = "\\.") %>%
+        unlist()
+
+      # take each column of data and combine its values into a single string 
+      df_x <- no_ebma_data %>%
+        dplyr::select({{y}}) %>%
+        dplyr::rowwise() %>%
+        dplyr::mutate({{x}} := paste(dplyr::c_across(
+          dplyr::everything()), collapse = "-")) %>%
+        dplyr::ungroup() %>%
+        dplyr::select(ncol(.))
+      
+      return(df_x)
+    }) %>%
+      dplyr::bind_cols()
+
+    # combine data and interactions
+    no_ebma_data <- dplyr::bind_cols(no_ebma_data, x_no_ebma)
+
+    # run deep mrp model for ebma
+    deep_mrp_model <- deep_mrp_classifier(
+      form = form,
+      data = data,
+      verbose = verbose)
+
+    # run deep mrp model for postratification only
+    deep_mrp_model_poststrat_only <- deep_mrp_classifier(
+      form = form,
+      data = no_ebma_data,
+      verbose = verbose)
+
+    # loop over all interactions for census data
+    x_census <- lapply(all_interactions, function(x) {
+
+      # break down interaction components
+      y <- stringr::str_split(string = x, pattern = "\\.") %>%
+        unlist()
+
+      # take each column of data and combine its values into a single string 
+      df_x <- census %>%
+        dplyr::select({{y}}) %>%
+        dplyr::rowwise() %>%
+        dplyr::mutate({{x}} := paste(dplyr::c_across(
+          dplyr::everything()), collapse = "-")) %>%
+        dplyr::ungroup() %>%
+        dplyr::select(ncol(.))
+      
+      return(df_x)
+    }) %>%
+      dplyr::bind_cols()
+
+    # combine data and interactions
+    deep_census <- dplyr::bind_cols(census, x_census)
+
+    # predictions for post-stratification only (no EBMA)
+    pred_d <- vglmer::predict_MAVB(
+      samples = 1000,
+      deep_mrp_model_poststrat_only,
+      newdata = deep_census,
+      allow_missing_levels = TRUE)[["mean"]]
+
+    # convert to response probabilities
+    pred_d <- plogis(pred_d)
+
+    # post-stratification
+    deep_preds <- deep_census %>%
+      dplyr::mutate(deep_mrp = pred_d) %>%
+      dplyr::group_by(!!rlang::sym(L2.unit)) %>%
+      dplyr::summarize(deep_mrp = stats::weighted.mean(x = deep_mrp, w = prop), .groups = "keep")
+
+    # individual level predictions for EBMA
+    deep_mrp_ind <- vglmer::predict_MAVB(
+      samples = 1000,
+      deep_mrp_model,
+      newdata = data,
+      allow_missing_levels = TRUE)[["mean"]]
+    
+    # convert response to probabilities
+    deep_mrp_ind <- plogis(deep_mrp_ind)
+    
+    # model for EBMA
+    models$deep_mrp <- deep_mrp_model
+
+  } # end of deep.mrp
+
+
   # --------------------------- combine l2 level predictions ----------------------------
 
   # tibble of L2 units
@@ -431,6 +594,7 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
   if(exists("gb_preds")) L2_preds <- dplyr::left_join(x = L2_preds, y = gb_preds, by = L2.unit)
   if(exists("svm_preds")) L2_preds <- dplyr::left_join(x = L2_preds, y = svm_preds, by = L2.unit)
   if(exists("mrp_preds")) L2_preds <- dplyr::left_join(x = L2_preds, y = mrp_preds, by = L2.unit)
+  if(exists("deep_preds")) L2_preds <- dplyr::left_join(x = L2_preds, y = deep_preds, by = L2.unit)
 
 
   # individual predictions for EBMA
@@ -473,13 +637,23 @@ post_stratification <- function(y, L1.x, L2.x, L2.unit, L2.reg,
         as.numeric(mrp_ind)
       } else{
         NA
+      },
+      # add deep MrP
+      deep_mrp = if(exists("deep_mrp_ind")){
+        as.numeric(deep_mrp_ind)
+      } else{
+        NA
       }
     )
+
   # remove NA's
   L1_preds <- L1_preds[,apply(X = L1_preds, MARGIN = 2, FUN = function(x){
     all(!is.na(x))})]
 
   # Function output
-  return(ps = list(predictions = list(Level1 = L1_preds, Level2 = L2_preds),
-                   models = models))
+  return(
+    ps = list(
+      predictions = list(
+        Level1 = L1_preds, Level2 = L2_preds),
+        models = models))
 }
