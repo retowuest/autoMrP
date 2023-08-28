@@ -542,7 +542,7 @@ post_stratification <- function(
           dplyr::everything()), collapse = "-")) %>%
         dplyr::ungroup() %>%
         dplyr::select(ncol(.))
-      
+
       return(df_x)
     }) %>%
       dplyr::bind_cols()
@@ -558,13 +558,15 @@ post_stratification <- function(
       allow_missing_levels = TRUE)[["mean"]]
 
     # convert to response probabilities
-    pred_d <- plogis(pred_d)
+    pred_d <- stats::plogis(pred_d)
 
     # post-stratification
     deep_preds <- deep_census %>%
       dplyr::mutate(deep_mrp = pred_d) %>%
       dplyr::group_by(!!rlang::sym(L2.unit)) %>%
-      dplyr::summarize(deep_mrp = stats::weighted.mean(x = deep_mrp, w = prop), .groups = "keep")
+      dplyr::summarize(
+        deep_mrp = stats::weighted.mean(
+          x = deep_mrp, w = prop), .groups = "keep")
 
     # individual level predictions for EBMA
     deep_mrp_ind <- vglmer::predict_MAVB(
@@ -572,17 +574,17 @@ post_stratification <- function(
       deep_mrp_model,
       newdata = data,
       allow_missing_levels = TRUE)[["mean"]]
-    
+
     # convert response to probabilities
-    deep_mrp_ind <- plogis(deep_mrp_ind)
-    
+    deep_mrp_ind <- stats::plogis(deep_mrp_ind)
+
     # model for EBMA
     models$deep_mrp <- deep_mrp_model
 
   } # end of deep.mrp
 
 
-  # --------------------------- combine l2 level predictions ----------------------------
+  # --------------------------- combine l2 level predictions ------------------
 
   # tibble of L2 units
   L2_preds <- dplyr::select(census, one_of(L2.unit)) %>%
@@ -603,51 +605,51 @@ post_stratification <- function(
     tidyr::drop_na() %>%
     # add best subset
     dplyr::mutate(
-      best_subset = if(exists("bs_ind")){
+      best_subset = if(exists("bs_ind")) {
         as.numeric(bs_ind)
-      } else{
+      } else {
         NA
         },
       # add lasso
-      lasso = if(exists("lasso_ind")){
+      lasso = if (exists("lasso_ind")) {
         as.numeric(lasso_ind)
-        } else{
+        } else {
           NA
           },
       # add pca
-      pca = if(exists("pca_ind")){
+      pca = if (exists("pca_ind")) {
         as.numeric(pca_ind)
-      } else{
+      } else {
         NA
       },
       # add gb
-      gb = if(exists("gb_ind")){
+      gb = if (exists("gb_ind")) {
         as.numeric(gb_ind)
-      } else{
+      } else {
         NA
       },
       # add svm
-      svm = if(exists("svm_ind")){
+      svm = if (exists("svm_ind")) {
         as.numeric(svm_ind)
-      } else{
+      } else {
         NA
       },
       # add MrP
-      mrp = if(exists("mrp_ind")){
+      mrp = if (exists("mrp_ind")) {
         as.numeric(mrp_ind)
-      } else{
+      } else {
         NA
       },
       # add deep MrP
-      deep_mrp = if(exists("deep_mrp_ind")){
+      deep_mrp = if (exists("deep_mrp_ind")) {
         as.numeric(deep_mrp_ind)
-      } else{
+      } else {
         NA
       }
     )
 
   # remove NA's
-  L1_preds <- L1_preds[,apply(X = L1_preds, MARGIN = 2, FUN = function(x){
+  L1_preds <- L1_preds[, apply(X = L1_preds, MARGIN = 2, FUN = function(x) {
     all(!is.na(x))})]
 
   # Function output

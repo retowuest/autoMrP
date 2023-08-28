@@ -1615,19 +1615,22 @@ plot.autoMrP <- function(x, algorithm = "ebma", ci.lvl = 0.95, ...){
 #' @export
 #' @export summary.autoMrP
 
-summary.autoMrP <- function(object, ci.lvl = 0.95, digits = 4, format = "simple",
-                            classifiers = NULL, n = 10, ...){
+summary.autoMrP <- function(
+  object, ci.lvl = 0.95, digits = 4, format = "simple", classifiers = NULL,
+  n = 10, ...) {
 
   # weights
-  if ( all(c("autoMrP", "weights") %in% class(object)) ){
+  if (all(c("autoMrP", "weights") %in% class(object))) {
 
-    # error message if weights summary called without running multiple classifiers
-    if (any(object == "EBMA step skipped (only 1 classifier run)")){
-      stop("Weights are not reported if the EBMA step was skipped. Re-run autoMrP with multiple classifiers.")
+    # error message if weights summary called without running
+    # multiple classifiers
+    if (any(object == "EBMA step skipped (only 1 classifier run)")) {
+      stop("Weights are not reported if the EBMA step was skipped. ",
+      "Re-run autoMrP with multiple classifiers.")
     }
 
     # weights vector to tibble
-    if( is.null(dim(object)) ){
+    if (is.null(dim(object))) {
       object <- dplyr::tibble(!!!object)
     }
 
@@ -1649,9 +1652,9 @@ summary.autoMrP <- function(object, ci.lvl = 0.95, digits = 4, format = "simple"
       dplyr::arrange(dplyr::desc(median))
 
     # weights with uncertainty
-    if ( all(s_data$median != s_data$min) ){
-      n <- ifelse(n <= nrow(s_data), yes = n, no = nrow(s_data) )
-      cat( paste("\n", "# EBMA classifier weights:"), sep = "")
+    if (all(s_data$median != s_data$min)) {
+      n <- ifelse(n <= nrow(s_data), yes = n, no = nrow(s_data))
+      cat(paste("\n", "# EBMA classifier weights:"), sep = "")
       # output table
       output_table(
         object = s_data[1:n, ],
@@ -1665,11 +1668,14 @@ summary.autoMrP <- function(object, ci.lvl = 0.95, digits = 4, format = "simple"
           "Max"),
         format = format,
         digits = digits)
-      if (n < nrow(s_data)) cat( paste("... with", nrow(s_data)-n, " more rows", "\n", "\n"), sep = "")
+      if (n < nrow(s_data)) {
+        cat(paste("... with", nrow(s_data) - n,
+          " more rows", "\n", "\n"), sep = "")
+      }
     } else{
       s_data <- dplyr::select(.data = s_data, method, median)
-      n <- ifelse(n <= nrow(s_data), yes = n, no = nrow(s_data) )
-      cat( paste("\n", "# EBMA classifier weights:"), sep = "")
+      n <- ifelse(n <= nrow(s_data), yes = n, no = nrow(s_data))
+      cat(paste("\n", "# EBMA classifier weights:"), sep = "")
       output_table(
         object = s_data[1:n, ],
         col.names = c(
@@ -1677,12 +1683,13 @@ summary.autoMrP <- function(object, ci.lvl = 0.95, digits = 4, format = "simple"
           "Weight"),
         format = format,
         digits = digits)
-      if (n < nrow(s_data)) cat( paste("... with", nrow(s_data)-n, " more rows", "\n", "\n"), sep = "")
+      if (n < nrow(s_data)) cat(
+        paste(
+          "... with", nrow(s_data)-n,
+          " more rows", "\n", "\n"), sep = "")
     }
-  }
-
-  # ensemble summary
-  else if ( all(c("autoMrP", "ensemble") %in% class(object)) ) {
+  } else if (all(c("autoMrP", "ensemble") %in% class(object))) {
+    # ensemble summary
 
     # unit identifier
     L2.unit <- names(object)[1]
@@ -1692,16 +1699,17 @@ summary.autoMrP <- function(object, ci.lvl = 0.95, digits = 4, format = "simple"
       dplyr::group_by(!! rlang::sym(L2.unit)) %>%
       dplyr::summarise(
         min = base::min(ebma, na.rm = TRUE),
-        lb = stats::quantile(x = ebma, probs = (1 - ci.lvl)*.5, na.rm = TRUE),
+        lb = stats::quantile(x = ebma, probs = (1 - ci.lvl) * .5, na.rm = TRUE),
         median = stats::quantile(x = ebma, probs = .5, na.rm = TRUE),
-        ub = stats::quantile(x = ebma, probs = ci.lvl + (1 - ci.lvl)*.5, na.rm = TRUE),
+        ub = stats::quantile(
+          x = ebma, probs = ci.lvl + (1 - ci.lvl) * .5, na.rm = TRUE),
         max = base::max(ebma, na.rm = TRUE),
         .groups = "drop"
       )
 
     # with or without uncertainty
-    if ( all(s_data$median != s_data$lb) ){
-      cat( paste("\n", "# EBMA estimates:"), sep = "")
+    if (all(s_data$median != s_data$lb)) {
+      cat(paste("\n", "# EBMA estimates:"), sep = "")
       # output table
       output_table(
         object = s_data[1:n, ],
@@ -1714,29 +1722,32 @@ summary.autoMrP <- function(object, ci.lvl = 0.95, digits = 4, format = "simple"
           "Max"),
         format = format,
         digits = digits)
-      if (n < nrow(s_data)) cat( paste("... with", nrow(s_data)-n, " more rows", "\n", "\n"), sep = "")
-
-    } else{
+      if (n < nrow(s_data)) {
+        cat(paste(
+          "... with", nrow(s_data)-n, " more rows", "\n", "\n"), sep = "")
+      }
+    } else {
       s_data <- dplyr::select(.data = s_data, dplyr::one_of(L2.unit), median)
-      n <- ifelse(n <= nrow(s_data), yes = n, no = nrow(s_data) )
-      cat( paste("\n", "# EBMA estimates:"), sep = "")
+      n <- ifelse(n <= nrow(s_data), yes = n, no = nrow(s_data))
+      cat(paste("\n", "# EBMA estimates:"), sep = "")
       output_table(
         object = s_data[1:n, ],
         col.names = c(L2.unit, "Estimate"),
         format = format,
         digits = digits)
-      if (n < nrow(s_data)) cat( paste("... with", nrow(s_data)-n, " more rows", "\n", "\n"), sep = "")
+      if (n < nrow(s_data)) {
+        cat(paste(
+          "... with", nrow(s_data)-n, " more rows", "\n", "\n"), sep = "")
+      }
     }
-  }
-
-  # classifier summary
-  else if ( all(c("autoMrP", "classifiers") %in% class(object)) ){
+  } else if (all(c("autoMrP", "classifiers") %in% class(object))){
+    # classifier summary
 
     # unit identifier
     L2.unit <- names(object)[1]
 
     # multiple classifiers
-    if (base::is.null(classifiers)){
+    if (base::is.null(classifiers)) {
 
       # point estimates for all classifiers
       s_data <- object %>%
@@ -1745,31 +1756,37 @@ summary.autoMrP <- function(object, ci.lvl = 0.95, digits = 4, format = "simple"
 
       # output table
       ests <- paste(names(object)[-1], collapse = ", ")
-      n <- ifelse(n <= nrow(s_data), yes = n, no = nrow(s_data) )
-      cat( paste("\n", "# estimates of classifiers: ", ests), sep = "")
-      output_table(object = s_data[1:n, ],
-                   col.names = names(s_data),
-                   format = format,
-                   digits = digits)
-      if (n < nrow(s_data)) cat( paste("... with", nrow(s_data)-n, " more rows", "\n", "\n"), sep = "")
-    } else{
+      n <- ifelse(n <= nrow(s_data), yes = n, no = nrow(s_data))
+      cat(paste("\n", "# estimates of classifiers: ", ests), sep = "")
+      output_table(
+        object = s_data[1:n, ],
+        col.names = names(s_data),
+        format = format,
+        digits = digits)
+      if (n < nrow(s_data)) {
+        cat(paste(
+          "... with", nrow(s_data)-n, " more rows", "\n", "\n"), sep = "")
+      }
+    } else {
 
       # summary statistics
       s_data <- object %>%
-        dplyr::select(dplyr::one_of(L2.unit,classifiers)) %>%
+        dplyr::select(dplyr::one_of(L2.unit, classifiers)) %>%
         dplyr::group_by(!! rlang::sym(L2.unit)) %>%
         dplyr::summarise_all(.funs = list(
           min = ~ base::min(x = ., na.rm = TRUE),
-          lb = ~ stats::quantile(x = ., probs = (1 - ci.lvl)*.5, na.rm = TRUE),
+          lb = ~ stats::quantile(
+            x = ., probs = (1 - ci.lvl) * .5, na.rm = TRUE),
           median = ~ stats::median(x = ., na.rm = TRUE),
-          ub = ~ stats::quantile(x = ., probs = ci.lvl + (1 - ci.lvl)*.5, na.rm = TRUE),
+          ub = ~ stats::quantile(
+            x = ., probs = ci.lvl + (1 - ci.lvl) * .5, na.rm = TRUE),
           max = ~ base::max(x = ., na.rm = TRUE)
           ))
 
       # with or without uncertainty
-      if( all(s_data$median != s_data$lb) ){
-        n <- ifelse(n <= nrow(s_data), yes = n, no = nrow(s_data) )
-        cat( paste("\n", "# estimates of", classifiers, "classifier"), sep = "")
+      if (all(s_data$median != s_data$lb)) {
+        n <- ifelse(n <= nrow(s_data), yes = n, no = nrow(s_data))
+        cat(paste("\n", "# estimates of", classifiers, "classifier"), sep = "")
         output_table(
           object = s_data[1:n, ],
           col.names = c(
@@ -1781,10 +1798,14 @@ summary.autoMrP <- function(object, ci.lvl = 0.95, digits = 4, format = "simple"
             "Max"),
           format = format,
           digits = digits)
-        if (n < nrow(s_data)) cat( paste("... with", nrow(s_data)-n, " more rows", "\n", "\n"), sep = "")
-      } else{
-        s_data <- dplyr::select(.data = s_data, dplyr::one_of(L2.unit), "median")
-        n <- ifelse(n <= nrow(s_data), yes = n, no = nrow(s_data) )
+        if (n < nrow(s_data)) {
+          cat(paste(
+            "... with", nrow(s_data) - n, " more rows", "\n", "\n"), sep = "")
+        }
+      } else {
+        s_data <- dplyr::select(
+          .data = s_data, dplyr::one_of(L2.unit), "median")
+        n <- ifelse(n <= nrow(s_data), yes = n, no = nrow(s_data))
         cat( paste("\n", "# estimates of", classifiers, "classifier"), sep = "")
         output_table(
           object = s_data[1:n, ],
@@ -1985,129 +2006,19 @@ log_spaced <- function(min, max, n){
 
 # Bootstrap function run inside the foreach loop
 
-boot_fun <- function(survey, L2.unit,
-                     y, L1.x, L2.x, mrp.L2.x, L2.reg, L2.x.scale,
-                     pcs, folds, bin.proportion, bin.size, census,
-                     k.folds, cv.sampling, loss.unit, loss.fun, best.subset,
-                     lasso, pca, gb, svm, mrp, forward.select, best.subset.L2.x,
-                     lasso.L2.x, pca.L2.x, pc.names, gb.L2.x, svm.L2.x,
-                     svm.L2.unit, svm.L2.reg, gb.L2.unit, gb.L2.reg,
-                     lasso.lambda, lasso.n.iter, gb.interaction.depth,
-                     gb.shrinkage, gb.n.trees.init, gb.n.trees.increase,
-                     gb.n.trees.max, gb.n.minobsinnode, svm.kernel,
-                     svm.gamma, svm.cost, ebma.tol, ebma.size, cores, verbose) {
+boot_fun <- function(
+  survey, L2.unit, y, L1.x, L2.x, mrp.L2.x, L2.reg, L2.x.scale,
+  pcs, folds, bin.proportion, bin.size, census, k.folds,
+  cv.sampling, loss.unit, loss.fun, best.subset, lasso, pca,
+  gb, svm, mrp, deep.mrp, forward.select, best.subset.L2.x,
+  lasso.L2.x, pca.L2.x, pc.names, gb.L2.x, svm.L2.x, svm.L2.unit,
+  svm.L2.reg, gb.L2.unit, gb.L2.reg, deep.L2.x, deep.L2.reg,
+  deep.splines, lasso.lambda, lasso.n.iter, gb.interaction.depth,
+  gb.shrinkage, gb.n.trees.init, gb.n.trees.increase,
+  gb.n.trees.max, gb.n.minobsinnode, svm.kernel, svm.gamma,
+  svm.cost, ebma.tol, ebma.size, cores, verbose) {
 
   # Bootstrap sample --------------------------------------------------------
-
-  # simple sampling with replacement
-  # boot_sample <- dplyr::slice_sample(
-  #   .data = survey, n = nrow(survey), replace = TRUE)
-
-  # number of states to draw in cluster balanced bootstrap
-  # avg_n <- survey %>% dplyr::mutate(nrows = dplyr::n()) %>%
-  #   dplyr::group_by(!!rlang::sym(L2.unit)) %>%
-  #   dplyr::mutate(state_n = dplyr::n(),
-  #                 state_proportion =  (dplyr::n() / nrows))%>%
-  #   dplyr::summarise(state_n = mean(state_n),
-  #                    state_proportion = mean(state_proportion),
-  #                    .groups = 'drop') %>%
-  #   dplyr::summarise(n = weighted.mean(x = state_n, w = state_proportion)) %>%
-  #   as.numeric
-  #
-  # #avg_n <- floor(x = (nrow(survey) / avg_n) )
-  # avg_n <- round(x = (nrow(survey) / avg_n), digits = 0)
-  #
-  # # balanced cluster bootstrap
-  # boot_sample <- survey %>%
-  #   dplyr::group_by(!!rlang::sym(L2.unit)) %>%
-  #   tidyr::nest() %>%
-  #   dplyr::left_join(
-  #     y = survey %>%
-  #       dplyr::mutate(nrows = dplyr::n()) %>%
-  #       dplyr::group_by(!!rlang::sym(L2.unit)) %>%
-  #       dplyr::mutate(state_proportion =  (dplyr::n() / nrows)) %>%
-  #       dplyr::summarise(state_proportion = mean(state_proportion),
-  #                        .groups = 'drop'), by = L2.unit) %>%
-  #   dplyr::ungroup() %>%
-  #   dplyr::slice_sample(n = avg_n, weight_by = state_proportion,
-  #                       replace = TRUE) %>%
-  #   dplyr::select(-state_proportion) %>%
-  #   tidyr::unnest(data)
-
-  # # drop observations if the bootstrap sample is too large
-  # if (nrow(boot_sample) > nrow(survey)){
-  #   boot_sample <- dplyr::slice_sample(.data = boot_sample, n = nrow(survey),
-  #                                      replace = TRUE)
-  # }
-
-  # # Sample 1) regions; 2) states; 3) individuals
-  # if (!is.null(L2.reg)) {
-  #   # Step 1: Sample regions but sample at least 2 different regions
-  #   boot_sample <- dplyr::bind_rows(
-  #       # Sample at least 2 different regions
-  #       dplyr::slice_sample(.data = survey %>%
-  #                             dplyr::group_by(!!rlang::sym(L2.reg)) %>%
-  #                             tidyr::nest() %>%
-  #                             dplyr::ungroup()
-  #                           , n = 2, replace = FALSE),
-  #       # Sample from all regions with replacement
-  #       dplyr::slice_sample(.data = survey %>%
-  #                             dplyr::group_by(!!rlang::sym(L2.reg)) %>%
-  #                             tidyr::nest() %>%
-  #                             dplyr::ungroup(),
-  #                           n = (length(unique(unlist(survey[, L2.reg]))) - 2),
-  #                           replace = TRUE)) %>%
-  #     tidyr::unnest(data) %>%
-  #     dplyr::ungroup() %>%
-  #   # Step 2: sample states with replacement
-  #     dplyr::group_by(!!rlang::sym(L2.unit)) %>%
-  #     tidyr::nest() %>%
-  #     dplyr::ungroup() %>%
-  #     dplyr::slice_sample(n = nrow(.), replace = TRUE) %>%
-  #     tidyr::unnest(data) %>%
-  #     dplyr::ungroup() %>%
-  #     # Step 3: Sample individuals with replacement
-  #     dplyr::group_by(!!rlang::sym(L2.unit)) %>%
-  #     tidyr::nest() %>%
-  #     dplyr::mutate(data = purrr::map(data, function(x){
-  #       data = dplyr::slice_sample(.data = x, n = nrow(x), replace = TRUE)})) %>%
-  #     tidyr::unnest(data) %>%
-  #     dplyr::ungroup()
-  # } else {
-  #   # Step 1: sample states with replacement
-  #   boot_sample <- survey %>%
-  #     dplyr::group_by(!!rlang::sym(L2.unit)) %>%
-  #     tidyr::nest() %>%
-  #     dplyr::ungroup() %>%
-  #     dplyr::slice_sample(n = nrow(.), replace = TRUE) %>%
-  #     tidyr::unnest(data) %>%
-  #     dplyr::ungroup() %>%
-  #     # Step 2: Sample individuals with replacement within states
-  #     dplyr::group_by(!!rlang::sym(L2.unit)) %>%
-  #     tidyr::nest() %>%
-  #     dplyr::mutate(data = purrr::map(data, function(x){
-  #       data = dplyr::slice_sample(.data = x, n = nrow(x), replace = TRUE)})) %>%
-  #     tidyr::unnest(data) %>%
-  #     dplyr::ungroup()
-  # }
-
-  # sample states with replacement & within states sample individuals with
-  # replacement
-  # Step 1: sample states with replacement
-  # boot_sample <- survey %>%
-  #   dplyr::group_by(!!rlang::sym(L2.unit)) %>%
-  #   tidyr::nest() %>%
-  #   dplyr::ungroup() %>%
-  #   dplyr::slice_sample(n = nrow(.), replace = TRUE) %>%
-  #   tidyr::unnest(data) %>%
-  #   dplyr::ungroup() %>%
-  #   # Step 2: Sample individuals with replacement within states
-  #   dplyr::group_by(!!rlang::sym(L2.unit)) %>%
-  #   tidyr::nest() %>%
-  #   dplyr::mutate(data = purrr::map(data, function(x){
-  #     data = dplyr::slice_sample(.data = x, n = nrow(x), replace = TRUE)})) %>%
-  #   tidyr::unnest(data) %>%
-  #   dplyr::ungroup()
 
   # cluster bootstrap - sample L2 units with replacement
   boot_sample <- survey %>%
@@ -2118,44 +2029,6 @@ boot_fun <- function(survey, L2.unit,
     tidyr::unnest(data) %>%
     dplyr::ungroup()
 
-  # state stratified sample
-  # boot_sample <- survey %>%
-  #   dplyr::group_by( !! rlang::sym(L2.unit) ) %>%
-  #   tidyr::nest() %>%
-  #   dplyr::mutate(data = purrr::map(data, function(x){
-  #     data = dplyr::slice_sample(.data = x, n = nrow(x), replace = TRUE)
-  #   })) %>%
-  #   tidyr::unnest(data) %>%
-  #   dplyr::ungroup()
-
-  # at least one observation per state and simple sample
-  # boot_sample <- survey %>%
-  #   dplyr::group_by(!! rlang::sym(L2.unit)) %>%
-  #   dplyr::mutate(state_pick = ifelse(
-  #     test = dplyr::row_number() == sample(x = 1:dplyr::n(), size = 1),
-  #     yes = 1, no = 0)) %>%
-  #   dplyr::ungroup() %>%
-  #   dplyr::group_by(state_pick) %>%
-  #   tidyr::nest() %>%
-  #   dplyr::mutate(data = ifelse(
-  #     test = state_pick == 0,
-  #     yes = purrr::map(data, function(x){
-  #       dplyr::slice_sample(.data = x, n = nrow(x), replace = TRUE)
-  #     }),
-  #     no = data
-  #   )) %>%
-  #   tidyr::unnest(data) %>%
-  #   dplyr::ungroup()
-
-  # no-bootstrapping (same data as original survey (for testing only))
-  # boot_sample <- survey
-
-
-  # do not predict outcomes for states that are not in boot_sample ----------
-  # boot_census <- census %>%
-  #   dplyr::filter( !!rlang::sym(L2.unit) %in% unique(dplyr::pull(
-  #     .data = boot_sample, var = !!rlang::sym(L2.unit))) )
-
   # Create folds ------------------------------------------------------------
 
   if (is.null(folds)) {
@@ -2163,13 +2036,14 @@ boot_fun <- function(survey, L2.unit,
     # EBMA hold-out fold
     ebma.size <- round(nrow(boot_sample) * ebma.size, digits = 0)
 
-    if(ebma.size>0){
-      ebma_folding_out <- ebma_folding(data = boot_sample,
-                                       L2.unit = L2.unit,
-                                       ebma.size = ebma.size)
+    if (ebma.size > 0) {
+      ebma_folding_out <- ebma_folding(
+        data = boot_sample,
+        L2.unit = L2.unit,
+        ebma.size = ebma.size)
       ebma_fold <- ebma_folding_out$ebma_fold
       cv_data <- ebma_folding_out$cv_data
-    } else{
+    } else {
       ebma_fold <- NULL
       cv_data <- boot_sample
     }
@@ -2182,7 +2056,7 @@ boot_fun <- function(survey, L2.unit,
       cv.sampling = cv.sampling)
   } else {
 
-    if (ebma.size > 0){
+    if (ebma.size > 0) {
       # EBMA hold-out fold
       ebma_fold <- boot_sample %>%
         dplyr::filter_at(dplyr::vars(dplyr::one_of(folds)),
@@ -2197,8 +2071,6 @@ boot_fun <- function(survey, L2.unit,
     cv_folds <- cv_data %>%
       dplyr::group_split(.data[[folds]])
   }
-
-
 
   # Run classifiers ---------------------------------------------------------
 
@@ -2233,6 +2105,7 @@ boot_fun <- function(survey, L2.unit,
     gb = gb,
     svm = svm,
     mrp = mrp,
+    deep.mrp = deep.mrp,
     forward.select = forward.select,
     best.subset.L2.x = best.subset.L2.x,
     lasso.L2.x = lasso.L2.x,
@@ -2244,6 +2117,9 @@ boot_fun <- function(survey, L2.unit,
     svm.L2.reg = svm.L2.reg,
     gb.L2.unit = gb.L2.unit,
     gb.L2.reg = gb.L2.reg,
+    deep.L2.x = deep.L2.x,
+    deep.L2.reg = deep.L2.reg,
+    deep.splines = deep.splines,
     lasso.lambda = lasso.lambda,
     lasso.n.iter = lasso.n.iter,
     gb.interaction.depth = gb.interaction.depth,
@@ -2257,4 +2133,5 @@ boot_fun <- function(survey, L2.unit,
     svm.cost = svm.cost,
     ebma.tol = ebma.tol
   )
+  return(boot_mrp)
 }

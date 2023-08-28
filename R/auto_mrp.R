@@ -389,7 +389,7 @@ auto_MrP <- function(
                boot.iter = boot.iter)
 
 
-# Prepare data ------------------------------------------------------------
+    # Prepare data ------------------------------------------------------------
 
     # Coerce individual-level variables and geographic variables to factors in
     # survey and census data
@@ -576,30 +576,59 @@ auto_MrP <- function(
     }
 
     ebma_out <- boot_auto_mrp(
-      y = y, L1.x = L1.x, L2.x = L2.x, mrp.L2.x = mrp.L2.x,
-      L2.unit = L2.unit, L2.reg = L2.reg, L2.x.scale = L2.x.scale,
-      pcs = pcs, folds = folds, bin.proportion = bin.proportion,
-      bin.size = bin.size, survey = survey, census = census,
-      ebma.size = ebma.size, k.folds = k.folds,
-      cv.sampling = cv.sampling, loss.unit = loss.unit,
-      loss.fun = loss.fun, best.subset = best.subset,
-      lasso = lasso, pca = pca, gb = gb, svm = svm, mrp = mrp,
-      deep.mrp = deep.mrp, forward.select = forward.select,
+      y = y,
+      L1.x = L1.x,
+      L2.x = L2.x,
+      mrp.L2.x = mrp.L2.x,
+      L2.unit = L2.unit,
+      L2.reg = L2.reg,
+      L2.x.scale = L2.x.scale,
+      pcs = pcs,
+      folds = folds,
+      bin.proportion = bin.proportion,
+      bin.size = bin.size,
+      survey = survey,
+      census = census,
+      ebma.size = ebma.size,
+      k.folds = k.folds,
+      cv.sampling = cv.sampling,
+      loss.unit = loss.unit,
+      loss.fun = loss.fun,
+      best.subset = best.subset,
+      lasso = lasso,
+      pca = pca,
+      gb = gb,
+      svm = svm,
+      mrp = mrp,
+      deep.mrp = deep.mrp,
+      forward.select = forward.select,
       best.subset.L2.x = best.subset.L2.x,
-      lasso.L2.x = lasso.L2.x, pca.L2.x = pca.L2.x, pc.names = pc_names,
-      gb.L2.x = gb.L2.x, svm.L2.x = svm.L2.x, svm.L2.unit = svm.L2.unit,
-      svm.L2.reg = svm.L2.reg, gb.L2.unit = gb.L2.unit, gb.L2.reg = gb.L2.reg,
-      deep.L2.x = deep.L2.x, deep.L2.reg = deep.L2.reg, deep.splines = deep.splines,
-      lasso.lambda = lasso.lambda, lasso.n.iter = lasso.n.iter,
+      lasso.L2.x = lasso.L2.x,
+      pca.L2.x = pca.L2.x,
+      pc.names = pc_names,
+      gb.L2.x = gb.L2.x,
+      svm.L2.x = svm.L2.x,
+      svm.L2.unit = svm.L2.unit,
+      svm.L2.reg = svm.L2.reg,
+      gb.L2.unit = gb.L2.unit,
+      gb.L2.reg = gb.L2.reg,
+      deep.L2.x = deep.L2.x,
+      deep.L2.reg = deep.L2.reg,
+      deep.splines = deep.splines,
+      lasso.lambda = lasso.lambda,
+      lasso.n.iter = lasso.n.iter,
       gb.interaction.depth = gb.interaction.depth,
       gb.shrinkage = gb.shrinkage,
       gb.n.trees.init = gb.n.trees.init,
       gb.n.trees.increase = gb.n.trees.increase,
       gb.n.trees.max = gb.n.trees.max,
       gb.n.minobsinnode = gb.n.minobsinnode,
-      svm.kernel = svm.kernel, svm.gamma = svm.gamma,
-      svm.cost = svm.cost, ebma.tol = ebma.tol,
-      boot.iter = boot.iter, cores = cores)
+      svm.kernel = svm.kernel,
+      svm.gamma = svm.gamma,
+      svm.cost = svm.cost,
+      ebma.tol = ebma.tol,
+      boot.iter = boot.iter,
+      cores = cores)
   }
 
 

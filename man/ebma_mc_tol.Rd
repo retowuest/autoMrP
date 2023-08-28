@@ -76,6 +76,9 @@ An \code{\link[e1071]{svm}} object.}
 
 \item{model.mrp}{The standard MrP model. An \code{\link[lme4]{glmer}} object}
 
+\item{model_deep}{The tuned model from the deep mrp classifier. An
+\code{\link[vglmer]{vglmerMod}} object.}
+
 \item{tol}{The tolerance values used for EBMA. A numeric vector.}
 
 \item{n.draws}{EBMA number of samples. An integer-valued scalar specifying

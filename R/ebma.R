@@ -32,10 +32,11 @@
 
 ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
                  post.strat, n.draws, tol, best.subset.opt, pca.opt,
-                 lasso.opt, gb.opt, svm.opt, deep.mrp, verbose, cores){
+                 lasso.opt, gb.opt, svm.opt, deep.mrp, verbose, cores) {
 
   # Run EBMA if at least two classifiers selected
-  if (sum(unlist(lapply(X = post.strat$models, FUN = function(x) !is.null(x)))) > 1){
+  if (sum(unlist(lapply(
+    X = post.strat$models, FUN = function(x) !is.null(x)))) > 1) {
 
     if (verbose) {
       message("Starting bayesian ensemble model averaging tuning")
@@ -64,7 +65,7 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
     if (cores > 1) {
 
       # Distribute clusters over tolerance values or n.draws
-      if (length(tol) <= n.draws * 3){
+      if (length(tol) <= n.draws * 3) {
 
         final_model_weights <- ebma_mc_draws(
           train.preds = train_preds,
@@ -105,11 +106,12 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
           model.gb = model_gb,
           model.svm = model_svm,
           model.mrp = model_mrp,
+          model_deep = model_deep,
           tol = tol,
           n.draws = n.draws,
           cores = cores)
       }
-    } else{
+    } else {
 
       # Counter for verbose screen output
       counter <- 0
@@ -119,8 +121,9 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
       mse_collector <- matrix(
         NA, nrow = n.draws,
         ncol = length(tol),
-        dimnames = list( c(paste0("Ndraw_", seq(1:n.draws))),
-                         c(paste0("Tol: ", tol) )))
+        dimnames = list(
+          c(paste0("Ndraw_", seq(1:n.draws))),
+          c(paste0("Tol: ", tol))))
 
       # container for model weights for each draw and tolerance value
       # Dimension 1 (rows): Bootstrap draws
@@ -129,34 +132,38 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
       weights_box <- array(
         NA,
         dim = c(n.draws, ncol(train_preds), length(tol)),
-        dimnames = list( c(paste0("Ndraw_", seq(1:n.draws))),
-                         c(colnames(train_preds)),
-                         c(paste0("Tol: ", tol))))
+        dimnames = list(
+          c(paste0("Ndraw_", seq(1:n.draws))),
+          c(colnames(train_preds)),
+          c(paste0("Tol: ", tol))))
 
       # loop over tolerance values
-      for (idx.tol in 1:length(tol)){
+      for (idx.tol in seq_along(tol)) {
 
         # loop over Ndraws wit equal obs/state
-        for (idx.Ndraws in 1:n.draws){
+        for (idx.Ndraws in 1:n.draws) {
 
           # Increase counter
-          counter <- counter +1
+          counter <- counter + 1L
 
           # Determine number per group to sample
-          n_per_group <- as.integer(nrow(ebma.fold) / length(levels(ebma.fold[[L2.unit]])))
+          n_per_group <- as.integer(nrow(ebma.fold) /
+            length(levels(ebma.fold[[L2.unit]])))
 
           # Test set with n_per_group persons per state (with resampling)
           test <- ebma.fold %>%
-            dplyr::group_by_at( .vars = L2.unit ) %>%
-            dplyr::sample_n( n_per_group, replace = TRUE) %>%
+            dplyr::group_by_at(.vars = L2.unit) %>%
+            dplyr::sample_n(n_per_group, replace = TRUE) %>%
             dplyr::ungroup() %>%
-            dplyr::mutate_at(.vars = c( L1.x, L2.unit, L2.reg), .funs = as.factor) %>%
-            dplyr::select( dplyr::one_of(c(y, L1.x, L2.x, L2.unit, L2.reg, pc.names))) %>%
+            dplyr::mutate_at(
+              .vars = c(L1.x, L2.unit, L2.reg), .funs = as.factor) %>%
+            dplyr::select(
+              dplyr::one_of(c(y, L1.x, L2.x, L2.unit, L2.reg, pc.names))) %>%
             tidyr::drop_na()
 
           # add the deep mrp interactions to the data
           if (!is.null(model_deep)) {
-    
+
             # covariates
             deep_x <- model_deep$formula$interpret_gam$pred.names
             # select all interaction terms
@@ -172,7 +179,8 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
             y <- stringr::str_split(string = x, pattern = "\\.") %>%
               unlist()
 
-            # take each column of data and combine its values into a single string 
+            # take each column of data and combine its values into a
+            # single string
             df_x <- test %>%
               dplyr::select({{y}}) %>%
               dplyr::rowwise() %>%
@@ -186,34 +194,67 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
             dplyr::bind_cols()
 
           # combine data and interactions
-          test <- dplyr::bind_cols(test, x_data)   
+          test <- dplyr::bind_cols(test, x_data)
           }
-          
 
           # predict outcomes in test set
           test_preds <- dplyr::tibble(
-            best_subset = if(!is.null(model_bs)){
-              predict(object = model_bs, newdata = test, type = "response", allow.new.levels = TRUE)
-            } else{NA},
-            pca = if(!is.null(model_pca)){
-              predict(object = model_pca, newdata = test, type = "response", allow.new.levels = TRUE)
-            } else{NA},
-            lasso = if(!is.null(model_lasso)){
-              predict_glmmLasso(census = test, m = model_lasso, L1.x = L1.x,
-                                lasso.L2.x = L2.x, L2.unit = L2.unit, L2.reg = L2.reg)
-              #predict(object = model_lasso, newdata = as.data.frame(test), type = "response",
-              #        allow.new.levels = TRUE)
-            } else{NA},
-            gb = if(!is.null(model_gb)){
-              gbm::predict.gbm(object = model_gb, newdata = test, n.trees = model_gb$n.trees, type = "response")
-            } else{NA},
-            svm = if(!is.null(model_svm)){
-              as.numeric(attr(predict(object = model_svm, newdata = test, probability = TRUE),"probabilities")[,"1"])
-            } else{NA},
-            mrp = if(!is.null(model_mrp)){
-              predict(object = model_mrp, newdata = test, type = "response", allow.new.levels = TRUE)
-            } else{NA},
-            deep = if(!is.null(model_deep)){
+            best_subset = if (!is.null(model_bs)) {
+              predict(
+                object = model_bs,
+                newdata = test,
+                type = "response",
+                allow.new.levels = TRUE)
+            } else {
+              NA
+            },
+            pca = if (!is.null(model_pca)) {
+              predict(
+                object = model_pca,
+                newdata = test,
+                type = "response",
+                allow.new.levels = TRUE)
+            } else {
+              NA
+            },
+            lasso = if (!is.null(model_lasso)) {
+              predict_glmmLasso(
+                census = test,
+                m = model_lasso,
+                L1.x = L1.x,
+                lasso.L2.x = L2.x,
+                L2.unit = L2.unit,
+                L2.reg = L2.reg)
+            } else {
+              NA
+            },
+            gb = if (!is.null(model_gb)) {
+              gbm::predict.gbm(
+                object = model_gb,
+                newdata = test,
+                n.trees = model_gb$n.trees,
+                type = "response")
+            } else{
+              NA
+            },
+            svm = if (!is.null(model_svm)) {
+              as.numeric(attr(predict(
+                object = model_svm,
+                newdata = test,
+                probability = TRUE), "probabilities")[, "1"])
+            } else {
+              NA
+            },
+            mrp = if (!is.null(model_mrp)) {
+              predict(
+                object = model_mrp,
+                newdata = test,
+                type = "response",
+                allow.new.levels = TRUE)
+            } else {
+              NA
+            },
+            deep = if (!is.null(model_deep)) {
               # predictions for post-stratification only (no EBMA)
               pred_d <- vglmer::predict_MAVB(
                 samples = 1000,
@@ -221,9 +262,11 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
                 newdata = test,
                 allow_missing_levels = TRUE)[["mean"]]
               # convert to response probabilities
-              pred_d <- plogis(pred_d)
-            } else{NA}
-          ) 
+              pred_d <- stats::plogis(pred_d)
+            } else {
+              NA
+            }
+          )
           # remove NA's
           test_preds <- test_preds[,apply(X = test_preds, MARGIN = 2, FUN = function(x){
             all(!is.na(x))})]
@@ -392,6 +435,8 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
 #'   \code{\link[gbm]{gbm}} object.
 #' @param model.svm The tuned model from the support vector machine classifier.
 #'   An \code{\link[e1071]{svm}} object.
+#' @param model_deep The tuned model from the deep mrp classifier. An
+#'  \code{\link[vglmer]{vglmerMod}} object.
 #' @param model.mrp The standard MrP model. An \code{\link[lme4]{glmer}} object
 #' @param tol The tolerance values used for EBMA. A numeric vector.
 #' @return The classifier weights. A numeric vector.
@@ -402,7 +447,7 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
 ebma_mc_tol <- function(
   train.preds, train.y, ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg,
   pc.names, model.bs, model.pca, model.lasso, model.gb, model.svm,
-  model.mrp, model_deep, tol, n.draws, cores){
+  model.mrp, model_deep, tol, n.draws, cores) {
 
   # Binding for global variables
   `%>%` <- dplyr::`%>%`
@@ -415,7 +460,8 @@ ebma_mc_tol <- function(
   for(idx.Ndraws in 1:n.draws){
 
     # Determine number per group to sample
-    n_per_group <- as.integer(nrow(ebma.fold) / length(levels(ebma.fold[[L2.unit]])))
+    n_per_group <- as.integer(nrow(ebma.fold) /
+      length(levels(ebma.fold[[L2.unit]])))
 
     # Test set with n_per_group persons per state (with resampling)
     test <- ebma.fold %>%
@@ -490,8 +536,10 @@ ebma_mc_tol <- function(
           newdata = test,
           allow_missing_levels = TRUE)[["mean"]]
         # convert to response probabilities
-        pred_d <- plogis(pred_d)
-      } else{NA}
+        pred_d <- stats::plogis(pred_d)
+      } else {
+        NA
+      }
     )
     # Remove NA's
     test_preds <- test_preds[,apply(X = test_preds, MARGIN = 2, FUN = function(x){
@@ -690,7 +738,7 @@ ebma_mc_draws <- function(
           newdata = test,
           allow_missing_levels = TRUE)[["mean"]]
         # convert to response probabilities
-        pred_d <- plogis(pred_d)
+        pred_d <- stats::plogis(pred_d)
       } else{NA}
     )
 
