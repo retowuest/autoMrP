@@ -27,7 +27,9 @@ run_classifiers <- function(
   # Classifier 1: Best Subset
   if (isTRUE(best.subset)) {
     if (verbose) {
-      message("Starting multilevel regression with best subset selection classifier tuning")
+      message(
+        "Starting multilevel regression with best subset ",
+        "selection classifier tuning")
     }
 
     # Determine context-level covariates
@@ -53,13 +55,13 @@ run_classifiers <- function(
   # Classifier 2: Lasso
 
   # message if Lasso is set to TRUE but no context level variables provided
-  if (isTRUE(lasso) & is.null(L2.x)) {
+  if (isTRUE(lasso) && is.null(L2.x)) {
     if (verbose) {
-      message('Lasso requires L2.x variables to be specified. Skipping Lasso.')
+      message("Lasso requires L2.x variables to be specified. Skipping Lasso.")
     }
   }
 
-  if (isTRUE(lasso) & !is.null(L2.x)) {
+  if (lasso && !is.null(L2.x)) {
 
     if (verbose) {
       message("Starting multilevel regression with L1 regularization tuning")
@@ -90,14 +92,17 @@ run_classifiers <- function(
   # Classifier 3: PCA
 
   # message if pca is TRUE but no level 2 variables or pc_names provided
-  if (isTRUE(pca) & is.null(pca.L2.x)) {
-    message(paste0('PCA requires that L2.x variables are specified or alternatively',
-                   ' that the pcs argument is specified.'))
+  if (pca && is.null(pca.L2.x)) {
+    message(
+      "PCA requires that L2.x variables are specified or alternatively",
+      " that the pcs argument is specified.")
   }
-  if (isTRUE(pca) & !is.null(pca.L2.x)) {
+  if (pca && !is.null(pca.L2.x)) {
 
     if (verbose) {
-      message("Starting multilevel regression with principal components as context level variables tuning")
+      message(
+        "Starting multilevel regression with principal components as ",
+        "context level variables tuning")
     }
 
     pca_out <- run_pca(
@@ -117,7 +122,7 @@ run_classifiers <- function(
   }
 
   # Classifier 4: GB
-  if (isTRUE(gb)) {
+  if (gb) {
 
     if (verbose) {
       message("Starting gradient tree boosting tuning")
@@ -129,14 +134,14 @@ run_classifiers <- function(
     }
 
     # Evaluate inclusion of L2.unit in GB
-    if (isTRUE(gb.L2.unit)) {
+    if (gb.L2.unit) {
       gb.L2.unit <- L2.unit
     } else {
       gb.L2.unit <- NULL
     }
 
     # Evaluate inclusion of L2.reg in GB
-    if (isTRUE(gb.L2.reg)) {
+    if (gb.L2.reg) {
       gb.L2.reg <- L2.reg
     } else {
       gb.L2.reg <- NULL
@@ -165,7 +170,7 @@ run_classifiers <- function(
   }
 
   # Classifier 5: SVM
-  if ( isTRUE(svm) ) {
+  if (svm) {
 
     if (verbose) {
       message("Starting support vector machine tuning")
@@ -177,7 +182,7 @@ run_classifiers <- function(
     }
 
     # Evaluate inclusion of L2.unit in GB
-    if (isTRUE(svm.L2.unit)) {
+    if (svm.L2.unit) {
       svm.L2.unit <- L2.unit
     } else {
       svm.L2.unit <- NULL
@@ -269,4 +274,6 @@ run_classifiers <- function(
     verbose = verbose,
     cores = cores
   )
+
+  return(ebma_out)
 }

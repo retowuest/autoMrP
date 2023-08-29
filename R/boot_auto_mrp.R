@@ -25,9 +25,7 @@ boot_auto_mrp <- function(
   cl <- multicore(cores = cores, type = "open", cl = NULL)
 
   # Bootstrap iterations
-  boot_out <- foreach::foreach(
-    idx_boot = 1:boot.iter,
-    .packages = "autoMrP" %dorng% {
+  boot_out <- foreach::foreach(idx_boot = 1:boot.iter, .packages = "autoMrP") %dorng% {
 
     boot_mrp <- boot_fun(
       y = y,
@@ -77,12 +75,10 @@ boot_auto_mrp <- function(
       svm.kernel = svm.kernel,
       svm.gamma = svm.gamma,
       svm.cost = svm.cost,
-      ebma.tol = ebma.tol,
-      cores = cores,
-      verbose = TRUE)
+      ebma.tol = ebma.tol)
 
     return(boot_mrp)
-  }) # end of foreach loop
+  } # end of foreach loop
 
   # Median and standard deviation of EBMA estimates
   if (!any(boot_out[[1]]$ebma == "EBMA step skipped (only 1 classifier run)")) {

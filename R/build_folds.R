@@ -1,14 +1,14 @@
 
 
-build_folds <- function(survey, 
-                        L2.unit,  
-                        ebma.size = 1/3, 
-                        k.folds = 5, 
-                        cv.sampling = "L2 units"){
+build_folds <- function(survey,
+                        L2.unit,
+                        ebma.size = 1/3,
+                        k.folds = 5,
+                        cv.sampling = "L2 units") {
   # EBMA hold-out fold
   ebma.size <- round(nrow(survey) * ebma.size, digits = 0)
-  
-  if(ebma.size>0){
+
+  if(ebma.size > 0) {
     ebma_folding_out <- ebma_folding(data = survey,
                                      L2.unit = L2.unit,
                                      ebma.size = ebma.size)
@@ -24,5 +24,4 @@ build_folds <- function(survey,
                          L2.unit = L2.unit,
                          k.folds = k.folds,
                          cv.sampling = cv.sampling)
-} 
-
+}

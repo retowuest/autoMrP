@@ -319,7 +319,7 @@
 auto_MrP <- function(
   y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE, pcs = NULL,
   folds = NULL, bin.proportion = NULL, bin.size = NULL, survey, census,
-  ebma.size = 1/3, stacking = FALSE, cores = 1, k.folds = 5,
+  ebma.size = 1 / 3, stacking = FALSE, cores = 1, k.folds = 5,
   cv.sampling = "L2 units",
   loss.unit = c("individuals", "L2 units"),
   loss.fun = c("msfe", "cross-entropy", "f1", "MSE"),
@@ -349,9 +349,7 @@ auto_MrP <- function(
   boot.iter = NULL) {
 
 
-# Error checks ------------------------------------------------------------
-
-  # Call to function doing the error checks
+  # Error checks ----------------------------------------------------------
   error_checks(y = y,
                L1.x = L1.x,
                L2.x = L2.x,
@@ -442,15 +440,15 @@ auto_MrP <- function(
       pc_names <- colnames(pca_out$x)
 
       census <- census %>%
-        dplyr::left_join(unique(survey %>% dplyr::select(all_of(L2.unit),
-                                                         all_of(pc_names))),
-                         by = L2.unit)
+        dplyr::left_join(unique(
+          survey %>% dplyr::select(all_of(L2.unit), all_of(pc_names))),
+          by = L2.unit)
     } else {
       pc_names <- pcs
     }
 
     # Scale context-level variables in survey and census data
-    if (isTRUE(L2.x.scale) && all(L2.x != "")) {
+    if (L2.x.scale && all(L2.x != "")) {
 
       # scale context-level variables in survey
       survey <- dplyr::mutate_at(
@@ -474,7 +472,7 @@ auto_MrP <- function(
     census <- tibble::as_tibble(x = census)
 
     # Random over-sampling
-    if (isTRUE(oversampling)) {
+    if (oversampling) {
       add_rows <- survey %>%
         dplyr::group_by(.dots = L2.unit) %>%
         tidyr::nest() %>%
@@ -497,12 +495,10 @@ auto_MrP <- function(
       survey <- dplyr::bind_rows(survey, add_rows)
     }
 
-# No bootstrapping --------------------------------------------------------
-
+    # No bootstrapping --------------------------------------------------------
     if (!uncertainty) {
 
-# Create folds ------------------------------------------------------------
-
+    # Create folds ------------------------------------------------------------
     if (is.null(folds)) {
 
       # EBMA hold-out fold
@@ -520,10 +516,11 @@ auto_MrP <- function(
       }
 
       # K folds for cross-validation
-      cv_folds <- cv_folding(data = cv_data,
-                             L2.unit = L2.unit,
-                             k.folds = k.folds,
-                             cv.sampling = cv.sampling)
+      cv_folds <- cv_folding(
+        data = cv_data,
+        L2.unit = L2.unit,
+        k.folds = k.folds,
+        cv.sampling = cv.sampling)
     } else {
 
       if (ebma.size > 0) {
@@ -556,8 +553,9 @@ auto_MrP <- function(
         lasso.L2.x = lasso.L2.x, pca.L2.x = pca.L2.x, pc.names = pc_names,
         gb.L2.x = gb.L2.x, svm.L2.x = svm.L2.x, svm.L2.unit = svm.L2.unit,
         svm.L2.reg = svm.L2.reg, gb.L2.unit = gb.L2.unit, gb.L2.reg = gb.L2.reg,
-        deep.L2.x = deep.L2.x, deep.L2.reg = deep.L2.reg, deep.splines = deep.splines,
-        lasso.lambda = lasso.lambda, lasso.n.iter = lasso.n.iter,
+        deep.L2.x = deep.L2.x, deep.L2.reg = deep.L2.reg,
+        deep.splines = deep.splines, lasso.lambda = lasso.lambda,
+        lasso.n.iter = lasso.n.iter,
         gb.interaction.depth = gb.interaction.depth,
         gb.shrinkage = gb.shrinkage, gb.n.trees.init = gb.n.trees.init,
         gb.n.trees.increase = gb.n.trees.increase,

@@ -79,7 +79,7 @@ run_gb <- function(y, L1.x, L2.x, L2.eval.unit, L2.unit, L2.reg,
   names(gb_grid) <- c("depth", "shrinkage", "ntrees")
 
   ## tuning with 1) multiple cores; 2) a single core
-  if (cores > 1){
+  if (cores > 1) {
 
     # 1) multiple cores
     grid_cells <- run_gb_mc(
@@ -87,11 +87,11 @@ run_gb <- function(y, L1.x, L2.x, L2.eval.unit, L2.unit, L2.reg,
       L2.reg = L2.reg, form = form, gb.grid = gb_grid,
       n.minobsinnode = n.minobsinnode,  loss.unit = loss.unit,
       loss.fun = loss.fun, data = data, cores = cores)
-  } else{
+  } else {
 
     # 2) single core
     # loop over tuning grid
-    grid_cells <- apply( gb_grid, 1, function(g) {
+    grid_cells <- apply(gb_grid, 1, function(g) {
 
       # Set tuning parameters
       depth <- as.numeric(g["depth"])
@@ -99,7 +99,7 @@ run_gb <- function(y, L1.x, L2.x, L2.eval.unit, L2.unit, L2.reg,
       ntrees <- as.numeric(g["ntrees"])
 
       # Print tuning parameters
-      if (isTRUE(verbose)) {
+      if (verbose) {
         cat(paste("GB: Running interaction depth ", depth,
                   ", learning rate ", shrinkage_value,
                   ", and number of total trees ", ntrees, "\n", sep = ""))
@@ -148,14 +148,18 @@ run_gb <- function(y, L1.x, L2.x, L2.eval.unit, L2.unit, L2.reg,
       k_errors <- dplyr::bind_rows(k_errors) %>%
         dplyr::group_by(measure) %>%
         dplyr::summarise(value = mean(value), .groups = "drop") %>%
-        dplyr::mutate(ntrees = ntrees, depth = depth, shrinkage = shrinkage_value)
+        dplyr::mutate(
+          ntrees = ntrees,
+          depth = depth,
+          shrinkage = shrinkage_value)
 
     })
   }
 
   # Extract best tuning parameters
   grid_cells <- dplyr::bind_rows(grid_cells)
-  best_params <- dplyr::slice(loss_score_ranking(score = grid_cells, loss.fun = loss.fun), 1)
+  best_params <- dplyr::slice(
+    loss_score_ranking(score = grid_cells, loss.fun = loss.fun), 1)
 
   out <- list(interaction_depth = dplyr::pull(.data = best_params, var = depth),
               shrinkage = dplyr::pull(.data = best_params, var = shrinkage),
@@ -192,13 +196,14 @@ run_gb_mc <- function(y, L1.x, L2.eval.unit, L2.unit, L2.reg, form, gb.grid,
   cl <- multicore(cores = cores, type = "open", cl = NULL)
 
   # Train and evaluate each model
-  grid_cells <- foreach::foreach(g = 1:nrow(gb.grid), .packages = 'autoMrP',
-                                 .errorhandling = "pass") %dorng% {
+  grid_cells <- foreach::foreach(
+    g = seq_len(nrow(gb.grid)), .packages = "autoMrP",
+    .errorhandling = "pass") %dorng% {
 
     # Set tuning parameters
-    depth <- as.numeric( gb.grid[g, "depth"] )
-    shrinkage_value <- as.numeric( gb.grid[g, "shrinkage"] )
-    ntrees <- as.numeric( gb.grid[g, "ntrees"] )
+    depth <- as.numeric(gb.grid[g, "depth"])
+    shrinkage_value <- as.numeric(gb.grid[g, "shrinkage"])
+    ntrees <- as.numeric(gb.grid[g, "ntrees"])
 
     # Loop over each fold
     k_errors <- lapply(seq_along(data), function(k) {

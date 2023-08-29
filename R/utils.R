@@ -2016,7 +2016,7 @@ boot_fun <- function(
   deep.splines, lasso.lambda, lasso.n.iter, gb.interaction.depth,
   gb.shrinkage, gb.n.trees.init, gb.n.trees.increase,
   gb.n.trees.max, gb.n.minobsinnode, svm.kernel, svm.gamma,
-  svm.cost, ebma.tol, ebma.size, cores, verbose) {
+  svm.cost, ebma.tol, ebma.size) {
 
   # Bootstrap sample --------------------------------------------------------
 

@@ -39,7 +39,7 @@ post_stratification <- function(
   pca.opt, gb.opt, svm.opt, svm.L2.reg, svm.L2.unit, svm.L2.x, mrp.include,
   n.minobsinnode, L2.unit.include, L2.reg.include, kernel, mrp.L2.x,
   data, ebma.fold, census, verbose, deep.mrp, deep.L2.x, deep.L2.reg,
-  deep.splines){
+  deep.splines) {
 
   # globals
   lasso <- NULL
@@ -62,8 +62,12 @@ post_stratification <- function(
   no_ebma_data <- dplyr::bind_rows(data, ebma.fold)
 
   # remove missing values
-  data <- tidyr::drop_na(data = data, dplyr::all_of(c(y, L1.x, L2.x, L2.unit, L2.reg)))
-  no_ebma_data <- tidyr::drop_na(data = no_ebma_data, dplyr::all_of(c(y, L1.x, L2.x, L2.unit, L2.reg)))
+  data <- tidyr::drop_na(
+    data = data,
+    dplyr::all_of(c(y, L1.x, L2.x, L2.unit, L2.reg)))
+  no_ebma_data <- tidyr::drop_na(
+    data = no_ebma_data,
+    dplyr::all_of(c(y, L1.x, L2.x, L2.unit, L2.reg)))
 
   # ----- Fit optimal model and make prediction for individual classifiers -----
 
@@ -90,11 +94,15 @@ post_stratification <- function(
 
     # post-stratification
     bs_preds <- census %>%
-      dplyr::mutate(best_subset = stats::predict(object = best_subset_opt_poststrat_only,
-                                                 newdata = ., allow.new.levels = TRUE,
-                                                 type = "response")) %>%
-      dplyr::group_by( !! rlang::sym(L2.unit)) %>%
-      dplyr::summarize(best_subset = stats::weighted.mean(x = best_subset, w = prop), .groups = "keep")
+      dplyr::mutate(
+        best_subset = stats::predict(
+          object = best_subset_opt_poststrat_only,
+          newdata = ., allow.new.levels = TRUE,
+          type = "response")) %>%
+      dplyr::group_by(!!rlang::sym(L2.unit)) %>%
+      dplyr::summarize(
+        best_subset = stats::weighted.mean(
+          x = best_subset, w = prop), .groups = "keep")
 
     # individual level predictions for EBMA
     bs_ind <- stats::predict(object = best_subset_opt_ebma, type = "response")
@@ -110,15 +118,16 @@ post_stratification <- function(
     # Determine context-level covariates
     if (is.null(lasso.L2.x)) {
       lasso.L2.x <- L2.x
-      }
+    }
 
     # Context-level fixed effects
     L2_fe <- paste(lasso.L2.x, collapse = " + ")
     L2_fe_form <- as.formula(paste(y, " ~ ", L2_fe, sep = ""))
 
     # Individual-level random effects as named list
-    L1_re <- setNames(as.list(rep(c(~ 1), times = length(c(L1.x, L2.unit, L2.reg)))),
-                      c(L1.x, L2.unit, L2.reg))
+    L1_re <- setNames(
+      as.list(rep(c(~ 1), times = length(c(L1.x, L2.unit, L2.reg)))),
+      c(L1.x, L2.unit, L2.reg))
 
     # Fit optimal model for EBMA
     lasso_opt_ebma <- lasso_classifier(
@@ -151,7 +160,8 @@ post_stratification <- function(
     lasso_preds <- census %>%
       dplyr::mutate(lasso = lasso_ests) %>%
       dplyr::group_by( !! rlang::sym(L2.unit)) %>%
-      dplyr::summarize(lasso = stats::weighted.mean(x = lasso, w = prop), .groups = "keep")
+      dplyr::summarize(lasso = stats::weighted.mean(
+        x = lasso, w = prop), .groups = "keep")
 
     # individual level predictions for EBMA
     lasso_ind <- stats::predict(object = lasso_opt_ebma, type = "response")
@@ -187,8 +197,9 @@ post_stratification <- function(
                                          newdata = .,
                                          allow.new.levels = TRUE,
                                          type = "response")) %>%
-      dplyr::group_by( !! rlang::sym(L2.unit)) %>%
-      dplyr::summarize(pca = stats::weighted.mean(x = pca, w = prop), .groups = "keep")
+      dplyr::group_by(!!rlang::sym(L2.unit)) %>%
+      dplyr::summarize(pca = stats::weighted.mean(
+        x = pca, w = prop), .groups = "keep")
 
     # individual level predictions for EBMA
     pca_ind <- stats::predict(object = pca_opt_ebma, type = "response")
@@ -242,15 +253,20 @@ post_stratification <- function(
 
     # post-stratification
     gb_preds <- census %>%
-      dplyr::mutate(gb = gbm::predict.gbm(object = gb_opt_poststrat_only,
-                                          newdata = .,
-                                          n.trees = gb.opt$n_trees,
-                                          type = "response")) %>%
-      dplyr::group_by( !! rlang::sym(L2.unit)) %>%
-      dplyr::summarize(gb = stats::weighted.mean(x = gb, w = prop), .groups = "keep")
+      dplyr::mutate(gb = gbm::predict.gbm(
+        object = gb_opt_poststrat_only,
+        newdata = .,
+        n.trees = gb.opt$n_trees,
+        type = "response")) %>%
+      dplyr::group_by(!!rlang::sym(L2.unit)) %>%
+      dplyr::summarize(gb = stats::weighted.mean(
+        x = gb, w = prop), .groups = "keep")
 
     # individual level predictions for EBMA
-    gb_ind <- gbm::predict.gbm(object = gb_opt_ebma, n.trees = gb.opt$n_trees, type = "response")
+    gb_ind <- gbm::predict.gbm(
+      object = gb_opt_ebma,
+      n.trees = gb.opt$n_trees,
+      type = "response")
 
     # model for EBMA
     models$gb <- gb_opt_ebma
@@ -282,12 +298,14 @@ post_stratification <- function(
     # Prepare data
     svm_data <- data %>%
       dplyr::mutate_at(.vars = y, .funs = list(y_svm = ~as.factor(.))) %>%
-      dplyr::select( y_svm, dplyr::all_of(c(y, L1.x, svm.L2.x, L2.unit, L2.reg)) )
+      dplyr::select(y_svm, dplyr::all_of(
+        c(y, L1.x, svm.L2.x, L2.unit, L2.reg)))
 
     svm_data_no_ebma <- data %>%
       dplyr::bind_rows(ebma.fold) %>%
       dplyr::mutate_at(.vars = y, .funs = list(y_svm = ~as.factor(.))) %>%
-      dplyr::select( y_svm, dplyr::all_of(c(y, L1.x, svm.L2.x, L2.unit, L2.reg)) )
+      dplyr::select(y_svm, dplyr::all_of(
+        c(y, L1.x, svm.L2.x, L2.unit, L2.reg)))
 
     # Create model formula
     x <- paste(c(L1.x, svm.L2.x, svm.L2.unit, svm.L2.reg), collapse = " + ")
@@ -319,15 +337,22 @@ post_stratification <- function(
 
     # post-stratification
     svm_preds <- census %>%
-      dplyr::filter(dplyr::pull(.data = census, !!L2.unit) %in% dplyr::pull(.data = svm_data_no_ebma, !!L2.unit)) %>%
-      dplyr::mutate(svm = attr(stats::predict(object = svm_opt_poststrat_only,
-                                              newdata = ., allow.new.levels = TRUE,
-                                              probability = TRUE),"probabilities")[,"1"]) %>%
-      dplyr::group_by( !! rlang::sym(L2.unit)) %>%
-      dplyr::summarize(svm = stats::weighted.mean(x = svm, w = prop), .groups = "keep")
+      dplyr::filter(dplyr::pull(
+        .data = census, !!L2.unit) %in% dplyr::pull(
+          .data = svm_data_no_ebma, !!L2.unit)) %>%
+      dplyr::mutate(svm = attr(stats::predict(
+        object = svm_opt_poststrat_only,
+        newdata = ., allow.new.levels = TRUE,
+        probability = TRUE), "probabilities")[, "1"]) %>%
+      dplyr::group_by(!!rlang::sym(L2.unit)) %>%
+      dplyr::summarize(svm = stats::weighted.mean(
+        x = svm, w = prop), .groups = "keep")
 
     # individual level predictions for EBMA
-    svm_ind <- attr(stats::predict(object = svm_opt_ebma, newdata = svm_data, probability = TRUE),"probabilities")[,"1"]
+    svm_ind <- attr(stats::predict(
+      object = svm_opt_ebma,
+      newdata = svm_data,
+      probability = TRUE),"probabilities")[,"1"]
 
     # model for EBMA
     models$svm <- svm_opt_ebma
@@ -354,16 +379,16 @@ post_stratification <- function(
     all_re <- paste(c(L1_re, L2_re), collapse = " + ")
 
     # Context-level fixed effects
-    if(is.null(mrp.L2.x)){
+    if (is.null(mrp.L2.x)) {
       L2_fe <- paste(L2.x, collapse = " + ")
-    } else{
-      if(length(mrp.L2.x) == 1){
-        if(mrp.L2.x == "empty"){
+    } else {
+      if (length(mrp.L2.x) == 1) {
+        if (mrp.L2.x == "empty") {
           L2_fe <- ""
         } else {
           L2_fe <- paste(mrp.L2.x, collapse = " + ")
         }
-      } else{
+      } else {
         L2_fe <- paste(mrp.L2.x, collapse = " + ")
       }
     }
@@ -391,11 +416,13 @@ post_stratification <- function(
 
     # post-stratification
     mrp_preds <- census %>%
-      dplyr::mutate(mrp = stats::predict(object = mrp_model_poststrat_only,
-                                         newdata = ., allow.new.levels = TRUE,
-                                         type = "response")) %>%
-      dplyr::group_by( !! rlang::sym(L2.unit)) %>%
-      dplyr::summarize(mrp = stats::weighted.mean(x = mrp, w = prop), .groups = "keep")
+      dplyr::mutate(mrp = stats::predict(
+        object = mrp_model_poststrat_only,
+        newdata = ., allow.new.levels = TRUE,
+        type = "response")) %>%
+      dplyr::group_by(!!rlang::sym(L2.unit)) %>%
+      dplyr::summarize(mrp = stats::weighted.mean(
+        x = mrp, w = prop), .groups = "keep")
 
     # individual level predictions for EBMA
     mrp_ind <- stats::predict(object = mrp_model_ebma, type = "response")
@@ -408,7 +435,7 @@ post_stratification <- function(
   # Fit model
   if (deep.mrp) {
 
-    # custom L2x 
+    # custom L2x
     if (!is.null(deep.L2.x)) {
       L2.x <- deep.L2.x
     }
@@ -431,7 +458,7 @@ post_stratification <- function(
       l1_region <- paste(L1.x, L2.reg, sep = ".")
     } else {
       l1_region <- NULL
-    }  
+    }
 
     # model formula
     if (!deep.splines) {
@@ -447,24 +474,32 @@ post_stratification <- function(
         # interactions of L1x with L2.unit
         paste("(1 | ", l1_state, ")", collapse = " + "), " + ",
         # interactions of L1x with L2.reg
-        paste("(1 | ", l1_region, ")", collapse = " + ")
+        if (any(!is.null(l1_region))) {
+          paste("(1 | ", l1_region, ")", collapse = " + ")
+        }
       )
     } else {
       form <- paste0(
-      # DV
-      y, " ~ ",
-      # L2x
-      paste0("v_s(", L2.x, ")", collapse = " + "), " + ",
-      # individual level variables
-      paste("(1 | ", L1.x, ")", collapse = " + "), " + ",
-      # interactions of L1x
-      paste("(1 | ", l1_comb, ")", collapse = " + "), " + ",
-      # interactions of L1x with L2.unit
-      paste("(1 | ", l1_state, ")", collapse = " + "), " + ",
-      # interactions of L1x with L2.reg
-      paste("(1 | ", l1_region, ")", collapse = " + ")
+        # DV
+        y, " ~ ",
+        # L2x
+        paste0("v_s(", L2.x, ")", collapse = " + "), " + ",
+        # individual level variables
+        paste("(1 | ", L1.x, ")", collapse = " + "), " + ",
+        # interactions of L1x
+        paste("(1 | ", l1_comb, ")", collapse = " + "), " + ",
+        # interactions of L1x with L2.unit
+        paste("(1 | ", l1_state, ")", collapse = " + "), " + ",
+        # interactions of L1x with L2.reg
+        if (any(!is.null(l1_region))) {
+          paste("(1 | ", l1_region, ")", collapse = " + ")
+        }
       )
     }
+
+    # match everything from the beginning to the last ")"
+    # for example if the string ends in +
+    form <- stringr::str_extract(string = form, pattern = "^.*\\)")
 
     # add the interactions to the data
     all_interactions <- c(l1_comb, l1_state, l1_region)
@@ -476,7 +511,7 @@ post_stratification <- function(
       y <- stringr::str_split(string = x, pattern = "\\.") %>%
         unlist()
 
-      # take each column of data and combine its values into a single string 
+      # take each column of data and combine its values into a single string
       df_x <- data %>%
         dplyr::select({{y}}) %>%
         dplyr::rowwise() %>%
@@ -484,7 +519,7 @@ post_stratification <- function(
           dplyr::everything()), collapse = "-")) %>%
         dplyr::ungroup() %>%
         dplyr::select(ncol(.))
-      
+
       return(df_x)
     }) %>%
       dplyr::bind_cols()
@@ -507,7 +542,7 @@ post_stratification <- function(
           dplyr::everything()), collapse = "-")) %>%
         dplyr::ungroup() %>%
         dplyr::select(ncol(.))
-      
+
       return(df_x)
     }) %>%
       dplyr::bind_cols()
@@ -534,7 +569,7 @@ post_stratification <- function(
       y <- stringr::str_split(string = x, pattern = "\\.") %>%
         unlist()
 
-      # take each column of data and combine its values into a single string 
+      # take each column of data and combine its values into a single string
       df_x <- census %>%
         dplyr::select({{y}}) %>%
         dplyr::rowwise() %>%
@@ -590,13 +625,48 @@ post_stratification <- function(
   L2_preds <- dplyr::select(census, one_of(L2.unit)) %>%
     dplyr::distinct()
   # add existing classifiers
-  if(exists("bs_preds")) L2_preds <- dplyr::left_join(x = L2_preds, y = bs_preds, by = L2.unit)
-  if(exists("lasso_preds")) L2_preds <- dplyr::left_join(x = L2_preds, y = lasso_preds, by = L2.unit)
-  if(exists("pca_preds")) L2_preds <- dplyr::left_join(x = L2_preds, y = pca_preds, by = L2.unit)
-  if(exists("gb_preds")) L2_preds <- dplyr::left_join(x = L2_preds, y = gb_preds, by = L2.unit)
-  if(exists("svm_preds")) L2_preds <- dplyr::left_join(x = L2_preds, y = svm_preds, by = L2.unit)
-  if(exists("mrp_preds")) L2_preds <- dplyr::left_join(x = L2_preds, y = mrp_preds, by = L2.unit)
-  if(exists("deep_preds")) L2_preds <- dplyr::left_join(x = L2_preds, y = deep_preds, by = L2.unit)
+  if (exists("bs_preds")) {
+    L2_preds <- dplyr::left_join(
+      x = L2_preds,
+      y = bs_preds,
+      by = L2.unit)
+  }
+  if (exists("lasso_preds")) {
+    L2_preds <- dplyr::left_join(
+      x = L2_preds,
+      y = lasso_preds,
+      by = L2.unit)
+  }
+  if (exists("pca_preds")) {
+    L2_preds <- dplyr::left_join(
+      x = L2_preds,
+      y = pca_preds,
+      by = L2.unit)
+  }
+  if (exists("gb_preds")) {
+    L2_preds <- dplyr::left_join(
+      x = L2_preds,
+      y = gb_preds,
+      by = L2.unit)
+  }
+  if (exists("svm_preds")) {
+    L2_preds <- dplyr::left_join(
+      x = L2_preds,
+      y = svm_preds,
+      by = L2.unit)
+  }
+  if (exists("mrp_preds")) {
+    L2_preds <- dplyr::left_join(
+      x = L2_preds,
+      y = mrp_preds,
+      by = L2.unit)
+  }
+  if (exists("deep_preds")) {
+    L2_preds <- dplyr::left_join(
+      x = L2_preds,
+      y = deep_preds,
+      by = L2.unit)
+  }
 
 
   # individual predictions for EBMA
@@ -605,17 +675,17 @@ post_stratification <- function(
     tidyr::drop_na() %>%
     # add best subset
     dplyr::mutate(
-      best_subset = if(exists("bs_ind")) {
+      best_subset = if (exists("bs_ind")) {
         as.numeric(bs_ind)
       } else {
         NA
-        },
+      },
       # add lasso
       lasso = if (exists("lasso_ind")) {
         as.numeric(lasso_ind)
-        } else {
-          NA
-          },
+      } else {
+        NA
+      },
       # add pca
       pca = if (exists("pca_ind")) {
         as.numeric(pca_ind)
@@ -649,8 +719,10 @@ post_stratification <- function(
     )
 
   # remove NA's
-  L1_preds <- L1_preds[, apply(X = L1_preds, MARGIN = 2, FUN = function(x) {
-    all(!is.na(x))})]
+  L1_preds <- L1_preds[, apply(
+    X = L1_preds, MARGIN = 2, FUN = function(x) {
+      all(!is.na(x))
+    })]
 
   # Function output
   return(

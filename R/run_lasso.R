@@ -11,7 +11,8 @@
 #'   minimum 0.1 and maximum 250 that is equally spaced on the log-scale. The
 #'   number of values is controlled by the \code{lasso.n.iter} parameter.
 #' @param n.iter Lasso number of lambda values. An integer-valued scalar
-#'   specifying the number of lambda values to search over. Default is \eqn{100}.
+#'   specifying the number of lambda values to search over. Default is
+#'   \eqn{100}.
 #'   \emph{Note:} Is ignored if a vector of \code{lasso.lambda} values is
 #'   provided.
 #' @param data Data for cross-validation. A \code{list} of \eqn{k}
@@ -20,12 +21,12 @@
 #'
 #' @return The tuned lambda value. A numeric scalar.
 
-run_lasso <- function(y, L1.x, L2.x, L2.unit, L2.reg,
-                      n.iter, loss.unit, loss.fun,
-                      lambda, data, verbose, cores) {
+run_lasso <- function(
+  y, L1.x, L2.x, L2.unit, L2.reg, n.iter, loss.unit, loss.fun,
+  lambda, data, verbose, cores) {
 
   # Lasso search grid
-  if ( is.null(lambda) ){
+  if (is.null(lambda)) {
     lambda <- log_spaced(min = 0.1, max = 250, n = n.iter)
   }
 
@@ -34,7 +35,7 @@ run_lasso <- function(y, L1.x, L2.x, L2.unit, L2.reg,
   if (L2_fe == ""){
     L2_fe_form <- as.formula(paste(y, " ~ 1", sep = ""))
     L2.x <- NULL
-  } else{
+  } else {
     L2_fe_form <- as.formula(paste(y, " ~ ", L2_fe, sep = ""))
   }
 
@@ -44,13 +45,13 @@ run_lasso <- function(y, L1.x, L2.x, L2.unit, L2.reg,
     c(L1.x, L2.unit, L2.reg))
 
   # Parallel processing
-  if (cores > 1){
+  if (cores > 1) {
     lambda_errors <- run_lasso_mc_lambda(
       y = y, L1.x = L1.x, L2.x = L2.x, L2.unit = L2.unit, L2.reg = L2.reg,
       loss.unit = loss.unit, loss.fun = loss.fun, data = data,
       cores = cores, L2.fe.form = L2_fe_form, L1.re = L1_re,
       lambda = lambda)
-  } else{
+  } else {
 
     # Train and evaluate each model
     lambda_errors <- lapply(seq_along(lambda), function(l) {
@@ -73,12 +74,12 @@ run_lasso <- function(y, L1.x, L2.x, L2.unit, L2.reg,
         # covariates to factor variables in training and validation sets
         data_train <- data_train %>%
           dplyr::mutate_at(.vars = c(L1.x, L2.unit, L2.reg), as.factor) %>%
-          dplyr::select( dplyr::all_of(c(y, L1.x, L2.x, L2.unit, L2.reg)) ) %>%
+          dplyr::select(dplyr::all_of(c(y, L1.x, L2.x, L2.unit, L2.reg))) %>%
           tidyr::drop_na()
 
         data_valid <- data_valid %>%
           dplyr::mutate_at(.vars = c(L1.x, L2.unit, L2.reg), as.factor) %>%
-          dplyr::select( dplyr::all_of(c(y, L1.x, L2.x, L2.unit, L2.reg)) ) %>%
+          dplyr::select(dplyr::all_of(c(y, L1.x, L2.x, L2.unit, L2.reg))) %>%
           tidyr::drop_na()
 
         # Train model using lambda value on kth training set
@@ -103,12 +104,13 @@ run_lasso <- function(y, L1.x, L2.x, L2.unit, L2.reg,
       k_errors <- dplyr::bind_rows(k_errors) %>%
         dplyr::group_by(measure) %>%
         dplyr::summarise(value = mean(value), .groups = "drop") %>%
-        dplyr::mutate(lambda = lambda[l] )
-      })
+        dplyr::mutate(lambda = lambda[l])
+    })
   }
   # Extract best tuning parameters
   grid_cells <- dplyr::bind_rows(lambda_errors)
-  best_params <- dplyr::slice(loss_score_ranking(score = grid_cells, loss.fun = loss.fun), 1)
+  best_params <- dplyr::slice(
+    loss_score_ranking(score = grid_cells, loss.fun = loss.fun), 1)
 
   # Choose best-performing model
   out <- dplyr::pull(.data = best_params, var = lambda)
@@ -135,9 +137,8 @@ run_lasso <- function(y, L1.x, L2.x, L2.unit, L2.reg,
 #' @return The cross-validation errors for all models. A list.
 
 run_lasso_mc_lambda <- function(
-  y, L1.x, L2.x, L2.unit, L2.reg,
-  loss.unit, loss.fun, data,
-  cores, L2.fe.form, L1.re, lambda){
+  y, L1.x, L2.x, L2.unit, L2.reg, loss.unit, loss.fun, data,
+  cores, L2.fe.form, L1.re, lambda) {
 
   # Binding for global variables
   `%>%` <- dplyr::`%>%`
@@ -147,7 +148,7 @@ run_lasso_mc_lambda <- function(
   cl <- multicore(cores = cores, type = "open", cl = NULL)
 
   # Loop over each lambda value
-  lambda_errors <- foreach::foreach(l = 1:length(lambda)) %dorng% {
+  lambda_errors <- foreach::foreach(l = seq_along(lambda)) %dorng% {
 
     # Set lambda value to 0
     lambda_value <- lambda[l]
@@ -162,12 +163,12 @@ run_lasso_mc_lambda <- function(
       # covariates to factor variables in training and validation sets
       data_train <- data_train %>%
         dplyr::mutate_at(.vars = c(L1.x, L2.unit, L2.reg), as.factor) %>%
-        dplyr::select( dplyr::all_of(c(y, L1.x, L2.x, L2.unit, L2.reg)) ) %>%
+        dplyr::select(dplyr::all_of(c(y, L1.x, L2.x, L2.unit, L2.reg))) %>%
         tidyr::drop_na()
 
       data_valid <- data_valid %>%
         dplyr::mutate_at(.vars = c(L1.x, L2.unit, L2.reg), as.factor) %>%
-        dplyr::select( dplyr::all_of(c(y, L1.x, L2.x, L2.unit, L2.reg)) ) %>%
+        dplyr::select(dplyr::all_of(c(y, L1.x, L2.x, L2.unit, L2.reg))) %>%
         tidyr::drop_na()
 
       # Train model using lambda value on kth training set
@@ -192,7 +193,7 @@ run_lasso_mc_lambda <- function(
     k_errors <- dplyr::bind_rows(k_errors) %>%
       dplyr::group_by(measure) %>%
       dplyr::summarise(value = mean(value), .groups = "drop") %>%
-      dplyr::mutate(lambda = lambda[l] )
+      dplyr::mutate(lambda = lambda[l])
 
   }
 
