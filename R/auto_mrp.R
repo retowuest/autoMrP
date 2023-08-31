@@ -224,9 +224,6 @@
 #'   indicating the number of bootstrap iterations to be computed. Will be
 #'   ignored unless \code{uncertainty = TRUE}. Default is \code{200} if
 #'   \code{uncertainty = TRUE} and \code{NULL} if \code{uncertainty = FALSE}.
-#' @param seed Seed. Either \code{NULL} or an integer-valued scalar controlling
-#'   random number generation. If \code{NULL}, then the seed is set to
-#'   \eqn{546213978}. Default is \code{NULL}.
 #' @param verbose Verbose output. A logical argument indicating whether or not
 #'   verbose output should be printed. Default is \code{FALSE}.
 #' @return The context-level predictions. A list with two elements. The first
@@ -241,10 +238,14 @@
 #'   bootstrapping and then comparing level two predictions from the model
 #'   without bootstrapping to the median level two predictions from the model
 #'   with bootstrapping.
+#'
+#'   To ensure reproducability of the results, use the \code{set.seed()} function to
+#'   specify a seed.
 #' @keywords MRP multilevel regression post-stratification machine learning
 #'   EBMA ensemble Bayesian model averaging
 #' @examples
 #' # An MrP model without machine learning
+#' set.seed(123)
 #' m <- auto_MrP(
 #'   y = "YES",
 #'   L1.x = c("L1x1"),
@@ -317,19 +318,47 @@
 
 
 auto_MrP <- function(
-  y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE, pcs = NULL,
-  folds = NULL, bin.proportion = NULL, bin.size = NULL, survey, census,
-  ebma.size = 1 / 3, stacking = FALSE, cores = 1, k.folds = 5,
+  y,
+  L1.x,
+  L2.x,
+  L2.unit,
+  L2.reg = NULL,
+  L2.x.scale = TRUE,
+  pcs = NULL,
+  folds = NULL,
+  bin.proportion = NULL,
+  bin.size = NULL,
+  survey,
+  census,
+  ebma.size = 1 / 3,
+  stacking = FALSE,
+  cores = 1,
+  k.folds = 5,
   cv.sampling = "L2 units",
   loss.unit = c("individuals", "L2 units"),
   loss.fun = c("msfe", "cross-entropy", "f1", "MSE"),
-  best.subset = TRUE, lasso = TRUE, pca = TRUE, gb = TRUE, svm = TRUE,
-  mrp = FALSE, deep.mrp = FALSE,
-  oversampling = FALSE, forward.select = FALSE,
-  best.subset.L2.x = NULL, lasso.L2.x = NULL, pca.L2.x = NULL,
-  gb.L2.x = NULL, svm.L2.x = NULL, mrp.L2.x = NULL, gb.L2.unit = TRUE,
-  gb.L2.reg = FALSE, svm.L2.unit = TRUE, svm.L2.reg = FALSE,
-  deep.L2.x = NULL, deep.L2.reg = TRUE, deep.splines = TRUE,
+  best.subset = TRUE,
+  lasso = TRUE,
+  pca = TRUE,
+  gb = TRUE,
+  svm = TRUE,
+  mrp = FALSE,
+  deep.mrp = FALSE,
+  oversampling = FALSE,
+  forward.select = FALSE,
+  best.subset.L2.x = NULL,
+  lasso.L2.x = NULL,
+  pca.L2.x = NULL,
+  gb.L2.x = NULL,
+  svm.L2.x = NULL,
+  mrp.L2.x = NULL,
+  gb.L2.unit = TRUE,
+  gb.L2.reg = FALSE,
+  svm.L2.unit = TRUE,
+  svm.L2.reg = FALSE,
+  deep.L2.x = NULL,
+  deep.L2.reg = TRUE,
+  deep.splines = TRUE,
   lasso.lambda = NULL,
   lasso.n.iter = 100,
   gb.interaction.depth = c(1, 2, 3),
@@ -343,7 +372,6 @@ auto_MrP <- function(
   svm.cost = NULL,
   ebma.n.draws = 100,
   ebma.tol = c(0.01, 0.005, 0.001, 0.0005, 0.0001, 0.00005, 0.00001),
-  seed = NULL,
   verbose = FALSE,
   uncertainty = FALSE,
   boot.iter = NULL) {
@@ -632,7 +660,6 @@ auto_MrP <- function(
       boot.iter = boot.iter,
       cores = cores)
   }
-
 
   # autoMrP function output ------------------------------------------------
 
