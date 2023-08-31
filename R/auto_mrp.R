@@ -166,7 +166,7 @@
 #'  specified in \code{L2.x}. Default is \code{NULL}.
 #' @param deep.L2.reg Deep MRP L2.reg. A logical argument indicating whether
 #'  \code{L2.reg} should be included in the deep MRP classifier. Default is
-#'  \code{FALSE}.
+#'  \code{TRUE}.
 #' @param deep.splines Deep MRP splines. A logical argument indicating whether
 #'  splines should be used in the deep MRP classifier. Default is \code{TRUE}.
 #' @param lasso.lambda Lasso penalty parameter. A numeric \code{vector} of
@@ -329,7 +329,7 @@ auto_MrP <- function(
   best.subset.L2.x = NULL, lasso.L2.x = NULL, pca.L2.x = NULL,
   gb.L2.x = NULL, svm.L2.x = NULL, mrp.L2.x = NULL, gb.L2.unit = TRUE,
   gb.L2.reg = FALSE, svm.L2.unit = TRUE, svm.L2.reg = FALSE,
-  deep.L2.x = NULL, deep.L2.reg = FALSE, deep.splines = TRUE,
+  deep.L2.x = NULL, deep.L2.reg = TRUE, deep.splines = TRUE,
   lasso.lambda = NULL,
   lasso.n.iter = 100,
   gb.interaction.depth = c(1, 2, 3),
@@ -387,127 +387,130 @@ auto_MrP <- function(
                boot.iter = boot.iter)
 
 
-    # Prepare data ------------------------------------------------------------
+  # Prepare data ------------------------------------------------------------
 
-    # Coerce individual-level variables and geographic variables to factors in
-    # survey and census data
+  # Coerce individual-level variables and geographic variables to factors in
+  # survey and census data
+  survey <- survey %>%
+    dplyr::mutate_at(.vars = c(L1.x, L2.unit, L2.reg), .funs = as.factor)
+
+  census <- census %>%
+    dplyr::mutate_at(.vars = c(L1.x, L2.unit, L2.reg), .funs = as.factor)
+
+  # If not provided in census data, calculate bin size and bin proportion for
+  # each ideal type in a geographic unit
+  if (is.null(bin.proportion)) {
+    if (is.null(bin.size)) {
+      census <- census %>%
+        dplyr::group_by(.dots = c(L1.x, L2.unit)) %>%
+        dplyr::summarise(n = dplyr::n())
+    } else {
+      census$n <- census[[bin.size]]
+    }
+    census <- census %>%
+      dplyr::group_by(.dots = L2.unit) %>%
+      dplyr::mutate(prop = n / sum(n))
+  } else {
+    census <- census %>%
+      dplyr::rename(prop = one_of(bin.proportion))
+  }
+
+  # If not provided in survey and census data, compute the principal
+  # components of context-level variables
+  if (is.null(pcs) && !is.null(L2.x)) {
+
+    # Determine context-level covariates whose principal components are to be
+    # computed
+    if (is.null(pca.L2.x)) {
+      pca.L2.x <- L2.x
+    }
+
+    # Compute principal components for survey data
+    pca_out <- stats::prcomp(
+      survey[, pca.L2.x],
+      retx = TRUE,
+      center = TRUE,
+      scale. = TRUE,
+      tol = NULL)
+
+    # Add PCs to survey data
     survey <- survey %>%
-      dplyr::mutate_at(.vars = c(L1.x, L2.unit, L2.reg), .funs = as.factor)
+      dplyr::bind_cols(as.data.frame(pca_out$x))
+
+    # Add PCs to census data
+    pc_names <- colnames(pca_out$x)
 
     census <- census %>%
-      dplyr::mutate_at(.vars = c(L1.x, L2.unit, L2.reg), .funs = as.factor)
+      dplyr::left_join(unique(
+      survey %>%
+      dplyr::select(all_of(L2.unit), all_of(pc_names))),
+        by = L2.unit)
+  } else {
+    pc_names <- pcs
+  }
 
-    # If not provided in census data, calculate bin size and bin proportion for
-    # each ideal type in a geographic unit
-    if (is.null(bin.proportion)) {
-      if (is.null(bin.size)) {
-        census <- census %>%
-          dplyr::group_by(.dots = c(L1.x, L2.unit)) %>%
-          dplyr::summarise(n = dplyr::n())
-      } else {
-        census$n <- census[[bin.size]]
-      }
-      census <- census %>%
-        dplyr::group_by(.dots = L2.unit) %>%
-        dplyr::mutate(prop = n / sum(n))
-    } else {
-      census <- census %>%
-        dplyr::rename(prop = one_of(bin.proportion))
-    }
+  # Scale context-level variables in survey and census data
+  if (L2.x.scale && all(L2.x != "")) {
 
-    # If not provided in survey and census data, compute the principal
-    # components of context-level variables
-    if (is.null(pcs) && !is.null(L2.x)) {
+     # scale context-level variables in survey
+    survey <- dplyr::mutate_at(
+      .tbl = survey,
+      .vars = L2.x,
+      .funs = function(x) {
+        base::as.numeric(base::scale(x = x, center = TRUE, scale = TRUE))
+      })
 
-      # Determine context-level covariates whose principal components are to be
-      # computed
-      if (is.null(pca.L2.x)) {
-        pca.L2.x <- L2.x
-      }
+    # scale context-level variables in census
+    census <- dplyr::mutate_at(
+      .tbl = census,
+      .vars = L2.x,
+      .funs = function(x) {
+        base::as.numeric(base::scale(x = x, center = TRUE, scale = TRUE))
+      })
+  }
 
-      # Compute principal components for survey data
-      pca_out <- stats::prcomp(survey[, pca.L2.x],
-                               retx = TRUE,
-                               center = TRUE,
-                               scale. = TRUE,
-                               tol = NULL)
+  # Convert survey and census data to tibble
+  survey <- tibble::as_tibble(x = survey)
+  census <- tibble::as_tibble(x = census)
 
-      # Add PCs to survey data
-      survey <- survey %>%
-        dplyr::bind_cols(as.data.frame(pca_out$x))
+  # Random over-sampling
+  if (oversampling) {
+    add_rows <- survey %>%
+      dplyr::group_by(.dots = L2.unit) %>%
+      tidyr::nest() %>%
+      dplyr::mutate(os = purrr::map(data, function(x) {
+        n <- nrow(x)
+        os <- dplyr::group_by(.data = x, !! rlang::sym(y))
+        y_1 <- sum(dplyr::pull(.data = os, var = !! rlang::sym(y)))
+        y_0 <- n - y_1
+        if (y_1 > 0 & y_0 > 0) {
+          y_needed <- ifelse(test = y_1 > y_0, yes = 0, no = 1)
+          n_needed <- ifelse(
+          test = y_needed == 0, yes = y_1 - y_0, no = y_0 - y_1)
+          os <- dplyr::filter(.data = os, !! rlang::sym(y) == y_needed)
+          os <- dplyr::slice_sample(.data = os, replace = TRUE, n = n_needed)
+        }
+        return(os)
+      })) %>%
+      tidyr::unnest(os) %>%
+      dplyr::ungroup()
+    survey <- dplyr::bind_rows(survey, add_rows)
+  }
 
-      # Add PCs to census data
-      pc_names <- colnames(pca_out$x)
+  # No bootstrapping --------------------------------------------------------
+  if (!uncertainty) {
 
-      census <- census %>%
-        dplyr::left_join(unique(
-          survey %>% dplyr::select(all_of(L2.unit), all_of(pc_names))),
-          by = L2.unit)
-    } else {
-      pc_names <- pcs
-    }
-
-    # Scale context-level variables in survey and census data
-    if (L2.x.scale && all(L2.x != "")) {
-
-      # scale context-level variables in survey
-      survey <- dplyr::mutate_at(
-        .tbl = survey,
-        .vars = L2.x,
-        .funs = function(x) {
-          base::as.numeric(base::scale(x = x, center = TRUE, scale = TRUE))
-        })
-
-      # scale context-level variables in census
-      census <- dplyr::mutate_at(
-        .tbl = census,
-        .vars = L2.x,
-        .funs = function(x) {
-          base::as.numeric(base::scale(x = x, center = TRUE, scale = TRUE))
-        })
-    }
-
-    # Convert survey and census data to tibble
-    survey <- tibble::as_tibble(x = survey)
-    census <- tibble::as_tibble(x = census)
-
-    # Random over-sampling
-    if (oversampling) {
-      add_rows <- survey %>%
-        dplyr::group_by(.dots = L2.unit) %>%
-        tidyr::nest() %>%
-        dplyr::mutate(os = purrr::map(data, function(x) {
-          n <- nrow(x)
-          os <- dplyr::group_by(.data = x, !! rlang::sym(y))
-          y_1 <- sum(dplyr::pull(.data = os, var = !! rlang::sym(y)))
-          y_0 <- n - y_1
-          if (y_1 > 0 & y_0 > 0){
-            y_needed <- ifelse(test = y_1 > y_0, yes = 0, no = 1)
-            n_needed <- ifelse(
-              test = y_needed == 0, yes = y_1 - y_0, no = y_0 - y_1)
-            os <- dplyr::filter(.data = os, !! rlang::sym(y) == y_needed)
-            os <- dplyr::slice_sample(.data = os, replace = TRUE, n = n_needed)
-          }
-          return(os)
-        })) %>%
-        tidyr::unnest(os) %>%
-        dplyr::ungroup()
-      survey <- dplyr::bind_rows(survey, add_rows)
-    }
-
-    # No bootstrapping --------------------------------------------------------
-    if (!uncertainty) {
-
-    # Create folds ------------------------------------------------------------
+    # Create folds ----------------------------------------------------------
     if (is.null(folds)) {
 
       # EBMA hold-out fold
       ebma.size <- round(nrow(survey) * ebma.size, digits = 0)
 
       if (ebma.size > 0) {
-        ebma_folding_out <- ebma_folding(data = survey,
-                                         L2.unit = L2.unit,
-                                         ebma.size = ebma.size)
+        ebma_folding_out <- ebma_folding(
+          data = survey,
+          L2.unit = L2.unit,
+          ebma.size = ebma.size)
         ebma_fold <- ebma_folding_out$ebma_fold
         cv_data <- ebma_folding_out$cv_data
       } else {
@@ -526,46 +529,47 @@ auto_MrP <- function(
       if (ebma.size > 0) {
         # EBMA hold-out fold
         ebma_fold <- survey %>%
-          dplyr::filter_at(dplyr::vars(dplyr::one_of(folds)),
-                           dplyr::any_vars(. == k.folds + 1))
+          dplyr::filter_at(
+            dplyr::vars(dplyr::one_of(folds)),
+            dplyr::any_vars(. == k.folds + 1))
       }
 
       # K folds for cross-validation
       cv_data <- survey %>%
-        dplyr::filter_at(dplyr::vars(dplyr::one_of(folds)),
-                         dplyr::any_vars(. != k.folds + 1))
+        dplyr::filter_at(
+          dplyr::vars(dplyr::one_of(folds)),
+          dplyr::any_vars(. != k.folds + 1))
 
       cv_folds <- cv_data %>%
         dplyr::group_split(.data[[folds]])
     }
 
-# Optimal individual classifiers ------------------------------------------
+    # Optimal individual classifiers -------------------------------------
+    ebma_out <- run_classifiers(
+      y = y, L1.x = L1.x, L2.x = L2.x, mrp.L2.x = mrp.L2.x,
+      L2.unit = L2.unit, L2.reg = L2.reg, pcs = pcs,
+      folds = folds, cv.folds = cv_folds, cv.data = cv_data,
+      ebma.fold = ebma_fold, census = census, k.folds = k.folds,
+      cv.sampling = cv.sampling, loss.unit = loss.unit, loss.fun = loss.fun,
+      best.subset = best.subset, lasso = lasso, pca = pca,
+      gb = gb, svm = svm, mrp = mrp, deep.mrp = deep.mrp,
+      forward.select = forward.select, best.subset.L2.x = best.subset.L2.x,
+      lasso.L2.x = lasso.L2.x, pca.L2.x = pca.L2.x, pc.names = pc_names,
+      gb.L2.x = gb.L2.x, svm.L2.x = svm.L2.x, svm.L2.unit = svm.L2.unit,
+      svm.L2.reg = svm.L2.reg, gb.L2.unit = gb.L2.unit, gb.L2.reg = gb.L2.reg,
+      deep.L2.x = deep.L2.x, deep.L2.reg = deep.L2.reg,
+      deep.splines = deep.splines, lasso.lambda = lasso.lambda,
+      lasso.n.iter = lasso.n.iter,
+      gb.interaction.depth = gb.interaction.depth,
+      gb.shrinkage = gb.shrinkage, gb.n.trees.init = gb.n.trees.init,
+      gb.n.trees.increase = gb.n.trees.increase,
+      gb.n.trees.max = gb.n.trees.max,
+      gb.n.minobsinnode = gb.n.minobsinnode,
+      svm.kernel = svm.kernel, svm.gamma = svm.gamma, svm.cost = svm.cost,
+      ebma.tol = ebma.tol, ebma.n.draws = ebma.n.draws,
+      cores = cores, verbose = verbose)
 
-      ebma_out <- run_classifiers(
-        y = y, L1.x = L1.x, L2.x = L2.x, mrp.L2.x = mrp.L2.x,
-        L2.unit = L2.unit, L2.reg = L2.reg, pcs = pcs,
-        folds = folds, cv.folds = cv_folds, cv.data = cv_data,
-        ebma.fold = ebma_fold, census = census, k.folds = k.folds,
-        cv.sampling = cv.sampling, loss.unit = loss.unit, loss.fun = loss.fun,
-        best.subset = best.subset, lasso = lasso, pca = pca,
-        gb = gb, svm = svm, mrp = mrp, deep.mrp = deep.mrp,
-        forward.select = forward.select, best.subset.L2.x = best.subset.L2.x,
-        lasso.L2.x = lasso.L2.x, pca.L2.x = pca.L2.x, pc.names = pc_names,
-        gb.L2.x = gb.L2.x, svm.L2.x = svm.L2.x, svm.L2.unit = svm.L2.unit,
-        svm.L2.reg = svm.L2.reg, gb.L2.unit = gb.L2.unit, gb.L2.reg = gb.L2.reg,
-        deep.L2.x = deep.L2.x, deep.L2.reg = deep.L2.reg,
-        deep.splines = deep.splines, lasso.lambda = lasso.lambda,
-        lasso.n.iter = lasso.n.iter,
-        gb.interaction.depth = gb.interaction.depth,
-        gb.shrinkage = gb.shrinkage, gb.n.trees.init = gb.n.trees.init,
-        gb.n.trees.increase = gb.n.trees.increase,
-        gb.n.trees.max = gb.n.trees.max,
-        gb.n.minobsinnode = gb.n.minobsinnode,
-        svm.kernel = svm.kernel, svm.gamma = svm.gamma, svm.cost = svm.cost,
-        ebma.tol = ebma.tol, ebma.n.draws = ebma.n.draws,
-        cores = cores, verbose = verbose)
-
-# Boostrapping wrapper ----------------------------------------------------
+    # Boostrapping wrapper --------------------------------------------------
 
   } else {
 
@@ -630,7 +634,7 @@ auto_MrP <- function(
   }
 
 
-# autoMrP function output -------------------------------------------------
+  # autoMrP function output ------------------------------------------------
 
   class(ebma_out) <- c("autoMrP", "list")
   class(ebma_out$ebma) <- c("autoMrP", "ensemble", class(ebma_out$ebma))

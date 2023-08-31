@@ -518,7 +518,7 @@ post_stratification <- function(
         dplyr::select({{y}}) %>%
         dplyr::rowwise() %>%
         dplyr::mutate({{x}} := paste(dplyr::c_across(
-        dplyr::everything()), collapse = "-")) %>%
+          dplyr::everything()), collapse = "-")) %>%
         dplyr::ungroup() %>%
         dplyr::select(ncol(.))
 
