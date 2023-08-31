@@ -27,9 +27,11 @@ ebma_mc_tol(
 )
 }
 \arguments{
-\item{train.preds}{Predictions of classifiers on the classifier training data. A tibble.}
+\item{train.preds}{Predictions of classifiers on the classifier training
+data. A tibble.}
 
-\item{train.y}{Outcome variable of the classifier training data. A numeric vector.}
+\item{train.y}{Outcome variable of the classifier training data. A numeric
+vector.}
 
 \item{ebma.fold}{The data used for EBMA tuning. A tibble.}
 

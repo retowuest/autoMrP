@@ -44,7 +44,7 @@ auto_MrP(
   svm.L2.unit = TRUE,
   svm.L2.reg = FALSE,
   deep.L2.x = NULL,
-  deep.L2.reg = NULL,
+  deep.L2.reg = TRUE,
   deep.splines = TRUE,
   lasso.lambda = NULL,
   lasso.n.iter = 100,
@@ -59,7 +59,6 @@ auto_MrP(
   svm.cost = NULL,
   ebma.n.draws = 100,
   ebma.tol = c(0.01, 0.005, 0.001, 5e-04, 1e-04, 5e-05, 1e-05),
-  seed = NULL,
   verbose = FALSE,
   uncertainty = FALSE,
   boot.iter = NULL
@@ -267,7 +266,7 @@ specified in \code{L2.x}. Default is \code{NULL}.}
 
 \item{deep.L2.reg}{Deep MRP L2.reg. A logical argument indicating whether
 \code{L2.reg} should be included in the deep MRP classifier. Default is
-\code{FALSE}.}
+\code{TRUE}.}
 
 \item{deep.splines}{Deep MRP splines. A logical argument indicating whether
 splines should be used in the deep MRP classifier. Default is \code{TRUE}.}
@@ -334,10 +333,6 @@ algorithm stops optimization. Values should range at least from \eqn{0.01}
 to \eqn{0.001}. Default is
 \code{c(0.01, 0.005, 0.001, 0.0005, 0.0001, 0.00005, 0.00001)}.}
 
-\item{seed}{Seed. Either \code{NULL} or an integer-valued scalar controlling
-random number generation. If \code{NULL}, then the seed is set to
-\eqn{546213978}. Default is \code{NULL}.}
-
 \item{verbose}{Verbose output. A logical argument indicating whether or not
 verbose output should be printed. Default is \code{FALSE}.}
 
@@ -369,9 +364,13 @@ Bootstrapping samples the level two units, sometimes referred to as
   bootstrapping and then comparing level two predictions from the model
   without bootstrapping to the median level two predictions from the model
   with bootstrapping.
+
+  To ensure reproducability of the results, use the \code{set.seed()} function to
+  specify a seed.
 }
 \examples{
 # An MrP model without machine learning
+set.seed(123)
 m <- auto_MrP(
   y = "YES",
   L1.x = c("L1x1"),

@@ -148,7 +148,7 @@ specified in \code{L2.x}. Default is \code{NULL}.}
 
 \item{deep.L2.reg}{Deep MRP L2.reg. A logical argument indicating whether
 \code{L2.reg} should be included in the deep MRP classifier. Default is
-\code{FALSE}.}
+\code{TRUE}.}
 
 \item{deep.splines}{Deep MRP splines. A logical argument indicating whether
 splines should be used in the deep MRP classifier. Default is \code{TRUE}.}
