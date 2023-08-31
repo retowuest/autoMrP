@@ -441,8 +441,10 @@ post_stratification <- function(
     }
 
     # custom L2.reg
-    if (!is.null(deep.L2.reg)) {
-      L2.reg <- deep.L2.reg
+    if (isTRUE(deep.L2.reg)) {
+      deep.L2.reg <- L2.reg
+    } else {
+      deep.L2.reg <- NULL
     }
 
     # generate all interactions of L1.x
@@ -454,7 +456,7 @@ post_stratification <- function(
     l1_state <- paste(L1.x, L2.unit, sep = ".")
 
     # generate all interactions of L1.x with L2.reg
-    if (!is.null(L2.reg)) {
+    if (!is.null(deep.L2.reg)) {
       l1_region <- paste(L1.x, L2.reg, sep = ".")
     } else {
       l1_region <- NULL
@@ -516,7 +518,7 @@ post_stratification <- function(
         dplyr::select({{y}}) %>%
         dplyr::rowwise() %>%
         dplyr::mutate({{x}} := paste(dplyr::c_across(
-          dplyr::everything()), collapse = "-")) %>%
+        dplyr::everything()), collapse = "-")) %>%
         dplyr::ungroup() %>%
         dplyr::select(ncol(.))
 
@@ -534,7 +536,7 @@ post_stratification <- function(
       y <- stringr::str_split(string = x, pattern = "\\.") %>%
         unlist()
 
-      # take each column of data and combine its values into a single string 
+      # take each column of data and combine its values into a single string
       df_x <- no_ebma_data %>%
         dplyr::select({{y}}) %>%
         dplyr::rowwise() %>%

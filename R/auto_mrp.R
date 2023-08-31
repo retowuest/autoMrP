@@ -329,7 +329,7 @@ auto_MrP <- function(
   best.subset.L2.x = NULL, lasso.L2.x = NULL, pca.L2.x = NULL,
   gb.L2.x = NULL, svm.L2.x = NULL, mrp.L2.x = NULL, gb.L2.unit = TRUE,
   gb.L2.reg = FALSE, svm.L2.unit = TRUE, svm.L2.reg = FALSE,
-  deep.L2.x = NULL, deep.L2.reg = NULL, deep.splines = TRUE,
+  deep.L2.x = NULL, deep.L2.reg = FALSE, deep.splines = TRUE,
   lasso.lambda = NULL,
   lasso.n.iter = 100,
   gb.interaction.depth = c(1, 2, 3),
