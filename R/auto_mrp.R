@@ -321,7 +321,6 @@ auto_MrP <- function(
   gb.n.trees.increase = 50,
   gb.n.trees.max = 1000,
   gb.n.minobsinnode = 20,
-  gb.weights = FALSE,
   svm.kernel = c("radial"),
   svm.gamma = NULL,
   svm.cost = NULL,
@@ -592,7 +591,7 @@ auto_MrP <- function(
       gb.shrinkage = gb.shrinkage, gb.n.trees.init = gb.n.trees.init,
       gb.n.trees.increase = gb.n.trees.increase,
       gb.n.trees.max = gb.n.trees.max,
-      gb.n.minobsinnode = gb.n.minobsinnode, gb.weights = gb.weights,
+      gb.n.minobsinnode = gb.n.minobsinnode,
       svm.kernel = svm.kernel, svm.gamma = svm.gamma, svm.cost = svm.cost,
       ebma.tol = ebma.tol, ebma.n.draws = ebma.n.draws,
       cores = cores, verbose = verbose
