@@ -10,6 +10,7 @@ lasso_classifier(
   data.train,
   lambda,
   model.family,
+  y,
   verbose = c(TRUE, FALSE)
 )
 }
@@ -34,7 +35,8 @@ to be used by glmmLasso. Defaults to binomial(link = "probit").}
 verbose output should be printed.}
 }
 \value{
-A multilevel lasso model. An \code{\link[glmmLasso]{glmmLasso}} object.
+A multilevel lasso model. An \code{\link[glmmLasso]{glmmLasso}}
+  object.
 }
 \description{
 \code{lasso_classifier} applies lasso classification to a data set.

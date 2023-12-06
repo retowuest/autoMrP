@@ -1013,36 +1013,57 @@ model_list_pca <- function(y, L1.x, L2.x, L2.unit, L2.reg = NULL) {
 #'   names of the loss-functions and the second is called value and contains the
 #'   loss-function scores.
 
-loss_function <- function(pred, data.valid,
-                          loss.unit = c("individuals", "L2 units"),
-                          loss.fun = c("MSE", "MAE", "cross-entropy"),
-                          y, L2.unit) {
+loss_function <- function(
+  pred, data.valid,
+  loss.unit = c("individuals", "L2 units"),
+  loss.fun = c("MSE", "MAE", "cross-entropy"),
+  y, L2.unit
+) {
+
+  # Determine type of dependent variable
+  # for continuous variables do not do cross-entropy and f1 score
+  if (
+    data.valid %>%
+      dplyr::pull(!!y) %>%
+      unique() %>%
+      length() > 2
+  ) {
+    # remove cross-entropy and f1 score from loss.fun
+    loss.fun <- loss.fun[!loss.fun %in% c("cross-entropy", "f1")]
+  }
 
   ## Loss functions
   # MSE
   mse <- mean_squared_error(
     pred = pred, data.valid = data.valid,
-    y = y, L2.unit = L2.unit)
+    y = y, L2.unit = L2.unit
+  )
 
   # MAE
   mae <- mean_absolute_error(
     pred = pred, data.valid = data.valid,
-    y = y, L2.unit = L2.unit)
+    y = y, L2.unit = L2.unit
+  )
 
   # binary cross-entropy
-  bce <- binary_cross_entropy(
-    pred = pred, data.valid = data.valid,
-    y = y, L2.unit = L2.unit)
+  bce <- suppressWarnings(
+    binary_cross_entropy(
+      pred = pred, data.valid = data.valid,
+      y = y, L2.unit = L2.unit
+    )
+  )
 
   # f1 score
   f1 <- f1_score(
     pred = pred, data.valid = data.valid,
-    L2.unit = L2.unit, y = y)
+    L2.unit = L2.unit, y = y
+  )
 
   # mean squared false error
   msfe <- mean_squared_false_error(
     pred = pred, data.valid = data.valid,
-    y = y, L2.unit = L2.unit)
+    y = y, L2.unit = L2.unit
+  )
 
   # Combine loss functions
   score <- mse %>%
@@ -1056,7 +1077,7 @@ loss_function <- function(pred, data.valid,
     dplyr::filter(measure %in% loss.fun) %>%
     dplyr::filter(level %in% loss.unit) %>%
     dplyr::group_by(measure) %>%
-    dplyr::summarise(value = mean(value), .groups = "drop" )
+    dplyr::summarise(value = mean(value), .groups = "drop")
 
   # Function output
   return(score)
@@ -1130,7 +1151,8 @@ mean_absolute_error <- function(pred, data.valid, y, L2.unit){
   out <- dplyr::tibble(
     measure = rep("MAE", 2),
     value = rep(NA, 2),
-    level = c( "individuals", "L2 units"))
+    level = c("individuals", "L2 units")
+  )
 
   # mae values
   values <- rep(NA, 2)
@@ -1171,33 +1193,37 @@ mean_absolute_error <- function(pred, data.valid, y, L2.unit){
 #'   variables: measure, value and level.
 
 
-binary_cross_entropy <- function(pred, data.valid,
-                                 loss.unit = c("individuals", "L2 units"),
-                                 y, L2.unit){
+binary_cross_entropy <- function(
+  pred, data.valid, loss.unit = c("individuals", "L2 units"), y, L2.unit
+) {
 
   # outcome
   out <- dplyr::tibble(
     measure = rep("cross-entropy", 2),
     value = rep(NA, 2),
-    level = c( "individuals", "L2 units")
+    level = c("individuals", "L2 units")
   )
 
   # cross-entropy values
   values <- rep(NA, 2)
 
   # loss unit = "individual"
-  values[1] <- (mean( data.valid[[y]] * log(pred) + (1 - data.valid[[y]]) * log(1 - pred)))*-1
+  values[1] <- (mean(
+    data.valid[[y]] * log(pred) + (1 - data.valid[[y]]) * log(1 - pred)
+  )) * -1
 
   # loss unit = "L2 units"
   l2 <- data.valid %>%
     dplyr::mutate(pred = pred) %>%
     dplyr::rowwise() %>%
-    dplyr::mutate(ce = .data[[y]] * log(pred) + (1 - .data[[y]]) * log(1 - pred) ) %>%
+    dplyr::mutate(
+      ce = .data[[y]] * log(pred) + (1 - .data[[y]]) * log(1 - pred)
+    ) %>%
     dplyr::ungroup() %>%
     dplyr::group_by(!! rlang::sym(L2.unit)) %>%
     dplyr::summarise(bce = mean(ce), .groups = "drop")
 
-  values[2] <- mean(dplyr::pull(.data = l2, var = bce)) *-1
+  values[2] <- mean(dplyr::pull(.data = l2, var = bce)) * -1
 
   out <- dplyr::mutate(out, value = values)
   return(out)
@@ -1219,14 +1245,14 @@ binary_cross_entropy <- function(pred, data.valid,
 
 
 
-f1_score <- function(pred, data.valid, y, L2.unit){
+f1_score <- function(pred, data.valid, y, L2.unit) {
 
   ## individual level
 
   # true positives
   tp_ind <- data.valid %>%
     dplyr::mutate(pval = ifelse(test = pred > 0.5, yes = 1, no = 0)) %>%
-    dplyr::select( !! rlang::sym(y), pval ) %>%
+    dplyr::select(!! rlang::sym(y), pval) %>%
     dplyr::filter(pval == 1 & !! rlang::sym(y) == 1) %>%
     dplyr::summarise(tp = sum(pval)) %>%
     dplyr::pull(var = tp)
@@ -1234,58 +1260,59 @@ f1_score <- function(pred, data.valid, y, L2.unit){
   # false positives
   fp_ind <- data.valid %>%
     dplyr::mutate(pval = ifelse(test = pred > 0.5, yes = 1, no = 0)) %>%
-    dplyr::select( !! rlang::sym(y), pval ) %>%
-    dplyr::filter(pval == 1 & !! rlang::sym(y) == 0 ) %>%
+    dplyr::select(!! rlang::sym(y), pval) %>%
+    dplyr::filter(pval == 1 & !! rlang::sym(y) == 0) %>%
     dplyr::summarise(fp = sum(pval)) %>%
     dplyr::pull(var = fp)
 
   # false negatives
   fn_ind <- data.valid %>%
     dplyr::mutate(pval = ifelse(test = pred > 0.5, yes = 1, no = 0)) %>%
-    dplyr::select( !! rlang::sym(y), pval ) %>%
-    dplyr::filter(pval == 0 & !! rlang::sym(y) == 1 ) %>%
+    dplyr::select(!! rlang::sym(y), pval) %>%
+    dplyr::filter(pval == 0 & !! rlang::sym(y) == 1) %>%
     dplyr::summarise(fn = sum(!! rlang::sym(y))) %>%
     dplyr::pull(var = fn)
 
   # f1 score
-  f1 <- tp_ind / (tp_ind + 0.5 * (fp_ind + fn_ind) )
+  f1 <- tp_ind / (tp_ind + 0.5 * (fp_ind + fn_ind))
 
   # state-level f1 score
   state_out <- data.valid %>%
     # predicted values
     dplyr::mutate(pval = ifelse(test = pred > 0.5, yes = 1, no = 0)) %>%
     # select L2.unit, y, and predicted values
-    dplyr::select( !! rlang::sym(L2.unit), !! rlang::sym(y), pval ) %>%
+    dplyr::select(!! rlang::sym(L2.unit), !! rlang::sym(y), pval) %>%
     # group by L2.unit
-    dplyr::group_by( !! rlang::sym(L2.unit) ) %>%
+    dplyr::group_by(!! rlang::sym(L2.unit)) %>%
     # nest data
     tidyr::nest() %>%
     # new column with state-level f1 values
     dplyr::mutate(
-      f1 = purrr::map(data, function(x){
+      f1 = purrr::map(data, function(x) {
         # true positives
         tp <- x %>%
-          dplyr::select( !! rlang::sym(y), pval ) %>%
+          dplyr::select(!! rlang::sym(y), pval) %>%
           dplyr::filter(pval == 1 & !! rlang::sym(y) == 1) %>%
           dplyr::summarise(tp = sum(pval)) %>%
           dplyr::pull(var = tp)
         # false positives
         fp <- x %>%
-          dplyr::select( !! rlang::sym(y), pval ) %>%
-          dplyr::filter(pval == 1 & !! rlang::sym(y) == 0 ) %>%
+          dplyr::select(!! rlang::sym(y), pval) %>%
+          dplyr::filter(pval == 1 & !! rlang::sym(y) == 0) %>%
           dplyr::summarise(fp = sum(pval)) %>%
           dplyr::pull(var = fp)
         # false negatives
         fn <- x %>%
-          dplyr::select( !! rlang::sym(y), pval ) %>%
-          dplyr::filter(pval == 0 & !! rlang::sym(y) == 1 ) %>%
+          dplyr::select(!! rlang::sym(y), pval) %>%
+          dplyr::filter(pval == 0 & !! rlang::sym(y) == 1) %>%
           dplyr::summarise(fn = sum(!! rlang::sym(y))) %>%
           dplyr::pull(var = fn)
         # f1 score
-        f1 <- tp / (tp + 0.5 * (fp + fn) ) })) %>%
+        f1 <- tp / (tp + 0.5 * (fp + fn)) 
+      })) %>%
     # unnest f1 values
     tidyr::unnest(f1) %>%
-    dplyr::select( !! rlang::sym(L2.unit), f1 ) %>%
+    dplyr::select(!! rlang::sym(L2.unit), f1) %>%
     dplyr::ungroup() %>%
     dplyr::summarise(f1 = mean(f1, na.rm = TRUE), .groups = "drop")
 
@@ -1293,7 +1320,8 @@ f1_score <- function(pred, data.valid, y, L2.unit){
   out <- dplyr::tibble(
     measure = c("f1", "f1"),
     value = c(1 - f1, 1 - dplyr::pull(.data = state_out, var = f1)),
-    level = c("individuals", "L2 units"))
+    level = c("individuals", "L2 units")
+  )
 
   return(out)
 
@@ -1315,32 +1343,32 @@ f1_score <- function(pred, data.valid, y, L2.unit){
 
 
 
-mean_squared_false_error <- function(pred, data.valid, y, L2.unit){
+mean_squared_false_error <- function(pred, data.valid, y, L2.unit) {
 
   ## individual level
   msfe_l1 <- data.valid %>%
     dplyr::mutate(pval = ifelse(test = pred > 0.5, yes = 1, no = 0)) %>%
-    dplyr::select( !! rlang::sym(y), pval ) %>%
-    dplyr::group_by( !! rlang::sym(y) ) %>%
-    dplyr::mutate(err = (!! rlang::sym(y) - pval) ) %>%
+    dplyr::select(!! rlang::sym(y), pval) %>%
+    dplyr::group_by(!! rlang::sym(y)) %>%
+    dplyr::mutate(err = (!! rlang::sym(y) - pval)) %>%
     dplyr::summarise(err_rates = mean(err), .groups = "drop") %>%
     dplyr::mutate(err_rates = err_rates^2) %>%
-    dplyr::summarise( msfe = sum(err_rates)) %>%
+    dplyr::summarise(msfe = sum(err_rates)) %>%
     dplyr::pull(var = msfe)
 
   ## group level
   msfe_l2 <- data.valid %>%
     dplyr::mutate(pval = ifelse(test = pred > 0.5, yes = 1, no = 0)) %>%
-    dplyr::select( !! rlang::sym(L2.unit), !! rlang::sym(y), pval ) %>%
-    dplyr::group_by( !! rlang::sym(L2.unit) ) %>%
+    dplyr::select(!! rlang::sym(L2.unit), !! rlang::sym(y), pval) %>%
+    dplyr::group_by(!! rlang::sym(L2.unit)) %>%
     tidyr::nest() %>%
-    dplyr::mutate(msfe = purrr::map(data, function(x){
+    dplyr::mutate(msfe = purrr::map(data, function(x) {
       msfe <- x %>%
-        dplyr::group_by( !! rlang::sym(y) ) %>%
-        dplyr::mutate(err = (!! rlang::sym(y) - pval) ) %>%
+        dplyr::group_by(!! rlang::sym(y)) %>%
+        dplyr::mutate(err = (!! rlang::sym(y) - pval)) %>%
         dplyr::summarise(err_rates = mean(err), .groups = "drop") %>%
         dplyr::mutate(err_rates = err_rates^2) %>%
-        dplyr::summarise( msfe = sum(err_rates)) %>%
+        dplyr::summarise(msfe = sum(err_rates)) %>%
         dplyr::pull(var = msfe)
     })) %>%
     tidyr::unnest(msfe) %>%
@@ -1352,7 +1380,8 @@ mean_squared_false_error <- function(pred, data.valid, y, L2.unit){
   out <- dplyr::tibble(
     measure = c("msfe", "msfe"),
     value = c(msfe_l1, msfe_l2),
-    level = c("individuals", "L2 units"))
+    level = c("individuals", "L2 units")
+  )
 
   return(out)
 
@@ -1374,12 +1403,12 @@ mean_squared_false_error <- function(pred, data.valid, y, L2.unit){
 #'   column that corresponds to the cross-validation rank of a parameter
 #'   combination across all loss function scores.
 
-loss_score_ranking <- function(score, loss.fun){
+loss_score_ranking <- function(score, loss.fun) {
 
   # tuning parameter names
   params <- names(score)[!names(score) %in% c("measure", "value")]
 
-  ranking <- lapply(loss.fun, function(x){
+  ranking <- lapply(loss.fun, function(x) {
     score %>%
       dplyr::filter(measure == x) %>%
       dplyr::arrange(value) %>%
@@ -1387,7 +1416,7 @@ loss_score_ranking <- function(score, loss.fun){
   })
 
   ranking <- dplyr::bind_rows(ranking) %>%
-    dplyr::group_by( !!!rlang::syms(params) ) %>%
+    dplyr::group_by(!!!rlang::syms(params)) %>%
     dplyr::summarise(rank = sum(rank), .groups = "drop") %>%
     dplyr::arrange(rank)
 
@@ -1429,9 +1458,9 @@ quiet <- function(x) {
 multicore <- function(cores = 1, type, cl = NULL) {
 
   # Start parallel processing
-  if (type == "open"){
+  if (type == "open") {
     # register clusters for windows
-    if( Sys.info()["sysname"] == "Windows" ){
+    if(Sys.info()["sysname"] == "Windows") {
       cl <- parallel::makeCluster(cores)
       doParallel::registerDoParallel(cl)
       parallel::clusterCall(cl, function(x) .libPaths(x), .libPaths())
@@ -1443,7 +1472,7 @@ multicore <- function(cores = 1, type, cl = NULL) {
   }
 
   # Stop parallel processing
-  if (type == "close"){
+  if (type == "close") {
     parallel::stopCluster(cl)
   }
 }
@@ -1465,40 +1494,51 @@ multicore <- function(cores = 1, type, cl = NULL) {
 predict_glmmLasso <- function(census, m, L1.x, lasso.L2.x, L2.unit, L2.reg) {
 
   # Fixed effects
-  fixed_effects <- as.matrix(cbind(1, as.data.frame(census)[, lasso.L2.x])) %*% cbind(m$coefficients)
+  fixed_effects <- as.matrix(
+    cbind(1, as.data.frame(census)[, lasso.L2.x])
+  ) %*% cbind(m$coefficients)
 
   # Individual-level random effects
   ind_ranef <- dplyr::select(.data = census, dplyr::one_of(L1.x))
-  ind_ranef[] <- base::Map(paste, names(ind_ranef), ind_ranef, sep = '')
-  ind_ranef <- cbind(apply(ind_ranef, 1, function(x){
+  ind_ranef[] <- base::Map(paste, names(ind_ranef), ind_ranef, sep = "")
+  ind_ranef <- cbind(apply(ind_ranef, 1, function(x) {
     sum(m$ranef[which(names(m$ranef) %in% x)])
   }))
 
   # State random effects
-  state_ranef <- cbind(paste(L2.unit, as.character(dplyr::pull(.data = census, var = L2.unit)), sep = ""))
-  state_ranef <- cbind(apply(state_ranef, 1, function(x){
-    if (x %in% names(m$ranef)){
+  state_ranef <- cbind(paste(
+    L2.unit, as.character(dplyr::pull(.data = census, var = L2.unit)), sep = ""
+  ))
+  state_ranef <- cbind(apply(state_ranef, 1, function(x) {
+    if (x %in% names(m$ranef)) {
       m$ranef[names(m$ranef) == x]
-    } else{
+    } else {
       0
-    }}))
+    }
+  }))
 
   # Region random effect
-  if(!is.null(L2.reg)){
-    region_ranef <- cbind(paste(L2.reg, as.character(as.data.frame(census)[, L2.reg]), sep = ""))
-    region_ranef <- cbind(apply(region_ranef, 1, function(x){
+  if (!is.null(L2.reg)) {
+    region_ranef <- cbind(paste(
+      L2.reg, as.character(as.data.frame(census)[, L2.reg]), sep = ""
+    ))
+    region_ranef <- cbind(apply(region_ranef, 1, function(x) {
       m$ranef[names(m$ranef) == x]
     }))
   }
 
   # Predictions
-  if(!is.null(L2.reg)){
+  if (!is.null(L2.reg)) {
     lasso_preds <- cbind(fixed_effects, ind_ranef, state_ranef, region_ranef)
-  } else{
+  } else {
     lasso_preds <- cbind(fixed_effects, ind_ranef, state_ranef)
   }
   lasso_preds <- base::apply(X = lasso_preds, MARGIN = 1, FUN = sum)
-  lasso_preds <- stats::pnorm(lasso_preds)
+
+  # binary DV through the link function
+  if (m$y %>% unique() %>% length() == 2) {
+    lasso_preds <- stats::pnorm(lasso_preds)
+  }
 
   return(lasso_preds)
 }
@@ -1526,45 +1566,65 @@ predict_glmmLasso <- function(census, m, L1.x, lasso.L2.x, L2.unit, L2.reg) {
 #' @export
 #' @export plot.autoMrP
 
-plot.autoMrP <- function(x, algorithm = "ebma", ci.lvl = 0.95, ...){
+plot.autoMrP <- function(x, algorithm = "ebma", ci.lvl = 0.95, ...) {
 
   # L2.unit identifier
   L2.unit <- names(x$classifiers)[1]
 
 
   # Error if requested algorithm was not fitted
-  if(! algorithm %in% names(x$classifiers) & algorithm != "ebma" ){
-    stop('The ', algorithm, ' classifier was not run. Re-run autoMrP() with the requested algorithm. Allowed choices are: "ebma", "best_subset", "lasso", "pca", "gb", "svm", and "mrp".')
+  if (! algorithm %in% names(x$classifiers) && algorithm != "ebma") {
+    stop(
+      'The ', algorithm, ' classifier was not run. Re-run autoMrP() with the ',
+      'requested algorithm. Allowed choices are: "ebma", "best_subset", "lasso",
+      "pca", "gb", "svm", and "mrp".'
+    )
   }
 
   # plot classifier if EBMA was not estimated
-  if( "EBMA step skipped (only 1 classifier run)" %in% x$ebma ) {
+  if ("EBMA step skipped (only 1 classifier run)" %in% x$ebma) {
     algorithm <- names(x$classifiers)[-1]
   }
 
   # plot data
-  if(algorithm == "ebma"){
+  if (algorithm == "ebma") {
     # EBMA summary
     plot_data <- x$ebma %>%
       dplyr::group_by(!! rlang::sym(L2.unit)) %>%
-      dplyr::summarise(median = stats::median(ebma, na.rm = TRUE),
-                       lb = stats::quantile(x = ebma, p = (1 - ci.lvl)*.5, na.rm = TRUE),
-                       ub = stats::quantile(x = ebma, p = ci.lvl + (1 - ci.lvl)*.5, na.rm = TRUE),
-                       .groups = "drop") %>%
+      dplyr::summarise(
+        median = stats::median(ebma, na.rm = TRUE),
+        lb = stats::quantile(x = ebma, p = (1 - ci.lvl) * .5, na.rm = TRUE),
+        ub = stats::quantile(
+          x = ebma, p = ci.lvl + (1 - ci.lvl)*.5, na.rm = TRUE
+        ),
+        .groups = "drop"
+      ) %>%
       dplyr::arrange(median) %>%
       dplyr::mutate(rank = dplyr::row_number()) %>%
       dplyr::mutate(rank = as.factor(rank)) %>%
-      dplyr::mutate(!!rlang::sym(L2.unit) := forcats::fct_reorder(!!rlang::sym(L2.unit), median))
-  } else{
+      dplyr::mutate(
+        !!rlang::sym(L2.unit) := forcats::fct_reorder(
+          !!rlang::sym(L2.unit), median
+        )
+      )
+  } else {
     # One of the classifiers
     plot_data <- x$classifiers %>%
       dplyr::group_by(!! rlang::sym(L2.unit)) %>%
       dplyr::select(all_of(L2.unit), contains(algorithm)) %>%
-      dplyr::summarise_all(.funs = list(median = ~ stats::quantile(x = ., probs = 0.5, na.rm = TRUE),
-                                        lb = ~ stats::quantile(x = ., probs = (1 - ci.lvl) *.5, na.rm = TRUE),
-                                        ub = ~ stats::quantile(x = ., probs = ci.lvl + (1 - ci.lvl) *.5, na.rm = TRUE))) %>%
+      dplyr::summarise_all(.funs = list(
+        median = ~ stats::quantile(x = ., probs = 0.5, na.rm = TRUE),
+        lb = ~ stats::quantile(x = ., probs = (1 - ci.lvl) * .5, na.rm = TRUE),
+        ub = ~ stats::quantile(
+          x = ., probs = ci.lvl + (1 - ci.lvl) * .5, na.rm = TRUE
+        )
+      )) %>%
       dplyr::arrange(median) %>%
-      dplyr::mutate(!!rlang::sym(L2.unit) := forcats::fct_reorder(!!rlang::sym(L2.unit), median))
+      dplyr::mutate(
+        !!rlang::sym(L2.unit) := forcats::fct_reorder(
+          !!rlang::sym(L2.unit), median
+        )
+      )
   }
 
   # y axis tick labels

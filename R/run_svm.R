@@ -31,22 +31,24 @@
 #'
 #' @return The support vector machine tuned parameters. A list.
 
-run_svm <- function(y, L1.x, L2.x, L2.eval.unit, L2.unit, L2.reg,
-                    kernel = "radial", loss.fun, loss.unit, gamma,
-                    cost, data, verbose, cores) {
+run_svm <- function(
+  y, L1.x, L2.x, L2.eval.unit, L2.unit, L2.reg,
+  kernel = "radial", loss.fun, loss.unit, gamma,
+  cost, data, verbose, cores
+) {
 
   # Create model formula
   x <- paste(c(L1.x, L2.x, L2.unit, L2.reg), collapse = " + ")
   form <- as.formula(paste(y, " ~ ", x, sep = ""))
 
   # Default Gamma values
-  if( is.null(gamma) ){
+  if (is.null(gamma)) {
     # SVM Gamma values
     gamma <- log_spaced(min = 1e-5, 1e-1, n = 20)
   }
 
   # Default Cost values
-  if ( is.null(cost) ){
+  if (is.null(cost)) {
     cost <- log_spaced(min = 0.5, max = 10, n = 5)
   }
 
@@ -55,7 +57,7 @@ run_svm <- function(y, L1.x, L2.x, L2.eval.unit, L2.unit, L2.reg,
   names(svm_grid) <- c("gamma", "cost", "kernel")
 
   # prallel tuning if cores > 1
-  if( cores > 1 ){
+  if (cores > 1) {
 
     # Train all models in parallel
     grid_cells <- run_svm_mc(
@@ -71,7 +73,8 @@ run_svm <- function(y, L1.x, L2.x, L2.eval.unit, L2.unit, L2.reg,
       L2.unit = L2.unit,
       L2.reg = L2.reg,
       form = form,
-      cores = cores)
+      cores = cores
+    )
 
   # Train all models sequentially
   } else {
@@ -89,16 +92,21 @@ run_svm <- function(y, L1.x, L2.x, L2.eval.unit, L2.unit, L2.reg,
         # Split data in training and validation sets and factorize DV
         data_train <- dplyr::bind_rows(data[-k]) %>%
           dplyr::mutate_at(.vars = y, as.factor) %>%
-          dplyr::select( dplyr::all_of(c(y, L1.x, L2.x, L2.eval.unit, L2.reg)) ) %>%
+          dplyr::select(dplyr::all_of(
+            c(y, L1.x, L2.x, L2.eval.unit, L2.reg)
+          )) %>%
           tidyr::drop_na()
 
         data_valid <- dplyr::bind_rows(data[k]) %>%
           dplyr::mutate_at(.vars = y, as.factor) %>%
-          dplyr::select( dplyr::all_of(c(y, L1.x, L2.x, L2.eval.unit, L2.reg)) ) %>%
+          dplyr::select(dplyr::all_of(
+            c(y, L1.x, L2.x, L2.eval.unit, L2.reg)
+          )) %>%
           tidyr::drop_na()
 
         # Svm classifier
         model_l <- svm_classifier(
+          y = y,
           form = form,
           data = data_train,
           kernel = kernel_value,
@@ -110,39 +118,51 @@ run_svm <- function(y, L1.x, L2.x, L2.eval.unit, L2.unit, L2.reg,
         )
 
         # Use trained model to make predictions for kth validation set
-        pred_l <- predict(model_l, newdata = data.frame(data_valid),
-                          probability = TRUE)
-        pred_l <- as.numeric(attr(pred_l, "probabilities")[, "1"])
+        pred_l <- predict(
+          model_l, newdata = data.frame(data_valid),
+          probability = TRUE
+        )
+        if (!is.null(attr(pred_l, "probabilities")[, "1"])) {
+          pred_l <- as.numeric(attr(pred_l, "probabilities")[, "1"])
+        }
 
         # Transform factor DV to numeric for loss function
         data_valid <- data_valid %>%
           dplyr::mutate_at(.vars = y, function(x) as.numeric(levels(x))[x])
 
         # Evaluate predictions based on loss function
-        perform_l <- loss_function(pred = pred_l, data.valid = data_valid,
-                                   loss.unit = loss.unit,
-                                   loss.fun = loss.fun,
-                                   y = y, L2.unit = L2.eval.unit)
+        perform_l <- loss_function(
+          pred = pred_l, data.valid = data_valid,
+          loss.unit = loss.unit,
+          loss.fun = loss.fun,
+          y = y, L2.unit = L2.eval.unit
+        )
       })
 
       # Mean over loss functions
       k_errors <- dplyr::bind_rows(k_errors) %>%
         dplyr::group_by(measure) %>%
         dplyr::summarise(value = mean(value), .groups = "drop") %>%
-        dplyr::mutate(gamma = gamma_value,
-                      cost = cost_value,
-                      kernel = kernel_value)
+        dplyr::mutate(
+          gamma = gamma_value,
+          cost = cost_value,
+          kernel = kernel_value
+        )
 
     })
   }
 
   # Extract best tuning parameters
   grid_cells <- dplyr::bind_rows(grid_cells)
-  best_params <- dplyr::slice(loss_score_ranking(score = grid_cells, loss.fun = loss.fun), 1)
+  best_params <- dplyr::slice(
+    loss_score_ranking(score = grid_cells, loss.fun = loss.fun), 1
+  )
 
-  out <- list(gamma =  dplyr::pull(.data = best_params, var = gamma),
-              cost = dplyr::pull(.data = best_params, var = cost),
-              kernel = dplyr::pull(.data = best_params, var = kernel))
+  out <- list(
+    gamma =  dplyr::pull(.data = best_params, var = gamma),
+    cost = dplyr::pull(.data = best_params, var = cost),
+    kernel = dplyr::pull(.data = best_params, var = kernel)
+  )
 
   # Function output
   return(out)
@@ -163,8 +183,10 @@ run_svm <- function(y, L1.x, L2.x, L2.eval.unit, L2.unit, L2.reg,
 #'   hyper-parameter combinations.
 #' @return The cross-validation errors for all models. A list.
 
-run_svm_mc <- function(y, L1.x, L2.x, L2.eval.unit, L2.unit, L2.reg, form,
-                       loss.unit, loss.fun, data, cores, svm.grid, verbose){
+run_svm_mc <- function(
+  y, L1.x, L2.x, L2.eval.unit, L2.unit, L2.reg, form,
+  loss.unit, loss.fun, data, cores, svm.grid, verbose
+) {
 
   # Binding for global variables
   g <- NULL
@@ -174,7 +196,9 @@ run_svm_mc <- function(y, L1.x, L2.x, L2.eval.unit, L2.unit, L2.reg, form,
   cl <- multicore(cores = cores, type = "open", cl = NULL)
 
   # Train and evaluate each model
-  grid_cells <- foreach::foreach(g = 1:nrow(svm.grid), .packages = 'autoMrP') %dorng% {
+  grid_cells <- foreach::foreach(
+    g = seq_len(nrow(svm.grid)), .packages = "autoMrP"
+  ) %dorng% {
 
     # Set tuning parameters
     gamma_value <- as.numeric(svm.grid[g, "gamma"])
@@ -187,16 +211,21 @@ run_svm_mc <- function(y, L1.x, L2.x, L2.eval.unit, L2.unit, L2.reg, form,
       # Split data in training and validation sets and factorize DV
       data_train <- dplyr::bind_rows(data[-k]) %>%
         dplyr::mutate_at(.vars = y, as.factor) %>%
-        dplyr::select( dplyr::all_of(c(y, L1.x, L2.x, L2.eval.unit, L2.reg)) ) %>%
+        dplyr::select(dplyr::all_of(
+          c(y, L1.x, L2.x, L2.eval.unit, L2.reg)
+        )) %>%
         tidyr::drop_na()
 
       data_valid <- dplyr::bind_rows(data[k]) %>%
         dplyr::mutate_at(.vars = y, as.factor) %>%
-        dplyr::select( dplyr::all_of(c(y, L1.x, L2.x, L2.eval.unit, L2.reg)) ) %>%
+        dplyr::select(dplyr::all_of(
+          c(y, L1.x, L2.x, L2.eval.unit, L2.reg)
+        )) %>%
         tidyr::drop_na()
 
       # Svm classifier
       model_l <- svm_classifier(
+        y = y,
         form = form,
         data = data_train,
         kernel = kernel_value,
@@ -208,28 +237,40 @@ run_svm_mc <- function(y, L1.x, L2.x, L2.eval.unit, L2.unit, L2.reg, form,
       )
 
       # Use trained model to make predictions for kth validation set
-      pred_l <- predict(model_l, newdata = data.frame(data_valid),
-                        probability = TRUE)
-      pred_l <- as.numeric(attr(pred_l, "probabilities")[, "1"])
+      pred_l <- predict(
+        model_l, newdata = data.frame(data_valid),
+        probability = TRUE
+      )
+      if (!is.null(attr(pred_l, "probabilities")[, "1"])) {
+        pred_l <- as.numeric(attr(pred_l, "probabilities")[, "1"])
+      }
 
       # Transform factor DV to numeric for loss function
       data_valid <- data_valid %>%
         dplyr::mutate_at(.vars = y, function(x) as.numeric(levels(x))[x])
 
       # Evaluate predictions based on loss function
-      perform_l <- loss_function(pred = pred_l, data.valid = data_valid,
-                                 loss.unit = loss.unit,
-                                 loss.fun = loss.fun,
-                                 y = y, L2.unit = L2.eval.unit)
+      perform_l <- loss_function(
+        pred = pred_l,
+        data.valid = data_valid,
+        loss.unit = loss.unit,
+        loss.fun = loss.fun,
+        y = y,
+        L2.unit = L2.eval.unit
+      )
+
+      return(perform_l)
     })
 
     # Mean over loss functions
     k_errors <- dplyr::bind_rows(k_errors) %>%
       dplyr::group_by(measure) %>%
       dplyr::summarise(value = mean(value), .groups = "drop") %>%
-      dplyr::mutate(gamma = gamma_value,
-                    cost = cost_value,
-                    kernel = kernel_value)
+      dplyr::mutate(
+        gamma = gamma_value,
+        cost = cost_value,
+        kernel = kernel_value
+      )
   }
 
   # De-register cluster

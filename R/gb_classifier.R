@@ -22,27 +22,50 @@
 #'   verbose output should be printed.
 #' @return A gradient tree boosting model. A \code{\link[gbm]{gbm}} object.
 
-gb_classifier <- function(form, distribution, data.train,
-                          n.trees, interaction.depth,
-                          n.minobsinnode, shrinkage,
-                          verbose = c(TRUE, FALSE)) {
+gb_classifier <- function(
+  y, form, distribution, data.train,
+  n.trees, interaction.depth,
+  n.minobsinnode, shrinkage,
+  verbose = c(TRUE, FALSE)
+) {
+
+  # Determine type of dependent variable
+  if (
+    data.train %>%
+      dplyr::pull(!!y) %>%
+      unique() %>%
+      length() > 2
+  ) {
+    # set model family to gaussian
+    distribution <- "gaussian"
+  }
+
   # Train model on training data with number of total trees, interaction depth,
   # and learning rate as tuning parameters
   if (isTRUE(verbose == TRUE)) {
-    out <- gbm::gbm(formula = form, distribution = distribution,
-                    data = data.train, n.trees = n.trees,
-                    interaction.depth = interaction.depth,
-                    n.minobsinnode = n.minobsinnode,
-                    shrinkage = shrinkage,
-                    train.fraction = 1, n.cores = 1)
+    out <- gbm::gbm(
+      formula = form,
+      distribution = distribution,
+      data = data.train,
+      n.trees = n.trees,
+      interaction.depth = interaction.depth,
+      n.minobsinnode = n.minobsinnode,
+      shrinkage = shrinkage,
+      train.fraction = 1,
+      n.cores = 1
+    )
   } else {
     out <- suppressMessages(suppressWarnings(
-      gbm::gbm(formula = form, distribution = distribution,
-               data = data.train, n.trees = n.trees,
-               interaction.depth = interaction.depth,
-               n.minobsinnode = n.minobsinnode,
-               shrinkage = shrinkage,
-               train.fraction = 1, n.cores = 1)
+      gbm::gbm(
+        formula = form,
+        distribution = distribution,
+        data = data.train, n.trees = n.trees,
+        interaction.depth = interaction.depth,
+        n.minobsinnode = n.minobsinnode,
+        shrinkage = shrinkage,
+        train.fraction = 1,
+        n.cores = 1
+      )
     ))
   }
 
@@ -59,19 +82,26 @@ gb_classifier <- function(form, distribution, data.train,
 #' @param n.new.trees Number of additional trees to grow. A numeric scalar.
 #' @param verbose Verbose output. A logical vector indicating whether or not
 #'   verbose output should be printed.
-#' @return An updated gradient tree boosting model. A \code{\link[gbm]{gbm.more}} object.
+#' @return An updated gradient tree boosting model.
+#'   A \code{\link[gbm]{gbm.more}} object.
 
-gb_classifier_update <- function(object, n.new.trees,
-                                 verbose = c(TRUE, FALSE)) {
+gb_classifier_update <- function(
+  object, n.new.trees, verbose = c(TRUE, FALSE)
+) {
+
   # Train model on training data with number of total trees, interaction depth,
   # and learning rate as tuning parameters
   if (isTRUE(verbose == TRUE)) {
-    out <- gbm::gbm.more(object = object,
-                         n.new.trees = n.new.trees)
+    out <- gbm::gbm.more(
+      object = object,
+      n.new.trees = n.new.trees
+    )
   } else {
     out <- suppressMessages(suppressWarnings(
-      gbm::gbm.more(object = object,
-                    n.new.trees = n.new.trees)
+      gbm::gbm.more(
+        object = object,
+        n.new.trees = n.new.trees
+      )
     ))
   }
 

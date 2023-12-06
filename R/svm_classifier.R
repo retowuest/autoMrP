@@ -11,7 +11,11 @@
 #' @param kernel Kernel for SVM. A character string specifying the kernel to
 #'   be used for SVM. The possible types are linear, polynomial, radial, and
 #'   sigmoid. Default is radial.
-#' @param type svm can be used as a classification machine, as a regression machine, or for novelty detection. Depending of whether y is a factor or not, the default setting for type is C-classification or eps-regression, respectively, but may be overwritten by setting an explicit value. Valid options are: #' \enumerate{
+#' @param type svm can be used as a classification machine, as a regression
+#'   machine, or for novelty detection. Depending of whether y is a factor or
+#'   not, the default setting for type is C-classification or eps-regression,
+#'   respectively, but may be overwritten by setting an explicit value. Valid
+#'   options are: #' \enumerate{
 #'   \item C-classification
 #'   \item nu-classification
 #'   \item one-classification (for novelty detection)
@@ -28,8 +32,24 @@
 #'   verbose output should be printed.
 #' @return The support vector machine model. An \code{\link[e1071]{svm}} object.
 
-svm_classifier <- function(form, data, kernel, type, probability, svm.gamma,
-                           svm.cost, verbose = c(TRUE, FALSE)) {
+svm_classifier <- function(
+  y, form, data, kernel, type, probability, svm.gamma,
+  svm.cost, verbose = c(TRUE, FALSE)
+) {
+
+  # Determine type of dependent variable
+  if (
+    data %>%
+      dplyr::pull(!!y) %>%
+      unique() %>%
+      length() > 2
+  ) {
+    # set type
+    type <- "eps-regression"
+    # numeric dv
+    data <- data %>%
+      dplyr::mutate_at(.vars = y, function(x) as.numeric(levels(x))[x])
+  }
 
   # Train and evaluate model using the supplied set of tuning parameters
   if (isTRUE(verbose == TRUE)) {

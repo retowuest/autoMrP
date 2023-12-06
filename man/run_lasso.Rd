@@ -31,7 +31,8 @@ is specified in argument \code{L2.unit}.}
 
 \item{L2.x}{Context-level covariates. A character vector containing the
 column names of the context-level variables in \code{survey} and
-\code{census} used to predict outcome \code{y}.}
+\code{census} used to predict outcome \code{y}. To exclude context-level
+variables, set \code{L2.x = NULL}.}
 
 \item{L2.unit}{Geographic unit. A character scalar containing the column
 name of the geographic unit in \code{survey} and \code{census} at which
@@ -43,7 +44,8 @@ geographic units are grouped (\code{L2.unit} must be nested within
 \code{L2.reg}). Default is \code{NULL}.}
 
 \item{n.iter}{Lasso number of lambda values. An integer-valued scalar
-specifying the number of lambda values to search over. Default is \eqn{100}.
+specifying the number of lambda values to search over. Default is
+\eqn{100}.
 \emph{Note:} Is ignored if a vector of \code{lasso.lambda} values is
 provided.}
 

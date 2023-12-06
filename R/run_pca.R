@@ -11,9 +11,10 @@
 #'
 #' @return A model formula of the winning best subset classifier model.
 
-run_pca <- function(y, L1.x, L2.x, L2.unit, L2.reg,
-                    loss.unit, loss.fun, data, cores,
-                    verbose) {
+run_pca <- function(
+  y, L1.x, L2.x, L2.unit, L2.reg, loss.unit, loss.fun, data, cores,
+  verbose
+) {
 
   # List of all models to be evaluated
   models <- model_list_pca(
@@ -21,10 +22,11 @@ run_pca <- function(y, L1.x, L2.x, L2.unit, L2.reg,
       L1.x = L1.x,
       L2.x = L2.x,
       L2.unit = L2.unit,
-      L2.reg = L2.reg)
+      L2.reg = L2.reg
+    )
 
   # prallel tuning if cores > 1
-  if( cores > 1 ){
+  if (cores > 1) {
 
     # Train all models in parallel
     m_errors <- run_best_subset_mc(
@@ -38,8 +40,9 @@ run_pca <- function(y, L1.x, L2.x, L2.unit, L2.reg,
       L2.x = L2.x,
       L2.unit = L2.unit,
       L2.reg = L2.reg,
-      cores = cores)
-  } else{
+      cores = cores
+    )
+  } else {
     # Train and evaluate each model
     m_errors <- lapply(seq_along(models), function(m) {
       # Print model m
@@ -56,24 +59,31 @@ run_pca <- function(y, L1.x, L2.x, L2.unit, L2.reg,
         data_valid <- dplyr::bind_rows(data[k])
 
         # Train mth model on kth training set
-        model_m <- best_subset_classifier(model = models[[m]],
-                                          data.train = data_train,
-                                          model.family = binomial(link = "probit"),
-                                          model.optimizer = "bobyqa",
-                                          n.iter = 1000000,
-                                          verbose = verbose)
+        model_m <- best_subset_classifier(
+          y = y,
+          model = models[[m]],
+          data.train = data_train,
+          model.family = binomial(link = "probit"),
+          model.optimizer = "bobyqa",
+          n.iter = 1000000,
+          verbose = verbose
+        )
 
         # Use trained model to make predictions for kth validation set
-        pred_m <- stats::predict(model_m, newdata = data_valid,
-                                 type = "response", allow.new.levels = TRUE)
+        pred_m <- stats::predict(
+          model_m, newdata = data_valid,
+          type = "response", allow.new.levels = TRUE
+        )
 
         # Evaluate predictions based on loss function
-        perform_m <- loss_function(pred = pred_m,
-                                   data.valid = data_valid,
-                                   loss.unit = loss.unit,
-                                   loss.fun = loss.fun,
-                                   y = y,
-                                   L2.unit = L2.unit)
+        perform_m <- loss_function(
+          pred = pred_m,
+          data.valid = data_valid,
+          loss.unit = loss.unit,
+          loss.fun = loss.fun,
+          y = y,
+          L2.unit = L2.unit
+        )
       })
 
       # Mean over loss functions
@@ -86,10 +96,12 @@ run_pca <- function(y, L1.x, L2.x, L2.unit, L2.reg,
 
   # Extract best tuning parameters
   grid_cells <- dplyr::bind_rows(m_errors)
-  best_params <- dplyr::slice(loss_score_ranking(score = grid_cells, loss.fun = loss.fun), 1)
+  best_params <- dplyr::slice(
+    loss_score_ranking(score = grid_cells, loss.fun = loss.fun), 1
+  )
 
   # Choose best-performing model
-  out <- models[[ dplyr::pull(.data = best_params, var = model) ]]
+  out <- models[[dplyr::pull(.data = best_params, var = model)]]
 
   # Function output
   return(out)

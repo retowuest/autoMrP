@@ -13,24 +13,29 @@
 #' @param pc.names A character vector of the principal component variable names
 #'   in the data.
 
-run_classifiers <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
-                            L2.x.scale, pcs, pc.names, folds, bin.proportion,
-                            bin.size, cv.folds, cv.data, ebma.fold, census, ebma.size,
-                            ebma.n.draws, k.folds, cv.sampling, loss.unit,
-                            loss.fun, best.subset, lasso, pca, gb, svm, mrp,
-                            forward.select, best.subset.L2.x,
-                            lasso.L2.x, pca.L2.x, gb.L2.x, svm.L2.x,
-                            gb.L2.unit, gb.L2.reg, svm.L2.unit, svm.L2.reg,
-                            lasso.lambda, lasso.n.iter, gb.interaction.depth,
-                            gb.shrinkage, gb.n.trees.init,
-                            gb.n.trees.increase, gb.n.trees.max,
-                            gb.n.minobsinnode, svm.kernel,
-                            svm.gamma, svm.cost, ebma.tol, cores, verbose) {
+run_classifiers <- function(
+  y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
+  L2.x.scale, pcs, pc.names, folds, bin.proportion,
+  bin.size, cv.folds, cv.data, ebma.fold, census, ebma.size,
+  ebma.n.draws, k.folds, cv.sampling, loss.unit,
+  loss.fun, best.subset, lasso, pca, gb, svm, mrp,
+  forward.select, best.subset.L2.x,
+  lasso.L2.x, pca.L2.x, gb.L2.x, svm.L2.x,
+  gb.L2.unit, gb.L2.reg, svm.L2.unit, svm.L2.reg,
+  lasso.lambda, lasso.n.iter, gb.interaction.depth,
+  gb.shrinkage, gb.n.trees.init,
+  gb.n.trees.increase, gb.n.trees.max,
+  gb.n.minobsinnode, svm.kernel,
+  svm.gamma, svm.cost, ebma.tol, cores, verbose
+) {
 
   # Classifier 1: Best Subset
   if (isTRUE(best.subset)) {
     if (verbose) {
-      message("Starting multilevel regression with best subset selection classifier tuning")
+      message(
+        "Starting multilevel regression with best subset selection ",
+        "classifier tuning"
+      )
     }
 
     # Determine context-level covariates
@@ -39,16 +44,18 @@ run_classifiers <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
     }
 
     # Run classifier
-    best_subset_out <- run_best_subset(y = y,
-                                       L1.x = L1.x,
-                                       L2.x = best.subset.L2.x,
-                                       L2.unit = L2.unit,
-                                       L2.reg = L2.reg,
-                                       loss.unit = loss.unit,
-                                       loss.fun = loss.fun,
-                                       data = cv.folds,
-                                       verbose = verbose,
-                                       cores = cores)
+    best_subset_out <- run_best_subset(
+      y = y,
+      L1.x = L1.x,
+      L2.x = best.subset.L2.x,
+      L2.unit = L2.unit,
+      L2.reg = L2.reg,
+      loss.unit = loss.unit,
+      loss.fun = loss.fun,
+      data = cv.folds,
+      verbose = verbose,
+      cores = cores
+    )
   } else {
     best_subset_out <- NULL
   }
@@ -56,13 +63,13 @@ run_classifiers <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
   # Classifier 2: Lasso
 
   # message if Lasso is set to TRUE but no context level variables provided
-  if (isTRUE(lasso) & is.null(L2.x)) {
+  if (isTRUE(lasso) && is.null(L2.x)) {
     if (verbose) {
-      message('Lasso requires L2.x variables to be specified. Skipping Lasso.')
+      message("Lasso requires L2.x variables to be specified. Skipping Lasso.")
     }
   }
 
-  if (isTRUE(lasso) & !is.null(L2.x)) {
+  if (isTRUE(lasso) && !is.null(L2.x)) {
 
     if (verbose) {
       message("Starting multilevel regression with L1 regularization tuning")
@@ -74,18 +81,20 @@ run_classifiers <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
     }
 
     # Run classifier
-    lasso_out <- run_lasso(y = y,
-                           L1.x = L1.x,
-                           L2.x = lasso.L2.x,
-                           L2.unit = L2.unit,
-                           L2.reg = L2.reg,
-                           loss.unit = loss.unit,
-                           loss.fun = loss.fun,
-                           lambda = lasso.lambda,
-                           n.iter = lasso.n.iter,
-                           data = cv.folds,
-                           verbose = verbose,
-                           cores = cores)
+    lasso_out <- run_lasso(
+      y = y,
+      L1.x = L1.x,
+      L2.x = lasso.L2.x,
+      L2.unit = L2.unit,
+      L2.reg = L2.reg,
+      loss.unit = loss.unit,
+      loss.fun = loss.fun,
+      lambda = lasso.lambda,
+      n.iter = lasso.n.iter,
+      data = cv.folds,
+      verbose = verbose,
+      cores = cores
+    )
   } else {
     lasso_out <- NULL
   }
@@ -93,14 +102,19 @@ run_classifiers <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
   # Classifier 3: PCA
 
   # message if pca is TRUE but no level 2 variables or pc_names provided
-  if (isTRUE(pca) & is.null(pca.L2.x)) {
-    message(paste0('PCA requires that L2.x variables are specified or alternatively',
-                   ' that the pcs argument is specified.'))
+  if (isTRUE(pca) && is.null(pca.L2.x)) {
+    message(
+      "PCA requires that L2.x variables are specified or alternatively",
+      " that the pcs argument is specified."
+    )
   }
-  if (isTRUE(pca) & !is.null(pca.L2.x)) {
+  if (isTRUE(pca) && !is.null(pca.L2.x)) {
 
     if (verbose) {
-      message("Starting multilevel regression with principal components as context level variables tuning")
+      message(
+        "Starting multilevel regression with principal components as ",
+        "context level variables tuning"
+      )
     }
 
     pca_out <- run_pca(
@@ -113,7 +127,8 @@ run_classifiers <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
       loss.fun = loss.fun,
       data = cv.folds,
       verbose = verbose,
-      cores = cores)
+      cores = cores
+    )
 
   } else {
     pca_out <- NULL
@@ -146,29 +161,31 @@ run_classifiers <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
     }
 
     # Run classifier
-    gb_out <- run_gb(y = y,
-                     L1.x = L1.x,
-                     L2.x = gb.L2.x,
-                     L2.eval.unit = L2.unit,
-                     L2.unit = gb.L2.unit,
-                     L2.reg = gb.L2.reg,
-                     loss.unit = loss.unit,
-                     loss.fun = loss.fun,
-                     interaction.depth = gb.interaction.depth,
-                     shrinkage = gb.shrinkage,
-                     n.trees.init = gb.n.trees.init,
-                     n.trees.increase = gb.n.trees.increase,
-                     n.trees.max = gb.n.trees.max,
-                     n.minobsinnode = gb.n.minobsinnode,
-                     data = cv.folds,
-                     cores = cores,
-                     verbose = verbose)
+    gb_out <- run_gb(
+      y = y,
+      L1.x = L1.x,
+      L2.x = gb.L2.x,
+      L2.eval.unit = L2.unit,
+      L2.unit = gb.L2.unit,
+      L2.reg = gb.L2.reg,
+      loss.unit = loss.unit,
+      loss.fun = loss.fun,
+      interaction.depth = gb.interaction.depth,
+      shrinkage = gb.shrinkage,
+      n.trees.init = gb.n.trees.init,
+      n.trees.increase = gb.n.trees.increase,
+      n.trees.max = gb.n.trees.max,
+      n.minobsinnode = gb.n.minobsinnode,
+      data = cv.folds,
+      cores = cores,
+      verbose = verbose
+    )
   } else {
     gb_out <- NULL
   }
 
   # Classifier 5: SVM
-  if ( isTRUE(svm) ) {
+  if (isTRUE(svm)) {
 
     if (verbose) {
       message("Starting support vector machine tuning")
@@ -208,7 +225,8 @@ run_classifiers <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
       cost = svm.cost,
       data = cv.folds,
       verbose = verbose,
-      cores = cores)
+      cores = cores
+    )
   } else {
     svm_out <- NULL
   }
@@ -249,7 +267,6 @@ run_classifiers <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
 
 
   # EBMA --------------------------------------------------------------------
-
 
   ebma_out <- ebma(
     ebma.fold = ebma.fold,

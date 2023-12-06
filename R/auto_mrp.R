@@ -13,7 +13,8 @@
 #'   is specified in argument \code{L2.unit}.
 #' @param L2.x Context-level covariates. A character vector containing the
 #'   column names of the context-level variables in \code{survey} and
-#'   \code{census} used to predict outcome \code{y}.
+#'   \code{census} used to predict outcome \code{y}. To exclude context-level
+#'   variables, set \code{L2.x = NULL}.
 #' @param L2.unit Geographic unit. A character scalar containing the column
 #'   name of the geographic unit in \code{survey} and \code{census} at which
 #'   outcomes should be aggregated.
@@ -162,9 +163,9 @@
 #'   minimum 0.1 and maximum 250 that is equally spaced on the log-scale. The
 #'   number of values is controlled by the \code{lasso.n.iter} parameter.
 #' @param lasso.n.iter Lasso number of lambda values. An integer-valued scalar
-#'   specifying the number of lambda values to search over. Default is \eqn{100}.
-#'   \emph{Note:} Is ignored if a vector of \code{lasso.lambda} values is
-#'   provided.
+#'   specifying the number of lambda values to search over. Default is
+#' \eqn{100}. \emph{Note:} Is ignored if a vector of \code{lasso.lambda}
+#'  values is provided.
 #' @param gb.interaction.depth GB interaction depth. An integer-valued vector
 #'   whose values specify the interaction depth of GB. The interaction depth
 #'   defines the maximum depth of each tree grown (i.e., the maximum level of
@@ -187,8 +188,9 @@
 #'   observations that each terminal node of the trees must contain. Default is
 #'   \eqn{20}.
 #' @param svm.kernel SVM kernel. A character-valued scalar specifying the kernel
-#'   to be used by SVM. The possible values are \code{linear}, \code{polynomial},
-#'   \code{radial}, and \code{sigmoid}. Default is \code{radial}.
+#'   to be used by SVM. The possible values are \code{linear},
+#'  \code{polynomial}, \code{radial}, and \code{sigmoid}. Default is
+#' \code{radial}.
 #' @param svm.gamma SVM kernel parameter. A numeric vector whose values specify
 #'   the gamma parameter in the SVM kernel. This parameter is needed for all
 #'   kernel types except linear. Default is a sequence with minimum = 1e-5,
@@ -294,7 +296,8 @@
 #'   )
 #' }
 #' @export
-#' @importFrom stats as.formula binomial predict setNames weighted.mean median sd
+#' @importFrom stats as.formula binomial predict setNames
+#' @importFrom stats weighted.mean median sd
 #' @importFrom utils combn
 #' @importFrom dplyr %>%
 #' @importFrom rlang .data
@@ -431,14 +434,16 @@ auto_MrP <- function(
   if (is.null(bin.proportion)) {
     if (is.null(bin.size)) {
       census <- census %>%
-        dplyr::group_by(.dots = c(L1.x, L2.unit)) %>%
-        dplyr::summarise(n = dplyr::n())
+        dplyr::group_by(!!!rlang::syms(L1.x), !!!rlang::syms(L2.unit)) %>%
+        dplyr::summarise(n = dplyr::n(), .groups = "drop") %>%
+        dplyr::ungroup()
     } else {
       census$n <- census[[bin.size]]
     }
     census <- census %>%
-      dplyr::group_by(.dots = L2.unit) %>%
-      dplyr::mutate(prop = n / sum(n))
+      dplyr::group_by(!!!rlang::syms(L2.unit)) %>%
+      dplyr::mutate(prop = n / sum(n), .groups = "drop") %>%
+      dplyr::ungroup()
   } else {
     census <- census %>%
       dplyr::rename(prop = one_of(bin.proportion))
@@ -455,11 +460,13 @@ auto_MrP <- function(
     }
 
     # Compute principal components for survey data
-    pca_out <- stats::prcomp(survey[, pca.L2.x],
-                              retx = TRUE,
-                              center = TRUE,
-                              scale. = TRUE,
-                              tol = NULL)
+    pca_out <- stats::prcomp(
+      survey[, pca.L2.x],
+      retx = TRUE,
+      center = TRUE,
+      scale. = TRUE,
+      tol = NULL
+    )
 
     # Add PCs to survey data
     survey <- survey %>%
@@ -469,9 +476,9 @@ auto_MrP <- function(
     pc_names <- colnames(pca_out$x)
 
     census <- census %>%
-      dplyr::left_join(unique(survey %>% dplyr::select(all_of(L2.unit),
-                                                        all_of(pc_names))),
-                        by = L2.unit)
+      dplyr::left_join(unique(survey %>% dplyr::select(
+        all_of(L2.unit), all_of(pc_names)
+      )), by = L2.unit)
   } else {
     pc_names <- pcs
   }
@@ -485,7 +492,8 @@ auto_MrP <- function(
       .vars = L2.x,
       .funs = function(x) {
         base::as.numeric(base::scale(x = x, center = TRUE, scale = TRUE))
-      })
+      }
+    )
 
     # scale context-level variables in census
     census <- dplyr::mutate_at(
@@ -493,7 +501,8 @@ auto_MrP <- function(
       .vars = L2.x,
       .funs = function(x) {
         base::as.numeric(base::scale(x = x, center = TRUE, scale = TRUE))
-      })
+      }
+    )
   }
 
   # Convert survey and census data to tibble
@@ -538,35 +547,43 @@ auto_MrP <- function(
       # EBMA hold-out fold
       ebma.size <- round(nrow(survey) * ebma.size, digits = 0)
 
-      if(ebma.size>0){
-        ebma_folding_out <- ebma_folding(data = survey,
-                                         L2.unit = L2.unit,
-                                         ebma.size = ebma.size)
+      if (ebma.size > 0) {
+        ebma_folding_out <- ebma_folding(
+          data = survey,
+          L2.unit = L2.unit,
+          ebma.size = ebma.size
+        )
         ebma_fold <- ebma_folding_out$ebma_fold
         cv_data <- ebma_folding_out$cv_data
-      } else{
+      } else {
         ebma_fold <- NULL
         cv_data <- survey
       }
 
       # K folds for cross-validation
-      cv_folds <- cv_folding(data = cv_data,
-                             L2.unit = L2.unit,
-                             k.folds = k.folds,
-                             cv.sampling = cv.sampling)
+      cv_folds <- cv_folding(
+        data = cv_data,
+        L2.unit = L2.unit,
+        k.folds = k.folds,
+        cv.sampling = cv.sampling
+      )
     } else {
 
-      if (ebma.size > 0){
+      if (ebma.size > 0) {
         # EBMA hold-out fold
         ebma_fold <- survey %>%
-          dplyr::filter_at(dplyr::vars(dplyr::one_of(folds)),
-                           dplyr::any_vars(. == k.folds + 1))
+          dplyr::filter_at(
+            dplyr::vars(dplyr::one_of(folds)),
+            dplyr::any_vars(. == k.folds + 1)
+          )
       }
 
       # K folds for cross-validation
       cv_data <- survey %>%
-        dplyr::filter_at(dplyr::vars(dplyr::one_of(folds)),
-                         dplyr::any_vars(. != k.folds + 1))
+        dplyr::filter_at(
+          dplyr::vars(dplyr::one_of(folds)),
+          dplyr::any_vars(. != k.folds + 1)
+        )
 
       cv_folds <- cv_data %>%
         dplyr::group_split(.data[[folds]])
@@ -599,9 +616,9 @@ auto_MrP <- function(
 
     # Boostrapping wrapper ----------------------------------------------------
 
-  } else{
+  } else {
 
-    if (is.null(boot.iter)){
+    if (is.null(boot.iter)) {
       boot.iter <- 200
     }
 

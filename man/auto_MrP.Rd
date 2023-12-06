@@ -73,7 +73,8 @@ is specified in argument \code{L2.unit}.}
 
 \item{L2.x}{Context-level covariates. A character vector containing the
 column names of the context-level variables in \code{survey} and
-\code{census} used to predict outcome \code{y}.}
+\code{census} used to predict outcome \code{y}. To exclude context-level
+variables, set \code{L2.x = NULL}.}
 
 \item{L2.unit}{Geographic unit. A character scalar containing the column
 name of the geographic unit in \code{survey} and \code{census} at which
@@ -258,9 +259,9 @@ minimum 0.1 and maximum 250 that is equally spaced on the log-scale. The
 number of values is controlled by the \code{lasso.n.iter} parameter.}
 
 \item{lasso.n.iter}{Lasso number of lambda values. An integer-valued scalar
-specifying the number of lambda values to search over. Default is \eqn{100}.
-\emph{Note:} Is ignored if a vector of \code{lasso.lambda} values is
-provided.}
+  specifying the number of lambda values to search over. Default is
+\eqn{100}. \emph{Note:} Is ignored if a vector of \code{lasso.lambda}
+ values is provided.}
 
 \item{gb.interaction.depth}{GB interaction depth. An integer-valued vector
 whose values specify the interaction depth of GB. The interaction depth
@@ -290,8 +291,9 @@ observations that each terminal node of the trees must contain. Default is
 \eqn{20}.}
 
 \item{svm.kernel}{SVM kernel. A character-valued scalar specifying the kernel
-to be used by SVM. The possible values are \code{linear}, \code{polynomial},
-\code{radial}, and \code{sigmoid}. Default is \code{radial}.}
+  to be used by SVM. The possible values are \code{linear},
+ \code{polynomial}, \code{radial}, and \code{sigmoid}. Default is
+\code{radial}.}
 
 \item{svm.gamma}{SVM kernel parameter. A numeric vector whose values specify
 the gamma parameter in the SVM kernel. This parameter is needed for all
