@@ -15,7 +15,6 @@ run_gb_mc(
   n.minobsinnode,
   loss.unit,
   loss.fun,
-  gb.weights,
   data,
   cores
 )
@@ -61,10 +60,6 @@ Default is \code{individuals}.}
 \item{loss.fun}{Loss function. A character-valued scalar indicating whether
 prediction loss should be measured by the mean squared error (\code{MSE})
 or the mean absolute error (\code{MAE}). Default is \code{MSE}.}
-
-\item{gb.weights}{GB weights. Logical argument indicating whether the
-observations should be weighted by the inverse of the sampling
-probabilities. Default is \code{FALSE}.}
 
 \item{data}{Data for cross-validation. A \code{list} of \eqn{k}
 \code{data.frames}, one for each fold to be used in \eqn{k}-fold

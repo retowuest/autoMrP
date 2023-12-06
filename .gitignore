@@ -1,6 +1,7 @@
 .gitignore
 packrat/lib*/
 .Rproj.user
+.vscode
 .Rhistory
 packrat/src/
 testing/

@@ -162,8 +162,7 @@
 #'   minimum 0.1 and maximum 250 that is equally spaced on the log-scale. The
 #'   number of values is controlled by the \code{lasso.n.iter} parameter.
 #' @param lasso.n.iter Lasso number of lambda values. An integer-valued scalar
-#'   specifying the number of lambda values to search over. Default is
-#'   \eqn{100}.
+#'   specifying the number of lambda values to search over. Default is \eqn{100}.
 #'   \emph{Note:} Is ignored if a vector of \code{lasso.lambda} values is
 #'   provided.
 #' @param gb.interaction.depth GB interaction depth. An integer-valued vector
@@ -187,12 +186,8 @@
 #'   nodes. An integer-valued scalar specifying the minimum number of
 #'   observations that each terminal node of the trees must contain. Default is
 #'   \eqn{20}.
-#' @param gb.weights GB weights. Logical argument indicating whether the
-#'   observations should be weighted by the inverse of the sampling
-#'   probabilities. Default is \code{FALSE}.
 #' @param svm.kernel SVM kernel. A character-valued scalar specifying the kernel
-#'   to be used by SVM. The possible values are \code{linear},
-#'   \code{polynomial},
+#'   to be used by SVM. The possible values are \code{linear}, \code{polynomial},
 #'   \code{radial}, and \code{sigmoid}. Default is \code{radial}.
 #' @param svm.gamma SVM kernel parameter. A numeric vector whose values specify
 #'   the gamma parameter in the SVM kernel. This parameter is needed for all
@@ -245,7 +240,7 @@
 #'   survey = taxes_survey,
 #'   census = taxes_census,
 #'   ebma.size = 0,
-#'   cores = max_cores,
+#'   cores = 2,
 #'   best.subset = FALSE,
 #'   lasso = FALSE,
 #'   pca = FALSE,
@@ -295,12 +290,11 @@
 #'   census = taxes_census,
 #'   gb.L2.reg = TRUE,
 #'   svm.L2.reg = TRUE,
-#'   cores = max_cores
+#'   cores = min(2, max_cores)
 #'   )
 #' }
 #' @export
-#' @importFrom stats as.formula binomial predict setNames
-#' @importFrom stats weighted.mean median sd
+#' @importFrom stats as.formula binomial predict setNames weighted.mean median sd
 #' @importFrom utils combn
 #' @importFrom dplyr %>%
 #' @importFrom rlang .data
@@ -339,9 +333,6 @@ auto_MrP <- function(
   boot.iter = NULL
 ) {
 
-  # initial binding for globals
-  `%>%` <- dplyr::`%>%`
-  n <- one_of <- all_of <- os <- .data <- . <- NULL
 
   # Error checks ------------------------------------------------------------
 
@@ -548,13 +539,13 @@ auto_MrP <- function(
       # EBMA hold-out fold
       ebma.size <- round(nrow(survey) * ebma.size, digits = 0)
 
-      if (ebma.size > 0) {
+      if(ebma.size>0){
         ebma_folding_out <- ebma_folding(data = survey,
                                          L2.unit = L2.unit,
                                          ebma.size = ebma.size)
         ebma_fold <- ebma_folding_out$ebma_fold
         cv_data <- ebma_folding_out$cv_data
-      } else {
+      } else{
         ebma_fold <- NULL
         cv_data <- survey
       }
@@ -566,7 +557,7 @@ auto_MrP <- function(
                              cv.sampling = cv.sampling)
     } else {
 
-      if (ebma.size > 0) {
+      if (ebma.size > 0){
         # EBMA hold-out fold
         ebma_fold <- survey %>%
           dplyr::filter_at(dplyr::vars(dplyr::one_of(folds)),
@@ -609,9 +600,9 @@ auto_MrP <- function(
 
     # Boostrapping wrapper ----------------------------------------------------
 
-  } else {
+  } else{
 
-    if (is.null(boot.iter)) {
+    if (is.null(boot.iter)){
       boot.iter <- 200
     }
 
@@ -635,7 +626,7 @@ auto_MrP <- function(
       gb.n.trees.init = gb.n.trees.init,
       gb.n.trees.increase = gb.n.trees.increase,
       gb.n.trees.max = gb.n.trees.max,
-      gb.n.minobsinnode = gb.n.minobsinnode, gb.weights = gb.weights,
+      gb.n.minobsinnode = gb.n.minobsinnode,
       svm.kernel = svm.kernel, svm.gamma = svm.gamma,
       svm.cost = svm.cost, ebma.tol = ebma.tol,
       boot.iter = boot.iter, cores = cores

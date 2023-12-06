@@ -26,11 +26,9 @@ ebma_mc_draws(
 )
 }
 \arguments{
-\item{train.preds}{Predictions of classifiers on the classifier training
-data. A tibble.}
+\item{train.preds}{Predictions of classifiers on the classifier training data. A tibble.}
 
-\item{train.y}{Outcome variable of the classifier training data. A
-numeric vector.}
+\item{train.y}{Outcome variable of the classifier training data. A numeric vector.}
 
 \item{ebma.fold}{New data for EBMA tuning. A list containing the the data
 that must not have been used in classifier training.}

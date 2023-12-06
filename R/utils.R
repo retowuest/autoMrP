@@ -170,7 +170,7 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                  "' must contain integer numbers only.", sep = ""))
     }
 
-    if (!(folds_var == 1:max(folds_var))) {
+    if (!any((folds_var == 1:max(folds_var)))) {
       stop(paste("Fold variable '", folds,
                  "' must contain a sequence of integers running from 1 to ",
                  max(folds_var), ".", sep = ""))
@@ -1521,6 +1521,8 @@ predict_glmmLasso <- function(census, m, L1.x, lasso.L2.x, L2.unit, L2.reg) {
 #'   \code{0.95}. Confidence intervals are based on bootstrapped estimates and
 #'   will not be printed if bootstrapping was not carried out.
 #' @param ... Additional arguments affecting the summary produced.
+#' @return Returns a \code{ggplot2} object of the preference estimates for the
+#' selected classifier.
 #' @export
 #' @export plot.autoMrP
 
@@ -1608,6 +1610,8 @@ plot.autoMrP <- function(x, algorithm = "ebma", ci.lvl = 0.95, ...){
 #' @param n Number of rows to be printed. An integer scalar. Default is
 #'   \code{10}.
 #' @param ... Additional arguments affecting the summary produced.
+#' @return No return value, prints a summary of the context level preference
+#'  estimates to the console.
 #' @export
 #' @export summary.autoMrP
 
@@ -1990,11 +1994,121 @@ boot_fun <- function(survey, L2.unit,
                      svm.L2.unit, svm.L2.reg, gb.L2.unit, gb.L2.reg,
                      lasso.lambda, lasso.n.iter, gb.interaction.depth,
                      gb.shrinkage, gb.n.trees.init, gb.n.trees.increase,
-                     gb.n.trees.max, gb.n.minobsinnode, gb.weights,
-                     svm.kernel, svm.gamma, svm.cost, ebma.tol, ebma.size,
-                     cores, verbose) {
+                     gb.n.trees.max, gb.n.minobsinnode, svm.kernel,
+                     svm.gamma, svm.cost, ebma.tol, ebma.size, cores, verbose) {
 
   # Bootstrap sample --------------------------------------------------------
+
+  # simple sampling with replacement
+  # boot_sample <- dplyr::slice_sample(
+  #   .data = survey, n = nrow(survey), replace = TRUE)
+
+  # number of states to draw in cluster balanced bootstrap
+  # avg_n <- survey %>% dplyr::mutate(nrows = dplyr::n()) %>%
+  #   dplyr::group_by(!!rlang::sym(L2.unit)) %>%
+  #   dplyr::mutate(state_n = dplyr::n(),
+  #                 state_proportion =  (dplyr::n() / nrows))%>%
+  #   dplyr::summarise(state_n = mean(state_n),
+  #                    state_proportion = mean(state_proportion),
+  #                    .groups = 'drop') %>%
+  #   dplyr::summarise(n = weighted.mean(x = state_n, w = state_proportion)) %>%
+  #   as.numeric
+  #
+  # #avg_n <- floor(x = (nrow(survey) / avg_n) )
+  # avg_n <- round(x = (nrow(survey) / avg_n), digits = 0)
+  #
+  # # balanced cluster bootstrap
+  # boot_sample <- survey %>%
+  #   dplyr::group_by(!!rlang::sym(L2.unit)) %>%
+  #   tidyr::nest() %>%
+  #   dplyr::left_join(
+  #     y = survey %>%
+  #       dplyr::mutate(nrows = dplyr::n()) %>%
+  #       dplyr::group_by(!!rlang::sym(L2.unit)) %>%
+  #       dplyr::mutate(state_proportion =  (dplyr::n() / nrows)) %>%
+  #       dplyr::summarise(state_proportion = mean(state_proportion),
+  #                        .groups = 'drop'), by = L2.unit) %>%
+  #   dplyr::ungroup() %>%
+  #   dplyr::slice_sample(n = avg_n, weight_by = state_proportion,
+  #                       replace = TRUE) %>%
+  #   dplyr::select(-state_proportion) %>%
+  #   tidyr::unnest(data)
+
+  # # drop observations if the bootstrap sample is too large
+  # if (nrow(boot_sample) > nrow(survey)){
+  #   boot_sample <- dplyr::slice_sample(.data = boot_sample, n = nrow(survey),
+  #                                      replace = TRUE)
+  # }
+
+  # # Sample 1) regions; 2) states; 3) individuals
+  # if (!is.null(L2.reg)) {
+  #   # Step 1: Sample regions but sample at least 2 different regions
+  #   boot_sample <- dplyr::bind_rows(
+  #       # Sample at least 2 different regions
+  #       dplyr::slice_sample(.data = survey %>%
+  #                             dplyr::group_by(!!rlang::sym(L2.reg)) %>%
+  #                             tidyr::nest() %>%
+  #                             dplyr::ungroup()
+  #                           , n = 2, replace = FALSE),
+  #       # Sample from all regions with replacement
+  #       dplyr::slice_sample(.data = survey %>%
+  #                             dplyr::group_by(!!rlang::sym(L2.reg)) %>%
+  #                             tidyr::nest() %>%
+  #                             dplyr::ungroup(),
+  #                           n = (length(unique(unlist(survey[, L2.reg]))) - 2),
+  #                           replace = TRUE)) %>%
+  #     tidyr::unnest(data) %>%
+  #     dplyr::ungroup() %>%
+  #   # Step 2: sample states with replacement
+  #     dplyr::group_by(!!rlang::sym(L2.unit)) %>%
+  #     tidyr::nest() %>%
+  #     dplyr::ungroup() %>%
+  #     dplyr::slice_sample(n = nrow(.), replace = TRUE) %>%
+  #     tidyr::unnest(data) %>%
+  #     dplyr::ungroup() %>%
+  #     # Step 3: Sample individuals with replacement
+  #     dplyr::group_by(!!rlang::sym(L2.unit)) %>%
+  #     tidyr::nest() %>%
+  #     dplyr::mutate(data = purrr::map(data, function(x){
+  #       data = dplyr::slice_sample(.data = x, n = nrow(x), replace = TRUE)})) %>%
+  #     tidyr::unnest(data) %>%
+  #     dplyr::ungroup()
+  # } else {
+  #   # Step 1: sample states with replacement
+  #   boot_sample <- survey %>%
+  #     dplyr::group_by(!!rlang::sym(L2.unit)) %>%
+  #     tidyr::nest() %>%
+  #     dplyr::ungroup() %>%
+  #     dplyr::slice_sample(n = nrow(.), replace = TRUE) %>%
+  #     tidyr::unnest(data) %>%
+  #     dplyr::ungroup() %>%
+  #     # Step 2: Sample individuals with replacement within states
+  #     dplyr::group_by(!!rlang::sym(L2.unit)) %>%
+  #     tidyr::nest() %>%
+  #     dplyr::mutate(data = purrr::map(data, function(x){
+  #       data = dplyr::slice_sample(.data = x, n = nrow(x), replace = TRUE)})) %>%
+  #     tidyr::unnest(data) %>%
+  #     dplyr::ungroup()
+  # }
+
+  # sample states with replacement & within states sample individuals with
+  # replacement
+  # Step 1: sample states with replacement
+  # boot_sample <- survey %>%
+  #   dplyr::group_by(!!rlang::sym(L2.unit)) %>%
+  #   tidyr::nest() %>%
+  #   dplyr::ungroup() %>%
+  #   dplyr::slice_sample(n = nrow(.), replace = TRUE) %>%
+  #   tidyr::unnest(data) %>%
+  #   dplyr::ungroup() %>%
+  #   # Step 2: Sample individuals with replacement within states
+  #   dplyr::group_by(!!rlang::sym(L2.unit)) %>%
+  #   tidyr::nest() %>%
+  #   dplyr::mutate(data = purrr::map(data, function(x){
+  #     data = dplyr::slice_sample(.data = x, n = nrow(x), replace = TRUE)})) %>%
+  #   tidyr::unnest(data) %>%
+  #   dplyr::ungroup()
+
   # cluster bootstrap - sample L2 units with replacement
   boot_sample <- survey %>%
     dplyr::group_by(!!rlang::sym(L2.unit)) %>%
@@ -2003,6 +2117,44 @@ boot_fun <- function(survey, L2.unit,
     dplyr::slice_sample(n = nrow(.), replace = TRUE) %>%
     tidyr::unnest(data) %>%
     dplyr::ungroup()
+
+  # state stratified sample
+  # boot_sample <- survey %>%
+  #   dplyr::group_by( !! rlang::sym(L2.unit) ) %>%
+  #   tidyr::nest() %>%
+  #   dplyr::mutate(data = purrr::map(data, function(x){
+  #     data = dplyr::slice_sample(.data = x, n = nrow(x), replace = TRUE)
+  #   })) %>%
+  #   tidyr::unnest(data) %>%
+  #   dplyr::ungroup()
+
+  # at least one observation per state and simple sample
+  # boot_sample <- survey %>%
+  #   dplyr::group_by(!! rlang::sym(L2.unit)) %>%
+  #   dplyr::mutate(state_pick = ifelse(
+  #     test = dplyr::row_number() == sample(x = 1:dplyr::n(), size = 1),
+  #     yes = 1, no = 0)) %>%
+  #   dplyr::ungroup() %>%
+  #   dplyr::group_by(state_pick) %>%
+  #   tidyr::nest() %>%
+  #   dplyr::mutate(data = ifelse(
+  #     test = state_pick == 0,
+  #     yes = purrr::map(data, function(x){
+  #       dplyr::slice_sample(.data = x, n = nrow(x), replace = TRUE)
+  #     }),
+  #     no = data
+  #   )) %>%
+  #   tidyr::unnest(data) %>%
+  #   dplyr::ungroup()
+
+  # no-bootstrapping (same data as original survey (for testing only))
+  # boot_sample <- survey
+
+
+  # do not predict outcomes for states that are not in boot_sample ----------
+  # boot_census <- census %>%
+  #   dplyr::filter( !!rlang::sym(L2.unit) %in% unique(dplyr::pull(
+  #     .data = boot_sample, var = !!rlang::sym(L2.unit))) )
 
   # Create folds ------------------------------------------------------------
 
@@ -2100,7 +2252,6 @@ boot_fun <- function(survey, L2.unit,
     gb.n.trees.increase = gb.n.trees.increase,
     gb.n.trees.max = gb.n.trees.max,
     gb.n.minobsinnode = gb.n.minobsinnode,
-    gb.weights = gb.weights,
     svm.kernel = svm.kernel,
     svm.gamma = svm.gamma,
     svm.cost = svm.cost,

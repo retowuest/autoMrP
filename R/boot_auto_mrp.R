@@ -17,9 +17,9 @@ boot_auto_mrp <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
                           lasso.lambda, lasso.n.iter, gb.interaction.depth,
                           gb.shrinkage, gb.n.trees.init,
                           gb.n.trees.increase, gb.n.trees.max,
-                          gb.n.minobsinnode, gb.weights, svm.kernel,
+                          gb.n.minobsinnode, svm.kernel,
                           svm.gamma, svm.cost, ebma.tol,
-                          boot.iter, cores) {
+                          boot.iter, cores){
 
   # Binding for global variables
   `%>%` <- dplyr::`%>%`
@@ -29,8 +29,7 @@ boot_auto_mrp <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
   cl <- multicore(cores = cores, type = "open", cl = NULL)
 
   # Bootstrap iterations
-  boot_out <- foreach::foreach(
-    idx_boot = 1:boot.iter, .packages = "autoMrP") %dorng% {
+  boot_out <- foreach::foreach(idx_boot = 1:boot.iter, .packages = "autoMrP") %dorng% {
 
     boot_fun(
       y = y, L1.x = L1.x, L2.x = L2.x, mrp.L2.x = mrp.L2.x,
@@ -51,48 +50,70 @@ boot_auto_mrp <- function(y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
       gb.n.trees.increase = gb.n.trees.increase,
       gb.n.trees.max = gb.n.trees.max,
       gb.n.minobsinnode = gb.n.minobsinnode,
-      gb.weights = gb.weights,
       svm.kernel = svm.kernel, svm.gamma = svm.gamma,
       svm.cost = svm.cost, ebma.tol = ebma.tol, cores = cores,
       verbose = verbose)
   } # end of foreach loop
 
   # Median and standard deviation of EBMA estimates
-  if (!any(boot_out[[1]]$ebma == "EBMA step skipped (only 1 classifier run)")) {
-    ebma <- base::do.call(
-      base::rbind, base::do.call(base::rbind, boot_out)[, "ebma"])
+  if ( !any(boot_out[[1]]$ebma == "EBMA step skipped (only 1 classifier run)") ){
+    ebma <- base::do.call(base::rbind, base::do.call(base::rbind, boot_out)[,"ebma"] ) #%>%
+    #dplyr::group_by(.dots = list(L2.unit)) %>%
+    #dplyr::summarise(median = median(ebma, na.rm = TRUE),
+    #                 sd = sd(ebma, na.rm = TRUE), .groups = "drop")
 
     # weights
-    weights <- base::do.call(
-      base::rbind, base::do.call(base::rbind, boot_out)[, "weights"]) %>%
+    weights <- base::do.call(base::rbind, base::do.call(base::rbind, boot_out)[,"weights"] ) %>%
       dplyr::as_tibble() %>%
       dplyr::select(
-        dplyr::contains("best_subset"),
-        dplyr::contains("pca"),
-        dplyr::contains("lasso"),
-        dplyr::contains("gb"),
-        dplyr::contains("svm"),
-        dplyr::contains("mrp")
+        contains("best_subset"),
+        contains("pca"),
+        contains("lasso"),
+        contains("gb"),
+        contains("svm"),
+        contains("mrp")
       )
+
   } else {
     ebma <- "EBMA step skipped (only 1 classifier run)"
     weights <- NULL
   }
 
   # Median and standard deviations for classifier estimates
-  classifiers <- base::do.call(
-    base::rbind, base::do.call(base::rbind, boot_out)[, "classifiers"]) %>%
+  classifiers <- base::do.call(base::rbind, base::do.call(base::rbind, boot_out)[,"classifiers"] ) %>%
     dplyr::select(
-      dplyr::one_of(L2.unit),
-      dplyr::contains("best_subset"),
-      dplyr::contains("pca"),
-      dplyr::contains("lasso"),
-      dplyr::contains("gb"),
-      dplyr::contains("svm"),
-      dplyr::contains("mrp")
+      one_of(L2.unit),
+      contains("best_subset"),
+      contains("pca"),
+      contains("lasso"),
+      contains("gb"),
+      contains("svm"),
+      contains("mrp")
     )
 
-  if (!is.null(weights)) {
+  #dplyr::group_by(.dots = list(L2.unit)) %>%
+  #dplyr::summarise_all(.funs = c(median = median, sd = sd), na.rm = TRUE) %>%
+  #dplyr::select(
+  #  state,
+  #  contains("best_subset"),
+  #  contains("pca"),
+  #  contains("lasso"),
+  #  contains("gb"),
+  #  contains("svm"),
+  #  contains("mrp")
+  #)
+
+  #dplyr::summarise_all(.funs = c(median = median, sd = sd), na.rm = TRUE) %>%
+  #dplyr::select(
+  #  contains("best_subset"),
+  #  contains("pca"),
+  #  contains("lasso"),
+  #  contains("gb"),
+  #  contains("svm"),
+  #  contains("mrp")
+  #)
+
+  if ( !is.null(weights) ) {
     boot_out <- list(ebma = ebma, classifiers = classifiers, weights = weights)
   } else {
     boot_out <- list(ebma = ebma, classifiers = classifiers)
