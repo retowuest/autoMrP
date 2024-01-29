@@ -26,9 +26,11 @@ ebma_mc_tol(
 )
 }
 \arguments{
-\item{train.preds}{Predictions of classifiers on the classifier training data. A tibble.}
+\item{train.preds}{Predictions of classifiers on the classifier training
+data. A tibble.}
 
-\item{train.y}{Outcome variable of the classifier training data. A numeric vector.}
+\item{train.y}{Outcome variable of the classifier training data. A numeric
+vector.}
 
 \item{ebma.fold}{The data used for EBMA tuning. A tibble.}
 
@@ -43,8 +45,8 @@ is specified in argument \code{L2.unit}.}
 
 \item{L2.x}{Context-level covariates. A character vector containing the
 column names of the context-level variables in \code{survey} and
-\code{census} used to predict outcome \code{y}. Note: For the empty MrP
-model, set \code{L2.x = NULL} and \code{mrp.L2.x = ""}.}
+\code{census} used to predict outcome \code{y}. To exclude context-level
+variables, set \code{L2.x = NULL}.}
 
 \item{L2.unit}{Geographic unit. A character scalar containing the column
 name of the geographic unit in \code{survey} and \code{census} at which

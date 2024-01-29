@@ -15,28 +15,56 @@
 #'   to be used by glmmLasso. Defaults to binomial(link = "probit").
 #' @param verbose Verbose output. A logical vector indicating whether or not
 #'   verbose output should be printed.
-#' @return A multilevel lasso model. An \code{\link[glmmLasso]{glmmLasso}} object.
+#' @return A multilevel lasso model. An \code{\link[glmmLasso]{glmmLasso}}
+#'   object.
 
-lasso_classifier <- function(L2.fix, L1.re, data.train,
-                             lambda, model.family,
-                             verbose = c(TRUE, FALSE)) {
+lasso_classifier <- function(
+  L2.fix, L1.re, data.train, lambda, model.family, y,
+  verbose = c(TRUE, FALSE)
+) {
+
+  # Determine type of dependent variable
+  if (
+    data.train %>%
+      dplyr::pull(!!y) %>%
+      unique() %>%
+      length() > 2
+  ) {
+    # set model family to gaussian
+    model.family <- gaussian(link = "identity")
+  }
+
   # Train model on training data with lambda as tuning parameter
   if (isTRUE(verbose == TRUE)) {
-    out <- glmmLasso::glmmLasso(fix = L2.fix, rnd = L1.re,
-                                data = data.train, lambda = lambda,
-                                family = model.family,
-                                switch.NR = FALSE, final.re = TRUE,
-                                control = list(center = TRUE,
-                                               standardize = TRUE))
+    out <- glmmLasso::glmmLasso(
+      fix = L2.fix,
+      rnd = L1.re,
+      data = data.train,
+      lambda = lambda,
+      family = model.family,
+      switch.NR = FALSE,
+      final.re = TRUE,
+      control = list(
+        center = TRUE,
+        standardize = TRUE
+      )
+    )
   } else {
     out <- quiet(
       suppressMessages(suppressWarnings(
-        glmmLasso::glmmLasso(fix = L2.fix, rnd = L1.re,
-                             data = data.train, lambda = lambda,
-                             family = model.family,
-                             switch.NR = FALSE, final.re = TRUE,
-                             control = list(center = TRUE,
-                                            standardize = TRUE))
+        glmmLasso::glmmLasso(
+          fix = L2.fix,
+          rnd = L1.re,
+          data = data.train,
+          lambda = lambda,
+          family = model.family,
+          switch.NR = FALSE,
+          final.re = TRUE,
+          control = list(
+            center = TRUE,
+            standardize = TRUE
+          )
+        )
       ))
     )
   }

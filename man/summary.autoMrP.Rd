@@ -36,6 +36,10 @@ or \code{mrp}. Default is \code{NULL}.}
 
 \item{...}{Additional arguments affecting the summary produced.}
 }
+\value{
+No return value, prints a summary of the context level preference
+ estimates to the console.
+}
 \description{
 \code{summary.autoMrP()} ...
 }
