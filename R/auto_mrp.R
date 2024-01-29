@@ -144,7 +144,8 @@
 #'   \code{census} to be used by the MRP classifier. The character vector
 #'   \emph{empty} if no context-level variables should be used by the MRP
 #'   classifier. If \code{NULL} and \code{mrp} is set to \code{TRUE}, then MRP
-#'   uses the variables specified in \code{L2.x}. Default is \code{NULL}.
+#'   uses the variables specified in \code{L2.x}. Default is \code{NULL}. Note:
+#'   For the empty MrP model, set \code{L2.x = NULL} and \code{mrp.L2.x = ""}.
 #' @param gb.L2.unit GB L2.unit. A logical argument indicating whether
 #'   \code{L2.unit} should be included in the GB classifier. Default is
 #'   \code{FALSE}.
@@ -255,27 +256,28 @@
 #' summary(m)
 #' plot(m)
 #'
-#' \donttest{
-#' # MrP model only:
-#' mrp_out <- auto_MrP(
+#' # An MrP model without context-level predictors
+#' m <- auto_MrP(
 #'   y = "YES",
-#'   L1.x = c("L1x1", "L1x2", "L1x3"),
-#'   L2.x = c("L2.x1", "L2.x2", "L2.x3", "L2.x4", "L2.x5", "L2.x6"),
+#'   L1.x = "L1x1",
+#'   L2.x = NULL,
+#'   mrp.L2.x = "",
 #'   L2.unit = "state",
-#'   L2.reg = "region",
 #'   bin.proportion = "proportion",
 #'   survey = taxes_survey,
 #'   census = taxes_census,
 #'   ebma.size = 0,
+#'   cores = 1,
 #'   best.subset = FALSE,
 #'   lasso = FALSE,
 #'   pca = FALSE,
 #'   gb = FALSE,
 #'   svm = FALSE,
 #'   mrp = TRUE
-#' )
+#'   )
 #'
-#' # Predictions through machine learning
+#' \donttest{
+#' # Predictions with machine learning
 #'
 #' # detect number of available cores
 #' max_cores <- parallel::detectCores()

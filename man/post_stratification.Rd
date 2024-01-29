@@ -118,7 +118,8 @@ the column names of the context-level variables in \code{survey} and
 \code{census} to be used by the MRP classifier. The character vector
 \emph{empty} if no context-level variables should be used by the MRP
 classifier. If \code{NULL} and \code{mrp} is set to \code{TRUE}, then MRP
-uses the variables specified in \code{L2.x}. Default is \code{NULL}.}
+uses the variables specified in \code{L2.x}. Default is \code{NULL}. Note:
+For the empty MrP model, set \code{L2.x = NULL} and \code{mrp.L2.x = ""}.}
 
 \item{data}{A data.frame containing the survey data used in classifier
 training.}
