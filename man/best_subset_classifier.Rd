@@ -31,6 +31,10 @@ describing the optimization method to be used by glmer. Defaults to
 \item{n.iter}{Iterations. A integer-valued scalar specifying the maximum
 number of function evaluations tried by the optimization method.}
 
+\item{y}{Outcome variable. A character vector containing the column names of
+the outcome variable. A character scalar containing the column name of
+the outcome variable in \code{survey}.}
+
 \item{verbose}{Verbose output. A logical vector indicating whether or not
 verbose output should be printed.}
 }

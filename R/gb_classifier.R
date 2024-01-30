@@ -2,6 +2,7 @@
 #'
 #' \code{gb_classifier} applies gradient boosting classification to a data set.
 #'
+#' @inheritParams auto_MrP
 #' @param form Model formula. A two-sided linear formula describing
 #'   the model to be fit, with the outcome on the LHS and the covariates
 #'   separated by + operators on the RHS.

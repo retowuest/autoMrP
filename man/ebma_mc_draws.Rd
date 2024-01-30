@@ -81,7 +81,7 @@ An \code{\link[e1071]{svm}} object.}
 \item{model.mrp}{The standard MrP model. An \code{\link[lme4]{glmer}} object}
 
 \item{model_deep}{The tuned model from the deep mrp classifier. An
-\code{\link[vglmer]{vglmerMod}} object.}
+\code{\link[vglmer]{vglmer}} object.}
 
 \item{tol}{EBMA tolerance. A numeric vector containing the tolerance values
 for improvements in the log-likelihood before the EM algorithm stops

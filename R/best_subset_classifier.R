@@ -3,6 +3,7 @@
 #' \code{best_subset_classifier} applies best subset classification to a data
 #' set.
 #'
+#' @inheritParams auto_MrP
 #' @param model Multilevel model. A model formula describing the multilevel
 #'   model to be estimated on the basis of the provided training data.
 #' @param data.train Training data. A data.frame containing the training data

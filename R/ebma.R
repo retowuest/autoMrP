@@ -528,7 +528,7 @@ ebma <- function(
 #' @param model.svm The tuned model from the support vector machine classifier.
 #'   An \code{\link[e1071]{svm}} object.
 #' @param model_deep The tuned model from the deep mrp classifier. An
-#'  \code{\link[vglmer]{vglmerMod}} object.
+#'  \code{\link[vglmer]{vglmer}} object.
 #' @param model.mrp The standard MrP model. An \code{\link[lme4]{glmer}} object
 #' @param tol The tolerance values used for EBMA. A numeric vector.
 #' @return The classifier weights. A numeric vector.

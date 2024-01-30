@@ -2,6 +2,7 @@
 #'
 #' \code{lasso_classifier} applies lasso classification to a data set.
 #'
+#' @inheritParams auto_MrP
 #' @param L2.fix Fixed effects. A two-sided linear formula describing
 #'   the fixed effects part of the model, with the outcome on the LHS and
 #'   the fixed effects separated by + operators on the RHS.

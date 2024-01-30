@@ -31,6 +31,10 @@ the shrinkage of fixed effects.}
 \item{model.family}{Model family. A variable indicating the model family
 to be used by glmmLasso. Defaults to binomial(link = "probit").}
 
+\item{y}{Outcome variable. A character vector containing the column names of
+the outcome variable. A character scalar containing the column name of
+the outcome variable in \code{survey}.}
+
 \item{verbose}{Verbose output. A logical vector indicating whether or not
 verbose output should be printed.}
 }
