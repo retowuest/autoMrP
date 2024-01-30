@@ -34,7 +34,6 @@ run_classifiers(
   svm,
   mrp,
   deep.mrp,
-  forward.select,
   best.subset.L2.x,
   lasso.L2.x,
   pca.L2.x,
@@ -208,12 +207,6 @@ MRP classifier should be used for predicting outcome \code{y}. Default is
 the deep MRP classifier should be used for predicting outcome \code{y}.
 Default is \code{FALSE}.}
 
-\item{forward.select}{Forward selection classifier. A logical argument
-indicating whether to use forward selection rather than best subset
-selection. Default is \code{FALSE}. \emph{Note:} forward selection is
-recommended if there are more than \eqn{8} context-level variables.
-\emph{Note:} forward selection is not implemented yet.}
-
 \item{best.subset.L2.x}{Best subset context-level covariates. A character
 vector containing the column names of the context-level variables in
 \code{survey} and \code{census} to be used by the best subset classifier.
@@ -339,5 +332,6 @@ of processor cores used for parallel computing. Default is 1.}
 verbose output should be printed. Default is \code{FALSE}.}
 }
 \description{
-\code{run_classifiers} tunes classifiers, post-stratifies and carries out EMBA.
+\code{run_classifiers} tunes classifiers, post-stratifies and carries out
+EMBA.
 }

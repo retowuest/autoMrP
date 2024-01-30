@@ -18,7 +18,6 @@ auto_MrP(
   survey,
   census,
   ebma.size = 1/3,
-  stacking = FALSE,
   cores = 1,
   k.folds = 5,
   cv.sampling = "L2 units",
@@ -32,7 +31,6 @@ auto_MrP(
   mrp = FALSE,
   deep.mrp = FALSE,
   oversampling = FALSE,
-  forward.select = FALSE,
   best.subset.L2.x = NULL,
   lasso.L2.x = NULL,
   pca.L2.x = NULL,
@@ -131,11 +129,6 @@ indicating the proportion of respondents to be allocated to the EBMA fold.
 Default is \eqn{1/3}. \emph{Note:} ignored if \code{folds} is provided, but
 must be specified otherwise.}
 
-\item{stacking}{Model averaging via stacking. Stacking is an alternative to
-EBMA. Default is \code{FALSE}. If set to TRUE a model ensemble is generated
-via stacking. \code{ebma.size} must be set to 0 if stacking is \code{TRUE}.
-Stacking is faster than EBMA.}
-
 \item{cores}{The number of cores to be used. An integer indicating the number
 of processor cores used for parallel computing. Default is 1.}
 
@@ -198,12 +191,6 @@ Default is \code{FALSE}.}
 
 \item{oversampling}{Over sample to create balance on the dependent variable.
 A logical argument. Default is \code{FALSE}.}
-
-\item{forward.select}{Forward selection classifier. A logical argument
-indicating whether to use forward selection rather than best subset
-selection. Default is \code{FALSE}. \emph{Note:} forward selection is
-recommended if there are more than \eqn{8} context-level variables.
-\emph{Note:} forward selection is not implemented yet.}
 
 \item{best.subset.L2.x}{Best subset context-level covariates. A character
 vector containing the column names of the context-level variables in
@@ -367,8 +354,8 @@ Bootstrapping samples the level two units, sometimes referred to as
   without bootstrapping to the median level two predictions from the model
   with bootstrapping.
 
-  To ensure reproducability of the results, use the \code{set.seed()} function to
-  specify a seed.
+  To ensure reproducability of the results, use the \code{set.seed()}
+  function to specify a seed.
 }
 \examples{
 # An MrP model without machine learning

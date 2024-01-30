@@ -28,7 +28,6 @@ error_checks(
   gb,
   svm,
   mrp,
-  forward.select,
   best.subset.L2.x,
   lasso.L2.x,
   gb.L2.x,
@@ -161,12 +160,6 @@ classifier should be used for predicting outcome \code{y}. Default is
 \item{mrp}{MRP classifier. A logical argument indicating whether the standard
 MRP classifier should be used for predicting outcome \code{y}. Default is
 \code{FALSE}.}
-
-\item{forward.select}{Forward selection classifier. A logical argument
-indicating whether to use forward selection rather than best subset
-selection. Default is \code{FALSE}. \emph{Note:} forward selection is
-recommended if there are more than \eqn{8} context-level variables.
-\emph{Note:} forward selection is not implemented yet.}
 
 \item{best.subset.L2.x}{Best subset context-level covariates. A character
 vector containing the column names of the context-level variables in
