@@ -610,15 +610,19 @@ post_stratification <- function(
     x_data <- lapply(all_interactions, function(x) {
 
       # break down interaction components
-      y <- stringr::str_split(string = x, pattern = "\\.") %>%
-        unlist()
+      y <- stringr::str_extract(
+        string = x,
+        pattern = stringr::fixed(pattern = names(data))
+      ) %>%
+        .[!is.na(.)]
 
       # take each column of data and combine its values into a single string
       df_x <- data %>%
         dplyr::select({{y}}) %>%
         dplyr::rowwise() %>%
         dplyr::mutate({{x}} := paste(dplyr::c_across(
-          dplyr::everything()), collapse = "-")) %>%
+          dplyr::everything()
+        ), collapse = "-")) %>%
         dplyr::ungroup() %>%
         dplyr::select(ncol(.))
 
@@ -633,15 +637,19 @@ post_stratification <- function(
     x_no_ebma <- lapply(all_interactions, function(x) {
 
       # break down interaction components
-      y <- stringr::str_split(string = x, pattern = "\\.") %>%
-        unlist()
+      y <- stringr::str_extract(
+        string = x,
+        pattern = stringr::fixed(pattern = names(no_ebma_data))
+      ) %>%
+        .[!is.na(.)]
 
       # take each column of data and combine its values into a single string
       df_x <- no_ebma_data %>%
         dplyr::select({{y}}) %>%
         dplyr::rowwise() %>%
         dplyr::mutate({{x}} := paste(dplyr::c_across(
-          dplyr::everything()), collapse = "-")) %>%
+          dplyr::everything()
+        ), collapse = "-")) %>%
         dplyr::ungroup() %>%
         dplyr::select(ncol(.))
 
@@ -654,29 +662,37 @@ post_stratification <- function(
 
     # run deep mrp model for ebma
     deep_mrp_model <- deep_mrp_classifier(
+      y = y,
       form = form,
       data = data,
-      verbose = verbose)
+      verbose = verbose
+    )
 
     # run deep mrp model for postratification only
     deep_mrp_model_poststrat_only <- deep_mrp_classifier(
+      y = y,
       form = form,
       data = no_ebma_data,
-      verbose = verbose)
+      verbose = verbose
+    )
 
     # loop over all interactions for census data
     x_census <- lapply(all_interactions, function(x) {
 
       # break down interaction components
-      y <- stringr::str_split(string = x, pattern = "\\.") %>%
-        unlist()
+      y <- stringr::str_extract(
+        string = x,
+        pattern = stringr::fixed(pattern = names(census))
+      ) %>%
+        .[!is.na(.)]
 
       # take each column of data and combine its values into a single string
       df_x <- census %>%
         dplyr::select({{y}}) %>%
         dplyr::rowwise() %>%
         dplyr::mutate({{x}} := paste(dplyr::c_across(
-          dplyr::everything()), collapse = "-")) %>%
+          dplyr::everything()
+        ), collapse = "-")) %>%
         dplyr::ungroup() %>%
         dplyr::select(ncol(.))
 
@@ -687,15 +703,39 @@ post_stratification <- function(
     # combine data and interactions
     deep_census <- dplyr::bind_cols(census, x_census)
 
-    # predictions for post-stratification only (no EBMA)
-    pred_d <- vglmer::predict_MAVB(
-      samples = 1000,
-      deep_mrp_model_poststrat_only,
-      newdata = deep_census,
-      allow_missing_levels = TRUE)[["mean"]]
+    # Determine type of dependent variable
+    if (
+      data %>%
+        dplyr::pull(!!y) %>%
+        unique() %>%
+        length() == 2
+    ) {
+      dv_type <- "binary"
+    } else {
+      dv_type <- "linear"
+    }
 
-    # convert to response probabilities
-    pred_d <- stats::plogis(pred_d)
+    # binary or continuous DV
+    if (dv_type == "binary") {
+      # predictions for post-stratification only (no EBMA)
+      pred_d <- vglmer::predict_MAVB(
+        samples = 1000,
+        deep_mrp_model_poststrat_only,
+        newdata = deep_census,
+        allow_missing_levels = TRUE
+      )[["mean"]]
+
+      # convert to response probabilities
+      pred_d <- stats::plogis(pred_d)
+    } else if (dv_type == "linear") {
+      # predictions for post-stratification only (no EBMA)
+      pred_d <- predict(
+        samples = 1000,
+        object = deep_mrp_model_poststrat_only,
+        newdata = deep_census,
+        allow_missing_levels = TRUE
+      )[["mean"]]
+    }
 
     # post-stratification
     deep_preds <- deep_census %>%
@@ -703,17 +743,31 @@ post_stratification <- function(
       dplyr::group_by(!!rlang::sym(L2.unit)) %>%
       dplyr::summarize(
         deep_mrp = stats::weighted.mean(
-          x = deep_mrp, w = prop), .groups = "keep")
+          x = deep_mrp, w = prop
+        ), .groups = "keep"
+      )
 
-    # individual level predictions for EBMA
-    deep_mrp_ind <- vglmer::predict_MAVB(
-      samples = 1000,
-      deep_mrp_model,
-      newdata = data,
-      allow_missing_levels = TRUE)[["mean"]]
+    # binary or continuous DV
+    if (dv_type == "binary") {
+      # individual level predictions for EBMA
+      deep_mrp_ind <- vglmer::predict_MAVB(
+        samples = 1000,
+        deep_mrp_model,
+        newdata = data,
+        allow_missing_levels = TRUE
+      )[["mean"]]
 
-    # convert response to probabilities
-    deep_mrp_ind <- stats::plogis(deep_mrp_ind)
+      # convert response to probabilities
+      deep_mrp_ind <- stats::plogis(deep_mrp_ind)
+    } else if (dv_type == "linear") {
+      # individual level predictions for EBMA
+      deep_mrp_ind <- predict(
+        samples = 1000,
+        object = deep_mrp_model,
+        newdata = data,
+        allow_missing_levels = TRUE
+      )[["mean"]]
+    }
 
     # model for EBMA
     models$deep_mrp <- deep_mrp_model

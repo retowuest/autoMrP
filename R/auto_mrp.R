@@ -57,10 +57,6 @@
 #'   indicating the proportion of respondents to be allocated to the EBMA fold.
 #'   Default is \eqn{1/3}. \emph{Note:} ignored if \code{folds} is provided, but
 #'   must be specified otherwise.
-#' @param stacking Model averaging via stacking. Stacking is an alternative to
-#'   EBMA. Default is \code{FALSE}. If set to TRUE a model ensemble is generated
-#'   via stacking. \code{ebma.size} must be set to 0 if stacking is \code{TRUE}.
-#'   Stacking is faster than EBMA.
 #' @param cores The number of cores to be used. An integer indicating the number
 #'   of processor cores used for parallel computing. Default is 1.
 #' @param k.folds Number of cross-validation folds. An integer-valued scalar
@@ -111,11 +107,6 @@
 #'   Default is \code{FALSE}.
 #' @param oversampling Over sample to create balance on the dependent variable.
 #'   A logical argument. Default is \code{FALSE}.
-#' @param forward.select Forward selection classifier. A logical argument
-#'   indicating whether to use forward selection rather than best subset
-#'   selection. Default is \code{FALSE}. \emph{Note:} forward selection is
-#'   recommended if there are more than \eqn{8} context-level variables.
-#'   \emph{Note:} forward selection is not implemented yet.
 #' @param best.subset.L2.x Best subset context-level covariates. A character
 #'   vector containing the column names of the context-level variables in
 #'   \code{survey} and \code{census} to be used by the best subset classifier.
@@ -241,8 +232,8 @@
 #'   without bootstrapping to the median level two predictions from the model
 #'   with bootstrapping.
 #'
-#'   To ensure reproducability of the results, use the \code{set.seed()} function to
-#'   specify a seed.
+#'   To ensure reproducability of the results, use the \code{set.seed()}
+#'   function to specify a seed.
 #' @keywords MRP multilevel regression post-stratification machine learning
 #'   EBMA ensemble Bayesian model averaging
 #' @examples
@@ -323,18 +314,18 @@
 auto_MrP <- function(
   y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE, pcs = NULL,
   folds = NULL, bin.proportion = NULL, bin.size = NULL, survey, census,
-  ebma.size = 1 / 3, stacking = FALSE, cores = 1, k.folds = 5,
+  ebma.size = 1 / 3, cores = 1, k.folds = 5,
   cv.sampling = "L2 units",
   loss.unit = c("individuals", "L2 units"),
   loss.fun = c("msfe", "cross-entropy", "f1", "MSE"),
   best.subset = TRUE, lasso = TRUE, pca = TRUE, gb = TRUE, svm = TRUE,
   mrp = FALSE,
-  deep.mrp = FALSE, oversampling = FALSE, forward.select = FALSE,
+  deep.mrp = FALSE, oversampling = FALSE,
   best.subset.L2.x = NULL, lasso.L2.x = NULL, pca.L2.x = NULL,
   gb.L2.x = NULL, svm.L2.x = NULL, mrp.L2.x = NULL, gb.L2.unit = TRUE,
   gb.L2.reg = FALSE, svm.L2.unit = TRUE, svm.L2.reg = FALSE,
   deep.L2.x = NULL, deep.L2.reg = TRUE, deep.splines = TRUE,
-  lasso.lambda = NULL, lasso.n.iter = 100, 
+  lasso.lambda = NULL, lasso.n.iter = 100,
   gb.interaction.depth = c(1, 2, 3),
   gb.shrinkage = c(0.04, 0.01, 0.008, 0.005, 0.001),
   gb.n.trees.init = 50, gb.n.trees.increase = 50,
@@ -413,7 +404,6 @@ auto_MrP <- function(
     gb = gb,
     svm = svm,
     mrp = mrp,
-    forward.select = forward.select,
     best.subset.L2.x = best.subset.L2.x,
     lasso.L2.x = lasso.L2.x,
     gb.L2.x = gb.L2.x,
@@ -435,7 +425,8 @@ auto_MrP <- function(
   survey <- survey %>%
     dplyr::mutate_at(.vars = c(L1.x, L2.unit, L2.reg), .funs = as.factor)
   census <- census %>%
-    dplyr::mutate_at(.vars = c(L1.x, L2.unit, L2.reg), .funs = as.factor)
+    dplyr::mutate_at(.vars = c(L1.x, L2.unit, L2.reg), .funs = as.factor) %>%
+    dplyr::ungroup()
 
   # If not provided in census data, calculate bin size and bin proportion for
   # each ideal type in a geographic unit
@@ -606,7 +597,7 @@ auto_MrP <- function(
       cv.sampling = cv.sampling, loss.unit = loss.unit, loss.fun = loss.fun,
       best.subset = best.subset, lasso = lasso, pca = pca,
       gb = gb, svm = svm, mrp = mrp, deep.mrp = deep.mrp,
-      forward.select = forward.select, best.subset.L2.x = best.subset.L2.x,
+      best.subset.L2.x = best.subset.L2.x,
       lasso.L2.x = lasso.L2.x, pca.L2.x = pca.L2.x, pc.names = pc_names,
       gb.L2.x = gb.L2.x, svm.L2.x = svm.L2.x, svm.L2.unit = svm.L2.unit,
       svm.L2.reg = svm.L2.reg, gb.L2.unit = gb.L2.unit, gb.L2.reg = gb.L2.reg,
@@ -657,7 +648,6 @@ auto_MrP <- function(
       svm = svm,
       mrp = mrp,
       deep.mrp = deep.mrp,
-      forward.select = forward.select,
       best.subset.L2.x = best.subset.L2.x,
       lasso.L2.x = lasso.L2.x,
       pca.L2.x = pca.L2.x,

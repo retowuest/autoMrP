@@ -13,7 +13,7 @@
 error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                          folds, bin.proportion, bin.size, survey, census,
                          ebma.size, k.folds, cv.sampling, loss.unit, loss.fun,
-                         best.subset, lasso, pca, gb, svm, mrp, forward.select,
+                         best.subset, lasso, pca, gb, svm, mrp,
                          best.subset.L2.x, lasso.L2.x, gb.L2.x, svm.L2.x,
                          mrp.L2.x, gb.L2.unit, gb.L2.reg, lasso.lambda,
                          lasso.n.iter, uncertainty, boot.iter) {
@@ -674,13 +674,6 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
   } else {
     stop(paste("The logical argument 'mrp', indicating whether the standard",
                " MRP classifier is to be used for predicting y,",
-               " must be either TRUE or FALSE.", sep = ""))
-  }
-
-  # Check if forward.select is logical
-  if (!is.logical(forward.select)) {
-    stop(paste("The logical argument 'forward.select', indicating whether to",
-               " use forward selection instead of best subset selection,",
                " must be either TRUE or FALSE.", sep = ""))
   }
 
@@ -2070,7 +2063,7 @@ boot_fun <- function(
   survey, L2.unit, y, L1.x, L2.x, mrp.L2.x, L2.reg, L2.x.scale,
   pcs, folds, bin.proportion, bin.size, census, k.folds,
   cv.sampling, loss.unit, loss.fun, best.subset, lasso, pca,
-  gb, svm, mrp, deep.mrp, forward.select, best.subset.L2.x,
+  gb, svm, mrp, deep.mrp, best.subset.L2.x,
   lasso.L2.x, pca.L2.x, pc.names, gb.L2.x, svm.L2.x, svm.L2.unit,
   svm.L2.reg, gb.L2.unit, gb.L2.reg, deep.L2.x, deep.L2.reg,
   deep.splines, lasso.lambda, lasso.n.iter, gb.interaction.depth,
@@ -2166,7 +2159,6 @@ boot_fun <- function(
     svm = svm,
     mrp = mrp,
     deep.mrp = deep.mrp,
-    forward.select = forward.select,
     best.subset.L2.x = best.subset.L2.x,
     lasso.L2.x = lasso.L2.x,
     pca.L2.x = pca.L2.x,
