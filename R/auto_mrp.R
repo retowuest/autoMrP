@@ -106,6 +106,9 @@
 #' @param mrp MRP classifier. A logical argument indicating whether the standard
 #'   MRP classifier should be used for predicting outcome \code{y}. Default is
 #'   \code{FALSE}.
+#' @param deep.mrp Deep MRP classifier. A logical argument indicating whether
+#'   the deep MRP classifier should be used for predicting outcome \code{y}.
+#'   Default is \code{FALSE}.
 #' @param oversampling Over sample to create balance on the dependent variable.
 #'   A logical argument. Default is \code{FALSE}.
 #' @param forward.select Forward selection classifier. A logical argument
@@ -158,6 +161,16 @@
 #' @param svm.L2.reg SVM L2.reg. A logical argument indicating whether
 #'   \code{L2.reg} should be included in the SVM classifier. Default is
 #'   \code{FALSE}.
+#' @param deep.L2.x Deep MRP context-level covariates. A character vector
+#'  containing the column names of the context-level variables in \code{survey}
+#'  and \code{census} to be used by the deep MRP classifier. If \code{NULL} and
+#'  \code{deep.mrp} is set to \code{TRUE}, then deep MRP uses the variables
+#'  specified in \code{L2.x}. Default is \code{NULL}.
+#' @param deep.L2.reg Deep MRP L2.reg. A logical argument indicating whether
+#'  \code{L2.reg} should be included in the deep MRP classifier. Default is
+#'  \code{TRUE}.
+#' @param deep.splines Deep MRP splines. A logical argument indicating whether
+#'  splines should be used in the deep MRP classifier. Default is \code{TRUE}.
 #' @param lasso.lambda Lasso penalty parameter. A numeric \code{vector} of
 #'   non-negative values. The penalty parameter controls the shrinkage of the
 #'   context-level variables in the lasso model. Default is a sequence with
@@ -165,8 +178,8 @@
 #'   number of values is controlled by the \code{lasso.n.iter} parameter.
 #' @param lasso.n.iter Lasso number of lambda values. An integer-valued scalar
 #'   specifying the number of lambda values to search over. Default is
-#' \eqn{100}. \emph{Note:} Is ignored if a vector of \code{lasso.lambda}
-#'  values is provided.
+#'   \eqn{100}. \emph{Note:} Is ignored if a vector of \code{lasso.lambda}
+#'   values is provided.
 #' @param gb.interaction.depth GB interaction depth. An integer-valued vector
 #'   whose values specify the interaction depth of GB. The interaction depth
 #'   defines the maximum depth of each tree grown (i.e., the maximum level of
@@ -190,8 +203,8 @@
 #'   \eqn{20}.
 #' @param svm.kernel SVM kernel. A character-valued scalar specifying the kernel
 #'   to be used by SVM. The possible values are \code{linear},
-#'  \code{polynomial}, \code{radial}, and \code{sigmoid}. Default is
-#' \code{radial}.
+#'   \code{polynomial}, \code{radial}, and \code{sigmoid}. Default is
+#'   \code{radial}.
 #' @param svm.gamma SVM kernel parameter. A numeric vector whose values specify
 #'   the gamma parameter in the SVM kernel. This parameter is needed for all
 #'   kernel types except linear. Default is a sequence with minimum = 1e-5,
@@ -213,9 +226,6 @@
 #'   indicating the number of bootstrap iterations to be computed. Will be
 #'   ignored unless \code{uncertainty = TRUE}. Default is \code{200} if
 #'   \code{uncertainty = TRUE} and \code{NULL} if \code{uncertainty = FALSE}.
-#' @param seed Seed. Either \code{NULL} or an integer-valued scalar controlling
-#'   random number generation. If \code{NULL}, then the seed is set to
-#'   \eqn{546213978}. Default is \code{NULL}.
 #' @param verbose Verbose output. A logical argument indicating whether or not
 #'   verbose output should be printed. Default is \code{FALSE}.
 #' @return The context-level predictions. A list with two elements. The first
@@ -230,10 +240,14 @@
 #'   bootstrapping and then comparing level two predictions from the model
 #'   without bootstrapping to the median level two predictions from the model
 #'   with bootstrapping.
+#'
+#'   To ensure reproducability of the results, use the \code{set.seed()} function to
+#'   specify a seed.
 #' @keywords MRP multilevel regression post-stratification machine learning
 #'   EBMA ensemble Bayesian model averaging
 #' @examples
 #' # An MrP model without machine learning
+#' set.seed(123)
 #' m <- auto_MrP(
 #'   y = "YES",
 #'   L1.x = c("L1x1"),
@@ -314,29 +328,22 @@ auto_MrP <- function(
   loss.unit = c("individuals", "L2 units"),
   loss.fun = c("msfe", "cross-entropy", "f1", "MSE"),
   best.subset = TRUE, lasso = TRUE, pca = TRUE, gb = TRUE, svm = TRUE,
-  mrp = FALSE, oversampling = FALSE, forward.select = FALSE,
+  mrp = FALSE,
+  deep.mrp = FALSE, oversampling = FALSE, forward.select = FALSE,
   best.subset.L2.x = NULL, lasso.L2.x = NULL, pca.L2.x = NULL,
   gb.L2.x = NULL, svm.L2.x = NULL, mrp.L2.x = NULL, gb.L2.unit = TRUE,
   gb.L2.reg = FALSE, svm.L2.unit = TRUE, svm.L2.reg = FALSE,
-  lasso.lambda = NULL,
-  lasso.n.iter = 100,
+  deep.L2.x = NULL, deep.L2.reg = TRUE, deep.splines = TRUE,
+  lasso.lambda = NULL, lasso.n.iter = 100, 
   gb.interaction.depth = c(1, 2, 3),
   gb.shrinkage = c(0.04, 0.01, 0.008, 0.005, 0.001),
-  gb.n.trees.init = 50,
-  gb.n.trees.increase = 50,
-  gb.n.trees.max = 1000,
-  gb.n.minobsinnode = 20,
-  svm.kernel = c("radial"),
-  svm.gamma = NULL,
-  svm.cost = NULL,
+  gb.n.trees.init = 50, gb.n.trees.increase = 50,
+  gb.n.trees.max = 1000, gb.n.minobsinnode = 20,
+  svm.kernel = c("radial"), svm.gamma = NULL, svm.cost = NULL,
   ebma.n.draws = 100,
   ebma.tol = c(0.01, 0.005, 0.001, 0.0005, 0.0001, 0.00005, 0.00001),
-  seed = NULL,
-  verbose = FALSE,
-  uncertainty = FALSE,
-  boot.iter = NULL
+  verbose = FALSE, uncertainty = FALSE, boot.iter = NULL
 ) {
-
 
   # Error checks ------------------------------------------------------------
 
@@ -427,7 +434,6 @@ auto_MrP <- function(
   # survey and census data
   survey <- survey %>%
     dplyr::mutate_at(.vars = c(L1.x, L2.unit, L2.reg), .funs = as.factor)
-
   census <- census %>%
     dplyr::mutate_at(.vars = c(L1.x, L2.unit, L2.reg), .funs = as.factor)
 
@@ -542,8 +548,7 @@ auto_MrP <- function(
 
   if (!uncertainty) {
 
-    # Create folds ---------------------------------------------------------
-
+    # Create folds ----------------------------------------------------------
     if (is.null(folds)) {
 
       # EBMA hold-out fold
@@ -600,12 +605,14 @@ auto_MrP <- function(
       ebma.fold = ebma_fold, census = census, k.folds = k.folds,
       cv.sampling = cv.sampling, loss.unit = loss.unit, loss.fun = loss.fun,
       best.subset = best.subset, lasso = lasso, pca = pca,
-      gb = gb, svm = svm, mrp = mrp, forward.select = forward.select,
-      best.subset.L2.x = best.subset.L2.x, lasso.L2.x = lasso.L2.x,
-      pca.L2.x = pca.L2.x, pc.names = pc_names, gb.L2.x = gb.L2.x,
-      svm.L2.x = svm.L2.x, svm.L2.unit = svm.L2.unit, svm.L2.reg = svm.L2.reg,
-      gb.L2.unit = gb.L2.unit, gb.L2.reg = gb.L2.reg,
-      lasso.lambda = lasso.lambda, lasso.n.iter = lasso.n.iter,
+      gb = gb, svm = svm, mrp = mrp, deep.mrp = deep.mrp,
+      forward.select = forward.select, best.subset.L2.x = best.subset.L2.x,
+      lasso.L2.x = lasso.L2.x, pca.L2.x = pca.L2.x, pc.names = pc_names,
+      gb.L2.x = gb.L2.x, svm.L2.x = svm.L2.x, svm.L2.unit = svm.L2.unit,
+      svm.L2.reg = svm.L2.reg, gb.L2.unit = gb.L2.unit, gb.L2.reg = gb.L2.reg,
+      deep.L2.x = deep.L2.x, deep.L2.reg = deep.L2.reg,
+      deep.splines = deep.splines, lasso.lambda = lasso.lambda,
+      lasso.n.iter = lasso.n.iter,
       gb.interaction.depth = gb.interaction.depth,
       gb.shrinkage = gb.shrinkage, gb.n.trees.init = gb.n.trees.init,
       gb.n.trees.increase = gb.n.trees.increase,
@@ -625,34 +632,63 @@ auto_MrP <- function(
     }
 
     ebma_out <- boot_auto_mrp(
-      y = y, L1.x = L1.x, L2.x = L2.x, mrp.L2.x = mrp.L2.x,
-      L2.unit = L2.unit, L2.reg = L2.reg, L2.x.scale = L2.x.scale,
-      pcs = pcs, folds = folds, bin.proportion = bin.proportion,
-      bin.size = bin.size, survey = survey, census = census,
-      ebma.size = ebma.size, k.folds = k.folds,
-      cv.sampling = cv.sampling, loss.unit = loss.unit,
-      loss.fun = loss.fun, best.subset = best.subset,
-      lasso = lasso, pca = pca, gb = gb, svm = svm, mrp = mrp,
+      y = y,
+      L1.x = L1.x,
+      L2.x = L2.x,
+      mrp.L2.x = mrp.L2.x,
+      L2.unit = L2.unit,
+      L2.reg = L2.reg,
+      L2.x.scale = L2.x.scale,
+      pcs = pcs,
+      folds = folds,
+      bin.proportion = bin.proportion,
+      bin.size = bin.size,
+      survey = survey,
+      census = census,
+      ebma.size = ebma.size,
+      k.folds = k.folds,
+      cv.sampling = cv.sampling,
+      loss.unit = loss.unit,
+      loss.fun = loss.fun,
+      best.subset = best.subset,
+      lasso = lasso,
+      pca = pca,
+      gb = gb,
+      svm = svm,
+      mrp = mrp,
+      deep.mrp = deep.mrp,
       forward.select = forward.select,
       best.subset.L2.x = best.subset.L2.x,
-      lasso.L2.x = lasso.L2.x, pca.L2.x = pca.L2.x, pc.names = pc_names,
-      gb.L2.x = gb.L2.x, svm.L2.x = svm.L2.x, svm.L2.unit = svm.L2.unit,
-      svm.L2.reg = svm.L2.reg, gb.L2.unit = gb.L2.unit, gb.L2.reg = gb.L2.reg,
-      lasso.lambda = lasso.lambda, lasso.n.iter = lasso.n.iter,
+      lasso.L2.x = lasso.L2.x,
+      pca.L2.x = pca.L2.x,
+      pc.names = pc_names,
+      gb.L2.x = gb.L2.x,
+      svm.L2.x = svm.L2.x,
+      svm.L2.unit = svm.L2.unit,
+      svm.L2.reg = svm.L2.reg,
+      gb.L2.unit = gb.L2.unit,
+      gb.L2.reg = gb.L2.reg,
+      deep.L2.x = deep.L2.x,
+      deep.L2.reg = deep.L2.reg,
+      deep.splines = deep.splines,
+      lasso.lambda = lasso.lambda,
+      lasso.n.iter = lasso.n.iter,
       gb.interaction.depth = gb.interaction.depth,
       gb.shrinkage = gb.shrinkage,
       gb.n.trees.init = gb.n.trees.init,
       gb.n.trees.increase = gb.n.trees.increase,
       gb.n.trees.max = gb.n.trees.max,
       gb.n.minobsinnode = gb.n.minobsinnode,
-      svm.kernel = svm.kernel, svm.gamma = svm.gamma,
-      svm.cost = svm.cost, ebma.tol = ebma.tol,
-      boot.iter = boot.iter, cores = cores
+      svm.kernel = svm.kernel,
+      svm.gamma = svm.gamma,
+      svm.cost = svm.cost,
+      ebma.tol = ebma.tol,
+      boot.iter = boot.iter,
+      cores = cores
     )
   }
 
-
-  # autoMrP function output -------------------------------------------------
+  # autoMrP function output ------------------------------------------------
 
   class(ebma_out) <- c("autoMrP", "list")
   class(ebma_out$ebma) <- c("autoMrP", "ensemble", class(ebma_out$ebma))

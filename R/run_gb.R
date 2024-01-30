@@ -102,7 +102,7 @@ run_gb <- function(
       ntrees <- as.numeric(g["ntrees"])
 
       # Print tuning parameters
-      if (isTRUE(verbose)) {
+      if (verbose) {
         cat(paste("GB: Running interaction depth ", depth,
                   ", learning rate ", shrinkage_value,
                   ", and number of total trees ", ntrees, "\n", sep = ""))

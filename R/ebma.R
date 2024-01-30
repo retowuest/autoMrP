@@ -33,12 +33,11 @@
 ebma <- function(
   ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
   post.strat, n.draws, tol, best.subset.opt, pca.opt,
-  lasso.opt, gb.opt, svm.opt, verbose, cores
-) {
+  lasso.opt, gb.opt, svm.opt, deep.mrp, verbose, cores) {
 
   # Run EBMA if at least two classifiers selected
-  if (sum(unlist(
-    lapply(X = post.strat$models, FUN = function(x) !is.null(x))
+  if (sum(unlist(lapply(
+    X = post.strat$models, FUN = function(x) !is.null(x))
   )) > 1) {
 
     if (verbose) {
@@ -55,6 +54,7 @@ ebma <- function(
     model_gb <- post.strat$models$gb
     model_svm <- post.strat$models$svm
     model_mrp <- post.strat$models$mrp
+    model_deep <- post.strat$model$deep
 
     # Training predictions
     train_preds <- post.strat$predictions$Level1 %>%
@@ -85,6 +85,7 @@ ebma <- function(
           model.gb = model_gb,
           model.svm = model_svm,
           model.mrp = model_mrp,
+          model_deep = model_deep,
           tol = tol,
           n.draws = n.draws,
           cores = cores
@@ -108,6 +109,7 @@ ebma <- function(
           model.gb = model_gb,
           model.svm = model_svm,
           model.mrp = model_mrp,
+          model_deep = model_deep,
           tol = tol,
           n.draws = n.draws,
           cores = cores
@@ -170,6 +172,42 @@ ebma <- function(
               dplyr::one_of(c(y, L1.x, L2.x, L2.unit, L2.reg, pc.names))
             ) %>%
             tidyr::drop_na()
+
+          # add the deep mrp interactions to the data
+          if (!is.null(model_deep)) {
+
+            # covariates
+            deep_x <- model_deep$formula$interpret_gam$pred.names
+            # select all interaction terms
+            deep_x <- deep_x[stringr::str_which(
+            string = deep_x, pattern = "\\.")]
+            # remove L2.x, L1.x, L2.unit, L2.reg, variables
+            deep_x <- deep_x[!deep_x %in% c(L2.x, L1.x, L2.unit, L2.reg)]
+
+            # loop over all interactions for data object
+            x_data <- lapply(deep_x, function(x) {
+
+            # break down interaction components
+            y <- stringr::str_split(string = x, pattern = "\\.") %>%
+              unlist()
+
+            # take each column of data and combine its values into a
+            # single string
+            df_x <- test %>%
+              dplyr::select({{y}}) %>%
+              dplyr::rowwise() %>%
+              dplyr::mutate({{x}} := paste(dplyr::c_across(
+                dplyr::everything()), collapse = "-")) %>%
+              dplyr::ungroup() %>%
+              dplyr::select(ncol(.))
+
+            return(df_x)
+          }) %>%
+            dplyr::bind_cols()
+
+          # combine data and interactions
+          test <- dplyr::bind_cols(test, x_data)
+          }
 
           # predict outcomes in test set
           test_preds <- dplyr::tibble(
@@ -244,6 +282,18 @@ ebma <- function(
                 type = "response",
                 allow.new.levels = TRUE
               )
+            } else {
+              NA
+            },
+            deep = if (!is.null(model_deep)) {
+              # predictions for post-stratification only (no EBMA)
+              pred_d <- vglmer::predict_MAVB(
+                samples = 1000,
+                model_deep,
+                newdata = test,
+                allow_missing_levels = TRUE)[["mean"]]
+              # convert to response probabilities
+              pred_d <- stats::plogis(pred_d)
             } else {
               NA
             }
@@ -359,7 +409,7 @@ ebma <- function(
       # average model weights
       if (is.null(dim(weights_mat))) {
         final_model_weights <- as.numeric(weights_mat)
-      } else{
+      } else {
         final_model_weights <- apply(weights_mat, 2, mean)
       }
       names(final_model_weights) <- names(train_preds)
@@ -407,7 +457,6 @@ ebma <- function(
       ),
       ebma = w_avg
     )
-
 
     # function output
     return(
@@ -460,6 +509,8 @@ ebma <- function(
 #'   \code{\link[gbm]{gbm}} object.
 #' @param model.svm The tuned model from the support vector machine classifier.
 #'   An \code{\link[e1071]{svm}} object.
+#' @param model_deep The tuned model from the deep mrp classifier. An
+#'  \code{\link[vglmer]{vglmerMod}} object.
 #' @param model.mrp The standard MrP model. An \code{\link[lme4]{glmer}} object
 #' @param tol The tolerance values used for EBMA. A numeric vector.
 #' @return The classifier weights. A numeric vector.
@@ -470,7 +521,7 @@ ebma <- function(
 ebma_mc_tol <- function(
   train.preds, train.y, ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg,
   pc.names, model.bs, model.pca, model.lasso, model.gb, model.svm,
-  model.mrp, tol, n.draws, cores
+  model.mrp, model_deep, tol, n.draws, cores
 ) {
 
   # Binding for global variables
@@ -498,6 +549,42 @@ ebma_mc_tol <- function(
         dplyr::one_of(c(y, L1.x, L2.x, L2.unit, L2.reg, pc.names))
       ) %>%
       tidyr::drop_na()
+
+    # add the deep mrp interactions to the data
+    if (!is.null(model_deep)) {
+
+      # covariates
+      deep_x <- model_deep$formula$interpret_gam$pred.names
+      # select all interaction terms
+      deep_x <- deep_x[stringr::str_which(
+        string = deep_x,
+        pattern = "\\.")]
+      # remove L2.x, L1.x, L2.unit, L2.reg, variables
+      deep_x <- deep_x[!deep_x %in% c(L2.x, L1.x, L2.unit, L2.reg)]
+
+      # loop over all interactions for data object
+      x_data <- lapply(deep_x, function(x) {
+
+        # break down interaction components
+        y <- stringr::str_split(string = x, pattern = "\\.") %>%
+          unlist()
+
+        # take each column of data and combine its values into a single string 
+        df_x <- test %>%
+          dplyr::select({{y}}) %>%
+          dplyr::rowwise() %>%
+          dplyr::mutate({{x}} := paste(dplyr::c_across(
+            dplyr::everything()), collapse = "-")) %>%
+          dplyr::ungroup() %>%
+          dplyr::select(ncol(.))
+
+        return(df_x)
+      }) %>%
+        dplyr::bind_cols()
+
+      # combine data and interactions
+      test <- dplyr::bind_cols(test, x_data)
+    }
 
     # predict outcomes in test set
     test_preds <- dplyr::tibble(
@@ -574,14 +661,28 @@ ebma_mc_tol <- function(
         )
       } else {
         NA
+      },
+      deep = if (!is.null(model_deep)) {
+        # predictions for post-stratification only (no EBMA)
+        pred_d <- vglmer::predict_MAVB(
+          samples = 1000,
+          model_deep,
+          newdata = test,
+          allow_missing_levels = TRUE)[["mean"]]
+        # convert to response probabilities
+        pred_d <- stats::plogis(pred_d)
+      } else {
+        NA
       }
     )
+
     # remove NA's
     test_preds <- test_preds[, apply(
       X = test_preds, MARGIN = 2, FUN = function(x) {
         all(!is.na(x))
       }
     )]
+
     # Outcome on the test
     test_y <- dplyr::select(.data = test, dplyr::one_of(y))
 
@@ -703,7 +804,8 @@ ebma_mc_tol <- function(
 ebma_mc_draws <- function(
   train.preds, train.y, ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg,
   pc.names, model.bs, model.pca, model.lasso, model.gb, model.svm,
-  model.mrp, tol, n.draws, cores) {
+  model.mrp, model_deep, tol, n.draws, cores
+) {
 
   # Binding for global variables
   `%>%` <- dplyr::`%>%`
@@ -730,6 +832,42 @@ ebma_mc_draws <- function(
         dplyr::one_of(c(y, L1.x, L2.x, L2.unit, L2.reg, pc.names))
       ) %>%
       tidyr::drop_na()
+
+    # add the deep mrp interactions to the data
+    if (!is.null(model_deep)) {
+
+      # covariates
+      deep_x <- model_deep$formula$interpret_gam$pred.names
+      # select all interaction terms
+      deep_x <- deep_x[stringr::str_which(
+        string = deep_x,
+        pattern = "\\.")]
+      # remove L2.x, L1.x, L2.unit, L2.reg, variables
+      deep_x <- deep_x[!deep_x %in% c(L2.x, L1.x, L2.unit, L2.reg)]
+
+      # loop over all interactions for data object
+      x_data <- lapply(deep_x, function(x) {
+
+        # break down interaction components
+        y <- stringr::str_split(string = x, pattern = "\\.") %>%
+          unlist()
+
+        # take each column of data and combine its values into a single string 
+        df_x <- test %>%
+          dplyr::select({{y}}) %>%
+          dplyr::rowwise() %>%
+          dplyr::mutate({{x}} := paste(dplyr::c_across(
+            dplyr::everything()), collapse = "-")) %>%
+          dplyr::ungroup() %>%
+          dplyr::select(ncol(.))
+
+        return(df_x)
+      }) %>%
+        dplyr::bind_cols()
+
+      # combine data and interactions
+      test <- dplyr::bind_cols(test, x_data)
+    }
 
     # predict outcomes in test set
     test_preds <- dplyr::tibble(
@@ -802,12 +940,24 @@ ebma_mc_draws <- function(
           object = model.mrp,
           newdata = test,
           type = "response",
-          allow.new.levels = TRUE
-        )
+          allow.new.levels = TRUE)
+      } else {
+        NA
+      },
+      deep = if (!is.null(model_deep)) {
+        # predictions for post-stratification only (no EBMA)
+        pred_d <- vglmer::predict_MAVB(
+          samples = 1000,
+          model_deep,
+          newdata = test,
+          allow_missing_levels = TRUE)[["mean"]]
+        # convert to response probabilities
+        pred_d <- stats::plogis(pred_d)
       } else {
         NA
       }
     )
+
     # remove NA's
     test_preds <- test_preds[, apply(
       X = test_preds, MARGIN = 2, FUN = function(x) {

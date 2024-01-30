@@ -30,6 +30,7 @@ auto_MrP(
   gb = TRUE,
   svm = TRUE,
   mrp = FALSE,
+  deep.mrp = FALSE,
   oversampling = FALSE,
   forward.select = FALSE,
   best.subset.L2.x = NULL,
@@ -42,6 +43,9 @@ auto_MrP(
   gb.L2.reg = FALSE,
   svm.L2.unit = TRUE,
   svm.L2.reg = FALSE,
+  deep.L2.x = NULL,
+  deep.L2.reg = TRUE,
+  deep.splines = TRUE,
   lasso.lambda = NULL,
   lasso.n.iter = 100,
   gb.interaction.depth = c(1, 2, 3),
@@ -55,7 +59,6 @@ auto_MrP(
   svm.cost = NULL,
   ebma.n.draws = 100,
   ebma.tol = c(0.01, 0.005, 0.001, 5e-04, 1e-04, 5e-05, 1e-05),
-  seed = NULL,
   verbose = FALSE,
   uncertainty = FALSE,
   boot.iter = NULL
@@ -189,6 +192,10 @@ classifier should be used for predicting outcome \code{y}. Default is
 MRP classifier should be used for predicting outcome \code{y}. Default is
 \code{FALSE}.}
 
+\item{deep.mrp}{Deep MRP classifier. A logical argument indicating whether
+the deep MRP classifier should be used for predicting outcome \code{y}.
+Default is \code{FALSE}.}
+
 \item{oversampling}{Over sample to create balance on the dependent variable.
 A logical argument. Default is \code{FALSE}.}
 
@@ -253,6 +260,19 @@ For the empty MrP model, set \code{L2.x = NULL} and \code{mrp.L2.x = ""}.}
 \code{L2.reg} should be included in the SVM classifier. Default is
 \code{FALSE}.}
 
+\item{deep.L2.x}{Deep MRP context-level covariates. A character vector
+containing the column names of the context-level variables in \code{survey}
+and \code{census} to be used by the deep MRP classifier. If \code{NULL} and
+\code{deep.mrp} is set to \code{TRUE}, then deep MRP uses the variables
+specified in \code{L2.x}. Default is \code{NULL}.}
+
+\item{deep.L2.reg}{Deep MRP L2.reg. A logical argument indicating whether
+\code{L2.reg} should be included in the deep MRP classifier. Default is
+\code{TRUE}.}
+
+\item{deep.splines}{Deep MRP splines. A logical argument indicating whether
+splines should be used in the deep MRP classifier. Default is \code{TRUE}.}
+
 \item{lasso.lambda}{Lasso penalty parameter. A numeric \code{vector} of
 non-negative values. The penalty parameter controls the shrinkage of the
 context-level variables in the lasso model. Default is a sequence with
@@ -260,9 +280,9 @@ minimum 0.1 and maximum 250 that is equally spaced on the log-scale. The
 number of values is controlled by the \code{lasso.n.iter} parameter.}
 
 \item{lasso.n.iter}{Lasso number of lambda values. An integer-valued scalar
-  specifying the number of lambda values to search over. Default is
+specifying the number of lambda values to search over. Default is
 \eqn{100}. \emph{Note:} Is ignored if a vector of \code{lasso.lambda}
- values is provided.}
+values is provided.}
 
 \item{gb.interaction.depth}{GB interaction depth. An integer-valued vector
 whose values specify the interaction depth of GB. The interaction depth
@@ -292,8 +312,8 @@ observations that each terminal node of the trees must contain. Default is
 \eqn{20}.}
 
 \item{svm.kernel}{SVM kernel. A character-valued scalar specifying the kernel
-  to be used by SVM. The possible values are \code{linear},
- \code{polynomial}, \code{radial}, and \code{sigmoid}. Default is
+to be used by SVM. The possible values are \code{linear},
+\code{polynomial}, \code{radial}, and \code{sigmoid}. Default is
 \code{radial}.}
 
 \item{svm.gamma}{SVM kernel parameter. A numeric vector whose values specify
@@ -314,10 +334,6 @@ tolerance values for improvements in the log-likelihood before the EM
 algorithm stops optimization. Values should range at least from \eqn{0.01}
 to \eqn{0.001}. Default is
 \code{c(0.01, 0.005, 0.001, 0.0005, 0.0001, 0.00005, 0.00001)}.}
-
-\item{seed}{Seed. Either \code{NULL} or an integer-valued scalar controlling
-random number generation. If \code{NULL}, then the seed is set to
-\eqn{546213978}. Default is \code{NULL}.}
 
 \item{verbose}{Verbose output. A logical argument indicating whether or not
 verbose output should be printed. Default is \code{FALSE}.}
@@ -350,9 +366,13 @@ Bootstrapping samples the level two units, sometimes referred to as
   bootstrapping and then comparing level two predictions from the model
   without bootstrapping to the median level two predictions from the model
   with bootstrapping.
+
+  To ensure reproducability of the results, use the \code{set.seed()} function to
+  specify a seed.
 }
 \examples{
 # An MrP model without machine learning
+set.seed(123)
 m <- auto_MrP(
   y = "YES",
   L1.x = c("L1x1"),

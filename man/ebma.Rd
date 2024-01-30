@@ -20,6 +20,7 @@ ebma(
   lasso.opt,
   gb.opt,
   svm.opt,
+  deep.mrp,
   verbose,
   cores
 )
@@ -83,6 +84,10 @@ returned from \code{run_pca()}.}
 
 \item{svm.opt}{Tuned support vector machine parameters. A list returned from
 \code{run_svm()}.}
+
+\item{deep.mrp}{Deep MRP classifier. A logical argument indicating whether
+the deep MRP classifier should be used for predicting outcome \code{y}.
+Default is \code{FALSE}.}
 
 \item{verbose}{Verbose output. A logical argument indicating whether or not
 verbose output should be printed. Default is \code{FALSE}.}

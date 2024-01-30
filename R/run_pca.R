@@ -48,8 +48,9 @@ run_pca <- function(
       # Print model m
       if (isTRUE(verbose)) {
         M <- length(models)
-        cat(paste("Best subset: Running model ", m,
-                  " out of ", M, " models\n", sep = ""))
+        message(
+          "Best subset: Running model ", m,
+          " out of ", M, " models\n")
       }
 
       # Loop over each fold

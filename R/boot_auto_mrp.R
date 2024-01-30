@@ -7,25 +7,20 @@
 #'   in the data.
 
 boot_auto_mrp <- function(
-  y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg,
-  L2.x.scale, pcs, folds, bin.proportion,
-  bin.size, survey, census, ebma.size,
-  k.folds, cv.sampling, loss.unit, loss.fun,
-  best.subset, lasso, pca, gb, svm, mrp,
-  forward.select, best.subset.L2.x,
-  lasso.L2.x, pca.L2.x, pc.names, gb.L2.x, svm.L2.x,
-  svm.L2.unit, svm.L2.reg,gb.L2.unit, gb.L2.reg,
-  lasso.lambda, lasso.n.iter, gb.interaction.depth,
-  gb.shrinkage, gb.n.trees.init,
-  gb.n.trees.increase, gb.n.trees.max,
-  gb.n.minobsinnode, svm.kernel,
-  svm.gamma, svm.cost, ebma.tol,
+  y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg, L2.x.scale, pcs, folds,
+  bin.proportion, bin.size, survey, census, ebma.size, k.folds,
+  cv.sampling, loss.unit, loss.fun, best.subset, lasso, pca, gb,
+  svm, mrp, deep.mrp, forward.select, best.subset.L2.x, lasso.L2.x,
+  pca.L2.x, pc.names, gb.L2.x, svm.L2.x, svm.L2.unit, svm.L2.reg,
+  gb.L2.unit, gb.L2.reg, deep.L2.x, deep.L2.reg, deep.splines,
+  lasso.lambda, lasso.n.iter, gb.interaction.depth, gb.shrinkage,
+  gb.n.trees.init, gb.n.trees.increase, gb.n.trees.max,
+  gb.n.minobsinnode, svm.kernel, svm.gamma, svm.cost, ebma.tol,
   boot.iter, cores
 ) {
 
   # Binding for global variables
   `%>%` <- dplyr::`%>%`
-  idx_boot <- NULL
 
   # Register cores
   cl <- multicore(cores = cores, type = "open", cl = NULL)
@@ -35,27 +30,56 @@ boot_auto_mrp <- function(
     idx_boot = 1:boot.iter, .packages = "autoMrP"
   ) %dorng% {
 
-    boot_fun(
-      y = y, L1.x = L1.x, L2.x = L2.x, mrp.L2.x = mrp.L2.x,
-      L2.unit = L2.unit, L2.reg = L2.reg, pcs = pcs,
-      folds = folds, survey = survey, census = census, k.folds = k.folds,
-      cv.sampling = cv.sampling, ebma.size = ebma.size,
-      loss.unit = loss.unit, loss.fun = loss.fun,
-      best.subset = best.subset, lasso = lasso, pca = pca,
-      gb = gb, svm = svm, mrp = mrp, forward.select = forward.select,
+    boot_mrp <- boot_fun(
+      y = y,
+      L1.x = L1.x,
+      L2.x = L2.x,
+      mrp.L2.x = mrp.L2.x,
+      L2.unit = L2.unit,
+      L2.reg = L2.reg,
+      pcs = pcs,
+      folds = folds,
+      survey = survey,
+      census = census,
+      k.folds = k.folds,
+      cv.sampling = cv.sampling,
+      ebma.size = ebma.size,
+      loss.unit = loss.unit,
+      loss.fun = loss.fun,
+      best.subset = best.subset,
+      lasso = lasso,
+      pca = pca,
+      gb = gb,
+      svm = svm,
+      mrp = mrp,
+      deep.mrp = deep.mrp,
+      forward.select = forward.select,
       best.subset.L2.x = best.subset.L2.x,
-      lasso.L2.x = lasso.L2.x, pca.L2.x = pca.L2.x, pc.names = pc.names,
-      gb.L2.x = gb.L2.x, svm.L2.x = svm.L2.x, svm.L2.unit = svm.L2.unit,
-      svm.L2.reg = svm.L2.reg, gb.L2.unit = gb.L2.unit, gb.L2.reg = gb.L2.reg,
-      lasso.lambda = lasso.lambda, lasso.n.iter = lasso.n.iter,
+      lasso.L2.x = lasso.L2.x,
+      pca.L2.x = pca.L2.x,
+      pc.names = pc.names,
+      gb.L2.x = gb.L2.x,
+      svm.L2.x = svm.L2.x,
+      svm.L2.unit = svm.L2.unit,
+      svm.L2.reg = svm.L2.reg,
+      gb.L2.unit = gb.L2.unit,
+      gb.L2.reg = gb.L2.reg,
+      deep.L2.x = deep.L2.x,
+      deep.L2.reg = deep.L2.reg,
+      deep.splines = deep.splines,
+      lasso.lambda = lasso.lambda,
+      lasso.n.iter = lasso.n.iter,
       gb.interaction.depth = gb.interaction.depth,
       gb.shrinkage = gb.shrinkage,
       gb.n.trees.init = gb.n.trees.init,
       gb.n.trees.increase = gb.n.trees.increase,
       gb.n.trees.max = gb.n.trees.max,
       gb.n.minobsinnode = gb.n.minobsinnode,
-      svm.kernel = svm.kernel, svm.gamma = svm.gamma,
-      svm.cost = svm.cost, ebma.tol = ebma.tol, cores = cores,
+      svm.kernel = svm.kernel,
+      svm.gamma = svm.gamma,
+      svm.cost = svm.cost,
+      ebma.tol = ebma.tol,
+      cores = cores,
       verbose = verbose
     )
   } # end of foreach loop
@@ -66,7 +90,7 @@ boot_auto_mrp <- function(
   )) {
     ebma <- base::do.call(
       base::rbind, base::do.call(base::rbind, boot_out)[, "ebma"]
-    ) #%>%
+    )
 
     # weights
     weights <- base::do.call(
@@ -79,7 +103,8 @@ boot_auto_mrp <- function(
         contains("lasso"),
         contains("gb"),
         contains("svm"),
-        contains("mrp")
+        contains("mrp"),
+        contains("deep_mrp")
       )
 
   } else {
@@ -98,7 +123,8 @@ boot_auto_mrp <- function(
       contains("lasso"),
       contains("gb"),
       contains("svm"),
-      contains("mrp")
+      contains("mrp"),
+      contains("deep_mrp")
     )
 
   if (!is.null(weights)) {

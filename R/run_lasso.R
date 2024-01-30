@@ -150,9 +150,9 @@ run_lasso <- function(
 #' @return The cross-validation errors for all models. A list.
 
 run_lasso_mc_lambda <- function(
-  y, L1.x, L2.x, L2.unit, L2.reg,
-  loss.unit, loss.fun, data,
-  cores, L2.fe.form, L1.re, lambda) {
+  y, L1.x, L2.x, L2.unit, L2.reg, loss.unit, loss.fun, data,
+  cores, L2.fe.form, L1.re, lambda
+) {
 
   # Binding for global variables
   `%>%` <- dplyr::`%>%`
