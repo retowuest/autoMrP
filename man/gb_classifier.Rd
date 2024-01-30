@@ -5,6 +5,7 @@
 \title{GB classifier}
 \usage{
 gb_classifier(
+  y,
   form,
   distribution,
   data.train,

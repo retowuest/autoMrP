@@ -30,13 +30,15 @@
 #' @param svm.opt Tuned support vector machine parameters. A list returned from
 #'   \code{run_svm()}.
 
-ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
-                 post.strat, n.draws, tol, best.subset.opt, pca.opt,
-                 lasso.opt, gb.opt, svm.opt, deep.mrp, verbose, cores) {
+ebma <- function(
+  ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
+  post.strat, n.draws, tol, best.subset.opt, pca.opt,
+  lasso.opt, gb.opt, svm.opt, deep.mrp, verbose, cores) {
 
   # Run EBMA if at least two classifiers selected
   if (sum(unlist(lapply(
-    X = post.strat$models, FUN = function(x) !is.null(x)))) > 1) {
+    X = post.strat$models, FUN = function(x) !is.null(x))
+  )) > 1) {
 
     if (verbose) {
       message("Starting bayesian ensemble model averaging tuning")
@@ -86,7 +88,8 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
           model_deep = model_deep,
           tol = tol,
           n.draws = n.draws,
-          cores = cores)
+          cores = cores
+        )
 
       } else {
 
@@ -109,7 +112,8 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
           model_deep = model_deep,
           tol = tol,
           n.draws = n.draws,
-          cores = cores)
+          cores = cores
+        )
       }
     } else {
 
@@ -119,23 +123,28 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
       # Container to store the MSE on the test folds
       # Bootstrap draws in rows and tolerance values in columns
       mse_collector <- matrix(
-        NA, nrow = n.draws,
+        data = NA,
+        nrow = n.draws,
         ncol = length(tol),
         dimnames = list(
           c(paste0("Ndraw_", seq(1:n.draws))),
-          c(paste0("Tol: ", tol))))
+          c(paste0("Tol: ", tol))
+        )
+      )
 
       # container for model weights for each draw and tolerance value
       # Dimension 1 (rows): Bootstrap draws
       # Dimension 2 (columns): Classifiers
       # Dimension 3 (layers): Tolerance values
       weights_box <- array(
-        NA,
+        data = NA,
         dim = c(n.draws, ncol(train_preds), length(tol)),
         dimnames = list(
           c(paste0("Ndraw_", seq(1:n.draws))),
           c(colnames(train_preds)),
-          c(paste0("Tol: ", tol))))
+          c(paste0("Tol: ", tol))
+        )
+      )
 
       # loop over tolerance values
       for (idx.tol in seq_along(tol)) {
@@ -147,8 +156,9 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
           counter <- counter + 1L
 
           # Determine number per group to sample
-          n_per_group <- as.integer(nrow(ebma.fold) /
-            length(levels(ebma.fold[[L2.unit]])))
+          n_per_group <- as.integer(
+            nrow(ebma.fold) / length(levels(ebma.fold[[L2.unit]]))
+          )
 
           # Test set with n_per_group persons per state (with resampling)
           test <- ebma.fold %>%
@@ -156,9 +166,11 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
             dplyr::sample_n(n_per_group, replace = TRUE) %>%
             dplyr::ungroup() %>%
             dplyr::mutate_at(
-              .vars = c(L1.x, L2.unit, L2.reg), .funs = as.factor) %>%
+              .vars = c(L1.x, L2.unit, L2.reg), .funs = as.factor
+            ) %>%
             dplyr::select(
-              dplyr::one_of(c(y, L1.x, L2.x, L2.unit, L2.reg, pc.names))) %>%
+              dplyr::one_of(c(y, L1.x, L2.x, L2.unit, L2.reg, pc.names))
+            ) %>%
             tidyr::drop_na()
 
           # add the deep mrp interactions to the data
@@ -204,7 +216,8 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
                 object = model_bs,
                 newdata = test,
                 type = "response",
-                allow.new.levels = TRUE)
+                allow.new.levels = TRUE
+              )
             } else {
               NA
             },
@@ -213,7 +226,8 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
                 object = model_pca,
                 newdata = test,
                 type = "response",
-                allow.new.levels = TRUE)
+                allow.new.levels = TRUE
+              )
             } else {
               NA
             },
@@ -224,7 +238,8 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
                 L1.x = L1.x,
                 lasso.L2.x = L2.x,
                 L2.unit = L2.unit,
-                L2.reg = L2.reg)
+                L2.reg = L2.reg
+              )
             } else {
               NA
             },
@@ -233,15 +248,30 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
                 object = model_gb,
                 newdata = test,
                 n.trees = model_gb$n.trees,
-                type = "response")
-            } else{
+                type = "response"
+              )
+            } else {
               NA
             },
             svm = if (!is.null(model_svm)) {
-              as.numeric(attr(predict(
-                object = model_svm,
-                newdata = test,
-                probability = TRUE), "probabilities")[, "1"])
+              # binary DV
+              if (length(unique(test[[y]])) == 2) {
+                as.numeric(
+                  attr(
+                    predict(
+                      object = model_svm,
+                      newdata = test,
+                      probability = TRUE
+                    ), "probabilities"
+                  )[, "1"]
+                )
+              } else {
+                # continuous DV
+                predict(
+                  object = model_svm,
+                  newdata = test
+                )
+              }
             } else {
               NA
             },
@@ -250,7 +280,8 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
                 object = model_mrp,
                 newdata = test,
                 type = "response",
-                allow.new.levels = TRUE)
+                allow.new.levels = TRUE
+              )
             } else {
               NA
             },
@@ -268,11 +299,13 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
             }
           )
           # remove NA's
-          test_preds <- test_preds[,apply(X = test_preds, MARGIN = 2, FUN = function(x){
-            all(!is.na(x))})]
+          test_preds <- test_preds[, apply(
+            X = test_preds, MARGIN = 2, FUN = function(x) {
+              all(!is.na(x))
+            }
+          )]
 
           # outcome on the test
-          # test_y <- dplyr::select(.data = test, dplyr::one_of(y))
           test_y <- dplyr::pull(.data = test, y)
 
           # EBMA
@@ -281,13 +314,16 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
               .predCalibration = data.frame(train_preds),
               .outcomeCalibration = train_y,
               .predTest = data.frame(test_preds),
-              .outcomeTest = test_y)
+              .outcomeTest = test_y
+            )
 
             # vector of initial model weights
             # Note: On some Mac versions the model weights do not sum to exactly
             # 1 for repeating decimal weights
-            W <- rep(x = 1 / ncol(forecast.data@predCalibration),
-                     times = ncol(forecast.data@predCalibration))
+            W <- rep(
+              x = 1 / ncol(forecast.data@predCalibration),
+              times = ncol(forecast.data@predCalibration)
+            )
             W[length(W)] <- 1 - sum(W[-length(W)])
 
             # calibrate EBMA ensemble
@@ -296,7 +332,8 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
               model = "normal",
               useModelParams = FALSE,
               tol = tol[idx.tol],
-              W = W)
+              W = W
+            )
 
           } else {
             forecast.data <- quiet(
@@ -304,14 +341,17 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
                 .predCalibration = data.frame(train_preds),
                 .outcomeCalibration = as.numeric(unlist(train_y)),
                 .predTest = data.frame(test_preds),
-                .outcomeTest = as.numeric(unlist(test_y)))
+                .outcomeTest = as.numeric(unlist(test_y))
+              )
             )
 
             # vector of initial model weights
             # Note: On some Mac versions the model weights do not sum to exactly
             # 1 for repeating decimal weights
-            W <- rep(x = 1 / ncol(forecast.data@predCalibration),
-                     times = ncol(forecast.data@predCalibration))
+            W <- rep(
+              x = 1 / ncol(forecast.data@predCalibration),
+              times = ncol(forecast.data@predCalibration)
+            )
             W[length(W)] <- 1 - sum(W[-length(W)])
 
             # calibrate EBMA ensemble
@@ -320,24 +360,30 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
               model = "normal",
               useModelParams = FALSE,
               tol = tol[idx.tol],
-              W = W))
+              W = W)
+            )
 
           }
 
           # mse
-          mse_collector[idx.Ndraws, idx.tol] <- mean((
-            as.numeric(unlist(test_y)) -
-            as.numeric(attributes(forecast.out)$predTest[, 1, 1]))^2)
+          mse_collector[idx.Ndraws, idx.tol] <- mean(
+            (as.numeric(unlist(test_y)) - as.numeric(
+              attributes(forecast.out)$predTest[, 1, 1]
+            ))^2
+          )
 
           # model weights
           weights_box[idx.Ndraws, , idx.tol] <- attributes(
-            forecast.out)$modelWeights
+            forecast.out
+          )$modelWeights
 
           # progress
           if (verbose) {
-            message(
+            cat(paste(
               "\n", "EBMA: ",
-              round(counter / (length(tol) * n.draws), 2) * 100, "% done ")
+              round(counter / (length(tol) * n.draws), digits = 2) * 100,
+              "% done ", sep = ""
+            ))
           }
         }
       }
@@ -352,8 +398,9 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
       # layers = tolerance values
       if (length(tol) > 1) {
         for (idx.tol in seq_along(best_tolerance)) {
-          weights_mat[idx.tol, ] <- weights_box[
-            idx.tol, , ][, best_tolerance[idx.tol]]
+          weights_mat[idx.tol, ] <- weights_box[idx.tol, , ][
+            , best_tolerance[idx.tol]
+          ]
         }
       } else {
         weights_mat <- weights_box[, , 1]
@@ -365,14 +412,13 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
       } else {
         final_model_weights <- apply(weights_mat, 2, mean)
       }
-
       names(final_model_weights) <- names(train_preds)
-
     }
 
     # weighted average
     model_preds <- as.matrix(
-      post.strat$predictions$Level2[, names(final_model_weights)])
+      post.strat$predictions$Level2[,names(final_model_weights)]
+    )
     w_avg <- as.numeric(model_preds %*% final_model_weights)
 
     # deal with missings
@@ -385,8 +431,9 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
       NA_classifiers <- which(apply(model_preds, 2, function(x) any(is.na(x))))
 
       # readjust weights without that classifier
-      NA_adj_weights <- final_model_weights[-NA_classifiers] /
-        sum(final_model_weights[-NA_classifiers])
+      NA_adj_weights <- final_model_weights[-NA_classifiers] / sum(
+        final_model_weights[-NA_classifiers]
+      )
 
       # remove columns with NAs
       no_Na_preds <- model_preds[
@@ -405,16 +452,20 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
 
     # L2 preds object
     L2_preds <- dplyr::tibble(
-      !!rlang::sym(L2.unit) := dplyr::pull(
-        .data = post.strat$predictions$Level2, var = L2.unit),
-      ebma = w_avg)
-
+      !! rlang::sym(L2.unit) := dplyr::pull(
+        .data = post.strat$predictions$Level2, var = L2.unit
+      ),
+      ebma = w_avg
+    )
 
     # function output
-    return(list(
-      ebma = L2_preds,
-      classifiers = post.strat$predictions$Level2,
-      weights = final_model_weights))
+    return(
+      list(
+        ebma = L2_preds,
+        classifiers = post.strat$predictions$Level2,
+        weights = final_model_weights
+      )
+    )
 
   } else {
     if (verbose) {
@@ -422,9 +473,12 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
     }
 
     # function output
-    return(list(
-      ebma = "EBMA step skipped (only 1 classifier run)",
-      classifiers = post.strat$predictions$Level2))
+    return(
+      list(
+        ebma = "EBMA step skipped (only 1 classifier run)",
+        classifiers = post.strat$predictions$Level2
+      )
+    )
   }
 }
 
@@ -467,7 +521,8 @@ ebma <- function(ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
 ebma_mc_tol <- function(
   train.preds, train.y, ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg,
   pc.names, model.bs, model.pca, model.lasso, model.gb, model.svm,
-  model.mrp, model_deep, tol, n.draws, cores) {
+  model.mrp, model_deep, tol, n.draws, cores
+) {
 
   # Binding for global variables
   `%>%` <- dplyr::`%>%`
@@ -480,8 +535,9 @@ ebma_mc_tol <- function(
   for (idx.Ndraws in 1:n.draws) {
 
     # Determine number per group to sample
-    n_per_group <- as.integer(nrow(ebma.fold) /
-      length(levels(ebma.fold[[L2.unit]])))
+    n_per_group <- as.integer(nrow(ebma.fold) / length(
+      levels(ebma.fold[[L2.unit]])
+    ))
 
     # Test set with n_per_group persons per state (with resampling)
     test <- ebma.fold %>%
@@ -489,8 +545,9 @@ ebma_mc_tol <- function(
       dplyr::sample_n(n_per_group, replace = TRUE) %>%
       dplyr::ungroup() %>%
       dplyr::mutate_at(.vars = c(L1.x, L2.unit, L2.reg), .funs = as.factor) %>%
-      dplyr::select(dplyr::one_of(
-        c(y, L1.x, L2.x, L2.unit, L2.reg, pc.names))) %>%
+      dplyr::select(
+        dplyr::one_of(c(y, L1.x, L2.x, L2.unit, L2.reg, pc.names))
+      ) %>%
       tidyr::drop_na()
 
     # add the deep mrp interactions to the data
@@ -536,7 +593,8 @@ ebma_mc_tol <- function(
           object = model.bs,
           newdata = test,
           type = "response",
-          allow.new.levels = TRUE)
+          allow.new.levels = TRUE
+        )
       } else {
         NA
       },
@@ -545,7 +603,8 @@ ebma_mc_tol <- function(
           object = model.pca,
           newdata = test,
           type = "response",
-          allow.new.levels = TRUE)
+          allow.new.levels = TRUE
+        )
       } else {
         NA
       },
@@ -556,7 +615,8 @@ ebma_mc_tol <- function(
           L1.x = L1.x,
           lasso.L2.x = L2.x,
           L2.unit = L2.unit,
-          L2.reg = L2.reg)
+          L2.reg = L2.reg
+        )
       } else {
         NA
       },
@@ -565,15 +625,30 @@ ebma_mc_tol <- function(
           object = model.gb,
           newdata = test,
           n.trees = model.gb$n.trees,
-          type = "response")
+          type = "response"
+        )
       } else {
         NA
       },
       svm = if (!is.null(model.svm)) {
-        as.numeric(attr(predict(
-          object = model.svm,
-          newdata = test,
-          probability = TRUE),"probabilities")[,"1"])
+        # binary DV
+        if (length(unique(test[[y]])) == 2) {
+          as.numeric(
+            attr(
+              predict(
+                object = model.svm,
+                newdata = test,
+                probability = TRUE
+              ), "probabilities"
+            )[, "1"]
+          )
+        } else {
+          # continuous DV
+          predict(
+            object = model.svm,
+            newdata = test
+          )
+        }
       } else {
         NA
       },
@@ -582,7 +657,8 @@ ebma_mc_tol <- function(
           object = model.mrp,
           newdata = test,
           type = "response",
-          allow.new.levels = TRUE)
+          allow.new.levels = TRUE
+        )
       } else {
         NA
       },
@@ -599,11 +675,13 @@ ebma_mc_tol <- function(
         NA
       }
     )
-    # Remove NA's
+
+    # remove NA's
     test_preds <- test_preds[, apply(
       X = test_preds, MARGIN = 2, FUN = function(x) {
         all(!is.na(x))
-      })]
+      }
+    )]
 
     # Outcome on the test
     test_y <- dplyr::select(.data = test, dplyr::one_of(y))
@@ -613,8 +691,8 @@ ebma_mc_tol <- function(
 
     # Loop over tolerance values
     ebma_tune <- foreach::foreach(
-      idx.tol = seq_along(tol), 
-      .packages = c("glmmLasso", "e1071", "gbm")) %dorng% {
+      idx.tol = seq_along(tol), .packages = c("glmmLasso", "e1071", "gbm")
+    ) %dorng% {
 
       # EBMA
       forecast.data <- suppressWarnings(
@@ -622,7 +700,8 @@ ebma_mc_tol <- function(
           .predCalibration = data.frame(train.preds),
           .outcomeCalibration = as.numeric(unlist(train.y)),
           .predTest = data.frame(test_preds),
-          .outcomeTest = as.numeric(unlist(test_y)))
+          .outcomeTest = as.numeric(unlist(test_y))
+        )
       )
 
       # vector of initial model weights
@@ -642,14 +721,17 @@ ebma_mc_tol <- function(
 
       # mse
       mse_collector <- mean((
-        as.numeric(unlist(test_y)) -
-        as.numeric( attributes(forecast.out)$predTest[, 1, 1]))^2)
+        as.numeric(unlist(test_y)) - as.numeric(
+          attributes(forecast.out)$predTest[, 1, 1]
+        )
+      )^2)
 
       # model weights
       weights_box <- matrix(
-        attributes(forecast.out)$modelWeights,
+        data = attributes(forecast.out)$modelWeights,
         nrow = 1,
-        ncol = ncol(train.preds))
+        ncol = ncol(train.preds)
+      )
 
       return(list(MSEs = mse_collector, weights = weights_box))
     }
@@ -663,21 +745,25 @@ ebma_mc_tol <- function(
     # weights
     weights <- lapply(ebma_tune, `[[`, 2)
     weights <- matrix(
-      data = unlist(weights), ncol = ncol(train.preds), byrow = TRUE,
-      dimnames = list(c(
-      paste0("Tol_", tol)),
-      c(names(train.preds))))
+      data = unlist(weights),
+      ncol = ncol(train.preds),
+      byrow = TRUE,
+      dimnames = list(
+        c(paste0("Tol_", tol)),
+        c(names(train.preds))
+      )
+    )
 
     # Store MSEs and weights in current draw
     draws[[idx.Ndraws]] <- list(MSEs = MSEs, weights = weights)
-
   }
 
   # Container of best weights per draw
   wgt <- matrix(
     data = NA,
     nrow = n.draws,
-    ncol = ncol(draws[[1]][["weights"]]))
+    ncol = ncol(draws[[1]][["weights"]])
+  )
 
   # Select best weights per draw
   for (idx_w in seq_along(draws)) {
@@ -718,7 +804,8 @@ ebma_mc_tol <- function(
 ebma_mc_draws <- function(
   train.preds, train.y, ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg,
   pc.names, model.bs, model.pca, model.lasso, model.gb, model.svm,
-  model.mrp, model_deep, tol, n.draws, cores) {
+  model.mrp, model_deep, tol, n.draws, cores
+) {
 
   # Binding for global variables
   `%>%` <- dplyr::`%>%`
@@ -727,11 +814,13 @@ ebma_mc_draws <- function(
   cl <- multicore(cores = cores, type = "open", cl = NULL)
 
   ebma_tune <- foreach::foreach(
-    idx.Ndraws = 1:n.draws, .packages = c("glmmLasso", "e1071", "gbm")) %dorng% {
+    idx.Ndraws = 1:n.draws, .packages = c("glmmLasso", "e1071", "gbm")
+  ) %dorng% {
 
     # Determine number per group to sample
     n_per_group <- as.integer(
-      nrow(ebma.fold) / length(levels(ebma.fold[[L2.unit]])))
+      nrow(ebma.fold) / length(levels(ebma.fold[[L2.unit]]))
+    )
 
     # Test set with n_per_group persons per state (with resampling)
     test <- ebma.fold %>%
@@ -739,8 +828,9 @@ ebma_mc_draws <- function(
       dplyr::sample_n(n_per_group, replace = TRUE) %>%
       dplyr::ungroup() %>%
       dplyr::mutate_at(.vars = c(L1.x, L2.unit, L2.reg), .funs = as.factor) %>%
-      dplyr::select(dplyr::one_of(
-        c(y, L1.x, L2.x, L2.unit, L2.reg, pc.names))) %>%
+      dplyr::select(
+        dplyr::one_of(c(y, L1.x, L2.x, L2.unit, L2.reg, pc.names))
+      ) %>%
       tidyr::drop_na()
 
     # add the deep mrp interactions to the data
@@ -785,7 +875,9 @@ ebma_mc_draws <- function(
         predict(
           object = model.bs,
           newdata = test,
-          type = "response", allow.new.levels = TRUE)
+          type = "response",
+          allow.new.levels = TRUE
+        )
       } else {
         NA
       },
@@ -794,7 +886,8 @@ ebma_mc_draws <- function(
           object = model.pca,
           newdata = test,
           type = "response",
-          allow.new.levels = TRUE)
+          allow.new.levels = TRUE
+        )
       } else {
         NA
       },
@@ -805,7 +898,8 @@ ebma_mc_draws <- function(
           L1.x = L1.x,
           lasso.L2.x = L2.x,
           L2.unit = L2.unit,
-          L2.reg = L2.reg)
+          L2.reg = L2.reg
+        )
       } else {
         NA
       },
@@ -814,15 +908,30 @@ ebma_mc_draws <- function(
           object = model.gb,
           newdata = test,
           n.trees = model.gb$n.trees,
-          type = "response")
+          type = "response"
+        )
       } else {
         NA
       },
       svm = if (!is.null(model.svm)) {
-        as.numeric(attr(predict(
-          object = model.svm,
-          newdata = test,
-          probability = TRUE),"probabilities")[,"1"])
+        # binary DV
+        if (length(unique(test[[y]])) == 2) {
+          as.numeric(
+            attr(
+              predict(
+                object = model.svm,
+                newdata = test,
+                probability = TRUE
+              ), "probabilities"
+            )[, "1"]
+          )
+        } else {
+          # continuous DV
+          predict(
+            object = model.svm,
+            newdata = test
+          )
+        }
       } else {
         NA
       },
@@ -849,10 +958,12 @@ ebma_mc_draws <- function(
       }
     )
 
-    # Remove NA's
+    # remove NA's
     test_preds <- test_preds[, apply(
       X = test_preds, MARGIN = 2, FUN = function(x) {
-        all(!is.na(x))})]
+        all(!is.na(x))
+      }
+    )]
 
     # Outcome on the test
     test_y <- dplyr::select(.data = test, dplyr::one_of(y))
@@ -861,12 +972,18 @@ ebma_mc_draws <- function(
     mse_collector <- NA
 
     # Container of model weights over tolerances in current draw
-    weights_box <- matrix(NA, nrow = length(tol), ncol = ncol(train.preds),
-                          dimnames = list(c(paste0("Tol_", tol)),
-                                          c(names(train.preds))))
+    weights_box <- matrix(
+      data = NA,
+      nrow = length(tol),
+      ncol = ncol(train.preds),
+      dimnames = list(
+        c(paste0("Tol_", tol)),
+        c(names(train.preds))
+      )
+    )
 
     # Loop over tolerance values
-    for (idx.tol in seq_along(tol)){
+    for (idx.tol in seq_along(tol)) {
 
       # EBMA
       forecast.data <- suppressWarnings(
@@ -874,7 +991,8 @@ ebma_mc_draws <- function(
           .predCalibration = data.frame(train.preds),
           .outcomeCalibration = as.numeric(unlist(train.y)),
           .predTest = data.frame(test_preds),
-          .outcomeTest = as.numeric(unlist(test_y)))
+          .outcomeTest = as.numeric(unlist(test_y))
+        )
       )
 
       # vector of initial model weights
@@ -890,11 +1008,15 @@ ebma_mc_draws <- function(
         model = "normal",
         useModelParams = FALSE,
         tol = tol[idx.tol],
-        W = W)
+        W = W
+      )
 
       # mse
-      mse_collector[idx.tol] <- mean((as.numeric(unlist(test_y)) -
-        as.numeric(attributes(forecast.out)$predTest[, 1, 1]))^2)
+      mse_collector[idx.tol] <- mean((
+        as.numeric(unlist(test_y)) - as.numeric(
+          attributes(forecast.out)$predTest[, 1, 1]
+        )
+      )^2)
 
       # model weights
       weights_box[idx.tol, ] <- attributes(forecast.out)$modelWeights
@@ -908,17 +1030,25 @@ ebma_mc_draws <- function(
   multicore(cores = cores, type = "close", cl = cl)
 
   # Container of best weights per draw
-  wgt <- matrix(data = NA, nrow = n.draws, ncol = ncol(ebma_tune[[1]][["weights"]]) )
+  wgt <- matrix(
+    data = NA,
+    nrow = n.draws,
+    ncol = ncol(ebma_tune[[1]][["weights"]])
+  )
 
   # Select best weights per draw
-  for(idx_w in 1:length(ebma_tune)){
+  for (idx_w in seq_along(ebma_tune)) {
 
     # Tolerance with lowest MSE in draw idx_w
-    best_tolerance <- which(ebma_tune[[idx_w]]$MSEs == min(ebma_tune[[idx_w]]$MSEs))
+    best_tolerance <- which(
+      ebma_tune[[idx_w]]$MSEs == min(ebma_tune[[idx_w]]$MSEs)
+    )
 
-    if (length(best_tolerance) > 1){
-      wgt[idx_w, ] <- apply(ebma_tune[[idx_w]]$weights[best_tolerance, ], 2, mean)
-    } else{
+    if (length(best_tolerance) > 1) {
+      wgt[idx_w, ] <- apply(
+        ebma_tune[[idx_w]]$weights[best_tolerance, ], 2, mean
+      )
+    } else {
       wgt[idx_w, ] <- ebma_tune[[idx_w]]$weights[best_tolerance, ]
     }
   }

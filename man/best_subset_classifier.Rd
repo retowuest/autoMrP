@@ -10,6 +10,7 @@ best_subset_classifier(
   model.family,
   model.optimizer,
   n.iter,
+  y,
   verbose = c(TRUE, FALSE)
 )
 }

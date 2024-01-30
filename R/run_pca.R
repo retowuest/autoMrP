@@ -13,15 +13,17 @@
 
 run_pca <- function(
   y, L1.x, L2.x, L2.unit, L2.reg, loss.unit, loss.fun, data, cores,
-  verbose) {
+  verbose
+) {
 
   # List of all models to be evaluated
   models <- model_list_pca(
-    y = y,
-    L1.x = L1.x,
-    L2.x = L2.x,
-    L2.unit = L2.unit,
-    L2.reg = L2.reg)
+      y = y,
+      L1.x = L1.x,
+      L2.x = L2.x,
+      L2.unit = L2.unit,
+      L2.reg = L2.reg
+    )
 
   # prallel tuning if cores > 1
   if (cores > 1) {
@@ -38,7 +40,8 @@ run_pca <- function(
       L2.x = L2.x,
       L2.unit = L2.unit,
       L2.reg = L2.reg,
-      cores = cores)
+      cores = cores
+    )
   } else {
     # Train and evaluate each model
     m_errors <- lapply(seq_along(models), function(m) {
@@ -58,19 +61,20 @@ run_pca <- function(
 
         # Train mth model on kth training set
         model_m <- best_subset_classifier(
+          y = y,
           model = models[[m]],
           data.train = data_train,
           model.family = binomial(link = "probit"),
           model.optimizer = "bobyqa",
           n.iter = 1000000,
-          verbose = verbose)
+          verbose = verbose
+        )
 
         # Use trained model to make predictions for kth validation set
         pred_m <- stats::predict(
-          model_m,
-          newdata = data_valid,
-          type = "response",
-          allow.new.levels = TRUE)
+          model_m, newdata = data_valid,
+          type = "response", allow.new.levels = TRUE
+        )
 
         # Evaluate predictions based on loss function
         perform_m <- loss_function(
@@ -79,7 +83,8 @@ run_pca <- function(
           loss.unit = loss.unit,
           loss.fun = loss.fun,
           y = y,
-          L2.unit = L2.unit)
+          L2.unit = L2.unit
+        )
       })
 
       # Mean over loss functions
@@ -93,7 +98,8 @@ run_pca <- function(
   # Extract best tuning parameters
   grid_cells <- dplyr::bind_rows(m_errors)
   best_params <- dplyr::slice(
-    loss_score_ranking(score = grid_cells, loss.fun = loss.fun), 1)
+    loss_score_ranking(score = grid_cells, loss.fun = loss.fun), 1
+  )
 
   # Choose best-performing model
   out <- models[[dplyr::pull(.data = best_params, var = model)]]

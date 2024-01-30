@@ -11,8 +11,9 @@
 #' @return A model formula of the winning best subset classifier model.
 
 run_best_subset <- function(
-  y, L1.x, L2.x, L2.unit, L2.reg, loss.unit, loss.fun,
-  data, verbose, cores) {
+  y, L1.x, L2.x, L2.unit, L2.reg,
+  loss.unit, loss.fun, data, verbose, cores
+) {
 
   # List of all models to be evaluated
   models <- model_list(
@@ -20,7 +21,8 @@ run_best_subset <- function(
     L1.x = L1.x,
     L2.x = L2.x,
     L2.unit = L2.unit,
-    L2.reg = L2.reg)
+    L2.reg = L2.reg
+  )
 
   # prallel tuning if cores > 1
   if (cores > 1) {
@@ -37,7 +39,8 @@ run_best_subset <- function(
       L2.x = L2.x,
       L2.unit = L2.unit,
       L2.reg = L2.reg,
-      cores = cores)
+      cores = cores
+    )
   } else {
 
     # Train and evaluate each model
@@ -47,7 +50,8 @@ run_best_subset <- function(
         M <- length(models)
         cat(paste(
           "Best subset: Running model ", m,
-          " out of ", M, " models\n", sep = ""))
+          " out of ", M, " models\n", sep = ""
+        ))
       }
 
       # Loop over each fold
@@ -59,18 +63,21 @@ run_best_subset <- function(
         # Train mth model on kth training set
         model_m <- best_subset_classifier(
           model = models[[m]],
+          y = y,
           data.train = data_train,
           model.family = binomial(link = "probit"),
           model.optimizer = "bobyqa",
           n.iter = 1000000,
-          verbose = verbose)
+          verbose = verbose
+        )
 
         # Use trained model to make predictions for kth validation set
         pred_m <- stats::predict(
           model_m,
           newdata = data_valid,
           type = "response",
-          allow.new.levels = TRUE)
+          allow.new.levels = TRUE
+        )
 
         # Evaluate predictions based on loss function
         perform_m <- loss_function(
@@ -79,7 +86,8 @@ run_best_subset <- function(
           loss.unit = loss.unit,
           loss.fun = loss.fun,
           y = y,
-          L2.unit = L2.unit)
+          L2.unit = L2.unit
+        )
       })
 
       # Mean over loss functions
@@ -150,9 +158,10 @@ run_best_subset <- function(
 #' # not yet
 #' }
 
-run_best_subset_mc <- function(y, L1.x, L2.x, L2.unit, L2.reg,
-                               loss.unit, loss.fun, data,
-                               cores, models, verbose){
+run_best_subset_mc <- function(
+  y, L1.x, L2.x, L2.unit, L2.reg, loss.unit, loss.fun,
+  data, cores, models, verbose
+) {
 
   # Binding for global variables
   m <- NULL
@@ -162,7 +171,8 @@ run_best_subset_mc <- function(y, L1.x, L2.x, L2.unit, L2.reg,
 
   # Train and evaluate each model
   m_errors <- foreach::foreach(
-    m = seq_along(models), .packages = "autoMrP") %dorng% {
+    m = seq_along(models), .packages = "autoMrP"
+  ) %dorng% {
 
     # Loop over each fold
     k_errors <- lapply(seq_along(data), function(k) {
@@ -173,16 +183,19 @@ run_best_subset_mc <- function(y, L1.x, L2.x, L2.unit, L2.reg,
       # Train mth model on kth training set
       model_m <- best_subset_classifier(
         model = models[[m]],
+        y = y,
         data.train = data_train,
         model.family = binomial(link = "probit"),
         model.optimizer = "bobyqa",
         n.iter = 1000000,
-        verbose = verbose)
+        verbose = verbose
+      )
 
       # Use trained model to make predictions for kth validation set
       pred_m <- stats::predict(
         model_m, newdata = data_valid,
-        type = "response", allow.new.levels = TRUE)
+        type = "response", allow.new.levels = TRUE
+      )
 
       # Evaluate predictions based on loss function
       perform_m <- loss_function(
@@ -191,7 +204,8 @@ run_best_subset_mc <- function(y, L1.x, L2.x, L2.unit, L2.reg,
         loss.unit = loss.unit,
         loss.fun = loss.fun,
         y = y,
-        L2.unit = L2.unit)
+        L2.unit = L2.unit
+      )
     })
 
     # Mean over loss functions

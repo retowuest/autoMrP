@@ -23,7 +23,8 @@
 
 run_lasso <- function(
   y, L1.x, L2.x, L2.unit, L2.reg, n.iter, loss.unit, loss.fun,
-  lambda, data, verbose, cores) {
+  lambda, data, verbose, cores
+) {
 
   # Lasso search grid
   if (is.null(lambda)) {
@@ -32,7 +33,7 @@ run_lasso <- function(
 
   # Context-level fixed effects
   L2_fe <- paste(L2.x, collapse = " + ")
-  if (L2_fe == ""){
+  if (L2_fe == "") {
     L2_fe_form <- as.formula(paste(y, " ~ 1", sep = ""))
     L2.x <- NULL
   } else {
@@ -42,7 +43,8 @@ run_lasso <- function(
   # Individual-level random effects as named list
   L1_re <- setNames(
     as.list(rep(c(~ 1), times = length(c(L1.x, L2.unit, L2.reg)))),
-    c(L1.x, L2.unit, L2.reg))
+    c(L1.x, L2.unit, L2.reg)
+  )
 
   # Parallel processing
   if (cores > 1) {
@@ -50,7 +52,8 @@ run_lasso <- function(
       y = y, L1.x = L1.x, L2.x = L2.x, L2.unit = L2.unit, L2.reg = L2.reg,
       loss.unit = loss.unit, loss.fun = loss.fun, data = data,
       cores = cores, L2.fe.form = L2_fe_form, L1.re = L1_re,
-      lambda = lambda)
+      lambda = lambda
+    )
   } else {
 
     # Train and evaluate each model
@@ -59,9 +62,11 @@ run_lasso <- function(
       # Print lambda value
       if (isTRUE(verbose)) {
         L <- length(lambda)
-        cat(paste("Lasso: Running lambda w/ value ", lambda[l],
-                  " (lambda ", l, " out of max. ",
-                  L, " lambdas)\n", sep = ""))
+        cat(paste(
+          "Lasso: Running lambda w/ value ", lambda[l],
+          " (lambda ", l, " out of max. ",
+          L, " lambdas)\n", sep = ""
+        ))
       }
 
       # Loop over each fold
@@ -83,21 +88,28 @@ run_lasso <- function(
           tidyr::drop_na()
 
         # Train model using lambda value on kth training set
-        model_l <- lasso_classifier(L2.fix = L2_fe_form,
-                                    L1.re = L1_re,
-                                    data.train = data_train,
-                                    lambda = lambda[l],
-                                    model.family = binomial(link = "probit"),
-                                    verbose = verbose)
+        model_l <- lasso_classifier(
+          y = y,
+          L2.fix = L2_fe_form,
+          L1.re = L1_re,
+          data.train = data_train,
+          lambda = lambda[l],
+          model.family = binomial(link = "probit"),
+          verbose = verbose
+        )
 
         # Use trained model to make predictions for kth validation set
         pred_l <- stats::predict(model_l, newdata = data.frame(data_valid))
 
         # Evaluate predictions based on loss function
-        perform_l <- loss_function(pred = pred_l, data.valid = data_valid,
-                                   loss.unit = loss.unit,
-                                   loss.fun = loss.fun,
-                                   y = y, L2.unit = L2.unit)
+        perform_l <- loss_function(
+          pred = pred_l,
+          data.valid = data_valid,
+          loss.unit = loss.unit,
+          loss.fun = loss.fun,
+          y = y,
+          L2.unit = L2.unit
+        )
       })
 
       # Mean over loss functions
@@ -110,7 +122,8 @@ run_lasso <- function(
   # Extract best tuning parameters
   grid_cells <- dplyr::bind_rows(lambda_errors)
   best_params <- dplyr::slice(
-    loss_score_ranking(score = grid_cells, loss.fun = loss.fun), 1)
+    loss_score_ranking(score = grid_cells, loss.fun = loss.fun), 1
+  )
 
   # Choose best-performing model
   out <- dplyr::pull(.data = best_params, var = lambda)
@@ -138,7 +151,8 @@ run_lasso <- function(
 
 run_lasso_mc_lambda <- function(
   y, L1.x, L2.x, L2.unit, L2.reg, loss.unit, loss.fun, data,
-  cores, L2.fe.form, L1.re, lambda) {
+  cores, L2.fe.form, L1.re, lambda
+) {
 
   # Binding for global variables
   `%>%` <- dplyr::`%>%`
@@ -172,21 +186,27 @@ run_lasso_mc_lambda <- function(
         tidyr::drop_na()
 
       # Train model using lambda value on kth training set
-      model_l <- lasso_classifier(L2.fix = L2.fe.form,
-                                  L1.re = L1.re,
-                                  data.train = data_train,
-                                  lambda = lambda_value,
-                                  model.family = binomial(link = "probit"),
-                                  verbose = FALSE)
+      model_l <- lasso_classifier(
+        y = y,
+        L2.fix = L2.fe.form,
+        L1.re = L1.re,
+        data.train = data_train,
+        lambda = lambda_value,
+        model.family = binomial(link = "probit"),
+        verbose = FALSE
+      )
 
       # Use trained model to make predictions for kth validation set
       pred_l <- stats::predict(model_l, newdata = data.frame(data_valid))
 
       # Evaluate predictions based on loss function
-      perform_l <- loss_function(pred = pred_l, data.valid = data_valid,
-                                 loss.unit = loss.unit,
-                                 loss.fun = loss.fun,
-                                 y = y, L2.unit = L2.unit)
+      perform_l <- loss_function(
+        pred = pred_l,
+        data.valid = data_valid,
+        loss.unit = loss.unit,
+        loss.fun = loss.fun,
+        y = y, L2.unit = L2.unit
+      )
     })
 
     # Mean over loss functions
