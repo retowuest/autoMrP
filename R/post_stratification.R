@@ -38,7 +38,7 @@ post_stratification <- function(
   y, L1.x, L2.x, L2.unit, L2.reg, best.subset.opt, lasso.opt, lasso.L2.x,
   pca.opt, gb.opt, svm.opt, svm.L2.reg, svm.L2.unit, svm.L2.x, mrp.include,
   n.minobsinnode, L2.unit.include, L2.reg.include, kernel, mrp.L2.x,
-  data, ebma.fold, census, verbose, deep.mrp, deep.L2.x, deep.L2.reg,
+  data, ebma.fold, census, verbose, deep.mrp, stacking, deep.L2.x, deep.L2.reg,
   deep.splines
 ) {
 
@@ -118,6 +118,23 @@ post_stratification <- function(
     # individual level predictions for EBMA
     bs_ind <- stats::predict(object = best_subset_opt_ebma, type = "response")
 
+    # individual level predictions for stacking
+    if (stacking) {
+      # ddd best subset predictions to the census
+      census <- census %>%
+        dplyr::mutate(
+          best_subset = stats::predict(
+            object = best_subset_opt_poststrat_only,
+            newdata = .,
+            allow.new.levels = TRUE
+          )
+        )
+      # individual level predictions for stacking on the base data
+      bs_stacking <- stats::predict(
+        object = best_subset_opt_poststrat_only, type = "response"
+      )
+    }
+
     # model for EBMA
     models$best_subset <- best_subset_opt_ebma
 
@@ -191,6 +208,29 @@ post_stratification <- function(
     # individual level predictions for EBMA
     lasso_ind <- stats::predict(object = lasso_opt_ebma, type = "response")
 
+    # individual level predictions for stacking
+    if (stacking) {
+
+      # add lasso predictions to census
+      census <- census %>%
+        dplyr::mutate(
+          lasso = predict_glmmLasso(
+            m = lasso_opt_poststrat_only,
+            lasso.L2.x = lasso.L2.x,
+            L2.unit = L2.unit,
+            L2.reg = L2.reg,
+            L1.x = L1.x,
+            census = census,
+            type = "predictors"
+          )
+        )
+
+      # individual level predictions for stacking
+      lasso_stacking <- stats::predict(
+        object = lasso_opt_poststrat_only, type = "response"
+      )
+    }
+
     # model for EBMA
     models$lasso <- lasso_opt_ebma
 
@@ -236,6 +276,21 @@ post_stratification <- function(
 
     # individual level predictions for EBMA
     pca_ind <- stats::predict(object = pca_opt_ebma, type = "response")
+
+    # individual level predictions for stacking
+    if (stacking) {
+      # add pca predictions to census
+      census <- census %>%
+        dplyr::mutate(pca = stats::predict(
+          object = pca_opt_poststrat_only,
+          newdata = .,
+          allow.new.levels = TRUE
+        ))
+      # individual level predictions for stacking
+      pca_stacking <- stats::predict(
+        object = pca_opt_poststrat_only, type = "response"
+      )
+    }
 
     # model for EBMA
     models$pca <- pca_opt_ebma
@@ -306,6 +361,25 @@ post_stratification <- function(
     gb_ind <- gbm::predict.gbm(
       object = gb_opt_ebma, n.trees = gb.opt$n_trees, type = "response"
     )
+
+    # individual level predictions for stacking
+    if (stacking) {
+
+      # add gb predictions to census
+      census <- census %>%
+        dplyr::mutate(gb = gbm::predict.gbm(
+          object = gb_opt_poststrat_only,
+          newdata = .,
+          n.trees = gb.opt$n_trees,
+        ))
+
+      # individual level predictions for stacking
+      gb_stacking <- gbm::predict.gbm(
+        object = gb_opt_poststrat_only,
+        n.trees = gb.opt$n_trees,
+        type = "response"
+      )
+    }
 
     # model for EBMA
     models$gb <- gb_opt_ebma
@@ -415,6 +489,47 @@ post_stratification <- function(
         )
     }
 
+    # add svm predictions to census if stacking
+    if (stacking) {
+
+      # post-stratification step 1: only L2 units in training data
+      svm_stack_census <- census %>%
+        dplyr::filter(
+          dplyr::pull(.data = census, !!L2.unit) %in%
+            dplyr::pull(.data = svm_data_no_ebma, !!L2.unit)
+        )
+
+      # stacking svm predictions on the linear predictor scale
+      if (
+        svm_stack_census %>%
+          dplyr::pull(var = "y_svm") %>%
+          unique() %>%
+          length() > 2
+      ) {
+        # continuous DV
+        census_stack <- svm_stack_census %>%
+          dplyr::mutate(
+            svm = stats::predict(
+              object = svm_opt_poststrat_only,
+              newdata = .,
+              allow.new.levels = TRUE
+            )
+          )
+      } else {
+        # binary DV
+        svm_preds <- svm_preds %>%
+          dplyr::mutate(
+            svm = attr(stats::predict(
+              object = svm_opt_poststrat_only,
+              newdata = .,
+              allow.new.levels = TRUE,
+              probability = FALSE
+            ), "probabilities")[, "1"]
+          )
+      }
+      census <- svm_preds
+    }
+
     # post-stratification step 3: weighted mean
     svm_preds <- svm_preds %>%
       dplyr::group_by(!!rlang::sym(L2.unit)) %>%
@@ -441,6 +556,31 @@ post_stratification <- function(
         newdata = svm_data,
         probability = TRUE
       ), "probabilities")[, "1"]
+    }
+
+    # individual level predictions for stacking
+    if (stacking) {
+      # individual level predictions for EBMA
+      if (
+        svm_data_no_ebma %>%
+          dplyr::pull(var = "y_svm") %>%
+          unique() %>%
+          length() > 2
+      ) {
+        svm_stacking <- stats::predict(
+          object = svm_opt_poststrat_only,
+          newdata = svm_data_no_ebma,
+          type = "response"
+        )
+      } else {
+        svm_stacking <- attr(stats::predict(
+          object = svm_opt_poststrat_only,
+          newdata = svm_data_no_ebma,
+          allow.new.levels = TRUE,
+          probability = TRUE
+        ), "probabilities")[, "1"]
+      }
+
     }
 
     # model for EBMA
@@ -526,6 +666,29 @@ post_stratification <- function(
 
     # individual level predictions for EBMA
     mrp_ind <- stats::predict(object = mrp_model_ebma, type = "response")
+
+    # individual level predictions for stacking
+    if (stacking) {
+
+      # add mrp predictions to census
+      census <- census %>%
+        dplyr::mutate(
+          mrp = stats::predict(
+            object = mrp_model_poststrat_only,
+            newdata = .,
+            allow.new.levels = TRUE,
+            type = "response"
+          )
+        )
+
+      # individual level predictions for stacking
+      mrp_stacking <- stats::predict(
+        object = mrp_model_poststrat_only,
+        newdata = no_ebma_data,
+        type = "response"
+      )
+    }
+
 
     # model for EBMA
     models$mrp <- mrp_model_ebma
@@ -727,6 +890,7 @@ post_stratification <- function(
 
       # convert to response probabilities
       pred_d <- stats::plogis(pred_d)
+
     } else if (dv_type == "linear") {
       # predictions for post-stratification only (no EBMA)
       pred_d <- predict(
@@ -735,6 +899,72 @@ post_stratification <- function(
         newdata = deep_census,
         allow_missing_levels = TRUE
       )[["mean"]]
+    }
+
+    # individual level predictions for stacking
+    if (stacking) {
+
+      # add deep mrp predictions to census
+      census <- census %>%
+        dplyr::mutate(deep_mrp = pred_d)
+
+      # data for stacking
+      deep_data_no_ebma <- data %>%
+        dplyr::bind_rows(ebma.fold) %>%
+        dplyr::select(
+          dplyr::all_of(c(y, L1.x, svm.L2.x, L2.unit, L2.reg))
+        )
+
+      # loop over all interactions for data_stack
+      x2_data <- lapply(all_interactions, function(x) {
+
+        # break down interaction components
+        y <- stringr::str_extract(
+          string = x,
+          pattern = stringr::fixed(pattern = names(deep_data_no_ebma))
+        ) %>%
+          .[!is.na(.)]
+
+        # take each column of data and combine its values into a single string
+        df_x <- deep_data_no_ebma %>%
+          dplyr::select({{y}}) %>%
+          dplyr::rowwise() %>%
+          dplyr::mutate({{x}} := paste(dplyr::c_across(
+            dplyr::everything()
+          ), collapse = "-")) %>%
+          dplyr::ungroup() %>%
+          dplyr::select(ncol(.))
+
+        return(df_x)
+      }) %>%
+        dplyr::bind_cols()
+
+      # combine data and interactions
+      x2_data <- dplyr::bind_cols(deep_data_no_ebma, x2_data)
+      rm(deep_data_no_ebma)
+
+      if (dv_type == "binary") {
+        deep_stacking <- vglmer::predict_MAVB(
+          samples = 1000,
+          deep_mrp_model_poststrat_only,
+          newdata = x2_data,
+          allow_missing_levels = TRUE
+        )[["mean"]]
+
+        # convert to response probabilities
+        deep_stacking <- stats::plogis(deep_stacking)
+
+      } else if (dv_type == "linear") {
+
+        # predictions for stacking
+        deep_stacking <- predict(
+          samples = 1000,
+          object = deep_mrp_model_poststrat_only,
+          newdata = x2_data,
+          allow_missing_levels = TRUE
+        )[["mean"]]
+      }
+
     }
 
     # post-stratification
@@ -774,6 +1004,52 @@ post_stratification <- function(
 
   } # end of deep.mrp
 
+  # stacking:
+  if (stacking) {
+
+    # stacking data
+    data_stack <- tibble::tibble(
+      y = no_ebma_data[[y]]
+    )
+    if (exists("bs_stacking")) {
+      data_stack <- dplyr::mutate(.data = data_stack, best_subset = bs_stacking)
+    }
+    if (exists("lasso_stacking")) {
+      data_stack <- dplyr::mutate(
+        .data = data_stack, lasso = as.numeric(lasso_stacking)
+      )
+    }
+    if (exists("pca_stacking")) {
+      data_stack <- dplyr::mutate(.data = data_stack, pca = pca_stacking)
+    }
+    if (exists("gb_stacking")) {
+      data_stack <- dplyr::mutate(.data = data_stack, gb = gb_stacking)
+    }
+    if (exists("svm_stacking")) {
+      data_stack <- dplyr::mutate(.data = data_stack, svm = svm_stacking)
+    }
+    if (exists("mrp_stacking")) {
+      data_stack <- dplyr::mutate(.data = data_stack, mrp = mrp_stacking)
+    }
+    if (exists("deep_stacking")) {
+      data_stack <- dplyr::mutate(.data = data_stack, deep_mrp = deep_stacking)
+    }
+
+    # get stacking weights
+    stack_weights(s_data = data_stack)
+
+
+    # stack model
+    stack_out <- glm(
+      formula = form_stack,
+      data = data_stack,
+      family = binomial(link = "probit")
+    )
+
+    # stacking weights
+    stack_weights <- stack_out$coefficients
+
+  }
 
   # --------------------------- combine l2 level predictions ------------------
 
@@ -828,6 +1104,16 @@ post_stratification <- function(
       x = L2_preds,
       y = deep_preds,
       by = L2.unit
+    )
+  }
+
+  ###########################
+  # current
+  # stacking combination
+  if (stacking) {
+    L2_stacking <- cbind(
+      !!colnames(L2_preds)[1] == L2_preds[, 1], # L2 ids
+      rep(1, nrow(L2_preds))
     )
   }
 

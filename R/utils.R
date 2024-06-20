@@ -10,13 +10,13 @@
 #' @inheritParams auto_MrP
 #' @return No return value, called for detection of errors in autoMrP() call.
 
-error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
-                         folds, bin.proportion, bin.size, survey, census,
-                         ebma.size, k.folds, cv.sampling, loss.unit, loss.fun,
-                         best.subset, lasso, pca, gb, svm, mrp,
-                         best.subset.L2.x, lasso.L2.x, gb.L2.x, svm.L2.x,
-                         mrp.L2.x, gb.L2.unit, gb.L2.reg, lasso.lambda,
-                         lasso.n.iter, uncertainty, boot.iter) {
+error_checks <- function(
+  y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs, folds, bin.proportion,
+  bin.size, survey, census, ebma.size, k.folds, cv.sampling, loss.unit,
+  loss.fun, best.subset, lasso, pca, gb, svm, mrp, best.subset.L2.x, lasso.L2.x,
+  gb.L2.x, svm.L2.x, mrp.L2.x, gb.L2.unit, gb.L2.reg, lasso.lambda,
+  lasso.n.iter, uncertainty, boot.iter
+) {
 
 
   # Check if y is a character scalar
@@ -1484,7 +1484,9 @@ multicore <- function(cores = 1, type, cl = NULL) {
 #' @return Returns a numeric vector of predictions from a \code{glmmLasso()}
 #'   object.
 
-predict_glmmLasso <- function(census, m, L1.x, lasso.L2.x, L2.unit, L2.reg) {
+predict_glmmLasso <- function(
+  census, m, L1.x, lasso.L2.x, L2.unit, L2.reg, type = "response"
+) {
 
   # Fixed effects
   fixed_effects <- as.matrix(
@@ -1529,10 +1531,11 @@ predict_glmmLasso <- function(census, m, L1.x, lasso.L2.x, L2.unit, L2.reg) {
   lasso_preds <- base::apply(X = lasso_preds, MARGIN = 1, FUN = sum)
 
   # binary DV through the link function
-  if (m$y %>% unique() %>% length() == 2) {
-    lasso_preds <- stats::pnorm(lasso_preds)
+  if (type == "response") {
+    if (m$y %>% unique() %>% length() == 2) {
+      lasso_preds <- stats::pnorm(lasso_preds)
+    }
   }
-
   return(lasso_preds)
 }
 
@@ -2063,13 +2066,14 @@ boot_fun <- function(
   survey, L2.unit, y, L1.x, L2.x, mrp.L2.x, L2.reg, L2.x.scale,
   pcs, folds, bin.proportion, bin.size, census, k.folds,
   cv.sampling, loss.unit, loss.fun, best.subset, lasso, pca,
-  gb, svm, mrp, deep.mrp, best.subset.L2.x,
+  gb, svm, mrp, deep.mrp, stacking, best.subset.L2.x,
   lasso.L2.x, pca.L2.x, pc.names, gb.L2.x, svm.L2.x, svm.L2.unit,
   svm.L2.reg, gb.L2.unit, gb.L2.reg, deep.L2.x, deep.L2.reg,
   deep.splines, lasso.lambda, lasso.n.iter, gb.interaction.depth,
   gb.shrinkage, gb.n.trees.init, gb.n.trees.increase,
   gb.n.trees.max, gb.n.minobsinnode, svm.kernel, svm.gamma,
-  svm.cost, ebma.tol, ebma.size) {
+  svm.cost, ebma.tol, ebma.size
+) {
 
   # Bootstrap sample --------------------------------------------------------
 
@@ -2112,14 +2116,18 @@ boot_fun <- function(
     if (ebma.size > 0) {
       # EBMA hold-out fold
       ebma_fold <- boot_sample %>%
-        dplyr::filter_at(dplyr::vars(dplyr::one_of(folds)),
-                         dplyr::any_vars(. == k.folds + 1))
+        dplyr::filter_at(
+          dplyr::vars(dplyr::one_of(folds)),
+          dplyr::any_vars(. == k.folds + 1)
+        )
     }
 
     # K folds for cross-validation
     cv_data <- boot_sample %>%
-      dplyr::filter_at(dplyr::vars(dplyr::one_of(folds)),
-                       dplyr::any_vars(. != k.folds + 1))
+      dplyr::filter_at(
+        dplyr::vars(dplyr::one_of(folds)),
+        dplyr::any_vars(. != k.folds + 1)
+      )
 
     cv_folds <- cv_data %>%
       dplyr::group_split(.data[[folds]])
@@ -2159,6 +2167,7 @@ boot_fun <- function(
     svm = svm,
     mrp = mrp,
     deep.mrp = deep.mrp,
+    stacking = stacking,
     best.subset.L2.x = best.subset.L2.x,
     lasso.L2.x = lasso.L2.x,
     pca.L2.x = pca.L2.x,
