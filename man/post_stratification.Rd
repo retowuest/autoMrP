@@ -30,6 +30,7 @@ post_stratification(
   census,
   verbose,
   deep.mrp,
+  stacking,
   deep.L2.x,
   deep.L2.reg,
   deep.splines

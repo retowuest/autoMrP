@@ -4,7 +4,15 @@
 \alias{predict_glmmLasso}
 \title{Predicts on newdata from glmmLasso objects}
 \usage{
-predict_glmmLasso(census, m, L1.x, lasso.L2.x, L2.unit, L2.reg)
+predict_glmmLasso(
+  census,
+  m,
+  L1.x,
+  lasso.L2.x,
+  L2.unit,
+  L2.reg,
+  type = "response"
+)
 }
 \arguments{
 \item{census}{Census data. A \code{data.frame} whose column names include

@@ -1535,7 +1535,9 @@ predict_glmmLasso <- function(
     if (m$y %>% unique() %>% length() == 2) {
       lasso_preds <- stats::pnorm(lasso_preds)
     }
+
   }
+
   return(lasso_preds)
 }
 

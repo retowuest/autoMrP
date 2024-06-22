@@ -29,6 +29,7 @@ auto_MrP(
   gb = TRUE,
   svm = TRUE,
   mrp = FALSE,
+  stacking = FALSE,
   deep.mrp = FALSE,
   oversampling = FALSE,
   best.subset.L2.x = NULL,

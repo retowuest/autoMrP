@@ -228,6 +228,49 @@ run_classifiers <- function(
     svm_out <- NULL
   }
 
+  # Individual level predictions for all data -------------------------------
+
+  if (verbose) {
+    message("Generate out of sample predictions from tuned classifiers")
+  }
+
+  preds_all <- get_predictions(
+    y = y,
+    L1.x = L1.x,
+    L2.x = L2.x,
+    L2.unit = L2.unit,
+    L2.reg = L2.reg,
+    best.subset.opt = best_subset_out,
+    lasso.opt = lasso_out,
+    lasso.L2.x = lasso.L2.x,
+    pca.opt = pca_out,
+    gb.opt = gb_out,
+    svm.opt = svm_out,
+    svm.L2.reg = svm.L2.reg,
+    svm.L2.unit = svm.L2.unit,
+    svm.L2.x = svm.L2.x,
+    mrp.include = mrp,
+    n.minobsinnode = gb.n.minobsinnode,
+    L2.unit.include = gb.L2.unit,
+    L2.reg.include = gb.L2.reg,
+    kernel = svm.kernel,
+    mrp.L2.x = mrp.L2.x,
+    deep.mrp = deep.mrp,
+    stacking = stacking,
+    deep.L2.x = deep.L2.x,
+    deep.L2.reg = deep.L2.reg,
+    deep.splines = deep.splines,
+    data = cv.folds,
+    ebma.fold = ebma.fold,
+    verbose = verbose,
+    all_data = TRUE
+  )
+
+  # Stacking weights --------------------------------------------------------
+  stacking_weights(
+    preds = preds_all,
+  )
+
   # Post-stratification -----------------------------------------------------
 
   if (verbose) {
