@@ -493,7 +493,8 @@ get_predictions <- function(
 
     # combine predictions into one table
     preds <- tibble::tibble(
-      y = data_valid[[y]]
+      y = data_valid[[y]],
+      L2_unit = data_valid[[L2.unit]]
     )
     if (exists("bs_preds")) {
       preds <- dplyr::mutate(
