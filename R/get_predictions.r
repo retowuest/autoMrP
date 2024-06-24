@@ -3,8 +3,8 @@ get_predictions <- function(
   y, L1.x, L2.x, L2.unit, L2.reg, best.subset.opt, lasso.opt, lasso.L2.x,
   pca.opt, gb.opt, svm.opt, svm.L2.reg, svm.L2.unit, svm.L2.x, mrp.include,
   n.minobsinnode, L2.unit.include, L2.reg.include, kernel, mrp.L2.x, deep.mrp,
-  stacking, deep.L2.x, deep.L2.reg, deep.splines, data, ebma.fold, verbose,
-  all_data = TRUE
+  deep.L2.x, deep.L2.reg, deep.splines, data, ebma.fold, verbose,
+  cv.sampling, k.folds = k.folds, all_data = TRUE
 ) {
 
   #------------------------------------------------------------
@@ -494,7 +494,7 @@ get_predictions <- function(
     # combine predictions into one table
     preds <- tibble::tibble(
       y = data_valid[[y]],
-      L2_unit = data_valid[[L2.unit]]
+      !!rlang::sym(L2.unit) := data_valid[[L2.unit]]
     )
     if (exists("bs_preds")) {
       preds <- dplyr::mutate(

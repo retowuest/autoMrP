@@ -23,7 +23,9 @@ ebma_mc_draws(
   model_deep,
   tol,
   n.draws,
-  cores
+  cores,
+  preds_all,
+  post.strat
 )
 }
 \arguments{
@@ -95,6 +97,11 @@ for tuning EBMA. Default is \eqn{100}. Passed on from \code{ebma.n.draws}.}
 
 \item{cores}{The number of cores to be used. An integer indicating the number
 of processor cores used for parallel computing. Default is 1.}
+
+\item{post.strat}{Post-stratification results. A list containing the best
+models for each of the tuned classifiers, the individual level predictions
+on the data classifier trainig data and the post-stratified context-level
+predictions.}
 }
 \value{
 The classifier weights. A numeric vector.

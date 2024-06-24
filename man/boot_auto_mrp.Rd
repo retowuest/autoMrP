@@ -30,7 +30,6 @@ boot_auto_mrp(
   svm,
   mrp,
   deep.mrp,
-  stacking,
   best.subset.L2.x,
   lasso.L2.x,
   pca.L2.x,

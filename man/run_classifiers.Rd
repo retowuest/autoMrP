@@ -34,7 +34,6 @@ run_classifiers(
   svm,
   mrp,
   deep.mrp,
-  stacking,
   best.subset.L2.x,
   lasso.L2.x,
   pca.L2.x,

@@ -22,7 +22,8 @@ ebma(
   svm.opt,
   deep.mrp,
   verbose,
-  cores
+  cores,
+  preds_all
 )
 }
 \arguments{

@@ -31,9 +31,9 @@
 #'   \code{run_svm()}.
 
 ebma <- function(
-  ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
-  post.strat, n.draws, tol, best.subset.opt, pca.opt,
-  lasso.opt, gb.opt, svm.opt, deep.mrp, verbose, cores
+  ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names, post.strat, n.draws, tol,
+  best.subset.opt, pca.opt, lasso.opt, gb.opt, svm.opt, deep.mrp, verbose,
+  cores, preds_all
 ) {
 
   # Run EBMA if at least two classifiers selected
@@ -89,8 +89,13 @@ ebma <- function(
           model_deep = model_deep,
           tol = tol,
           n.draws = n.draws,
-          cores = cores
+          cores = cores,
+          preds_all = preds_all,
+          post.strat = post.strat
         )
+        # unlist
+        ebma_preds <- final_model_weights$ebma_preds
+        final_model_weights <- final_model_weights$final_model_weights
 
       } else {
 
@@ -113,8 +118,13 @@ ebma <- function(
           model_deep = model_deep,
           tol = tol,
           n.draws = n.draws,
-          cores = cores
+          cores = cores,
+          preds_all = preds_all,
+          post.strat = post.strat
         )
+        # unlist
+        ebma_preds <- final_model_weights$ebma_preds
+        final_model_weights <- final_model_weights$final_model_weights
       }
     } else {
 
@@ -147,8 +157,17 @@ ebma <- function(
         )
       )
 
+      # container for ebma models
+      model_box <- tibble::tibble(
+        tolerance_value = tol,
+        model = vector("list", length(tol))
+      )
+
       # loop over tolerance values
       for (idx.tol in seq_along(tol)) {
+
+        # list of ebma models for each of the n draws
+        model_n_draws <- vector("list", n.draws)
 
         # loop over Ndraws wit equal obs/state
         for (idx.Ndraws in 1:n.draws) {
@@ -403,8 +422,13 @@ ebma <- function(
               "% done ", sep = ""
             ))
           }
-        }
-      }
+
+          # store model
+          model_n_draws[[idx.Ndraws]] <- forecast.out
+        } # end loop over Ndraws
+        # add models to the model box
+        model_box$model[[idx.tol]] <- model_n_draws
+      } # end loop over tolerance values
 
       # which tolerance value minimizes the mse on the test set
       best_tolerance <- apply(mse_collector, 1, function(x) which.min(x))
@@ -424,6 +448,43 @@ ebma <- function(
         weights_mat <- weights_box[, , 1]
       }
 
+      ## EBMA predictions on the individual level for all data
+      # L2 preds object
+      L2_preds <- dplyr::tibble(
+        !! rlang::sym(L2.unit) := dplyr::pull(
+          .data = post.strat$predictions$Level2, var = L2.unit
+        ),
+        ebma = w_avg
+      )
+
+      # generate EBMA predictions stacking
+      train_preds <- as.matrix(preds_all[, -c(1, 2)])
+
+      # extract the best ebma models (one for each of Ndraws)
+      best_model <- model_box$model[[best_tolerance]]
+
+      # loop over ndraws
+      for (idx_model in seq_along(best_model)) {
+
+        # predictions from the EBMA model on the individual level data
+        ebma_preds <- EBMAforecast::EBMApredict(
+          EBMAmodel = best_model[[idx_model]],
+          Predictions = train_preds,
+          Outcome = as.numeric(preds_all$y)
+        )
+
+        # extract predictions
+        ebma_preds <- ebma_preds@predTest
+        if (idx_model == 1) {
+          individual_preds <- as.matrix(ebma_preds[, "EBMA", 1])
+        } else {
+          individual_preds <- cbind(
+            individual_preds,
+            as.matrix(ebma_preds[, "EBMA", 1])
+          )
+        }
+      }
+
       # average model weights
       if (is.null(dim(weights_mat))) {
         final_model_weights <- as.numeric(weights_mat)
@@ -431,11 +492,14 @@ ebma <- function(
         final_model_weights <- apply(weights_mat, 2, mean)
       }
       names(final_model_weights) <- names(train_preds)
+
+      # average EBMA individual level predictions
+      ebma_preds <- apply(individual_preds, 1, mean)
     }
 
     # weighted average
     model_preds <- as.matrix(
-      post.strat$predictions$Level2[,names(final_model_weights)]
+      post.strat$predictions$Level2[, names(final_model_weights)]
     )
     w_avg <- as.numeric(model_preds %*% final_model_weights)
 
@@ -481,7 +545,8 @@ ebma <- function(
       list(
         ebma = L2_preds,
         classifiers = post.strat$predictions$Level2,
-        weights = final_model_weights
+        weights = final_model_weights,
+        individual_level_predictions = ebma_preds
       )
     )
 
@@ -539,7 +604,7 @@ ebma <- function(
 ebma_mc_tol <- function(
   train.preds, train.y, ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg,
   pc.names, model.bs, model.pca, model.lasso, model.gb, model.svm,
-  model.mrp, model_deep, tol, n.draws, cores
+  model.mrp, model_deep, tol, n.draws, cores, preds_all, post.strat
 ) {
 
   # Binding for global variables
@@ -743,8 +808,10 @@ ebma_mc_tol <- function(
       # vector of initial model weights
       # Note: On some Mac versions the model weights do not sum to exactly
       # 1 for repeating decimal weights
-      W <- rep(x = 1 / ncol(forecast.data@predCalibration),
-               times = ncol(forecast.data@predCalibration))
+      W <- rep(
+        x = 1 / ncol(forecast.data@predCalibration),
+        times = ncol(forecast.data@predCalibration)
+      )
       W[length(W)] <- 1 - sum(W[-length(W)])
 
       # calibrate EBMA ensemble
@@ -753,7 +820,8 @@ ebma_mc_tol <- function(
         model = "normal",
         useModelParams = FALSE,
         tol = tol[idx.tol],
-        W = W)
+        W = W
+      )
 
       # mse
       mse_collector <- mean((
@@ -769,7 +837,11 @@ ebma_mc_tol <- function(
         ncol = ncol(train.preds)
       )
 
-      return(list(MSEs = mse_collector, weights = weights_box))
+      return(list(
+        MSEs = mse_collector,
+        weights = weights_box,
+        EBMA_model = forecast.out
+      ))
     }
 
     # De-register cluster
@@ -790,8 +862,14 @@ ebma_mc_tol <- function(
       )
     )
 
+    # models for each tolerance value
+    EBMA_models <- lapply(ebma_tune, `[[`, 3)
+
+
     # Store MSEs and weights in current draw
-    draws[[idx.Ndraws]] <- list(MSEs = MSEs, weights = weights)
+    draws[[idx.Ndraws]] <- list(
+      MSEs = MSEs, weights = weights, EBMA_models = EBMA_models
+    )
   }
 
   # Container of best weights per draw
@@ -800,6 +878,12 @@ ebma_mc_tol <- function(
     nrow = n.draws,
     ncol = ncol(draws[[1]][["weights"]])
   )
+
+  # container of best models per draw
+  EBMA_models <- vector("list", n.draws)
+
+  # generate EBMA predictions stacking
+  train_preds <- as.matrix(preds_all[, -c(1, 2)])
 
   # Select best weights per draw
   for (idx_w in seq_along(draws)) {
@@ -812,14 +896,56 @@ ebma_mc_tol <- function(
     } else {
       wgt[idx_w, ] <- draws[[idx_w]]$weights[best_tolerance, ]
     }
+
+    # loop over best models
+    for (idx_model in seq_along(draws[[idx_w]]$EBMA_models[best_tolerance])) {
+
+      # predictions from the EBMA model on the individual level data
+      ebma_preds <- EBMAforecast::EBMApredict(
+        EBMAmodel = draws[[idx_w]]$EBMA_models[best_tolerance][[idx_model]],
+        Predictions = train_preds,
+        Outcome = as.numeric(preds_all$y)
+      )
+
+      # extract predictions
+      ebma_preds <- ebma_preds@predTest
+      if (idx_model == 1) {
+        individual_preds <- as.matrix(ebma_preds[, "EBMA", 1])
+      } else {
+        individual_preds <- cbind(
+          individual_preds,
+          as.matrix(ebma_preds[, "EBMA", 1])
+        )
+      }
+    }
   }
 
   # Average model weights
   final_model_weights <- apply(wgt, 2, mean)
   names(final_model_weights) <- names(train.preds)
 
+  # average EBMA individual level predictions
+  ebma_preds <- apply(individual_preds, 1, mean)
+
+  # L2 preds object
+  L2_preds <- dplyr::tibble(
+    !! rlang::sym(L2.unit) := dplyr::pull(
+      .data = post.strat$predictions$Level2, var = L2.unit
+    ),
+    ebma = w_avg
+  )
+
   # Function output
-  return(final_model_weights)
+  return(
+    list(
+      final_model_weights = final_model_weights,
+      ebma_preds = tibble::tibble(
+        y = as.numeric(preds_all$y),
+        !!rlang::sym(L2.unit) := preds_all %>% dplyr::pull(var = L2.unit),
+        ebma_preds = ebma_preds
+      )
+    )
+  )
 
 }
 
@@ -840,7 +966,7 @@ ebma_mc_tol <- function(
 ebma_mc_draws <- function(
   train.preds, train.y, ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg,
   pc.names, model.bs, model.pca, model.lasso, model.gb, model.svm,
-  model.mrp, model_deep, tol, n.draws, cores
+  model.mrp, model_deep, tol, n.draws, cores, preds_all, post.strat
 ) {
 
   # Binding for global variables
@@ -850,7 +976,9 @@ ebma_mc_draws <- function(
   cl <- multicore(cores = cores, type = "open", cl = NULL)
 
   ebma_tune <- foreach::foreach(
-    idx.Ndraws = 1:n.draws, .packages = c("glmmLasso", "e1071", "gbm", "vglmer")
+    idx.Ndraws = 1:n.draws,
+    .packages = c("glmmLasso", "e1071", "gbm", "vglmer"),
+    .export = "predict_glmmLasso"
   ) %dorng% {
 
     # Determine number per group to sample
@@ -1036,6 +1164,9 @@ ebma_mc_draws <- function(
       )
     )
 
+    # container of models
+    model_box <- vector("list", length(tol))
+
     # Loop over tolerance values
     for (idx.tol in seq_along(tol)) {
 
@@ -1052,8 +1183,10 @@ ebma_mc_draws <- function(
       # vector of initial model weights
       # Note: On some Mac versions the model weights do not sum to exactly
       # 1 for repeating decimal weights
-      W <- rep(x = 1 / ncol(forecast.data@predCalibration),
-               times = ncol(forecast.data@predCalibration))
+      W <- rep(
+        x = 1 / ncol(forecast.data@predCalibration),
+        times = ncol(forecast.data@predCalibration)
+      )
       W[length(W)] <- 1 - sum(W[-length(W)])
 
       # calibrate EBMA ensemble
@@ -1074,9 +1207,16 @@ ebma_mc_draws <- function(
 
       # model weights
       weights_box[idx.tol, ] <- attributes(forecast.out)$modelWeights
+
+      # model box
+      model_box[[idx.tol]] <- forecast.out
     }
 
-    return(list(MSEs = mse_collector, weights = weights_box))
+    return(list(
+      MSEs = mse_collector,
+      weights = weights_box,
+      EBMA_model = model_box
+    ))
 
   }
 
@@ -1089,6 +1229,9 @@ ebma_mc_draws <- function(
     nrow = n.draws,
     ncol = ncol(ebma_tune[[1]][["weights"]])
   )
+
+  # generate EBMA predictions stacking
+  train_preds <- as.matrix(preds_all[, -c(1, 2)])
 
   # Select best weights per draw
   for (idx_w in seq_along(ebma_tune)) {
@@ -1105,12 +1248,48 @@ ebma_mc_draws <- function(
     } else {
       wgt[idx_w, ] <- ebma_tune[[idx_w]]$weights[best_tolerance, ]
     }
+
+    # loop over best models
+    for (
+      idx_model in seq_along(ebma_tune[[idx_w]]$EBMA_model[best_tolerance])
+    ) {
+
+      # predictions from the EBMA model on the individual level data
+      ebma_preds <- EBMAforecast::EBMApredict(
+        EBMAmodel = ebma_tune[[idx_w]]$EBMA_model[best_tolerance][[idx_model]],
+        Predictions = train_preds,
+        Outcome = as.numeric(preds_all$y)
+      )
+
+      # extract predictions
+      ebma_preds <- ebma_preds@predTest
+      if (idx_model == 1) {
+        individual_preds <- as.matrix(ebma_preds[, "EBMA", 1])
+      } else {
+        individual_preds <- cbind(
+          individual_preds,
+          as.matrix(ebma_preds[, "EBMA", 1])
+        )
+      }
+    }
   }
 
   # Average model weights
   final_model_weights <- apply(wgt, 2, mean)
   names(final_model_weights) <- names(train.preds)
 
+  # average EBMA individual level predictions
+  ebma_preds <- apply(individual_preds, 1, mean)
+
   # Function output
-  return(final_model_weights)
+  return(
+    list(
+      final_model_weights = final_model_weights,
+      ebma_preds = tibble::tibble(
+        y = as.numeric(preds_all$y),
+        !!rlang::sym(L2.unit) := preds_all %>% dplyr::pull(var = L2.unit),
+        ebma_preds = ebma_preds
+      )
+    )
+  )
 }

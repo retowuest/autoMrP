@@ -18,7 +18,7 @@ run_classifiers <- function(
   y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg, L2.x.scale, pcs, pc.names, folds,
   bin.proportion, bin.size, cv.folds, cv.data, ebma.fold, census, ebma.size,
   ebma.n.draws, k.folds, cv.sampling, loss.unit, loss.fun, best.subset,
-  lasso, pca, gb, svm, mrp, deep.mrp, stacking, best.subset.L2.x,
+  lasso, pca, gb, svm, mrp, deep.mrp, best.subset.L2.x,
   lasso.L2.x, pca.L2.x, gb.L2.x, svm.L2.x, gb.L2.unit, gb.L2.reg,
   svm.L2.unit, svm.L2.reg, deep.L2.x, deep.L2.reg, deep.splines,
   lasso.lambda, lasso.n.iter, gb.interaction.depth, gb.shrinkage,
@@ -234,41 +234,41 @@ run_classifiers <- function(
     message("Generate out of sample predictions from tuned classifiers")
   }
 
-  preds_all <- get_predictions(
-    y = y,
-    L1.x = L1.x,
-    L2.x = L2.x,
-    L2.unit = L2.unit,
-    L2.reg = L2.reg,
-    best.subset.opt = best_subset_out,
-    lasso.opt = lasso_out,
-    lasso.L2.x = lasso.L2.x,
-    pca.opt = pca_out,
-    gb.opt = gb_out,
-    svm.opt = svm_out,
-    svm.L2.reg = svm.L2.reg,
-    svm.L2.unit = svm.L2.unit,
-    svm.L2.x = svm.L2.x,
-    mrp.include = mrp,
-    n.minobsinnode = gb.n.minobsinnode,
-    L2.unit.include = gb.L2.unit,
-    L2.reg.include = gb.L2.reg,
-    kernel = svm.kernel,
-    mrp.L2.x = mrp.L2.x,
-    deep.mrp = deep.mrp,
-    stacking = stacking,
-    deep.L2.x = deep.L2.x,
-    deep.L2.reg = deep.L2.reg,
-    deep.splines = deep.splines,
-    data = cv.folds,
-    ebma.fold = ebma.fold,
-    verbose = verbose,
-    all_data = TRUE
-  )
-
-  # Stacking weights --------------------------------------------------------
-  stacking_weights(
-    preds = preds_all,
+  preds_all <- suppressWarnings(
+    suppressMessages(
+      get_predictions(
+        y = y,
+        L1.x = L1.x,
+        L2.x = L2.x,
+        L2.unit = L2.unit,
+        L2.reg = L2.reg,
+        best.subset.opt = best_subset_out,
+        lasso.opt = lasso_out,
+        lasso.L2.x = lasso.L2.x,
+        pca.opt = pca_out,
+        gb.opt = gb_out,
+        svm.opt = svm_out,
+        svm.L2.reg = svm.L2.reg,
+        svm.L2.unit = svm.L2.unit,
+        svm.L2.x = svm.L2.x,
+        mrp.include = mrp,
+        n.minobsinnode = gb.n.minobsinnode,
+        L2.unit.include = gb.L2.unit,
+        L2.reg.include = gb.L2.reg,
+        kernel = svm.kernel,
+        mrp.L2.x = mrp.L2.x,
+        deep.mrp = deep.mrp,
+        deep.L2.x = deep.L2.x,
+        deep.L2.reg = deep.L2.reg,
+        deep.splines = deep.splines,
+        data = cv.folds,
+        ebma.fold = ebma.fold,
+        verbose = verbose,
+        cv.sampling = cv.sampling,
+        k.folds = k.folds,
+        all_data = TRUE
+      )
+    )
   )
 
   # Post-stratification -----------------------------------------------------
@@ -299,7 +299,6 @@ run_classifiers <- function(
     kernel = svm.kernel,
     mrp.L2.x = mrp.L2.x,
     deep.mrp = deep.mrp,
-    stacking = stacking,
     deep.L2.x = deep.L2.x,
     deep.L2.reg = deep.L2.reg,
     deep.splines = deep.splines,
@@ -329,7 +328,28 @@ run_classifiers <- function(
     deep.mrp = deep.mrp,
     pc.names = pc.names,
     verbose = verbose,
-    cores = cores
+    cores = cores,
+    preds_all = preds_all
+  )
+
+  # Stacking  ----------------------------------------------------------------
+
+  if (verbose) {
+    message("Starting stacking")
+  }
+
+  # get stacking weights
+  stack_out <- autoMrP:::stacking_weights(
+    preds = preds_all, ebma_out = ebma_out, L2.unit = L2.unit
+  )
+
+  # apply stacking weights
+  ebma_out <- apply_stack_weights(
+    ebma_out = ebma_out,
+    stack_out = stack_out,
+    L2.unit = L2.unit,
+    y = y,
+    preds_all = preds_all
   )
 
   return(ebma_out)

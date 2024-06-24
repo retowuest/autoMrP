@@ -319,7 +319,7 @@ auto_MrP <- function(
   loss.unit = c("individuals", "L2 units"),
   loss.fun = c("msfe", "cross-entropy", "f1", "MSE"),
   best.subset = TRUE, lasso = TRUE, pca = TRUE, gb = TRUE, svm = TRUE,
-  mrp = FALSE, stacking = FALSE,
+  mrp = FALSE,
   deep.mrp = FALSE, oversampling = FALSE,
   best.subset.L2.x = NULL, lasso.L2.x = NULL, pca.L2.x = NULL,
   gb.L2.x = NULL, svm.L2.x = NULL, mrp.L2.x = NULL, gb.L2.unit = TRUE,
@@ -416,7 +416,6 @@ auto_MrP <- function(
     uncertainty = uncertainty,
     boot.iter = boot.iter
   )
-
 
   # Prepare data ------------------------------------------------------------
 
@@ -596,7 +595,7 @@ auto_MrP <- function(
       ebma.fold = ebma_fold, census = census, k.folds = k.folds,
       cv.sampling = cv.sampling, loss.unit = loss.unit, loss.fun = loss.fun,
       best.subset = best.subset, lasso = lasso, pca = pca,
-      gb = gb, svm = svm, mrp = mrp, deep.mrp = deep.mrp, stacking = stacking,
+      gb = gb, svm = svm, mrp = mrp, deep.mrp = deep.mrp,
       best.subset.L2.x = best.subset.L2.x,
       lasso.L2.x = lasso.L2.x, pca.L2.x = pca.L2.x, pc.names = pc_names,
       gb.L2.x = gb.L2.x, svm.L2.x = svm.L2.x, svm.L2.unit = svm.L2.unit,
@@ -648,7 +647,6 @@ auto_MrP <- function(
       svm = svm,
       mrp = mrp,
       deep.mrp = deep.mrp,
-      stacking = stacking,
       best.subset.L2.x = best.subset.L2.x,
       lasso.L2.x = lasso.L2.x,
       pca.L2.x = pca.L2.x,
@@ -687,7 +685,18 @@ auto_MrP <- function(
     "autoMrP", "classifiers", class(ebma_out$classifiers)
   )
   if ("weights" %in% names(ebma_out)) {
-    class(ebma_out$weights) <- c("autoMrP", "weights", class(ebma_out$weights))
+    tryCatch(
+      expr = {
+        class(ebma_out$weights) <- c(
+          "autoMrP", "weights", class(ebma_out$weights)
+        )
+      }, error = function(e) {
+        ebma_out$weights <- "EBMA step skipped (only 1 classifier run)"
+        class(ebma_out$weights) <- c(
+          "autoMrP", "weights", class(ebma_out$weights)
+        )
+      }
+    )
   } else {
     ebma_out$weights <- "EBMA step skipped (only 1 classifier run)"
     class(ebma_out$weights) <- c("autoMrP", "weights", class(ebma_out$weights))
