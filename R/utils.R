@@ -1244,7 +1244,9 @@ f1_score <- function(pred, data.valid, y, L2.unit) {
 
   # true positives
   tp_ind <- data.valid %>%
-    dplyr::mutate(pval = ifelse(test = pred > 0.5, yes = 1, no = 0)) %>%
+    dplyr::mutate(
+      pval = as.numeric(ifelse(test = pred > 0.5, yes = 1, no = 0))
+    ) %>%
     dplyr::select(!! rlang::sym(y), pval) %>%
     dplyr::filter(pval == 1 & !! rlang::sym(y) == 1) %>%
     dplyr::summarise(tp = sum(pval)) %>%
@@ -1252,7 +1254,9 @@ f1_score <- function(pred, data.valid, y, L2.unit) {
 
   # false positives
   fp_ind <- data.valid %>%
-    dplyr::mutate(pval = ifelse(test = pred > 0.5, yes = 1, no = 0)) %>%
+    dplyr::mutate(
+      pval = as.numeric(ifelse(test = pred > 0.5, yes = 1, no = 0))
+    ) %>%
     dplyr::select(!! rlang::sym(y), pval) %>%
     dplyr::filter(pval == 1 & !! rlang::sym(y) == 0) %>%
     dplyr::summarise(fp = sum(pval)) %>%
@@ -1260,7 +1264,9 @@ f1_score <- function(pred, data.valid, y, L2.unit) {
 
   # false negatives
   fn_ind <- data.valid %>%
-    dplyr::mutate(pval = ifelse(test = pred > 0.5, yes = 1, no = 0)) %>%
+    dplyr::mutate(
+      pval = as.numeric(ifelse(test = pred > 0.5, yes = 1, no = 0))
+    ) %>%
     dplyr::select(!! rlang::sym(y), pval) %>%
     dplyr::filter(pval == 0 & !! rlang::sym(y) == 1) %>%
     dplyr::summarise(fn = sum(!! rlang::sym(y))) %>%
@@ -1272,7 +1278,9 @@ f1_score <- function(pred, data.valid, y, L2.unit) {
   # state-level f1 score
   state_out <- data.valid %>%
     # predicted values
-    dplyr::mutate(pval = ifelse(test = pred > 0.5, yes = 1, no = 0)) %>%
+    dplyr::mutate(
+      pval = as.numeric(ifelse(test = pred > 0.5, yes = 1, no = 0))
+    ) %>%
     # select L2.unit, y, and predicted values
     dplyr::select(!! rlang::sym(L2.unit), !! rlang::sym(y), pval) %>%
     # group by L2.unit
