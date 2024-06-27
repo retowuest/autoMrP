@@ -448,34 +448,23 @@ ebma <- function(
         weights_mat <- weights_box[, , 1]
       }
 
-      ## EBMA predictions on the individual level for all data
-      # L2 preds object
-      L2_preds <- dplyr::tibble(
-        !! rlang::sym(L2.unit) := dplyr::pull(
-          .data = post.strat$predictions$Level2, var = L2.unit
-        ),
-        ebma = w_avg
-      )
-
       # generate EBMA predictions stacking
       train_preds <- as.matrix(preds_all[, -c(1, 2)])
 
-      # extract the best ebma models (one for each of Ndraws)
-      best_model <- model_box$model[[best_tolerance]]
-
-      # loop over ndraws
-      for (idx_model in seq_along(best_model)) {
+      # get the individual level predictions from the best model for each draw
+      # loop over n.draws
+      for (idx_tol in seq_along(best_tolerance)) {
 
         # predictions from the EBMA model on the individual level data
         ebma_preds <- EBMAforecast::EBMApredict(
-          EBMAmodel = best_model[[idx_model]],
+          EBMAmodel = model_box$model[[best_tolerance[[idx_tol]]]][[idx_tol]],
           Predictions = train_preds,
           Outcome = as.numeric(preds_all$y)
         )
 
         # extract predictions
         ebma_preds <- ebma_preds@predTest
-        if (idx_model == 1) {
+        if (idx_tol == 1) {
           individual_preds <- as.matrix(ebma_preds[, "EBMA", 1])
         } else {
           individual_preds <- cbind(
@@ -491,7 +480,7 @@ ebma <- function(
       } else {
         final_model_weights <- apply(weights_mat, 2, mean)
       }
-      names(final_model_weights) <- names(train_preds)
+      names(final_model_weights) <- colnames(train_preds)
 
       # average EBMA individual level predictions
       ebma_preds <- apply(individual_preds, 1, mean)
@@ -540,6 +529,13 @@ ebma <- function(
       ebma = w_avg
     )
 
+    # individual level predictions
+    ebma_preds <- tibble::tibble(
+      y = as.numeric(preds_all$y),
+      !!rlang::sym(L2.unit) := preds_all %>% dplyr::pull(var = L2.unit),
+      ebma_preds = ebma_preds
+    )
+
     # function output
     return(
       list(
@@ -549,6 +545,8 @@ ebma <- function(
         individual_level_predictions = ebma_preds
       )
     )
+
+
 
   } else {
     if (verbose) {

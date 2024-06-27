@@ -25,7 +25,7 @@ get_predictions <- function(
       dplyr::mutate(
         dplyr::across(dplyr::all_of(y), ~as.factor(.), .names = "y_svm")
       ) %>%
-      dplyr::relocate(y_svm, .after = y)
+      dplyr::relocate(y_svm, .after = {{y}})
   }
 
   #------------------------------------------------------------
