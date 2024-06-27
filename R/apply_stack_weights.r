@@ -47,14 +47,17 @@ apply_stack_weights <- function(ebma_out, stack_out, L2.unit, preds_all, y) {
       # current state
       c_state <- dplyr::pull(c_pred, !!rlang::sym(L2.unit))
 
-      # predictions without state and added intercept
-      c_pred <- cbind(1, as.matrix(c_pred[, -1]))
-
       # corresponding lme4 weights
       c_weights <- stack_out$stack_weights$stack_lme4 %>%
         dplyr::filter(!!rlang::sym(L2.unit) == c_state) %>%
         dplyr::select(-!!rlang::sym(L2.unit)) %>%
         as.matrix()
+
+      # drop c_pred columns that are missing from c_weights
+      c_pred <- c_pred[, colnames(c_pred) %in% colnames(c_weights)]
+
+      # predictions without state and added intercept
+      c_pred <- cbind(1, as.matrix(c_pred))
 
       # multiply predictions with weights
       c_pred <- c_pred %*% t(c_weights)
