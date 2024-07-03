@@ -94,7 +94,8 @@ ebma <- function(
           post.strat = post.strat
         )
         # unlist
-        ebma_preds <- final_model_weights$ebma_preds
+        ebma_preds <- final_model_weights$ebma_preds %>%
+          dplyr::pull(var = ebma_preds)
         final_model_weights <- final_model_weights$final_model_weights
 
       } else {
@@ -123,7 +124,8 @@ ebma <- function(
           post.strat = post.strat
         )
         # unlist
-        ebma_preds <- final_model_weights$ebma_preds
+        ebma_preds <- final_model_weights$ebma_preds %>%
+          dplyr::pull(var = ebma_preds)
         final_model_weights <- final_model_weights$final_model_weights
       }
     } else {
