@@ -34,24 +34,35 @@ stacking_weights <- function(preds, ebma_out, L2.unit) {
       #--------------------------------------------------
       # meta formula
       meta_formula <- as.formula(
-        paste("y ~ ", paste(colnames(stack_predictions), collapse = " + "))
+        paste("y ~ -1 + ", paste(colnames(stack_predictions), collapse = " + "))
       )
 
-      # logistic regression model
-      logit_m <- glm(meta_formula, data = preds, family = binomial)
+      # non-negative least squares
+      ols_coefs <- nnls::nnls(
+        as.matrix(stack_predictions), true_labels
+      )$x
+      names(ols_coefs) <- colnames(stack_predictions)
+
+      # normalize the weights
+      ols_coefs <- ols_coefs / sum(ols_coefs)
+
+      ## logistic regression model
+      #logit_m <- glm(meta_formula, data = preds, family = binomial)
 
       # coefficients of the logistic model
-      logit_coefs <- coef(logit_m)
+      #logit_coefs <- coef(logit_m)
 
       # weights for base models
-      stacking_weights <- logit_coefs  # Exclude the intercept
-      stacking_weights[is.na(stacking_weights)] <- 0
+      #stacking_weights <- logit_coefs
+      #stacking_weights[is.na(stacking_weights)] <- 0
+      stacking_weights <- ols_coefs
+      stacking_weights[is.na(ols_coefs)] <- 0
 
       # predicions using logistic regression weights
-      final_prediction <- cbind(1L, stack_predictions) %*% stacking_weights
+      final_prediction <- stack_predictions %*% stacking_weights
 
       # apply sigmoid
-      final_prediction <- 1 / (1 + exp(-final_prediction))
+      #final_prediction <- 1 / (1 + exp(-final_prediction))
 
       # stacked predictions output
       stack_out <- tibble::tibble(
@@ -72,11 +83,14 @@ stacking_weights <- function(preds, ebma_out, L2.unit) {
         true_labels = true_labels,
         !!rlang::sym(L2.unit) := group_var
       ) %>%
-        dplyr::bind_cols(stack_predictions)
+        dplyr::bind_cols(
+          stack_predictions %>%
+            apply(., 2, function(x) log(x / (1 - x)))
+        )
 
       # random intercepts formula
       glmer_form <- sprintf(
-        "true_labels ~ %s + (1 | %s)",
+        "true_labels ~ -1 + %s + (1 | %s)",
         paste0(colnames(stack_predictions), collapse = " + "), L2.unit
       )
 
@@ -103,7 +117,7 @@ stacking_weights <- function(preds, ebma_out, L2.unit) {
       random_effects <- lme4::ranef(glmer_m)[[L2.unit]]
 
       # compute group-specific intercepts
-      group_intercepts <- random_effects + fixed_effects["(Intercept)"]
+      group_intercepts <- random_effects# + fixed_effects["(Intercept)"]
 
       # Group-specific weights
       group_specific_weights <- tibble::tibble(
@@ -133,42 +147,92 @@ stacking_weights <- function(preds, ebma_out, L2.unit) {
       # opitmization for binary response
       #----------------------------------------------------------------
 
-      # objective function to minimize (log loss)
+      # # objective function to minimize (log loss)
+      # objective <- function(weights) {
+      #   weighted_preds <- stack_predictions %*% weights
+      #   # apply sigmoid
+      #   weighted_preds <- 1 / (1 + exp(-weighted_preds))
+      #   # log loss
+      #   -mean(
+      #     true_labels * log(weighted_preds) + (1 - true_labels) *
+      #       log(1 - weighted_preds)
+      #   )
+      # }
+
+      # # initial guess for weights - same weights for all models
+      # initial_weights <- rep(
+      #   x = 1 / (ncol(stack_predictions) - 1),
+      #   times = ncol(stack_predictions - 1)
+      # )
+
+      # # minimize the objective function
+      # result <- stats:::nlm(objective, initial_weights)
+
+      # # opptimal weights
+      # optimal_weights <- result$estimate
+      # names(optimal_weights) <- colnames(stack_predictions)
+
+      # # stacked prediction
+      # stack_out <- stack_out %>%
+      #   dplyr::mutate(
+      #     stack_nlm = as.numeric(stack_predictions %*% optimal_weights)
+      #   ) %>%
+      #   dplyr::mutate(
+      #     stack_nlm = 1 / (1 + exp(-stack_nlm))
+      #   )
+
+      # # add optimal weights to the stack_weights list
+      # stack_weights$stack_nlm <- optimal_weights
+
+      # Objective function to minimize (log loss)
       objective <- function(weights) {
         weighted_preds <- stack_predictions %*% weights
-        # apply sigmoid
+        # Apply sigmoid
         weighted_preds <- 1 / (1 + exp(-weighted_preds))
-        # log loss
+        # Log loss
         -mean(
-          true_labels * log(weighted_preds) + (1 - true_labels) *
-            log(1 - weighted_preds)
+          true_labels * log(weighted_preds + 1e-15) +
+            (1 - true_labels) * log(1 - weighted_preds + 1e-15)
         )
       }
 
-      # initial guess for weights - same weights for all models
+      # Initial guess for weights
       initial_weights <- rep(
-        x = 1 / (ncol(stack_predictions) - 1),
-        times = ncol(stack_predictions - 1)
+        1 / ncol(stack_predictions), ncol(stack_predictions)
       )
 
-      # minimize the objective function
-      result <- stats:::nlm(objective, initial_weights)
+      # Define bounds for weights
+      lower_bounds <- rep(0, ncol(stack_predictions))
+      upper_bounds <- rep(Inf, ncol(stack_predictions))
 
-      # opptimal weights
-      optimal_weights <- result$estimate
-      names(optimal_weights) <- colnames(stack_predictions)
+      # Run the optimization
+      result <- nloptr::nloptr(
+        x0 = initial_weights,
+        eval_f = objective,
+        lb = lower_bounds,
+        ub = upper_bounds,
+        opts = list(
+          algorithm = "NLOPT_LN_COBYLA",
+          xtol_rel = 1.0e-8,
+          maxeval = 1000
+        )
+      )
 
-      # stacked prediction
+      # Optimal weights
+      stacking_weights <- result$solution
+      names(stacking_weights) <- colnames(stack_predictions)
+
+      # normalize the weights
+      stacking_weights <- stacking_weights / sum(stacking_weights)
+
+      # add weights to the stack_weights list
+      stack_weights$stack_nlm <- stacking_weights
+
+      # Final stacked prediction using the optimized weights
       stack_out <- stack_out %>%
         dplyr::mutate(
-          stack_nlm = as.numeric(stack_predictions %*% optimal_weights)
-        ) %>%
-        dplyr::mutate(
-          stack_nlm = 1 / (1 + exp(-stack_nlm))
+          stack_nlm = as.numeric(stack_predictions %*% stacking_weights)
         )
-
-      # add optimal weights to the stack_weights list
-      stack_weights$stack_nlm <- optimal_weights
 
       #----------------------------------------------------------------
       # Ornstein hillclimbing for binary response
@@ -231,7 +295,8 @@ stacking_weights <- function(preds, ebma_out, L2.unit) {
         # iterations), then add the best model
         if (sum(weights_ornstein) < 1000 && best_log_loss < c_log_loss) {
 
-          weights_ornstein[best_addition] <- weights_ornstein[best_addition] + 1L
+          weights_ornstein[best_addition] <- weights_ornstein[best_addition] +
+            1L
           c_log_loss <- best_log_loss
 
         } else {
@@ -263,18 +328,29 @@ stacking_weights <- function(preds, ebma_out, L2.unit) {
         dplyr::relocate(y, .before = 1)
 
       # use a logistic regression to combine the stacked predictions
-      m_blend <- glm(y ~ ., data = stack_out, family = binomial)
+      #m_blend <- glm(y ~ ., data = stack_out, family = binomial)
 
-      # add model predictions
+      # non-negative least squares
+      m_blend <- nnls::nnls(
+        as.matrix(stack_out[, -1]), true_labels
+      )
+
+      blend_coefs <- m_blend$x
+      names(blend_coefs) <- colnames(stack_out[-1])
+
+      # normalize the weights
+      blend_coefs <- blend_coefs / sum(blend_coefs)
+
+      # add model predictions as a weighted average
       stack_out <- stack_out %>%
         dplyr::mutate(
-          stack_of_stacks = predict(
-            m_blend, newdata = stack_out, type = "response"
+          stack_of_stacks = as.numeric(
+            as.matrix(stack_out[, -1]) %*% blend_coefs
           )
         )
 
       # add optimal weights to the stack_weights list
-      stack_weights$stack_of_stacks <- coef(m_blend)
+      stack_weights$stack_of_stacks <- blend_coefs
 
       #----------------------------------------------------------------
       # Stack of staacks for binary response with EBMA
@@ -288,17 +364,24 @@ stacking_weights <- function(preds, ebma_out, L2.unit) {
         dplyr::select(y, stack_of_stacks, ebma_preds)
 
       # use a logistic regression to combine the stacked predictions
-      m_blend <- glm(y ~ ., data = stack_with_ebma, family = binomial)
+      # m_blend <- glm(y ~ ., data = stack_with_ebma, family = binomial)
+      m_blend <- m_blend <- nnls::nnls(
+        as.matrix(stack_with_ebma[, -1]), true_labels
+      )
 
       # add model predictions
       stack_out <- stack_out %>%
         dplyr::mutate(
-          stack_of_stacks_with_ebma = predict(
-            m_blend, newdata = stack_with_ebma, type = "response"
+          stack_of_stacks_with_ebma = as.numeric(
+            as.matrix(stack_with_ebma[, -1]) %*% m_blend$x
           )
         )
 
       # add optimal weights to the stack_weights list
+      c_coefs <- m_blend$x
+      names(c_coefs) <- colnames(stack_with_ebma[-1])
+      # normalize the weights
+      c_coefs <- c_coefs / sum(c_coefs)
       stack_weights$stack_of_stacks_with_ebma <- coef(m_blend)
 
     } # end if binary_dv

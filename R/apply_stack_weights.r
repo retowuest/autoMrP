@@ -23,11 +23,11 @@ apply_stack_weights <- function(ebma_out, stack_out, L2.unit, preds_all, y) {
   } else {
 
     # 1) glm stack
-    glm_stack <- cbind(1, as.matrix(ebma_out$classifiers[, -1])) %*%
+    glm_stack <- as.matrix(ebma_out$classifiers[, -1]) %*%
       stack_out$stack_weights$stack_glm
 
     # sigmoid transformation
-    glm_stack <- 1 / (1 + exp(-glm_stack))
+    #glm_stack <- 1 / (1 + exp(-glm_stack))
 
     # generate stack predictions
     stacked_preds <- tibble::tibble(
@@ -57,10 +57,10 @@ apply_stack_weights <- function(ebma_out, stack_out, L2.unit, preds_all, y) {
       c_pred <- c_pred[, colnames(c_pred) %in% colnames(c_weights)]
 
       # predictions without state and added intercept
-      c_pred <- cbind(1, as.matrix(c_pred))
+      c_pred <- as.matrix(c_pred)
 
       # multiply predictions with weights
-      c_pred <- c_pred %*% t(c_weights)
+      c_pred <- cbind(1L, c_pred) %*% t(c_weights)
 
       # sigmoid transformation
       c_pred <- 1 / (1 + exp(-c_pred))
@@ -85,7 +85,7 @@ apply_stack_weights <- function(ebma_out, stack_out, L2.unit, preds_all, y) {
       stack_out$stack_weights$stack_nlm
 
     # sigmoid transformation
-    nlm_stack <- 1 / (1 + exp(-nlm_stack))
+    #nlm_stack <- 1 / (1 + exp(-nlm_stack))
 
     # add nlm stack to stack predictions
     stacked_preds <- stacked_preds %>%
@@ -100,11 +100,11 @@ apply_stack_weights <- function(ebma_out, stack_out, L2.unit, preds_all, y) {
       dplyr::mutate(stack_ornstein = as.numeric(ornstein_stack))
 
     # 5) stack of stacks
-    stack_of_stacks <- cbind(1, as.matrix(stacked_preds[, -1])) %*%
+    stack_of_stacks <- as.matrix(stacked_preds[, -1]) %*%
       stack_out$stack_weights$stack_of_stacks
 
     # sigmoid transformation
-    stack_of_stacks <- 1 / (1 + exp(-stack_of_stacks))
+    #stack_of_stacks <- 1 / (1 + exp(-stack_of_stacks))
 
     # add stack of stacks to stack predictions
     stacked_preds <- stacked_preds %>%
@@ -112,12 +112,12 @@ apply_stack_weights <- function(ebma_out, stack_out, L2.unit, preds_all, y) {
 
     # 6) stack of stacks with ebma
     stack_of_stacks_ebma <- as.matrix(
-      cbind(1, stacked_preds[, "stack_of_stacks"], ebma_out$ebma[, "ebma"])
+      cbind(stacked_preds[, "stack_of_stacks"], ebma_out$ebma[, "ebma"])
     ) %*%
       stack_out$stack_weights$stack_of_stacks_with_ebma
 
     # sigmoid transformation
-    stack_of_stacks_ebma <- 1 / (1 + exp(-stack_of_stacks_ebma))
+    #stack_of_stacks_ebma <- 1 / (1 + exp(-stack_of_stacks_ebma))
 
     # add stack of stacks with ebma to stack predictions
     stacked_preds <- stacked_preds %>%
