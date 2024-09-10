@@ -1,4 +1,4 @@
-# autoMrP 1.07
+# autoMrP 1.1.0
 
 + implements stacking
 

@@ -340,7 +340,11 @@ run_classifiers <- function(
 
   # get stacking weights
   stack_out <- autoMrP:::stacking_weights(
-    preds = preds_all, ebma_out = ebma_out, L2.unit = L2.unit
+    preds = preds_all,
+    ebma_out = ebma_out,
+    L2.unit = L2.unit,
+    k.folds = k.folds,
+    cores = cores
   )
 
   # apply stacking weights
