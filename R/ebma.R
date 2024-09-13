@@ -42,7 +42,7 @@ ebma <- function(
   )) > 1) {
 
     if (verbose) {
-      message("Starting bayesian ensemble model averaging tuning")
+      cli::cli_progress_step("Tuning bayesian ensemble model averaging")
     }
 
     # EBMA wihtout L2.x variables

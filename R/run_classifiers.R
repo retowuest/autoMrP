@@ -29,10 +29,7 @@ run_classifiers <- function(
   # Classifier 1: Best Subset
   if (isTRUE(best.subset)) {
     if (verbose) {
-      message(
-        "Starting multilevel regression with best subset selection ",
-        "classifier tuning"
-      )
+      cli::cli_progress_step("Tuning multilevel regression with best subset selection classifier")
     }
 
     # Determine context-level covariates
@@ -69,7 +66,7 @@ run_classifiers <- function(
   if (isTRUE(lasso) && !is.null(L2.x)) {
 
     if (verbose) {
-      message("Starting multilevel regression with L1 regularization tuning")
+      cli::cli_progress_step("Tuning multilevel regression with L1 regularization")
     }
 
     # Determine context-level covariates
@@ -108,9 +105,7 @@ run_classifiers <- function(
   if (isTRUE(pca) && !is.null(pca.L2.x)) {
 
     if (verbose) {
-      message(
-        "Starting multilevel regression with principal components as ",
-        "context level variables tuning"
+      cli::cli_progress_step("Tuning multilevel regression with principal components as context level variables"
       )
     }
 
@@ -135,7 +130,7 @@ run_classifiers <- function(
   if (gb) {
 
     if (verbose) {
-      message("Starting gradient tree boosting tuning")
+      cli::cli_progress_step("Tuning gradient tree boosting")
     }
 
     # Determine context-level covariates
@@ -185,7 +180,7 @@ run_classifiers <- function(
   if (isTRUE(svm)) {
 
     if (verbose) {
-      message("Starting support vector machine tuning")
+      cli::cli_progress_step("Tuning support vector machine")
     }
 
     # Determine context-level covariates
@@ -231,7 +226,7 @@ run_classifiers <- function(
   # Individual level predictions for all data -------------------------------
 
   if (verbose) {
-    message("Generate out of sample predictions from tuned classifiers")
+    cli::cli_progress_step("Generating out of sample predictions from tuned classifiers")
   }
 
   preds_all <- suppressWarnings(
@@ -274,7 +269,7 @@ run_classifiers <- function(
   # Post-stratification -----------------------------------------------------
 
   if (verbose) {
-    message("Starting post-stratification")
+    cli::cli_progress_step("Post-stratification")
   }
 
   ps_out <- post_stratification(
@@ -335,7 +330,7 @@ run_classifiers <- function(
   # Stacking  ----------------------------------------------------------------
 
   if (verbose) {
-    message("Starting stacking")
+    cli::cli_progress_step("Stacking")
   }
 
   # get stacking weights
