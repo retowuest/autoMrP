@@ -406,7 +406,7 @@ m <- auto_MrP(
 # Predictions with machine learning
 
 # detect number of available cores
-max_cores <- parallel::detectCores()
+max_cores <- parallelly::availableCores()
 
 # autoMrP with machine learning
 ml_out <- auto_MrP(
