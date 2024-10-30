@@ -27,19 +27,18 @@ deep_mrp_classifier <- function(y, form, data, verbose) {
   # run vglmer model
   if (verbose) {
     out <- vglmer::vglmer(
-      formula = form %>% as.formula(),
+      formula = as.formula(form),
       data = data,
       family = family
     )
   } else {
     out <- suppressMessages(suppressWarnings(
       vglmer::vglmer(
-        formula = form %>% as.formula(),
+        formula = as.formula(form),
         data = data,
         family = family
       )
     ))
   }
-
   return(out)
 }

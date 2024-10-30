@@ -103,8 +103,9 @@
 #'   MRP classifier should be used for predicting outcome \code{y}. Default is
 #'   \code{FALSE}.
 #' @param deep.mrp Deep MRP classifier. A logical argument indicating whether
-#'   the deep MRP classifier should be used for predicting outcome \code{y}.
-#'   Default is \code{FALSE}.
+#'   the deep MRP classifier should be used for best subset prediction. Setting
+#'   \code{deep.mrp = TRUE} will include all interactions of L1.x in the best
+#'   subset classifier. Default is \code{FALSE}.
 #' @param oversampling Over sample to create balance on the dependent variable.
 #'   A logical argument. Default is \code{FALSE}.
 #' @param best.subset.L2.x Best subset context-level covariates. A character
@@ -152,14 +153,6 @@
 #' @param svm.L2.reg SVM L2.reg. A logical argument indicating whether
 #'   \code{L2.reg} should be included in the SVM classifier. Default is
 #'   \code{FALSE}.
-#' @param deep.L2.x Deep MRP context-level covariates. A character vector
-#'  containing the column names of the context-level variables in \code{survey}
-#'  and \code{census} to be used by the deep MRP classifier. If \code{NULL} and
-#'  \code{deep.mrp} is set to \code{TRUE}, then deep MRP uses the variables
-#'  specified in \code{L2.x}. Default is \code{NULL}.
-#' @param deep.L2.reg Deep MRP L2.reg. A logical argument indicating whether
-#'  \code{L2.reg} should be included in the deep MRP classifier. Default is
-#'  \code{TRUE}.
 #' @param deep.splines Deep MRP splines. A logical argument indicating whether
 #'  splines should be used in the deep MRP classifier. Default is \code{TRUE}.
 #' @param lasso.lambda Lasso penalty parameter. A numeric \code{vector} of
@@ -324,7 +317,7 @@ auto_MrP <- function(
   best.subset.L2.x = NULL, lasso.L2.x = NULL, pca.L2.x = NULL,
   gb.L2.x = NULL, svm.L2.x = NULL, mrp.L2.x = NULL, gb.L2.unit = TRUE,
   gb.L2.reg = FALSE, svm.L2.unit = TRUE, svm.L2.reg = FALSE,
-  deep.L2.x = NULL, deep.L2.reg = TRUE, deep.splines = TRUE,
+  deep.splines = TRUE,
   lasso.lambda = NULL, lasso.n.iter = 100,
   gb.interaction.depth = c(1, 2, 3),
   gb.shrinkage = c(0.04, 0.01, 0.008, 0.005, 0.001),
@@ -335,6 +328,9 @@ auto_MrP <- function(
   ebma.tol = c(0.01, 0.005, 0.001, 0.0005, 0.0001, 0.00005, 0.00001),
   verbose = FALSE, uncertainty = FALSE, boot.iter = NULL
 ) {
+
+  # auto_MrP start time
+  automrp_start <- Sys.time()
 
   # Error checks ------------------------------------------------------------
 
@@ -404,6 +400,7 @@ auto_MrP <- function(
     gb = gb,
     svm = svm,
     mrp = mrp,
+    deep.mrp = deep.mrp,
     best.subset.L2.x = best.subset.L2.x,
     lasso.L2.x = lasso.L2.x,
     gb.L2.x = gb.L2.x,
@@ -414,7 +411,8 @@ auto_MrP <- function(
     lasso.lambda = lasso.lambda,
     lasso.n.iter = lasso.n.iter,
     uncertainty = uncertainty,
-    boot.iter = boot.iter
+    boot.iter = boot.iter,
+    deep.splines = deep.splines
   )
 
   # Prepare data ------------------------------------------------------------
@@ -506,6 +504,84 @@ auto_MrP <- function(
   # Convert survey and census data to tibble
   survey <- tibble::as_tibble(x = survey)
   census <- tibble::as_tibble(x = census)
+
+  # add interactions to survey and census data if deep.mrp is TRUE
+  if (deep.mrp) {
+
+    # generate all interactions of L1.x
+    l1_comb <- unlist(lapply(2:length(L1.x), function(x) {
+      apply(combn(L1.x, x), 2, paste, collapse = ".")
+    }))
+
+    # generate all interactions of L1.x with L2.unit
+    l1_state <- paste(L1.x, L2.unit, sep = ".")
+
+    # generate all interactions of L1.x with L2.reg
+    if (!is.null(L2.reg)) {
+      l1_region <- paste(L1.x, L2.reg, sep = ".")
+    } else {
+      l1_region <- NULL
+    }
+
+    # add the interactions to the data
+    all_interactions <- c(l1_comb, l1_state, l1_region)
+
+    # loop over all interactions for the survey object
+    x_data <- lapply(all_interactions, function(x) {
+
+      # break down interaction components
+      y <- stringr::str_extract(
+        string = x,
+        pattern = stringr::fixed(pattern = names(survey))
+      ) %>%
+        .[!is.na(.)]
+
+      # take each column of data and combine its values into a single string
+      df_x <- survey %>%
+        dplyr::select({{y}}) %>%
+        dplyr::rowwise() %>%
+        dplyr::mutate({{x}} := paste(dplyr::c_across(
+          dplyr::everything()
+        ), collapse = "-")) %>%
+        dplyr::ungroup() %>%
+        dplyr::select(ncol(.))
+
+      return(df_x)
+    }) %>%
+      dplyr::bind_cols()
+
+    # combine survey and interactions
+    survey <- dplyr::bind_cols(survey, x_data)
+    rm(x_data)
+
+    # loop over all interactions for census data
+    x_census <- lapply(all_interactions, function(x) {
+
+      # break down interaction components
+      y <- stringr::str_extract(
+        string = x,
+        pattern = stringr::fixed(pattern = names(census))
+      ) %>%
+        .[!is.na(.)]
+
+      # take each column of data and combine its values into a single string
+      df_x <- census %>%
+        dplyr::select({{y}}) %>%
+        dplyr::rowwise() %>%
+        dplyr::mutate({{x}} := paste(dplyr::c_across(
+          dplyr::everything()
+        ), collapse = "-")) %>%
+        dplyr::ungroup() %>%
+        dplyr::select(ncol(.))
+
+      return(df_x)
+    }) %>%
+      dplyr::bind_cols()
+
+    # combine data and interactions
+    census <- dplyr::bind_cols(census, x_census)
+    rm(x_census)
+  }
 
   # Random over-sampling
   if (isTRUE(oversampling)) {
@@ -600,7 +676,6 @@ auto_MrP <- function(
       lasso.L2.x = lasso.L2.x, pca.L2.x = pca.L2.x, pc.names = pc_names,
       gb.L2.x = gb.L2.x, svm.L2.x = svm.L2.x, svm.L2.unit = svm.L2.unit,
       svm.L2.reg = svm.L2.reg, gb.L2.unit = gb.L2.unit, gb.L2.reg = gb.L2.reg,
-      deep.L2.x = deep.L2.x, deep.L2.reg = deep.L2.reg,
       deep.splines = deep.splines, lasso.lambda = lasso.lambda,
       lasso.n.iter = lasso.n.iter,
       gb.interaction.depth = gb.interaction.depth,
@@ -657,8 +732,6 @@ auto_MrP <- function(
       svm.L2.reg = svm.L2.reg,
       gb.L2.unit = gb.L2.unit,
       gb.L2.reg = gb.L2.reg,
-      deep.L2.x = deep.L2.x,
-      deep.L2.reg = deep.L2.reg,
       deep.splines = deep.splines,
       lasso.lambda = lasso.lambda,
       lasso.n.iter = lasso.n.iter,
@@ -701,5 +774,21 @@ auto_MrP <- function(
     ebma_out$weights <- "EBMA step skipped (only 1 classifier run)"
     class(ebma_out$weights) <- c("autoMrP", "weights", class(ebma_out$weights))
   }
+
+  # auto_MrP end time
+  automrp_end <- Sys.time()
+
+  # auto_MrP total runtime
+  ebma_out$runtime <- ebma_out$runtime %>%
+    dplyr::mutate(
+      total = difftime(
+        time1 = automrp_end,
+        time2 = automrp_start,
+        units = "mins"
+      )
+    ) %>%
+    tidyr::pivot_longer(cols = dplyr::everything()) %>%
+    dplyr::rename(step = name, duration = value)
+
   return(ebma_out)
 }

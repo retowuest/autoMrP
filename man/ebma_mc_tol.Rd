@@ -20,12 +20,13 @@ ebma_mc_tol(
   model.gb,
   model.svm,
   model.mrp,
-  model_deep,
   tol,
   n.draws,
   cores,
   preds_all,
-  post.strat
+  post.strat,
+  dv_type,
+  deep.mrp
 )
 }
 \arguments{
@@ -81,9 +82,6 @@ An \code{\link[e1071]{svm}} object.}
 
 \item{model.mrp}{The standard MrP model. An \code{\link[lme4]{glmer}} object}
 
-\item{model_deep}{The tuned model from the deep mrp classifier. An
-\code{\link[vglmer]{vglmer}} object.}
-
 \item{tol}{The tolerance values used for EBMA. A numeric vector.}
 
 \item{n.draws}{EBMA number of samples. An integer-valued scalar specifying
@@ -97,6 +95,14 @@ of processor cores used for parallel computing. Default is 1.}
 models for each of the tuned classifiers, the individual level predictions
 on the data classifier trainig data and the post-stratified context-level
 predictions.}
+
+\item{dv_type}{The type of the depenedent variable. A character string.
+Either "binary" or "linear".}
+
+\item{deep.mrp}{Deep MRP classifier. A logical argument indicating whether
+the deep MRP classifier should be used for best subset prediction. Setting
+\code{deep.mrp = TRUE} will include all interactions of L1.x in the best
+subset classifier. Default is \code{FALSE}.}
 }
 \value{
 The classifier weights. A numeric vector.

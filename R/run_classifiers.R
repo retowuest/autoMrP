@@ -18,18 +18,23 @@ run_classifiers <- function(
   y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg, L2.x.scale, pcs, pc.names, folds,
   bin.proportion, bin.size, cv.folds, cv.data, ebma.fold, census, ebma.size,
   ebma.n.draws, k.folds, cv.sampling, loss.unit, loss.fun, best.subset,
-  lasso, pca, gb, svm, mrp, deep.mrp, best.subset.L2.x,
-  lasso.L2.x, pca.L2.x, gb.L2.x, svm.L2.x, gb.L2.unit, gb.L2.reg,
-  svm.L2.unit, svm.L2.reg, deep.L2.x, deep.L2.reg, deep.splines,
-  lasso.lambda, lasso.n.iter, gb.interaction.depth, gb.shrinkage,
+  lasso, pca, gb, svm, mrp, deep.mrp, best.subset.L2.x, lasso.L2.x, pca.L2.x,
+  gb.L2.x, svm.L2.x, gb.L2.unit, gb.L2.reg, svm.L2.unit, svm.L2.reg,
+  deep.splines, lasso.lambda, lasso.n.iter, gb.interaction.depth, gb.shrinkage,
   gb.n.trees.init, gb.n.trees.increase, gb.n.trees.max, gb.n.minobsinnode,
   svm.kernel, svm.gamma, svm.cost, ebma.tol, cores, verbose
 ) {
 
   # Classifier 1: Best Subset
   if (isTRUE(best.subset)) {
+
+    # get start time
+    best_subset_start_time <- Sys.time()
+
     if (verbose) {
-      cli::cli_progress_step("Tuning multilevel regression with best subset selection classifier")
+      cli::cli_progress_step(
+        "Tuning multilevel regression with best subset selection classifier"
+      )
     }
 
     # Determine context-level covariates
@@ -37,21 +42,51 @@ run_classifiers <- function(
       best.subset.L2.x <- L2.x
     }
 
-    # Run classifier
-    best_subset_out <- run_best_subset(
-      y = y,
-      L1.x = L1.x,
-      L2.x = best.subset.L2.x,
-      L2.unit = L2.unit,
-      L2.reg = L2.reg,
-      loss.unit = loss.unit,
-      loss.fun = loss.fun,
-      data = cv.folds,
-      verbose = verbose,
-      cores = cores
+    # interactions of L1.x yes/no
+    if (isTRUE(deep.mrp)) {
+      # Run classifier with L1.x interactions
+      best_subset_out <- run_deep_bs(
+        y = y,
+        L1.x = L1.x,
+        L2.x = best.subset.L2.x,
+        L2.unit = L2.unit,
+        L2.reg = L2.reg,
+        deep.splines = deep.splines,
+        loss.unit = loss.unit,
+        loss.fun = loss.fun,
+        k.folds = k.folds,
+        data = cv.folds,
+        verbose = verbose,
+        cores = cores
+      )
+    } else {
+      # Run classifier without L1.x interactions
+      best_subset_out <- run_best_subset(
+        y = y,
+        L1.x = L1.x,
+        L2.x = best.subset.L2.x,
+        L2.unit = L2.unit,
+        L2.reg = L2.reg,
+        loss.unit = loss.unit,
+        loss.fun = loss.fun,
+        data = cv.folds,
+        verbose = verbose,
+        cores = cores
+      )
+    }
+
+    # get end time
+    best_subset_end_time <- Sys.time()
+
+    # best subset runtime
+    best_subset_runtime <- difftime(
+      time1 = best_subset_end_time, time2 = best_subset_start_time,
+      units = "mins"
     )
+
   } else {
     best_subset_out <- NULL
+    best_subset_runtime <- NULL
   }
 
   # Classifier 2: Lasso
@@ -65,8 +100,13 @@ run_classifiers <- function(
 
   if (isTRUE(lasso) && !is.null(L2.x)) {
 
+    # get start time
+    lasso_start_time <- Sys.time()
+
     if (verbose) {
-      cli::cli_progress_step("Tuning multilevel regression with L1 regularization")
+      cli::cli_progress_step(
+        "Tuning multilevel regression with L1 regularization"
+      )
     }
 
     # Determine context-level covariates
@@ -89,8 +129,18 @@ run_classifiers <- function(
       verbose = verbose,
       cores = cores
     )
+
+    # get end time
+    lasso_end_time <- Sys.time()
+
+    # lasso runtime
+    lasso_runtime <- difftime(
+      time1 = lasso_end_time, time2 = lasso_start_time, units = "mins"
+    )
+
   } else {
     lasso_out <- NULL
+    lasso_runtime <- NULL
   }
 
   # Classifier 3: PCA
@@ -104,30 +154,68 @@ run_classifiers <- function(
   }
   if (isTRUE(pca) && !is.null(pca.L2.x)) {
 
+    # get start time
+    pca_start_time <- Sys.time()
+
     if (verbose) {
-      cli::cli_progress_step("Tuning multilevel regression with principal components as context level variables"
+      cli::cli_progress_step(
+        paste0(
+          "Tuning multilevel regression with principal components as context",
+          " level variables"
+        )
       )
     }
 
-    pca_out <- run_pca(
-      y = y,
-      L1.x = L1.x,
-      L2.x = pc.names,
-      L2.unit = L2.unit,
-      L2.reg = L2.reg,
-      loss.unit = loss.unit,
-      loss.fun = loss.fun,
-      data = cv.folds,
-      verbose = verbose,
-      cores = cores
+    # interactions of L1.x yes/no
+    if (isTRUE(deep.mrp)) {
+      # Run classifier with L1.x interactions
+      pca_out <- run_deep_pca(
+        y = y,
+        L1.x = L1.x,
+        L2.x = pc.names,
+        L2.unit = L2.unit,
+        L2.reg = L2.reg,
+        deep.splines = deep.splines,
+        loss.unit = loss.unit,
+        loss.fun = loss.fun,
+        data = cv.folds,
+        verbose = verbose,
+        cores = cores
+      )
+    } else {
+      # run classifier without L1.x interactions
+      pca_out <- run_pca(
+        y = y,
+        L1.x = L1.x,
+        L2.x = pc.names,
+        L2.unit = L2.unit,
+        L2.reg = L2.reg,
+        loss.unit = loss.unit,
+        loss.fun = loss.fun,
+        data = cv.folds,
+        verbose = verbose,
+        cores = cores
+      )
+    }
+
+    # get end time
+    pca_end_time <- Sys.time()
+
+    # pca runtime
+    pca_runtime <- difftime(
+      time1 = pca_end_time, time2 = pca_start_time, units = "mins"
     )
 
   } else {
     pca_out <- NULL
+    pca_runtime <- NULL
   }
 
   # Classifier 4: GB
   if (gb) {
+
+    # get start time
+    gb_start_time <- Sys.time()
 
     if (verbose) {
       cli::cli_progress_step("Tuning gradient tree boosting")
@@ -172,12 +260,25 @@ run_classifiers <- function(
       cores = cores,
       verbose = verbose
     )
+
+    # get end time
+    gb_end_time <- Sys.time()
+
+    # gb runtime
+    gb_runtime <- difftime(
+      time1 = gb_end_time, time2 = gb_start_time, units = "mins"
+    )
+
   } else {
     gb_out <- NULL
+    gb_runtime <- NULL
   }
 
   # Classifier 5: SVM
   if (isTRUE(svm)) {
+
+    # get start time
+    svm_start_time <- Sys.time()
 
     if (verbose) {
       cli::cli_progress_step("Tuning support vector machine")
@@ -219,15 +320,30 @@ run_classifiers <- function(
       verbose = verbose,
       cores = cores
     )
+
+    # get start time
+    svm_end_time <- Sys.time()
+
+    # svm runtime
+    svm_runtime <- difftime(
+      time1 = svm_end_time, time2 = svm_start_time, units = "mins"
+    )
+
   } else {
     svm_out <- NULL
+    svm_runtime <- NULL
   }
 
   # Individual level predictions for all data -------------------------------
 
   if (verbose) {
-    cli::cli_progress_step("Generating out of sample predictions from tuned classifiers")
+    cli::cli_progress_step(
+      "Generating out of sample predictions from tuned classifiers"
+    )
   }
+
+  # get start time
+  preds_all_start_time <- Sys.time()
 
   preds_all <- suppressWarnings(
     suppressMessages(
@@ -253,8 +369,6 @@ run_classifiers <- function(
         kernel = svm.kernel,
         mrp.L2.x = mrp.L2.x,
         deep.mrp = deep.mrp,
-        deep.L2.x = deep.L2.x,
-        deep.L2.reg = deep.L2.reg,
         deep.splines = deep.splines,
         data = cv.folds,
         ebma.fold = ebma.fold,
@@ -266,11 +380,22 @@ run_classifiers <- function(
     )
   )
 
+  # get end time
+  preds_all_end_time <- Sys.time()
+
+  # preds_all runtime
+  preds_all_runtime <- difftime(
+    time1 = preds_all_end_time, time2 = preds_all_start_time, units = "mins"
+  )
+
   # Post-stratification -----------------------------------------------------
 
   if (verbose) {
     cli::cli_progress_step("Post-stratification")
   }
+
+  # get start time
+  ps_start_time <- Sys.time()
 
   ps_out <- post_stratification(
     y = y,
@@ -294,8 +419,6 @@ run_classifiers <- function(
     kernel = svm.kernel,
     mrp.L2.x = mrp.L2.x,
     deep.mrp = deep.mrp,
-    deep.L2.x = deep.L2.x,
-    deep.L2.reg = deep.L2.reg,
     deep.splines = deep.splines,
     data = cv.data,
     ebma.fold = ebma.fold,
@@ -303,7 +426,18 @@ run_classifiers <- function(
     verbose = verbose
   )
 
+  # get start time
+  ps_end_time <- Sys.time()
+
+  # ps runtime
+  ps_runtime <- difftime(
+    time1 = ps_end_time, time2 = ps_start_time, units = "mins"
+  )
+
   # EBMA --------------------------------------------------------------------
+
+  # get start time
+  ebma_start_time <- Sys.time()
 
   ebma_out <- ebma(
     ebma.fold = ebma.fold,
@@ -327,7 +461,18 @@ run_classifiers <- function(
     preds_all = preds_all
   )
 
+  # get end time
+  ebma_end_time <- Sys.time()
+
+  # ebma runtime
+  ebma_runtime <- difftime(
+    time1 = ebma_end_time, time2 = ebma_start_time, units = "mins"
+  )
+
   # Stacking  ----------------------------------------------------------------
+
+  # get start time
+  stack_start_time <- Sys.time()
 
   if (verbose) {
     cli::cli_progress_step("Stacking")
@@ -335,11 +480,8 @@ run_classifiers <- function(
 
   # get stacking weights
   stack_out <- autoMrP:::stacking_weights(
-    preds = preds_all,
-    ebma_out = ebma_out,
-    L2.unit = L2.unit,
-    k.folds = k.folds,
-    cores = cores
+    preds = preds_all, ebma_out = ebma_out, L2.unit = L2.unit,
+    k.folds = k.folds, cores = cores
   )
 
   # apply stacking weights
@@ -350,6 +492,28 @@ run_classifiers <- function(
     y = y,
     preds_all = preds_all
   )
+
+  # get end time
+  stack_end_time <- Sys.time()
+
+  # stack runtime
+  stack_runtime <- difftime(
+    time1 = stack_end_time, time2 = stack_start_time, units = "mins"
+  )
+
+  # Detailed runtime ---------------------------------------------------------
+  runtime_detailed <- tibble::tibble(
+    best_subset = best_subset_runtime,
+    lasso = lasso_runtime,
+    pca = pca_runtime,
+    gb = gb_runtime,
+    svm = svm_runtime,
+    individual_level_predictions = preds_all_runtime,
+    post_stratification = ps_runtime,
+    ebma = ebma_runtime,
+    stacking = stack_runtime
+  )
+  ebma_out$runtime <- runtime_detailed
 
   return(ebma_out)
 }

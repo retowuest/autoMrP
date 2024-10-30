@@ -87,8 +87,9 @@ returned from \code{run_pca()}.}
 \code{run_svm()}.}
 
 \item{deep.mrp}{Deep MRP classifier. A logical argument indicating whether
-the deep MRP classifier should be used for predicting outcome \code{y}.
-Default is \code{FALSE}.}
+the deep MRP classifier should be used for best subset prediction. Setting
+\code{deep.mrp = TRUE} will include all interactions of L1.x in the best
+subset classifier. Default is \code{FALSE}.}
 
 \item{verbose}{Verbose output. A logical argument indicating whether or not
 verbose output should be printed. Default is \code{FALSE}.}

@@ -38,8 +38,7 @@ post_stratification <- function(
   y, L1.x, L2.x, L2.unit, L2.reg, best.subset.opt, lasso.opt, lasso.L2.x,
   pca.opt, gb.opt, svm.opt, svm.L2.reg, svm.L2.unit, svm.L2.x, mrp.include,
   n.minobsinnode, L2.unit.include, L2.reg.include, kernel, mrp.L2.x,
-  data, ebma.fold, census, verbose, deep.mrp, deep.L2.x, deep.L2.reg,
-  deep.splines
+  data, ebma.fold, census, verbose, deep.mrp, deep.splines
 ) {
 
   # globals
@@ -72,55 +71,149 @@ post_stratification <- function(
     data = no_ebma_data, dplyr::all_of(c(y, L1.x, L2.x, L2.unit, L2.reg))
   )
 
+  # Determine type of dependent variable
+  if (
+    no_ebma_data %>%
+      dplyr::pull(!!y) %>%
+      unique() %>%
+      length() == 2
+  ) {
+    dv_type <- "binary"
+  } else {
+    dv_type <- "linear"
+  }
+
   # ----- Fit optimal model and make prediction for individual classifiers -----
 
   # Classifier 1: Best Subset
   if (!is.null(best.subset.opt)) {
 
-    # Fit optimal model for EBMA
-    best_subset_opt_ebma <- best_subset_classifier(
-      y = y,
-      model = best.subset.opt,
-      data.train = data,
-      model.family = binomial(link = "probit"),
-      model.optimizer = "bobyqa",
-      n.iter = 1000000,
-      verbose = verbose
-    )
+    # deep MrP or not
+    if (deep.mrp) {
 
-    # Fit optimal model for post-stratification w/o EBMA
-    best_subset_opt_poststrat_only <- best_subset_classifier(
-      y = y,
-      model = best.subset.opt,
-      data.train = no_ebma_data,
-      model.family = binomial(link = "probit"),
-      model.optimizer = "bobyqa",
-      n.iter = 1000000,
-      verbose = verbose
-    )
+      # Fit optimal model for EBMA
+      best_subset_opt_ebma <- deep_mrp_classifier(
+        form = best.subset.opt,
+        y = y,
+        data = data,
+        verbose = TRUE
+      )
 
-    # post-stratification
-    bs_preds <- census %>%
-      dplyr::mutate(
-        best_subset = stats::predict(
-          object = best_subset_opt_poststrat_only,
-          newdata = .,
-          allow.new.levels = TRUE,
-          type = "response"
-        )
-      ) %>%
-      dplyr::group_by(!! rlang::sym(L2.unit)) %>%
-      dplyr::summarize(best_subset = stats::weighted.mean(
-        x = best_subset, w = prop
-      ), .groups = "keep") %>%
-      dplyr::ungroup()
+      # Fit optimal model for post-stratification w/o EBMA
+      best_subset_opt_poststrat_only <- deep_mrp_classifier(
+        form = best.subset.opt,
+        y = y,
+        data = no_ebma_data,
+        verbose = TRUE
+      )
 
-    # individual level predictions for EBMA
-    bs_ind <- stats::predict(object = best_subset_opt_ebma, type = "response")
+      if (dv_type == "binary") {
 
-    # model for EBMA
-    models$best_subset <- best_subset_opt_ebma
+        # post-stratification
+        bs_preds <- census %>%
+          dplyr::mutate(
+            best_subset = vglmer::predict_MAVB(
+              samples = 1000,
+              best_subset_opt_poststrat_only,
+              newdata = census,
+              allow_missing_levels = TRUE
+            )[["mean"]] %>%
+              stats::plogis()
+          ) %>%
+          dplyr::group_by(!! rlang::sym(L2.unit)) %>%
+          dplyr::summarize(best_subset = stats::weighted.mean(
+            x = best_subset, w = prop
+          ), .groups = "keep") %>%
+          dplyr::ungroup()
 
+        # individual level predictions for EBMA
+        bs_ind <- vglmer::predict_MAVB(
+          samples = 1000,
+          best_subset_opt_ebma,
+          newdata = data,
+          allow_missing_levels = TRUE
+        )[["mean"]] %>%
+          stats::plogis()
+
+        # model for EBMA
+        models$best_subset <- best_subset_opt_ebma
+
+      } else {
+
+        # post-stratification
+        bs_preds <- census %>%
+          dplyr::mutate(
+            best_subset = vglmer::predict_MAVB(
+              samples = 1000,
+              best_subset_opt_poststrat_only,
+              newdata = census,
+              allow_missing_levels = TRUE
+            )[["mean"]]
+          ) %>%
+          dplyr::group_by(!! rlang::sym(L2.unit)) %>%
+          dplyr::summarize(best_subset = stats::weighted.mean(
+            x = best_subset, w = prop
+          ), .groups = "keep") %>%
+          dplyr::ungroup()
+
+        # individual level predictions for EBMA
+        bs_ind <- vglmer::predict_MAVB(
+          samples = 1000,
+          best_subset_opt_ebma,
+          newdata = data,
+          allow_missing_levels = TRUE
+        )[["mean"]]
+
+        # model for EBMA
+        models$best_subset <- best_subset_opt_ebma
+      }
+
+    } else {
+
+      # Fit optimal model for EBMA
+      best_subset_opt_ebma <- best_subset_classifier(
+        y = y,
+        model = best.subset.opt,
+        data.train = data,
+        model.family = binomial(link = "probit"),
+        model.optimizer = "bobyqa",
+        n.iter = 1000000,
+        verbose = verbose
+      )
+
+      # Fit optimal model for post-stratification w/o EBMA
+      best_subset_opt_poststrat_only <- best_subset_classifier(
+        y = y,
+        model = best.subset.opt,
+        data.train = no_ebma_data,
+        model.family = binomial(link = "probit"),
+        model.optimizer = "bobyqa",
+        n.iter = 1000000,
+        verbose = verbose
+      )
+
+      # post-stratification
+      bs_preds <- census %>%
+        dplyr::mutate(
+          best_subset = stats::predict(
+            object = best_subset_opt_poststrat_only,
+            newdata = .,
+            allow.new.levels = TRUE,
+            type = "response"
+          )
+        ) %>%
+        dplyr::group_by(!! rlang::sym(L2.unit)) %>%
+        dplyr::summarize(best_subset = stats::weighted.mean(
+          x = best_subset, w = prop
+        ), .groups = "keep") %>%
+        dplyr::ungroup()
+
+      # individual level predictions for EBMA
+      bs_ind <- stats::predict(object = best_subset_opt_ebma, type = "response")
+
+      # model for EBMA
+      models$best_subset <- best_subset_opt_ebma
+    }
   }
 
   # Classifier 2: Lasso
@@ -199,48 +292,129 @@ post_stratification <- function(
   # Classifier 3: PCA
   if (!is.null(pca.opt)) {
 
-    # Fit optimal model for EBMA
-    pca_opt_ebma <- best_subset_classifier(
-      y = y,
-      model = pca.opt,
-      data.train = data,
-      model.family = binomial(link = "probit"),
-      model.optimizer = "bobyqa",
-      n.iter = 1000000,
-      verbose = verbose
-    )
+    # deep MrP or not
+    if (deep.mrp) {
 
-    # Fit optimal model for for post-stratification w/o EBMA
-    pca_opt_poststrat_only <- best_subset_classifier(
-      y = y,
-      model = pca.opt,
-      data.train = no_ebma_data,
-      model.family = binomial(link = "probit"),
-      model.optimizer = "bobyqa",
-      n.iter = 1000000,
-      verbose = verbose
-    )
+      # Fit optimal model for EBMA
+      pca_opt_ebma <- deep_mrp_classifier(
+        form = pca.opt,
+        y = y,
+        data = data,
+        verbose = TRUE
+      )
 
-    # post-stratification
-    pca_preds <- census %>%
-      dplyr::mutate(pca = stats::predict(
-        object = pca_opt_poststrat_only,
-        newdata = .,
-        allow.new.levels = TRUE,
-        type = "response"
-      )) %>%
-      dplyr::group_by(!! rlang::sym(L2.unit)) %>%
-      dplyr::summarize(
-        pca = stats::weighted.mean(x = pca, w = prop), .groups = "keep"
-      ) %>%
-      dplyr::ungroup()
+      # Fit optimal model for for post-stratification w/o EBMA
+      pca_opt_poststrat_only <- deep_mrp_classifier(
+        form = pca.opt,
+        y = y,
+        data = no_ebma_data,
+        verbose = TRUE
+      )
 
-    # individual level predictions for EBMA
-    pca_ind <- stats::predict(object = pca_opt_ebma, type = "response")
+      # dependent variable type
+      if (dv_type == "binary") {
 
-    # model for EBMA
-    models$pca <- pca_opt_ebma
+        # post-stratification
+        pca_preds <- census %>%
+          dplyr::mutate(
+            pca = vglmer::predict_MAVB(
+              samples = 1000,
+              pca_opt_poststrat_only,
+              newdata = census,
+              allow_missing_levels = TRUE
+            )[["mean"]] %>%
+              stats::plogis()
+          ) %>%
+          dplyr::group_by(!! rlang::sym(L2.unit)) %>%
+          dplyr::summarize(
+            pca = stats::weighted.mean(x = pca, w = prop), .groups = "keep"
+          ) %>%
+          dplyr::ungroup()
 
+        # individual level predictions for EBMA
+        pca_ind <- vglmer::predict_MAVB(
+          samples = 1000,
+          pca_opt_ebma,
+          newdata = data,
+          allow_missing_levels = TRUE
+        )[["mean"]] %>%
+          stats::plogis()
+
+      } else {
+
+        # post-stratification
+        pca_preds <- census %>%
+          dplyr::mutate(
+            pca = vglmer::predict_MAVB(
+              samples = 1000,
+              pca_opt_poststrat_only,
+              newdata = census,
+              allow_missing_levels = TRUE
+            )[["mean"]]
+          ) %>%
+          dplyr::group_by(!! rlang::sym(L2.unit)) %>%
+          dplyr::summarize(
+            pca = stats::weighted.mean(x = pca, w = prop), .groups = "keep"
+          ) %>%
+          dplyr::ungroup()
+
+        # individual level predictions for EBMA
+        pca_ind <- vglmer::predict_MAVB(
+          samples = 1000,
+          pca_opt_ebma,
+          newdata = data,
+          allow_missing_levels = TRUE
+        )[["mean"]]
+
+      }
+
+      # model for EBMA
+      models$pca <- pca_opt_ebma
+
+    } else {
+
+      # Fit optimal model for EBMA
+      pca_opt_ebma <- best_subset_classifier(
+        y = y,
+        model = pca.opt,
+        data.train = data,
+        model.family = binomial(link = "probit"),
+        model.optimizer = "bobyqa",
+        n.iter = 1000000,
+        verbose = verbose
+      )
+
+      # Fit optimal model for for post-stratification w/o EBMA
+      pca_opt_poststrat_only <- best_subset_classifier(
+        y = y,
+        model = pca.opt,
+        data.train = no_ebma_data,
+        model.family = binomial(link = "probit"),
+        model.optimizer = "bobyqa",
+        n.iter = 1000000,
+        verbose = verbose
+      )
+
+      # post-stratification
+      pca_preds <- census %>%
+        dplyr::mutate(pca = stats::predict(
+          object = pca_opt_poststrat_only,
+          newdata = .,
+          allow.new.levels = TRUE,
+          type = "response"
+        )) %>%
+        dplyr::group_by(!! rlang::sym(L2.unit)) %>%
+        dplyr::summarize(
+          pca = stats::weighted.mean(x = pca, w = prop), .groups = "keep"
+        ) %>%
+        dplyr::ungroup()
+
+      # individual level predictions for EBMA
+      pca_ind <- stats::predict(object = pca_opt_ebma, type = "response")
+
+      # model for EBMA
+      models$pca <- pca_opt_ebma
+    }
   }
 
   # Classifier 4: GB
@@ -533,250 +707,6 @@ post_stratification <- function(
     models$mrp <- mrp_model_ebma
   }
 
-  # Classifier 7: deep MRP
-  # Fit model
-  if (deep.mrp) {
-
-    # custom L2x
-    if (!is.null(deep.L2.x)) {
-      L2.x <- deep.L2.x
-    }
-
-    # custom L2.reg
-    if (isTRUE(deep.L2.reg)) {
-      deep.L2.reg <- L2.reg
-    } else {
-      deep.L2.reg <- NULL
-    }
-
-    # generate all interactions of L1.x
-    l1_comb <- unlist(lapply(2:length(L1.x), function(x) {
-      apply(combn(L1.x, x), 2, paste, collapse = ".")
-    }))
-
-    # generate all interactions of L1.x with L2.unit
-    l1_state <- paste(L1.x, L2.unit, sep = ".")
-
-    # generate all interactions of L1.x with L2.reg
-    if (!is.null(deep.L2.reg)) {
-      l1_region <- paste(L1.x, L2.reg, sep = ".")
-    } else {
-      l1_region <- NULL
-    }
-
-    # model formula
-    if (!deep.splines) {
-      form <- paste0(
-        # DV
-        y, " ~ ",
-        # L2x
-        paste(L2.x, collapse = " + "), " + ",
-        # individual level variables
-        paste("(1 | ", L1.x, ")", collapse = " + "), " + ",
-        # interactions of L1x
-        paste("(1 | ", l1_comb, ")", collapse = " + "), " + ",
-        # interactions of L1x with L2.unit
-        paste("(1 | ", l1_state, ")", collapse = " + "), " + ",
-        # interactions of L1x with L2.reg
-        if (any(!is.null(l1_region))) {
-          paste("(1 | ", l1_region, ")", collapse = " + ")
-        }
-      )
-    } else {
-      form <- paste0(
-        # DV
-        y, " ~ ",
-        # L2x
-        paste0("v_s(", L2.x, ")", collapse = " + "), " + ",
-        # individual level variables
-        paste("(1 | ", L1.x, ")", collapse = " + "), " + ",
-        # interactions of L1x
-        paste("(1 | ", l1_comb, ")", collapse = " + "), " + ",
-        # interactions of L1x with L2.unit
-        paste("(1 | ", l1_state, ")", collapse = " + "), " + ",
-        # interactions of L1x with L2.reg
-        if (any(!is.null(l1_region))) {
-          paste("(1 | ", l1_region, ")", collapse = " + ")
-        }
-      )
-    }
-
-    # match everything from the beginning to the last ")"
-    # for example if the string ends in +
-    form <- stringr::str_extract(string = form, pattern = "^.*\\)")
-
-    # add the interactions to the data
-    all_interactions <- c(l1_comb, l1_state, l1_region)
-
-    # loop over all interactions for data object
-    x_data <- lapply(all_interactions, function(x) {
-
-      # break down interaction components
-      y <- stringr::str_extract(
-        string = x,
-        pattern = stringr::fixed(pattern = names(data))
-      ) %>%
-        .[!is.na(.)]
-
-      # take each column of data and combine its values into a single string
-      df_x <- data %>%
-        dplyr::select({{y}}) %>%
-        dplyr::rowwise() %>%
-        dplyr::mutate({{x}} := paste(dplyr::c_across(
-          dplyr::everything()
-        ), collapse = "-")) %>%
-        dplyr::ungroup() %>%
-        dplyr::select(ncol(.))
-
-      return(df_x)
-    }) %>%
-      dplyr::bind_cols()
-
-    # combine data and interactions
-    data <- dplyr::bind_cols(data, x_data)
-
-    # loop over all interactions for data no_ebma_data object
-    x_no_ebma <- lapply(all_interactions, function(x) {
-
-      # break down interaction components
-      y <- stringr::str_extract(
-        string = x,
-        pattern = stringr::fixed(pattern = names(no_ebma_data))
-      ) %>%
-        .[!is.na(.)]
-
-      # take each column of data and combine its values into a single string
-      df_x <- no_ebma_data %>%
-        dplyr::select({{y}}) %>%
-        dplyr::rowwise() %>%
-        dplyr::mutate({{x}} := paste(dplyr::c_across(
-          dplyr::everything()
-        ), collapse = "-")) %>%
-        dplyr::ungroup() %>%
-        dplyr::select(ncol(.))
-
-      return(df_x)
-    }) %>%
-      dplyr::bind_cols()
-
-    # combine data and interactions
-    no_ebma_data <- dplyr::bind_cols(no_ebma_data, x_no_ebma)
-
-    # run deep mrp model for ebma
-    deep_mrp_model <- deep_mrp_classifier(
-      y = y,
-      form = form,
-      data = data,
-      verbose = verbose
-    )
-
-    # run deep mrp model for postratification only
-    deep_mrp_model_poststrat_only <- deep_mrp_classifier(
-      y = y,
-      form = form,
-      data = no_ebma_data,
-      verbose = verbose
-    )
-
-    # loop over all interactions for census data
-    x_census <- lapply(all_interactions, function(x) {
-
-      # break down interaction components
-      y <- stringr::str_extract(
-        string = x,
-        pattern = stringr::fixed(pattern = names(census))
-      ) %>%
-        .[!is.na(.)]
-
-      # take each column of data and combine its values into a single string
-      df_x <- census %>%
-        dplyr::select({{y}}) %>%
-        dplyr::rowwise() %>%
-        dplyr::mutate({{x}} := paste(dplyr::c_across(
-          dplyr::everything()
-        ), collapse = "-")) %>%
-        dplyr::ungroup() %>%
-        dplyr::select(ncol(.))
-
-      return(df_x)
-    }) %>%
-      dplyr::bind_cols()
-
-    # combine data and interactions
-    deep_census <- dplyr::bind_cols(census, x_census)
-
-    # Determine type of dependent variable
-    if (
-      data %>%
-        dplyr::pull(!!y) %>%
-        unique() %>%
-        length() == 2
-    ) {
-      dv_type <- "binary"
-    } else {
-      dv_type <- "linear"
-    }
-
-    # binary or continuous DV
-    if (dv_type == "binary") {
-      # predictions for post-stratification only (no EBMA)
-      pred_d <- vglmer::predict_MAVB(
-        samples = 1000,
-        deep_mrp_model_poststrat_only,
-        newdata = deep_census,
-        allow_missing_levels = TRUE
-      )[["mean"]]
-
-      # convert to response probabilities
-      pred_d <- stats::plogis(pred_d)
-
-    } else if (dv_type == "linear") {
-      # predictions for post-stratification only (no EBMA)
-      pred_d <- predict(
-        samples = 1000,
-        object = deep_mrp_model_poststrat_only,
-        newdata = deep_census,
-        allow_missing_levels = TRUE
-      )[["mean"]]
-    }
-
-    # post-stratification
-    deep_preds <- deep_census %>%
-      dplyr::mutate(deep_mrp = pred_d) %>%
-      dplyr::group_by(!!rlang::sym(L2.unit)) %>%
-      dplyr::summarize(
-        deep_mrp = stats::weighted.mean(
-          x = deep_mrp, w = prop
-        ), .groups = "keep"
-      )
-
-    # binary or continuous DV
-    if (dv_type == "binary") {
-      # individual level predictions for EBMA
-      deep_mrp_ind <- vglmer::predict_MAVB(
-        samples = 1000,
-        deep_mrp_model,
-        newdata = data,
-        allow_missing_levels = TRUE
-      )[["mean"]]
-
-      # convert response to probabilities
-      deep_mrp_ind <- stats::plogis(deep_mrp_ind)
-    } else if (dv_type == "linear") {
-      # individual level predictions for EBMA
-      deep_mrp_ind <- predict(
-        samples = 1000,
-        object = deep_mrp_model,
-        newdata = data,
-        allow_missing_levels = TRUE
-      )[["mean"]]
-    }
-
-    # model for EBMA
-    models$deep_mrp <- deep_mrp_model
-
-  } # end of deep.mrp
-
   # --------------------------- combine l2 level predictions ------------------
 
   # tibble of L2 units
@@ -825,13 +755,6 @@ post_stratification <- function(
       by = L2.unit
     )
   }
-  if (exists("deep_preds")) {
-    L2_preds <- dplyr::left_join(
-      x = L2_preds,
-      y = deep_preds,
-      by = L2.unit
-    )
-  }
 
   # individual predictions for EBMA
   L1_preds <- data %>%
@@ -871,12 +794,6 @@ post_stratification <- function(
       # add MrP
       mrp = if (exists("mrp_ind")) {
         as.numeric(mrp_ind)
-      } else {
-        NA
-      },
-      # add deep MrP
-      deep_mrp = if (exists("deep_mrp_ind")) {
-        as.numeric(deep_mrp_ind)
       } else {
         NA
       }

@@ -8,15 +8,13 @@
 
 boot_auto_mrp <- function(
   y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg, L2.x.scale, pcs, folds,
-  bin.proportion, bin.size, survey, census, ebma.size, k.folds,
-  cv.sampling, loss.unit, loss.fun, best.subset, lasso, pca, gb,
-  svm, mrp, deep.mrp, best.subset.L2.x, lasso.L2.x,
-  pca.L2.x, pc.names, gb.L2.x, svm.L2.x, svm.L2.unit, svm.L2.reg,
-  gb.L2.unit, gb.L2.reg, deep.L2.x, deep.L2.reg, deep.splines,
-  lasso.lambda, lasso.n.iter, gb.interaction.depth, gb.shrinkage,
-  gb.n.trees.init, gb.n.trees.increase, gb.n.trees.max,
-  gb.n.minobsinnode, svm.kernel, svm.gamma, svm.cost, ebma.tol,
-  boot.iter, cores
+  bin.proportion, bin.size, survey, census, ebma.size, k.folds, cv.sampling,
+  loss.unit, loss.fun, best.subset, lasso, pca, gb, svm, mrp, deep.mrp,
+  best.subset.L2.x, lasso.L2.x, pca.L2.x, pc.names, gb.L2.x, svm.L2.x,
+  svm.L2.unit, svm.L2.reg, gb.L2.unit, gb.L2.reg, deep.splines, lasso.lambda,
+  lasso.n.iter, gb.interaction.depth, gb.shrinkage, gb.n.trees.init,
+  gb.n.trees.increase, gb.n.trees.max, gb.n.minobsinnode, svm.kernel, svm.gamma,
+  svm.cost, ebma.tol, boot.iter, cores
 ) {
 
   # Binding for global variables
@@ -63,8 +61,6 @@ boot_auto_mrp <- function(
       svm.L2.reg = svm.L2.reg,
       gb.L2.unit = gb.L2.unit,
       gb.L2.reg = gb.L2.reg,
-      deep.L2.x = deep.L2.x,
-      deep.L2.reg = deep.L2.reg,
       deep.splines = deep.splines,
       lasso.lambda = lasso.lambda,
       lasso.n.iter = lasso.n.iter,
@@ -100,8 +96,7 @@ boot_auto_mrp <- function(
         contains("lasso"),
         contains("gb"),
         contains("svm"),
-        contains("mrp"),
-        contains("deep_mrp")
+        contains("mrp")
       )
 
   } else {
@@ -120,8 +115,7 @@ boot_auto_mrp <- function(
       contains("lasso"),
       contains("gb"),
       contains("svm"),
-      contains("mrp"),
-      contains("deep_mrp")
+      contains("mrp")
     )
 
   if (!is.null(weights)) {
