@@ -1,8 +1,10 @@
 # autoMrP
-autoMrP improves the prediction performance of multilevel regression with post-stratification (MrP) by combining a number of machine learning methods through ensemble Bayesian model averaging (EBMA). The full discussion can be found here: Broniecki, Leemann, and Wüest. 2020. "Improving Multilevel Regression with Post-Stratification Through Machine Learning (autoMrP)," forthcoming in *the Journal of Politics*.
+
+autoMrP improves the prediction performance of multilevel regression with post-stratification (MrP) by combining a number of machine learning methods through ensemble Bayesian model averaging (EBMA). For more information, see: Broniecki, Leemann, and Wüest. 2022. "Improving Multilevel Regression with Post-Stratification Through Machine Learning (autoMrP)", published in the *Journal of Politics*: https://doi.org/10.1086/714777.
 
 ## Installation
-To install autoMrP from GitHub run:
+
+To install autoMrP from GitHub, run:
 
 ```R
 devtools::install_github("retowuest/autoMrP", build_vignettes = TRUE)

@@ -10,19 +10,20 @@
 #' @inheritParams auto_MrP
 #' @return No return value, called for detection of errors in autoMrP() call.
 
-error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
-                         folds, bin.proportion, bin.size, survey, census,
-                         ebma.size, k.folds, cv.sampling, loss.unit, loss.fun,
-                         best.subset, lasso, pca, gb, svm, mrp,
-                         best.subset.L2.x, lasso.L2.x, gb.L2.x, svm.L2.x,
-                         mrp.L2.x, gb.L2.unit, gb.L2.reg, lasso.lambda,
-                         lasso.n.iter, uncertainty, boot.iter) {
-
+error_checks <- function(
+  y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs, folds, bin.proportion,
+  bin.size, survey, census, ebma.size, k.folds, cv.sampling, loss.unit,
+  loss.fun, best.subset, lasso, pca, gb, svm, mrp, best.subset.L2.x, lasso.L2.x,
+  deep.mrp, gb.L2.x, svm.L2.x, mrp.L2.x, gb.L2.unit, gb.L2.reg, lasso.lambda,
+  lasso.n.iter, deep.splines, uncertainty, boot.iter
+) {
 
   # Check if y is a character scalar
-  if (!(is.character(y) & length(y) == 1)) {
-    stop(paste("The argument 'y', specifying the outcome variable, must be a",
-               " character scalar.", sep = ""))
+  if (!(is.character(y) && length(y) == 1)) {
+    stop(
+      "The argument 'y', specifying the outcome variable, must be a",
+      " character scalar."
+    )
   }
 
   # Check if y is in survey data
@@ -388,6 +389,50 @@ error_checks <- function(y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs,
                " must be either TRUE or FALSE.", sep = ""))
   }
 
+  # Check if deep.mrp is logical
+  if (is.logical(deep.mrp)) {
+    # Check if deep.mrp is TRUE
+    if (isTRUE(deep.mrp))
+      # Check if best.subset is FALSE
+      if (!isTRUE(best.subset) && !isTRUE(pca)) {
+        stop(
+          "The argument 'deep.mrp' can only be set to TRUE if 'best.subset' or",
+          " 'pca' is TRUE."
+        )
+      }
+  } else {
+    stop(
+      "The logical argument 'deep.mrp', indicating whether all interactions",
+      " of L2.x should be used within the best subset classifier, must be",
+      " either TRUE or FALSE."
+    )
+  }
+
+  # Check if deep.splines is logical
+  if (is.logical(deep.splines)) {
+    # Check if deep.splines is TRUE
+    if (isTRUE(deep.mrp)) {
+      # Check if best.subset is FALSE
+      if (!isTRUE(best.subset) && !isTRUE(pca)) {
+        stop(
+          "The argument 'deep.splines' can only be set to TRUE if ",
+          " 'best.subset' or 'pca' is TRUE."
+        )
+      }
+    } else {
+      stop(
+        "The argument 'deep.splines' can only be set to TRUE if 'deep.mrp' is",
+        " TRUE."
+      )
+    }
+  } else {
+    stop(
+      "The logical argument 'deep.splines', indicating whether splines should",
+      " be used within the best subset classifier using all interactions of",
+      " L2.x must be either TRUE or FALSE."
+    )
+  }
+
   # Check if lasso is logical
   if (is.logical(lasso)) {
     # Check if lasso is TRUE
@@ -737,8 +782,11 @@ ebma_folding <- function(data, L2.unit, ebma.size) {
   data <- data %>%
     dplyr::filter(!(index %in% one_per_unit))
 
-  remainder <- sample(data$index, size = ebma.size - length(one_per_unit),
-                      replace = FALSE)
+  remainder <- sample(
+    data$index,
+    size = ebma.size - length(one_per_unit),
+    replace = FALSE
+  )
 
   ebma_remainder <- data %>%
     dplyr::filter(index %in% remainder)
@@ -758,8 +806,11 @@ ebma_folding <- function(data, L2.unit, ebma.size) {
     dplyr::select(-index)
 
   # Function output
-  out <- list(ebma_fold = ebma_fold,
-              cv_data = cv_data)
+  out <- list(
+    ebma_fold = ebma_fold,
+    cv_data = cv_data
+  )
+
   return(out)
 }
 
@@ -1097,7 +1148,7 @@ mean_squared_error <- function(pred, data.valid, y, L2.unit){
   out <- dplyr::tibble(
     measure = rep("MSE", 2),
     value = rep(NA, 2),
-    level = c( "individuals", "L2 units")
+    level = c("individuals", "L2 units")
   )
 
   # mse values
@@ -1484,7 +1535,9 @@ multicore <- function(cores = 1, type, cl = NULL) {
 #' @return Returns a numeric vector of predictions from a \code{glmmLasso()}
 #'   object.
 
-predict_glmmLasso <- function(census, m, L1.x, lasso.L2.x, L2.unit, L2.reg) {
+predict_glmmLasso <- function(
+  census, m, L1.x, lasso.L2.x, L2.unit, L2.reg, type = "response"
+) {
 
   # Fixed effects
   fixed_effects <- as.matrix(
@@ -1529,8 +1582,11 @@ predict_glmmLasso <- function(census, m, L1.x, lasso.L2.x, L2.unit, L2.reg) {
   lasso_preds <- base::apply(X = lasso_preds, MARGIN = 1, FUN = sum)
 
   # binary DV through the link function
-  if (m$y %>% unique() %>% length() == 2) {
-    lasso_preds <- stats::pnorm(lasso_preds)
+  if (type == "response") {
+    if (m$y %>% unique() %>% length() == 2) {
+      lasso_preds <- stats::pnorm(lasso_preds)
+    }
+
   }
 
   return(lasso_preds)
@@ -1624,18 +1680,20 @@ plot.autoMrP <- function(x, algorithm = "ebma", ci.lvl = 0.95, ...) {
   ylabs <- as.character(dplyr::pull(.data = plot_data, var = L2.unit))
 
   # plot (with/ without error bars)
-  if(all(plot_data$median == plot_data$lb)){
+  if (all(plot_data$median == plot_data$lb)) {
     ggplot2::ggplot(
       data = plot_data,
-      mapping = ggplot2::aes_string(x = 'median', y = L2.unit)) +
+      mapping = ggplot2::aes_string(x = "median", y = L2.unit)
+    ) +
       ggplot2::geom_point() +
-      ggplot2::labs(x = 'Estimates')
-  } else{
+      ggplot2::labs(x = "Estimates")
+  } else {
     ggplot2::ggplot(
       data = plot_data,
-      mapping = ggplot2::aes_string(x = 'median', y = L2.unit)) +
+      mapping = ggplot2::aes_string(x = "median", y = L2.unit)
+    ) +
       ggplot2::geom_point() +
-      ggplot2::labs(x = 'Estimates') +
+      ggplot2::labs(x = "Estimates") +
       ggplot2::geom_errorbarh(mapping = ggplot2::aes(xmin = lb, xmax = ub))
   }
 }
@@ -1670,7 +1728,8 @@ plot.autoMrP <- function(x, algorithm = "ebma", ci.lvl = 0.95, ...) {
 
 summary.autoMrP <- function(
   object, ci.lvl = 0.95, digits = 4, format = "simple", classifiers = NULL,
-  n = 10, ...) {
+  n = 10, ...
+) {
 
   # weights
   if (all(c("autoMrP", "weights") %in% class(object))) {
@@ -1678,8 +1737,10 @@ summary.autoMrP <- function(
     # error message if weights summary called without running
     # multiple classifiers
     if (any(object == "EBMA step skipped (only 1 classifier run)")) {
-      stop("Weights are not reported if the EBMA step was skipped. ",
-      "Re-run autoMrP with multiple classifiers.")
+      stop(
+        "Weights are not reported if the EBMA step was skipped. ",
+        "Re-run autoMrP with multiple classifiers."
+      )
     }
 
     # weights vector to tibble
@@ -1692,7 +1753,8 @@ summary.autoMrP <- function(
       tidyr::pivot_longer(
         cols = dplyr::everything(),
         names_to = "method",
-        values_to = "estimates") %>%
+        values_to = "estimates"
+      ) %>%
       dplyr::group_by(method) %>%
       dplyr::summarise(
         min = base::min(estimates, na.rm = TRUE),
@@ -1701,7 +1763,8 @@ summary.autoMrP <- function(
         mean = base::mean(estimates, na.rm = TRUE),
         quart3 = stats::quantile(x = estimates, probs = 0.75, na.rm = TRUE),
         max = base::max(estimates, na.rm = TRUE),
-        .groups = "drop") %>%
+        .groups = "drop"
+      ) %>%
       dplyr::arrange(dplyr::desc(median))
 
     # weights with uncertainty
@@ -1718,14 +1781,19 @@ summary.autoMrP <- function(
           "Median",
           "Mean",
           "3rd Qu.",
-          "Max"),
+          "Max"
+        ),
         format = format,
-        digits = digits)
+        digits = digits
+      )
       if (n < nrow(s_data)) {
-        cat(paste("... with", nrow(s_data) - n,
-          " more rows", "\n", "\n"), sep = "")
+        cat(
+          paste(
+            "... with", nrow(s_data) - n, " more rows", "\n", "\n"
+          ), sep = ""
+        )
       }
-    } else{
+    } else {
       s_data <- dplyr::select(.data = s_data, method, median)
       n <- ifelse(n <= nrow(s_data), yes = n, no = nrow(s_data))
       cat(paste("\n", "# EBMA classifier weights:"), sep = "")
@@ -1733,13 +1801,19 @@ summary.autoMrP <- function(
         object = s_data[1:n, ],
         col.names = c(
           "Classifier",
-          "Weight"),
+          "Weight"
+        ),
         format = format,
-        digits = digits)
-      if (n < nrow(s_data)) cat(
-        paste(
-          "... with", nrow(s_data)-n,
-          " more rows", "\n", "\n"), sep = "")
+        digits = digits
+      )
+      if (n < nrow(s_data)) {
+        cat(
+          paste(
+            "... with", nrow(s_data) - n,
+            " more rows", "\n", "\n"
+          ), sep = ""
+        )
+      }
     }
   } else if (all(c("autoMrP", "ensemble") %in% class(object))) {
     # ensemble summary
@@ -1755,7 +1829,8 @@ summary.autoMrP <- function(
         lb = stats::quantile(x = ebma, probs = (1 - ci.lvl) * .5, na.rm = TRUE),
         median = stats::quantile(x = ebma, probs = .5, na.rm = TRUE),
         ub = stats::quantile(
-          x = ebma, probs = ci.lvl + (1 - ci.lvl) * .5, na.rm = TRUE),
+          x = ebma, probs = ci.lvl + (1 - ci.lvl) * .5, na.rm = TRUE
+        ),
         max = base::max(ebma, na.rm = TRUE),
         .groups = "drop"
       )
@@ -1772,12 +1847,17 @@ summary.autoMrP <- function(
           "Lower bound",
           "Median",
           "Upper bound",
-          "Max"),
+          "Max"
+        ),
         format = format,
-        digits = digits)
+        digits = digits
+      )
       if (n < nrow(s_data)) {
-        cat(paste(
-          "... with", nrow(s_data)-n, " more rows", "\n", "\n"), sep = "")
+        cat(
+          paste(
+            "... with", nrow(s_data) - n, " more rows", "\n", "\n"
+          ), sep = ""
+        )
       }
     } else {
       s_data <- dplyr::select(.data = s_data, dplyr::one_of(L2.unit), median)
@@ -1787,13 +1867,17 @@ summary.autoMrP <- function(
         object = s_data[1:n, ],
         col.names = c(L2.unit, "Estimate"),
         format = format,
-        digits = digits)
+        digits = digits
+      )
       if (n < nrow(s_data)) {
-        cat(paste(
-          "... with", nrow(s_data)-n, " more rows", "\n", "\n"), sep = "")
+        cat(
+          paste(
+            "... with", nrow(s_data) - n, " more rows", "\n", "\n"
+          ), sep = ""
+        )
       }
     }
-  } else if (all(c("autoMrP", "classifiers") %in% class(object))){
+  } else if (all(c("autoMrP", "classifiers") %in% class(object))) {
     # classifier summary
 
     # unit identifier
@@ -1815,10 +1899,14 @@ summary.autoMrP <- function(
         object = s_data[1:n, ],
         col.names = names(s_data),
         format = format,
-        digits = digits)
+        digits = digits
+      )
       if (n < nrow(s_data)) {
-        cat(paste(
-          "... with", nrow(s_data)-n, " more rows", "\n", "\n"), sep = "")
+        cat(
+          paste(
+            "... with", nrow(s_data) - n, " more rows", "\n", "\n"
+          ), sep = ""
+        )
       }
     } else {
 
@@ -1829,12 +1917,14 @@ summary.autoMrP <- function(
         dplyr::summarise_all(.funs = list(
           min = ~ base::min(x = ., na.rm = TRUE),
           lb = ~ stats::quantile(
-            x = ., probs = (1 - ci.lvl) * .5, na.rm = TRUE),
+            x = ., probs = (1 - ci.lvl) * .5, na.rm = TRUE
+          ),
           median = ~ stats::median(x = ., na.rm = TRUE),
           ub = ~ stats::quantile(
-            x = ., probs = ci.lvl + (1 - ci.lvl) * .5, na.rm = TRUE),
+            x = ., probs = ci.lvl + (1 - ci.lvl) * .5, na.rm = TRUE
+          ),
           max = ~ base::max(x = ., na.rm = TRUE)
-          ))
+        ))
 
       # with or without uncertainty
       if (all(s_data$median != s_data$lb)) {
@@ -1848,47 +1938,60 @@ summary.autoMrP <- function(
             "Lower bound",
             "Median",
             "Upper bound",
-            "Max"),
+            "Max"
+          ),
           format = format,
-          digits = digits)
+          digits = digits
+        )
         if (n < nrow(s_data)) {
-          cat(paste(
-            "... with", nrow(s_data) - n, " more rows", "\n", "\n"), sep = "")
+          cat(
+            paste(
+              "... with", nrow(s_data) - n, " more rows", "\n", "\n"
+            ), sep = ""
+          )
         }
       } else {
         s_data <- dplyr::select(
-          .data = s_data, dplyr::one_of(L2.unit), "median")
+          .data = s_data, dplyr::one_of(L2.unit), "median"
+        )
         n <- ifelse(n <= nrow(s_data), yes = n, no = nrow(s_data))
-        cat( paste("\n", "# estimates of", classifiers, "classifier"), sep = "")
+        cat(paste("\n", "# estimates of", classifiers, "classifier"), sep = "")
         output_table(
           object = s_data[1:n, ],
           col.names = c(L2.unit, "Estimate"),
           format = format,
-          digits = digits)
-        if (n < nrow(s_data)) cat( paste("... with", nrow(s_data)-n, " more rows", "\n", "\n"), sep = "")
+          digits = digits
+        )
+        if (n < nrow(s_data)) {
+          cat(
+            paste(
+              "... with", nrow(s_data) - n, " more rows", "\n", "\n"
+            ), sep = ""
+          )
+        }
       }
     }
-  }
-
-  # autoMrP list object
-  else if ( all(c("autoMrP", "list") %in% class(object)) ){
-
+  } else if (all(c("autoMrP", "list") %in% class(object))) {
+    # autoMrP list object
     # unit identifier
     L2.unit <- names(object$classifiers)[1]
 
     # if EBMA was run
-    if( !"EBMA step skipped (only 1 classifier run)" %in% object$ebma ){
+    if (!"EBMA step skipped (only 1 classifier run)" %in% object$ebma) {
 
       # Summarize EBMA or classifier specified in classifiers argument
-      if( is.null(classifiers)) {
+      if (is.null(classifiers)) {
         s_data <- object$ebma
-      } else{
+      } else {
         # check whether classifier was fitted
-        if( !classifiers %in% names(object$classifiers) ){
-          stop( classifiers, " was not fitted. Summary available for: ", paste(names(object$classifiers)[-1], collapse = ", "))
+        if (!classifiers %in% names(object$classifiers)) {
+          stop(
+            classifiers, " was not fitted. Summary available for: ",
+            paste(names(object$classifiers)[-1], collapse = ", ")
+          )
         }
         s_data <- object$classifiers %>%
-          dplyr::select( dplyr::one_of(L2.unit, classifiers) )
+          dplyr::select(dplyr::one_of(L2.unit, classifiers))
       }
 
       # summary statistics
@@ -1896,42 +1999,66 @@ summary.autoMrP <- function(
         dplyr::group_by(!! rlang::sym(L2.unit)) %>%
         dplyr::summarise_all(.funs = list(
           min = ~ base::min(x = ., na.rm = TRUE),
-          lb = ~ stats::quantile(x = ., probs = (1 - ci.lvl)*.5, na.rm = TRUE),
-          median = ~ stats::median(x = ., na.rm = TRUE ),
-          ub = ~ stats::quantile(x = ., probs = ci.lvl + (1 - ci.lvl)*.5, na.rm = TRUE),
+          lb = ~ stats::quantile(
+            x = ., probs = (1 - ci.lvl) * .5, na.rm = TRUE
+          ),
+          median = ~ stats::median(x = ., na.rm = TRUE),
+          ub = ~ stats::quantile(
+            x = ., probs = ci.lvl + (1 - ci.lvl)*.5, na.rm = TRUE
+          ),
           max = ~ base::max(x = ., na.rm = TRUE)
         ))
 
       # with or without uncertainty
-      if( all(s_data$median != s_data$lb) ){
-        n <- ifelse(n <= nrow(s_data), yes = n, no = nrow(s_data) )
-        if( is.null(classifiers) ){
-          cat( paste("\n", "# EBMA estimates:"), sep = "")
-        } else{
-          cat( paste("\n", "# ", classifiers, " estimates", sep = ""))
+      if (all(s_data$median != s_data$lb)) {
+        n <- ifelse(n <= nrow(s_data), yes = n, no = nrow(s_data))
+        if (is.null(classifiers)) {
+          cat(paste("\n", "# EBMA estimates:"), sep = "")
+        } else {
+          cat(paste("\n", "# ", classifiers, " estimates", sep = ""))
         }
         output_table(
           object = s_data[1:n, ],
-          col.names = c( L2.unit, "Min.", "Lower bound", "Median", "Upper bound", "Max"),
-        format = format,
-        digits = digits)
-        if (n < nrow(s_data)) cat( paste("... with", nrow(s_data)-n, " more rows", "\n", "\n"), sep = "")
-      } else{
+          col.names = c(
+            L2.unit, "Min.", "Lower bound", "Median", "Upper bound", "Max"
+          ),
+          format = format,
+          digits = digits
+        )
+        if (n < nrow(s_data)) {
+          cat(
+            paste(
+              "... with", nrow(s_data) - n, " more rows", "\n", "\n"
+            ), sep = ""
+          )
+        }
+      } else {
         s_data <- dplyr::select(.data = s_data, dplyr::one_of(L2.unit), median)
-        n <- ifelse(n <= nrow(s_data), yes = n, no = nrow(s_data) )
-        cat( paste("\n", "# EBMA estimates:"), sep = "")
-        output_table(object = s_data[1:n, ], col.names = c(L2.unit, "Median"), format = format, digits = digits)
-        if (n < nrow(s_data)) cat( paste("... with", nrow(s_data)-n, " more rows", "\n", "\n"), sep = "")
+        n <- ifelse(n <= nrow(s_data), yes = n, no = nrow(s_data))
+        cat(paste("\n", "# EBMA estimates:"), sep = "")
+        output_table(
+          object = s_data[1:n, ],
+          col.names = c(L2.unit, "Median"),
+          format = format,
+          digits = digits
+        )
+        if (n < nrow(s_data)) {
+          cat(
+            paste(
+              "... with", nrow(s_data) - n, " more rows", "\n", "\n"
+            ), sep = ""
+          )
+        }
       }
-    } else{
+    } else {
 
-      # Summarize all classifiers or classifier specified in classifiers argument
-      # or MrP model
-      if( is.null(classifiers) ) {
+      # Summarize all classifiers or classifier specified in classifiers
+      # argument or MrP model
+      if (is.null(classifiers)) {
         s_data <- object$classifiers
-      } else{
+      } else {
         s_data <- object$classifiers %>%
-          dplyr::select(dplyr::one_of(L2.unit, classifiers) )
+          dplyr::select(dplyr::one_of(L2.unit, classifiers))
       }
 
       # summary statistics
@@ -1939,69 +2066,132 @@ summary.autoMrP <- function(
         dplyr::group_by(!! rlang::sym(L2.unit)) %>%
         dplyr::summarise_all(.funs = list(
           min = ~ base::min(x = ., na.rm = TRUE),
-          lb = ~ stats::quantile(x = ., probs = (1 - ci.lvl)*.5, na.rm = TRUE),
+          lb = ~ stats::quantile(
+            x = ., probs = (1 - ci.lvl) * .5, na.rm = TRUE
+          ),
           median = ~ stats::median(x = ., na.rm = TRUE),
-          ub = ~ stats::quantile(x = ., probs = ci.lvl + (1 - ci.lvl)*.5, na.rm = TRUE),
+          ub = ~ stats::quantile(
+            x = ., probs = ci.lvl + (1 - ci.lvl)*.5, na.rm = TRUE
+          ),
           max = ~ base::max(x = ., na.rm = TRUE)
         ))
 
       # with or without uncertainty
       comparison <- s_data %>%
-        dplyr::select(dplyr::one_of(grep(
-          pattern = "median", x = names(s_data), value = "TRUE")[1],
-          grep(pattern = "lb", x = names(s_data), value = "TRUE")[1]))
+        dplyr::select(
+          dplyr::one_of(grep(
+            pattern = "median",
+            x = names(s_data),
+            value = "TRUE"
+          )[1],
+          grep(pattern = "lb", x = names(s_data), value = "TRUE")[1])
+        )
 
-        # summarize one classifier
-        if ( sum(grepl(pattern = "best_subset|pca|lasso|gb|svm|mrp", x = names(s_data))) < 4 ){
+      # summarize one classifier
+      if (
+        sum(
+          grepl(
+            pattern = "best_subset|pca|lasso|gb|svm|mrp", x = names(s_data)
+          )
+        ) < 4
+      ) {
 
-          # without uncertainty
-          if( all(comparison[,1] != comparison[,2]) ){
+        # without uncertainty
+        if (all(comparison[, 1] != comparison[, 2])) {
 
-            n <- ifelse(n <= nrow(s_data), yes = n, no = nrow(s_data) )
-            cat( paste("\n", "# ", names(object$classifiers)[2]," estimates:"), sep = "")
-            output_table(
-              object = s_data[1:n, ],
-              col.names = c(
-                L2.unit,
-                "Min.",
-                "Lower bound",
-                "Median",
-                "Upper bound",
-                "Max"),
-              format = format,
-              digits = digits)
-            if (n < nrow(s_data)) cat( paste("... with", nrow(s_data)-n, " more rows", "\n", "\n"), sep = "")
-          } else{
-            n <- ifelse(n <= nrow(s_data), yes = n, no = nrow(s_data) )
-            cat( paste("\n", "# estimates of: ", paste(names(object$classifiers)[-1], collapse = ", ")), sep = "")
-            s_data <- s_data %>%
-              dplyr::select(dplyr::one_of( L2.unit), contains("median"))
-            output_table(
-              object = s_data[1:n, ],
-              col.names = names(s_data),
-              format = format,
-              digits = digits)
-            if (n < nrow(s_data)) cat( paste("... with", nrow(s_data)-n, " more rows", "\n", "\n"), sep = "")
+          n <- ifelse(test = n <= nrow(s_data), yes = n, no = nrow(s_data))
+          cat(
+            paste(
+              "\n", "# ", names(object$classifiers)[2]," estimates:"
+            ), sep = ""
+          )
+          output_table(
+            object = s_data[1:n, ],
+            col.names = c(
+              L2.unit,
+              "Min.",
+              "Lower bound",
+              "Median",
+              "Upper bound",
+              "Max"
+            ),
+            format = format,
+            digits = digits
+          )
+          if (n < nrow(s_data)) {
+            cat(
+              paste(
+                "... with", nrow(s_data)-n, " more rows", "\n", "\n"
+              ), sep = ""
+            )
           }
-
-      } else {
-       # drop uncertainty columns
-        if ( ncol(s_data) < 5 ){
-          s_data <- dplyr::select(.data = s_data, dplyr::one_of(L2.unit), median)
-          n <- ifelse(n <= nrow(s_data), yes = n, no = nrow(s_data) )
-          cat( paste("\n", "# ", names(object$classifiers)[2]," estimates:"), sep = "")
-          output_table(object = s_data[1:n, ], col.names = c(L2.unit, "Estimate"), format = format, digits = digits)
-          if (n < nrow(s_data)) cat( paste("... with", nrow(s_data)-n, " more rows", "\n", "\n"), sep = "")
-        } else{
-          n <- ifelse(n <= nrow(s_data), yes = n, no = nrow(s_data) )
+        } else {
+          n <- ifelse(n <= nrow(s_data), yes = n, no = nrow(s_data))
+          cat(
+            paste(
+              "\n", "# estimates of: ",
+              paste(names(object$classifiers)[-1], collapse = ", ")
+            ), sep = ""
+          )
           s_data <- s_data %>%
-            dplyr::select(dplyr::one_of( L2.unit), contains("median"))
+            dplyr::select(dplyr::one_of(L2.unit), contains("median"))
           output_table(
             object = s_data[1:n, ],
             col.names = names(s_data),
             format = format,
-            digits = digits)
-          if (n < nrow(s_data)) cat( paste("... with", nrow(s_data)-n, " more rows", "\n", "\n"), sep = "")
+            digits = digits
+          )
+          if (n < nrow(s_data)) {
+            cat(
+              paste(
+                "... with", nrow(s_data)-n, " more rows", "\n", "\n"
+              ), sep = ""
+            )
+          }
+        }
+
+      } else {
+        # drop uncertainty columns
+        if (ncol(s_data) < 5) {
+          s_data <- dplyr::select(
+            .data = s_data, dplyr::one_of(L2.unit), median
+          )
+          n <- ifelse(test = n <= nrow(s_data), yes = n, no = nrow(s_data))
+          cat(
+            paste(
+              "\n", "# ", names(object$classifiers)[2]," estimates:"
+            ), sep = ""
+          )
+          output_table(
+            object = s_data[1:n, ],
+            col.names = c(L2.unit, "Estimate"),
+            format = format,
+            digits = digits
+          )
+          if (n < nrow(s_data)) {
+            cat(
+              paste(
+                "... with", nrow(s_data)-n, " more rows", "\n", "\n"
+              ), sep = ""
+            )
+          }
+        } else {
+          n <- ifelse(n <= nrow(s_data), yes = n, no = nrow(s_data))
+          s_data <- s_data %>%
+            dplyr::select(dplyr::one_of(L2.unit), contains("median"))
+          output_table(
+            object = s_data[1:n, ],
+            col.names = names(s_data),
+            format = format,
+            digits = digits
+          )
+          if (n < nrow(s_data)) {
+            cat(
+              paste(
+                "... with", nrow(s_data) - n, " more rows", "\n", "\n"
+              ), sep = ""
+            )
+          }
         }
       }
     }
@@ -2020,14 +2210,16 @@ summary.autoMrP <- function(
 #' @param col.names The column names of the table. A
 #' @return No return value, prints a table to the console.
 
-output_table <- function(object, col.names, format, digits){
-
+output_table <- function(object, col.names, format, digits) {
   # output table
-  print( knitr::kable(x = object,
-                      col.names = col.names,
-                      format = format,
-                      digits = digits))
-
+  print(
+    knitr::kable(
+      x = object,
+      col.names = col.names,
+      format = format,
+      digits = digits
+    )
+  )
 }
 
 
@@ -2045,8 +2237,12 @@ output_table <- function(object, col.names, format, digits){
 #' @return Returns a numeric vector with length specified in argument \code{n}.
 #'   The vector elements are equally spaced on the log-scale.
 
-log_spaced <- function(min, max, n){
-  return(base::exp( base::seq(from = base::log(min), to = base::log(max), length.out = n)))
+log_spaced <- function(min, max, n) {
+  return(
+    base::exp(
+      base::seq(from = base::log(min), to = base::log(max), length.out = n)
+    )
+  )
 }
 
 
@@ -2060,16 +2256,14 @@ log_spaced <- function(min, max, n){
 # Bootstrap function run inside the foreach loop
 
 boot_fun <- function(
-  survey, L2.unit, y, L1.x, L2.x, mrp.L2.x, L2.reg, L2.x.scale,
-  pcs, folds, bin.proportion, bin.size, census, k.folds,
-  cv.sampling, loss.unit, loss.fun, best.subset, lasso, pca,
-  gb, svm, mrp, deep.mrp, best.subset.L2.x,
-  lasso.L2.x, pca.L2.x, pc.names, gb.L2.x, svm.L2.x, svm.L2.unit,
-  svm.L2.reg, gb.L2.unit, gb.L2.reg, deep.L2.x, deep.L2.reg,
-  deep.splines, lasso.lambda, lasso.n.iter, gb.interaction.depth,
-  gb.shrinkage, gb.n.trees.init, gb.n.trees.increase,
-  gb.n.trees.max, gb.n.minobsinnode, svm.kernel, svm.gamma,
-  svm.cost, ebma.tol, ebma.size) {
+  survey, L2.unit, y, L1.x, L2.x, mrp.L2.x, L2.reg, L2.x.scale, pcs, folds,
+  bin.proportion, bin.size, census, k.folds, cv.sampling, loss.unit, loss.fun,
+  best.subset, lasso, pca, gb, svm, mrp, deep.mrp, best.subset.L2.x, lasso.L2.x,
+  pca.L2.x, pc.names, gb.L2.x, svm.L2.x, svm.L2.unit, svm.L2.reg, gb.L2.unit,
+  gb.L2.reg, deep.splines, lasso.lambda, lasso.n.iter, gb.interaction.depth,
+  gb.shrinkage, gb.n.trees.init, gb.n.trees.increase, gb.n.trees.max,
+  gb.n.minobsinnode, svm.kernel, svm.gamma, svm.cost, ebma.tol, ebma.size
+) {
 
   # Bootstrap sample --------------------------------------------------------
 
@@ -2093,7 +2287,8 @@ boot_fun <- function(
       ebma_folding_out <- ebma_folding(
         data = boot_sample,
         L2.unit = L2.unit,
-        ebma.size = ebma.size)
+        ebma.size = ebma.size
+      )
       ebma_fold <- ebma_folding_out$ebma_fold
       cv_data <- ebma_folding_out$cv_data
     } else {
@@ -2106,20 +2301,25 @@ boot_fun <- function(
       data = cv_data,
       L2.unit = L2.unit,
       k.folds = k.folds,
-      cv.sampling = cv.sampling)
+      cv.sampling = cv.sampling
+    )
   } else {
 
     if (ebma.size > 0) {
       # EBMA hold-out fold
       ebma_fold <- boot_sample %>%
-        dplyr::filter_at(dplyr::vars(dplyr::one_of(folds)),
-                         dplyr::any_vars(. == k.folds + 1))
+        dplyr::filter_at(
+          dplyr::vars(dplyr::one_of(folds)),
+          dplyr::any_vars(. == k.folds + 1)
+        )
     }
 
     # K folds for cross-validation
     cv_data <- boot_sample %>%
-      dplyr::filter_at(dplyr::vars(dplyr::one_of(folds)),
-                       dplyr::any_vars(. != k.folds + 1))
+      dplyr::filter_at(
+        dplyr::vars(dplyr::one_of(folds)),
+        dplyr::any_vars(. != k.folds + 1)
+      )
 
     cv_folds <- cv_data %>%
       dplyr::group_split(.data[[folds]])
@@ -2169,8 +2369,6 @@ boot_fun <- function(
     svm.L2.reg = svm.L2.reg,
     gb.L2.unit = gb.L2.unit,
     gb.L2.reg = gb.L2.reg,
-    deep.L2.x = deep.L2.x,
-    deep.L2.reg = deep.L2.reg,
     deep.splines = deep.splines,
     lasso.lambda = lasso.lambda,
     lasso.n.iter = lasso.n.iter,

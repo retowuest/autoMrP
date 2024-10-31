@@ -30,6 +30,7 @@ error_checks(
   mrp,
   best.subset.L2.x,
   lasso.L2.x,
+  deep.mrp,
   gb.L2.x,
   svm.L2.x,
   mrp.L2.x,
@@ -37,6 +38,7 @@ error_checks(
   gb.L2.reg,
   lasso.lambda,
   lasso.n.iter,
+  deep.splines,
   uncertainty,
   boot.iter
 )
@@ -173,6 +175,11 @@ containing the column names of the context-level variables in
 \code{NULL} and \code{lasso} is set to \code{TRUE}, then lasso uses the
 variables specified in \code{L2.x}. Default is \code{NULL}.}
 
+\item{deep.mrp}{Deep MRP classifier. A logical argument indicating whether
+the deep MRP classifier should be used for best subset prediction. Setting
+\code{deep.mrp = TRUE} will include all interactions of L1.x in the best
+subset classifier. Default is \code{FALSE}.}
+
 \item{gb.L2.x}{GB context-level covariates. A character vector containing the
 column names of the context-level variables in \code{survey} and
 \code{census} to be used by the GB classifier. If \code{NULL} and \code{gb}
@@ -211,6 +218,9 @@ number of values is controlled by the \code{lasso.n.iter} parameter.}
 specifying the number of lambda values to search over. Default is
 \eqn{100}. \emph{Note:} Is ignored if a vector of \code{lasso.lambda}
 values is provided.}
+
+\item{deep.splines}{Deep MRP splines. A logical argument indicating whether
+splines should be used in the deep MRP classifier. Default is \code{TRUE}.}
 
 \item{uncertainty}{Uncertainty estimates. A logical argument indicating
 whether uncertainty estimates should be computed. Default is \code{FALSE}.}

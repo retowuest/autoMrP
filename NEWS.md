@@ -1,3 +1,7 @@
+# autoMrP 1.1.0
+
++ implements stacking
+
 # autoMrP 1.0.6
 
 + implements Deep MrP by Gopelrud as presented in https://doi.org/10.1017/S0003055423000035

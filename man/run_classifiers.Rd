@@ -43,8 +43,6 @@ run_classifiers(
   gb.L2.reg,
   svm.L2.unit,
   svm.L2.reg,
-  deep.L2.x,
-  deep.L2.reg,
   deep.splines,
   lasso.lambda,
   lasso.n.iter,
@@ -204,8 +202,9 @@ MRP classifier should be used for predicting outcome \code{y}. Default is
 \code{FALSE}.}
 
 \item{deep.mrp}{Deep MRP classifier. A logical argument indicating whether
-the deep MRP classifier should be used for predicting outcome \code{y}.
-Default is \code{FALSE}.}
+the deep MRP classifier should be used for best subset prediction. Setting
+\code{deep.mrp = TRUE} will include all interactions of L1.x in the best
+subset classifier. Default is \code{FALSE}.}
 
 \item{best.subset.L2.x}{Best subset context-level covariates. A character
 vector containing the column names of the context-level variables in
@@ -253,16 +252,6 @@ the column names of the context-level variables in \code{survey} and
 \item{svm.L2.reg}{SVM L2.reg. A logical argument indicating whether
 \code{L2.reg} should be included in the SVM classifier. Default is
 \code{FALSE}.}
-
-\item{deep.L2.x}{Deep MRP context-level covariates. A character vector
-containing the column names of the context-level variables in \code{survey}
-and \code{census} to be used by the deep MRP classifier. If \code{NULL} and
-\code{deep.mrp} is set to \code{TRUE}, then deep MRP uses the variables
-specified in \code{L2.x}. Default is \code{NULL}.}
-
-\item{deep.L2.reg}{Deep MRP L2.reg. A logical argument indicating whether
-\code{L2.reg} should be included in the deep MRP classifier. Default is
-\code{TRUE}.}
 
 \item{deep.splines}{Deep MRP splines. A logical argument indicating whether
 splines should be used in the deep MRP classifier. Default is \code{TRUE}.}

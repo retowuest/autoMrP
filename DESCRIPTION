@@ -1,7 +1,7 @@
 Package: autoMrP
 Type: Package
 Title: Improving MrP with Ensemble Learning
-Version: 1.0.6
+Version: 1.1.0
 Authors@R: c(
   person(
 		given = "Reto",
@@ -47,10 +47,11 @@ Imports:
 	e1071 (>= 1.7-3), tibble (>= 3.0.1), glmmLasso (>= 1.5.1),
 	EBMAforecast (>= 1.0.0), foreach (>= 1.5.0), doParallel (>= 1.0.15),
 	doRNG (>= 1.8.2), ggplot2 (>= 3.3.2), knitr (>= 1.29), tidyr (>= 1.1.2),
-	purrr (>= 0.3.4), forcats (>= 0.5.1), vglmer (>= 1.0.3), stringr (>= 1.5.0)
+	purrr (>= 0.3.4), forcats (>= 0.5.1), vglmer (>= 1.0.3), stringr (>= 1.5.0),
+	R.rsp (>= 0.46.0), nloptr (>= 2.1.1), quadprog (>= 1.5-8), cli (>= 3.6.3)
 Suggests: R.rsp
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.2
 VignetteBuilder: R.rsp
