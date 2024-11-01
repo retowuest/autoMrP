@@ -136,6 +136,11 @@
 #'   \code{census} to be used by the SVM classifier. If \code{NULL} and
 #'   \code{svm} is set to \code{TRUE}, then SVM uses the variables specified in
 #'   \code{L2.x}. Default is \code{NULL}.
+#' @param knn.L2.x KNN context-level covariates. A character vector containing
+#'   the column names of the context-level variables in \code{survey} and
+#'   \code{census} to be used by the KNN classifier. If \code{NULL} and
+#'   \code{knn} is set to \code{TRUE}, then KNN uses the variables specified in
+#'   \code{L2.x}. Default is \code{NULL}.
 #' @param mrp.L2.x MRP context-level covariates. A character vector containing
 #'   the column names of the context-level variables in \code{survey} and
 #'   \code{census} to be used by the MRP classifier. The character vector
@@ -198,6 +203,8 @@
 #' @param svm.cost SVM cost parameter. A numeric vector whose values specify the
 #'   cost of constraints violation in SVM. Default is a sequence with minimum =
 #'   0.5, maximum = 10, and length = 5 that is equally spaced on the log-scale.
+#' @param knn.k KNN number of neighbors. An integer-valued scalar specifying the
+#'   number of neighbors to be considered in the KNN model. Default is \eqn{7}.
 #' @param ebma.n.draws EBMA number of samples. An integer-valued scalar
 #'   specifying the number of bootstrapped samples to be drawn from the EBMA
 #'   fold and used for tuning EBMA. Default is \eqn{100}.
