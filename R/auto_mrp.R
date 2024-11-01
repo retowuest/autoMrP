@@ -1,11 +1,10 @@
 #' Improve MrP through ensemble learning.
 #'
 #' This package improves the prediction performance of multilevel
-#' regression with post-stratification (MrP) by combining a number of machine
+#' regression and post-stratification (MrP) by combining a number of machine
 #' learning methods through ensemble Bayesian model averaging (EBMA).
 #'
-#' @param y Outcome variable. A character vector containing the column names of
-#'   the outcome variable. A character scalar containing the column name of
+#' @param y Outcome variable. A character scalar containing the column name of
 #'   the outcome variable in \code{survey}.
 #' @param L1.x Individual-level covariates. A character vector containing the
 #'   column names of the individual-level variables in \code{survey} and
@@ -99,6 +98,9 @@
 #' @param svm SVM classifier. A logical argument indicating whether the SVM
 #'   classifier should be used for predicting outcome \code{y}. Default is
 #'   \code{TRUE}.
+#' @param knn KNN classifier. A logical argument indicating whether the KNN
+#'   classifier should be used for predicting outcome \code{y}. Default is
+#'   \code{TRUE}.
 #' @param mrp MRP classifier. A logical argument indicating whether the standard
 #'   MRP classifier should be used for predicting outcome \code{y}. Default is
 #'   \code{FALSE}.
@@ -106,7 +108,7 @@
 #'   the deep MRP classifier should be used for best subset prediction. Setting
 #'   \code{deep.mrp = TRUE} will include all interactions of L1.x in the best
 #'   subset classifier. Default is \code{FALSE}.
-#' @param oversampling Over sample to create balance on the dependent variable.
+#' @param oversampling Oversample to create balance on the dependent variable.
 #'   A logical argument. Default is \code{FALSE}.
 #' @param best.subset.L2.x Best subset context-level covariates. A character
 #'   vector containing the column names of the context-level variables in
