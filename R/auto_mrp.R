@@ -203,8 +203,9 @@
 #' @param svm.cost SVM cost parameter. A numeric vector whose values specify the
 #'   cost of constraints violation in SVM. Default is a sequence with minimum =
 #'   0.5, maximum = 10, and length = 5 that is equally spaced on the log-scale.
-#' @param knn.k KNN number of neighbors. An integer-valued scalar specifying the
-#'   number of neighbors to be considered in the KNN model. Default is \eqn{7}.
+#' @param knn.k KNN number of neighbors. An integer-valued positive scalar
+#'   specifying the number of neighbors to be considered in the KNN model.
+#'   Default is \eqn{7}.
 #' @param ebma.n.draws EBMA number of samples. An integer-valued scalar
 #'   specifying the number of bootstrapped samples to be drawn from the EBMA
 #'   fold and used for tuning EBMA. Default is \eqn{100}.
