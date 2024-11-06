@@ -349,11 +349,11 @@ auto_MrP <- function(
   # variables to drop missing values on
   drop_na_vars <- c(y, L1.x, L2.x, L2.unit, L2.reg)
 
-  # drop mssing values on survey
+  # drop missing values on survey
   if (any(is.na(survey[, drop_na_vars]))) {
     message(
       "Survey data contains missing values. Missings on any of y, L1.x, L2.x,
-      L2.unit, L2.reg  will be dropped."
+      L2.unit, L2.reg will be dropped."
     )
     # number of rows in data before dropping missings
     old_n <- nrow(survey)
@@ -369,11 +369,11 @@ auto_MrP <- function(
 
   # dependent variable is not in census data
   drop_na_vars <- drop_na_vars[-1]
-  # drop mssing values on census
+  # drop missing values on census
   if (any(is.na(census[, drop_na_vars]))) {
     message(
       "Census data contains missing values. Missings on any of L1.x, L2.x,
-      L2.unit, L2.reg  will be dropped."
+      L2.unit, L2.reg will be dropped."
     )
     # number of rows in data before dropping missings
     old_n <- nrow(census)
@@ -700,7 +700,7 @@ auto_MrP <- function(
       cores = cores, verbose = verbose
     )
 
-    # Boostrapping wrapper ----------------------------------------------------
+    # Bootstrapping wrapper ----------------------------------------------------
 
   } else {
 
