@@ -412,6 +412,7 @@ auto_MrP <- function(
     pca = pca,
     gb = gb,
     svm = svm,
+    knn = knn,
     mrp = mrp,
     deep.mrp = deep.mrp,
     best.subset.L2.x = best.subset.L2.x,
@@ -423,6 +424,7 @@ auto_MrP <- function(
     gb.L2.reg = gb.L2.reg,
     lasso.lambda = lasso.lambda,
     lasso.n.iter = lasso.n.iter,
+    knn.k = knn.k,
     uncertainty = uncertainty,
     boot.iter = boot.iter,
     deep.splines = deep.splines

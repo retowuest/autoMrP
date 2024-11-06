@@ -13,9 +13,9 @@
 error_checks <- function(
   y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs, folds, bin.proportion,
   bin.size, survey, census, ebma.size, k.folds, cv.sampling, loss.unit,
-  loss.fun, best.subset, lasso, pca, gb, svm, mrp, best.subset.L2.x, lasso.L2.x,
+  loss.fun, best.subset, lasso, pca, gb, svm, knn, mrp, best.subset.L2.x, lasso.L2.x,
   deep.mrp, gb.L2.x, svm.L2.x, mrp.L2.x, gb.L2.unit, gb.L2.reg, lasso.lambda,
-  lasso.n.iter, deep.splines, uncertainty, boot.iter
+  lasso.n.iter, knn.k, deep.splines, uncertainty, boot.iter
 ) {
 
   # Check if y is a character scalar
@@ -465,7 +465,7 @@ error_checks <- function(
         }
       }
 
-      # Check if is provided but not a numeric vector
+      # Check if lasso.lambda is provided but not a numeric vector
       if (!is.null(lasso.lambda)){
         if (!is.numeric(lasso.lambda)){
           stop("lasso.lambda must be 'NULL' or a non-negative numeric vector.")
@@ -669,6 +669,59 @@ error_checks <- function(
     }
   } else {
     stop(paste("The logical argument 'svm', indicating whether the SVM",
+               " classifier is to be used for predicting y,",
+               " must be either TRUE or FALSE.", sep = ""))
+  }
+
+  # Check if knn is logical
+  if (is.logical(knn)) {
+    # Check if knn is TRUE
+    if (isTRUE(knn)) {
+      # Check if knn.L2.x is NULL
+      if (!is.null(knn.L2.x)) {
+        # Check if knn.L2.x is a character vector
+        if (!is.character(knn.L2.x)) {
+          stop(paste("The argument 'knn.L2.x', specifying the context-level",
+                     " variables to be used by the KNN classifier, must be",
+                     " a character vector.", sep = ""))
+        }
+
+        # Check if knn.L2.x is in survey data
+        if (!all(knn.L2.x %in% colnames(survey))) {
+          stop(cat(paste("Context-level variable '",
+                         knn.L2.x[which(!(knn.L2.x %in% colnames(survey)))],
+                         "', specified in argument 'knn.L2.x' to be used by the",
+                         " KNN classifier, is not in your survey data.", sep = ""),
+                   sep = ""))
+        }
+
+        # Check if knn.L2.x is in census data
+        if (!all(knn.L2.x %in% colnames(census))) {
+          stop(cat(paste("Context-level variable '",
+                         knn.L2.x[which(!(knn.L2.x %in% colnames(census)))],
+                         "', specified in argument 'knn.L2.x' to be used by the",
+                         " KNN classifier, is not in your census data.", sep = ""),
+                   sep = ""))
+        }
+      }
+
+      # Check if knn.k is NULL
+      if (!is.null(knn.k)) {
+        if (!(dplyr::near(knn.k, as.integer(knn.k)) &
+              (length(knn.k) == 1) & (knn.k > 0))) {
+          stop("knn.k specifies the number of neighbors to be considered in the KNN model. It must be a positive integer-valued scalar.")
+        }
+      }
+    } else {
+      # Check if knn.L2.x is NULL
+      if (!is.null(knn.L2.x)) {
+        warning(paste("The argument 'knn.L2.x', specifying the context-level",
+                      " variables to be used by the KNN classifier, will be",
+                      " ignored because 'knn' is set to FALSE.", sep = ""))
+      }
+    }
+  } else {
+    stop(paste("The logical argument 'knn', indicating whether the KNN",
                " classifier is to be used for predicting y,",
                " must be either TRUE or FALSE.", sep = ""))
   }
@@ -1352,7 +1405,7 @@ f1_score <- function(pred, data.valid, y, L2.unit) {
           dplyr::summarise(fn = sum(!! rlang::sym(y))) %>%
           dplyr::pull(var = fn)
         # f1 score
-        f1 <- tp / (tp + 0.5 * (fp + fn)) 
+        f1 <- tp / (tp + 0.5 * (fp + fn))
       })) %>%
     # unnest f1 values
     tidyr::unnest(f1) %>%
