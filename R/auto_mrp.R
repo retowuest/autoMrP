@@ -222,8 +222,8 @@
 #' @param verbose Verbose output. A logical argument indicating whether or not
 #'   verbose output should be printed. Default is \code{FALSE}.
 #' @return The context-level predictions. A list with two elements. The first
-#'   element, \code{EBMA}, contains the post-stratified ensemble bayesian model
-#'   avaeraging (EBMA) predictions. The second element, \code{classifiers},
+#'   element, \code{EBMA}, contains the post-stratified ensemble Bayesian model
+#'   averaging (EBMA) predictions. The second element, \code{classifiers},
 #'   contains the post-stratified predictions from all estimated classifiers.
 #' @details Bootstrapping samples the level two units, sometimes referred to as
 #'   the cluster bootstrap. For the multilevel model, for example, when running
