@@ -256,6 +256,7 @@
 #'   pca = FALSE,
 #'   gb = FALSE,
 #'   svm = FALSE,
+#'   knn = FALSE,
 #'   mrp = TRUE
 #' )
 #'
@@ -280,6 +281,7 @@
 #'   pca = FALSE,
 #'   gb = FALSE,
 #'   svm = FALSE,
+#'   knn = FALSE,
 #'   mrp = TRUE
 #'   )
 #'
