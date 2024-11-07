@@ -1,7 +1,7 @@
 #' Optimal individual classifiers
 #'
-#' \code{run_classifiers} tunes classifiers, post-stratifies and carries out
-#' EMBA.
+#' \code{run_classifiers} tunes classifiers, post-stratifies, and carries out
+#' EBMA.
 #'
 #' @inheritParams auto_MrP
 #' @param cv.folds Data for cross-validation. A \code{list} of \eqn{k}
@@ -20,9 +20,10 @@ run_classifiers <- function(
   ebma.n.draws, k.folds, cv.sampling, loss.unit, loss.fun, best.subset,
   lasso, pca, gb, svm, knn, mrp, deep.mrp, best.subset.L2.x, lasso.L2.x, pca.L2.x,
   gb.L2.x, svm.L2.x, knn.L2.x, gb.L2.unit, gb.L2.reg, svm.L2.unit, svm.L2.reg,
-  deep.splines, lasso.lambda, lasso.n.iter, gb.interaction.depth, gb.shrinkage,
-  gb.n.trees.init, gb.n.trees.increase, gb.n.trees.max, gb.n.minobsinnode,
-  svm.kernel, svm.gamma, svm.cost, knn.k, ebma.tol, cores, verbose
+  knn.L2.unit, knn.L2.reg, deep.splines, lasso.lambda, lasso.n.iter,
+  gb.interaction.depth, gb.shrinkage, gb.n.trees.init, gb.n.trees.increase,
+  gb.n.trees.max, gb.n.minobsinnode, svm.kernel, svm.gamma, svm.cost,
+  knn.k, ebma.tol, cores, verbose
 ) {
 
   # Classifier 1: Best Subset
@@ -349,13 +350,27 @@ run_classifiers <- function(
       knn.L2.x <- L2.x
     }
 
+    # Evaluate inclusion of L2.unit in KNN
+    if (knn.L2.unit) {
+      knn.L2.unit <- L2.unit
+    } else {
+      knn.L2.unit <- NULL
+    }
+
+    # Evaluate inclusion of L2.reg in KNN
+    if (knn.L2.reg) {
+      knn.L2.reg <- L2.reg
+    } else {
+      knn.L2.reg <- NULL
+    }
+
     # Run classifier
     knn_out <- run_knn(
       y = y,
       L1.x = L1.x,
       L2.x = knn.L2.x,
-      L2.unit = L2.unit,
-      L2.reg = L2.reg,
+      L2.unit = knn.L2.unit,
+      L2.reg = knn.L2.reg,
       loss.unit = loss.unit,
       loss.fun = loss.fun,
       k = knn.k,
