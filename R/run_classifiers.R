@@ -289,14 +289,14 @@ run_classifiers <- function(
       svm.L2.x <- L2.x
     }
 
-    # Evaluate inclusion of L2.unit in GB
+    # Evaluate inclusion of L2.unit in SVM
     if (svm.L2.unit) {
       svm.L2.unit <- L2.unit
     } else {
       svm.L2.unit <- NULL
     }
 
-    # Evaluate inclusion of L2.reg in GB
+    # Evaluate inclusion of L2.reg in SVM
     if (isTRUE(svm.L2.reg)) {
       svm.L2.reg <- L2.reg
     } else {
@@ -321,7 +321,7 @@ run_classifiers <- function(
       cores = cores
     )
 
-    # get start time
+    # get end time
     svm_end_time <- Sys.time()
 
     # svm runtime
@@ -332,6 +332,49 @@ run_classifiers <- function(
   } else {
     svm_out <- NULL
     svm_runtime <- NULL
+  }
+
+  # Classifier 6: KNN
+  if (isTRUE(knn)) {
+
+    # get start time
+    knn_start_time <- Sys.time()
+
+    if (verbose) {
+      cli::cli_progress_step("Tuning k-nearest neighbors")
+    }
+
+    # Determine context-level covariates
+    if (is.null(knn.L2.x)) {
+      knn.L2.x <- L2.x
+    }
+
+    # Run classifier
+    knn_out <- run_knn(
+      y = y,
+      L1.x = L1.x,
+      L2.x = knn.L2.x,
+      L2.unit = L2.unit,
+      L2.reg = L2.reg,
+      loss.unit = loss.unit,
+      loss.fun = loss.fun,
+      k = knn.k,
+      data = cv.folds,
+      verbose = verbose,
+      cores = cores
+    )
+
+    # get end time
+    knn_end_time <- Sys.time()
+
+    # knn runtime
+    knn_runtime <- difftime(
+      time1 = knn_end_time, time2 = knn_start_time, units = "mins"
+    )
+
+  } else {
+    knn_out <- NULL
+    knn_runtime <- NULL
   }
 
   # Individual level predictions for all data -------------------------------
