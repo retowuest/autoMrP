@@ -150,15 +150,21 @@
 #'   For the empty MrP model, set \code{L2.x = NULL} and \code{mrp.L2.x = ""}.
 #' @param gb.L2.unit GB L2.unit. A logical argument indicating whether
 #'   \code{L2.unit} should be included in the GB classifier. Default is
-#'   \code{FALSE}.
+#'   \code{TRUE}.
 #' @param gb.L2.reg GB L2.reg. A logical argument indicating whether
 #'   \code{L2.reg} should be included in the GB classifier. Default is
 #'   \code{FALSE}.
 #' @param svm.L2.unit SVM L2.unit. A logical argument indicating whether
 #'   \code{L2.unit} should be included in the SVM classifier. Default is
-#'   \code{FALSE}.
+#'   \code{TRUE}.
 #' @param svm.L2.reg SVM L2.reg. A logical argument indicating whether
 #'   \code{L2.reg} should be included in the SVM classifier. Default is
+#'   \code{FALSE}.
+#' @param knn.L2.unit KNN L2.unit. A logical argument indicating whether
+#'   \code{L2.unit} should be included in the KNN classifier. Default is
+#'   \code{TRUE}.
+#' @param knn.L2.reg KNN L2.reg. A logical argument indicating whether
+#'   \code{L2.reg} should be included in the KNN classifier. Default is
 #'   \code{FALSE}.
 #' @param deep.splines Deep MRP splines. A logical argument indicating whether
 #'  splines should be used in the deep MRP classifier. Default is \code{TRUE}.
@@ -304,6 +310,7 @@
 #'   census = taxes_census,
 #'   gb.L2.reg = TRUE,
 #'   svm.L2.reg = TRUE,
+#'   knn.L2.reg = TRUE,
 #'   cores = min(2, max_cores)
 #'   )
 #' }
@@ -329,6 +336,7 @@ auto_MrP <- function(
   best.subset.L2.x = NULL, lasso.L2.x = NULL, pca.L2.x = NULL,
   gb.L2.x = NULL, svm.L2.x = NULL, knn.L2.x = NULL, mrp.L2.x = NULL,
   gb.L2.unit = TRUE, gb.L2.reg = FALSE, svm.L2.unit = TRUE, svm.L2.reg = FALSE,
+  knn.L2.unit = TRUE, knn.L2.reg = FALSE,
   deep.splines = TRUE,
   lasso.lambda = NULL, lasso.n.iter = 100,
   gb.interaction.depth = c(1, 2, 3),
@@ -422,6 +430,8 @@ auto_MrP <- function(
     mrp.L2.x = mrp.L2.x,
     gb.L2.unit = gb.L2.unit,
     gb.L2.reg = gb.L2.reg,
+    knn.L2.unit = knn.L2.unit,
+    knn.L2.reg = knn.L2.reg,
     lasso.lambda = lasso.lambda,
     lasso.n.iter = lasso.n.iter,
     knn.k = knn.k,
@@ -689,9 +699,10 @@ auto_MrP <- function(
       gb = gb, svm = svm, knn = knn, mrp = mrp, deep.mrp = deep.mrp,
       best.subset.L2.x = best.subset.L2.x,
       lasso.L2.x = lasso.L2.x, pca.L2.x = pca.L2.x, pc.names = pc_names,
-      gb.L2.x = gb.L2.x, svm.L2.x = svm.L2.x, svm.L2.unit = svm.L2.unit,
-      svm.L2.reg = svm.L2.reg, gb.L2.unit = gb.L2.unit, gb.L2.reg = gb.L2.reg,
-      knn.L2.x = knn.L2.x, deep.splines = deep.splines,
+      gb.L2.x = gb.L2.x, gb.L2.unit = gb.L2.unit, gb.L2.reg = gb.L2.reg,
+      svm.L2.x = svm.L2.x, svm.L2.unit = svm.L2.unit, svm.L2.reg = svm.L2.reg,
+      knn.L2.x = knn.L2.x, knn.L2.unit = knn.L2.unit, knn.L2.reg = knn.L2.reg,
+      deep.splines = deep.splines,
       lasso.lambda = lasso.lambda, lasso.n.iter = lasso.n.iter,
       gb.interaction.depth = gb.interaction.depth,
       gb.shrinkage = gb.shrinkage, gb.n.trees.init = gb.n.trees.init,
@@ -742,11 +753,11 @@ auto_MrP <- function(
       pca.L2.x = pca.L2.x,
       pc.names = pc_names,
       gb.L2.x = gb.L2.x,
+      gb.L2.unit = gb.L2.unit,
+      gb.L2.reg = gb.L2.reg,
       svm.L2.x = svm.L2.x,
       svm.L2.unit = svm.L2.unit,
       svm.L2.reg = svm.L2.reg,
-      gb.L2.unit = gb.L2.unit,
-      gb.L2.reg = gb.L2.reg,
       deep.splines = deep.splines,
       lasso.lambda = lasso.lambda,
       lasso.n.iter = lasso.n.iter,
