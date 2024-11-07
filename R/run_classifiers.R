@@ -373,7 +373,7 @@ run_classifiers <- function(
       L2.reg = knn.L2.reg,
       loss.unit = loss.unit,
       loss.fun = loss.fun,
-      k = knn.k,
+      knn.k = knn.k,
       data = cv.folds,
       verbose = verbose,
       cores = cores
