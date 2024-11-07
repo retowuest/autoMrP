@@ -13,8 +13,9 @@
 error_checks <- function(
   y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs, folds, bin.proportion,
   bin.size, survey, census, ebma.size, k.folds, cv.sampling, loss.unit,
-  loss.fun, best.subset, lasso, pca, gb, svm, knn, mrp, best.subset.L2.x, lasso.L2.x,
-  deep.mrp, gb.L2.x, svm.L2.x, knn.L2.x, mrp.L2.x, gb.L2.unit, gb.L2.reg, lasso.lambda,
+  loss.fun, best.subset, lasso, pca, gb, svm, knn, mrp, best.subset.L2.x,
+  lasso.L2.x, deep.mrp, gb.L2.x, svm.L2.x, knn.L2.x, mrp.L2.x,
+  gb.L2.unit, gb.L2.reg, knn.L2.unit, knn.L2.reg, lasso.lambda,
   lasso.n.iter, knn.k, deep.splines, uncertainty, boot.iter
 ) {
 
@@ -705,6 +706,20 @@ error_checks <- function(
         }
       }
 
+      # Check if knn.L2.unit is logical
+      if (!is.logical(knn.L2.unit)) {
+        stop(paste("The logical argument 'knn.L2.unit', indicating whether",
+                   " 'L2.unit' should be included in the KNN classifier must be",
+                   " either TRUE or FALSE.", sep = ""))
+      }
+
+      # Check if knn.L2.reg is logical
+      if (!is.logical(knn.L2.reg)) {
+        stop(paste("The logical argument 'knn.L2.reg', indicating whether",
+                   " 'L2.reg' should be included in the KNN classifier must be",
+                   " either TRUE or FALSE.", sep = ""))
+      }
+
       # Check if knn.k is NULL
       if (!is.null(knn.k)) {
         if (!(dplyr::near(knn.k, as.integer(knn.k)) &
@@ -718,6 +733,20 @@ error_checks <- function(
         warning(paste("The argument 'knn.L2.x', specifying the context-level",
                       " variables to be used by the KNN classifier, will be",
                       " ignored because 'knn' is set to FALSE.", sep = ""))
+      }
+
+      # Check if knn.L2.unit has a value other than the default
+      if (!isFALSE(knn.L2.unit)) {
+        stop(paste("The argument 'knn.L2.unit', indicating whether 'L2.unit'",
+                   " should be included in the KNN classifier, will be",
+                   " ignored because 'KNN' is set to FALSE.", sep = ""))
+      }
+
+      # Check if knn.L2.reg has a value other than the default
+      if (!isFALSE(knn.L2.reg)) {
+        stop(paste("The argument 'knn.L2.reg', indicating whether 'L2.reg'",
+                   " should be included in the KNN classifier, will be",
+                   " ignored because 'KNN' is set to FALSE.", sep = ""))
       }
     }
   } else {
