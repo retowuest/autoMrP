@@ -14,7 +14,7 @@ error_checks <- function(
   y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs, folds, bin.proportion,
   bin.size, survey, census, ebma.size, k.folds, cv.sampling, loss.unit,
   loss.fun, best.subset, lasso, pca, gb, svm, knn, mrp, best.subset.L2.x, lasso.L2.x,
-  deep.mrp, gb.L2.x, svm.L2.x, mrp.L2.x, gb.L2.unit, gb.L2.reg, lasso.lambda,
+  deep.mrp, gb.L2.x, svm.L2.x, knn.L2.x, mrp.L2.x, gb.L2.unit, gb.L2.reg, lasso.lambda,
   lasso.n.iter, knn.k, deep.splines, uncertainty, boot.iter
 ) {
 
