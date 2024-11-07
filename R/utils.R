@@ -610,11 +610,11 @@ error_checks <- function(
       }
 
       # Check if gb.L2.unit has a value other than the default
-      # if (!isFALSE(gb.L2.unit)) {
-      #   stop(paste("The argument 'gb.L2.unit', indicating whether 'L2.unit'",
-      #              " should be included in the GB classifier, will be",
-      #              " ignored because 'gb' is set to FALSE.", sep = ""))
-      # }
+      if (!isFALSE(gb.L2.unit)) {
+        stop(paste("The argument 'gb.L2.unit', indicating whether 'L2.unit'",
+                   " should be included in the GB classifier, will be",
+                   " ignored because 'gb' is set to FALSE.", sep = ""))
+      }
 
       # Check if gb.L2.reg has a value other than the default
       if (!isFALSE(gb.L2.reg)) {
