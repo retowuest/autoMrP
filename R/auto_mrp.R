@@ -209,11 +209,11 @@
 #' @param svm.cost SVM cost parameter. A numeric vector whose values specify the
 #'   cost of constraints violation in SVM. Default is a sequence with minimum =
 #'   0.5, maximum = 10, and length = 5 that is equally spaced on the log-scale.
-#' @param knn.k.max KNN maximum number of neighbors. An integer-valued scalar
-#'   specifying the maximum number of neighbors to be considered in the KNN
-#'   model if \code{knn.k} is \code{NULL}. If \code{knn.k.max} is specified and
-#'   \code{knn.k} is \code{NULL}, then the number of neighbors considered is the
-#'   sequence \code{1:knn.k.max}. Default is \code{11}.
+#' @param knn.k.max KNN maximum number of neighbors. An positive integer-valued
+#'   scalar specifying the maximum number of neighbors to be considered in the
+#'   KNN model if \code{knn.k} is \code{NULL}. If \code{knn.k.max} is specified
+#'   and \code{knn.k} is \code{NULL}, then the number of neighbors considered is
+#'   the sequence \code{1:knn.k.max}. Default is \code{11}.
 #' @param knn.k KNN number of neighbors. A \code{vector} of positive integers
 #'   specifying the number of neighbors to be considered in the KNN model. If
 #'   not \code{NULL}, \code{knn.k} takes precedence over \code{knn.k.max}.
