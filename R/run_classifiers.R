@@ -23,7 +23,7 @@ run_classifiers <- function(
   knn.L2.unit, knn.L2.reg, deep.splines, lasso.lambda, lasso.n.iter,
   gb.interaction.depth, gb.shrinkage, gb.n.trees.init, gb.n.trees.increase,
   gb.n.trees.max, gb.n.minobsinnode, svm.kernel, svm.gamma, svm.cost,
-  knn.k, ebma.tol, cores, verbose
+  knn.k.max, knn.k, knn.kernel, ebma.tol, cores, verbose
 ) {
 
   # Classifier 1: Best Subset
@@ -373,7 +373,9 @@ run_classifiers <- function(
       L2.reg = knn.L2.reg,
       loss.unit = loss.unit,
       loss.fun = loss.fun,
+      knn.k.max = knn.k.max,
       knn.k = knn.k,
+      knn.kernel = knn.kernel,
       data = cv.folds,
       verbose = verbose,
       cores = cores
