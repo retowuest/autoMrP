@@ -209,9 +209,21 @@
 #' @param svm.cost SVM cost parameter. A numeric vector whose values specify the
 #'   cost of constraints violation in SVM. Default is a sequence with minimum =
 #'   0.5, maximum = 10, and length = 5 that is equally spaced on the log-scale.
-#' @param knn.k KNN number of neighbors. An integer-valued positive scalar
-#'   specifying the number of neighbors to be considered in the KNN model.
-#'   Default is \eqn{7}.
+#' @param knn.k.max KNN maximum number of neighbors. An integer-valued scalar
+#'   specifying the maximum number of neighbors to be considered in the KNN
+#'   model if \code{knn.k} is \code{NULL}. If \code{knn.k.max} is specified and
+#'   \code{knn.k} is \code{NULL}, then the number of neighbors considered is the
+#'   sequence \code{1:knn.k.max}. Default is \code{11}.
+#' @param knn.k KNN number of neighbors. A \code{vector} of positive integers
+#'   specifying the number of neighbors to be considered in the KNN model. If
+#'   not \code{NULL}, \code{knn.k} takes precedence over \code{knn.k.max}.
+#'   Default is \code{NULL}.
+#' @param knn.kernel KNN kernel. A character-valued scalar specifying the kernel
+#'   to be used in the KNN model. The possible values are \code{rectangular}
+#'   (which is standard unweighted KNN), \code{triangular}, \code{epanechnikov}
+#'   (or beta(2,2)), \code{biweight} (or beta(3,3)), \code{triweight} (or
+#'   beta(4,4)), \code{cos}, \code{inv}, \code{gaussian}, and \code{optimal}.
+#'   Default is \code{optimal}.
 #' @param ebma.n.draws EBMA number of samples. An integer-valued scalar
 #'   specifying the number of bootstrapped samples to be drawn from the EBMA
 #'   fold and used for tuning EBMA. Default is \eqn{100}.
@@ -344,7 +356,7 @@ auto_MrP <- function(
   gb.n.trees.init = 50, gb.n.trees.increase = 50,
   gb.n.trees.max = 1000, gb.n.minobsinnode = 20,
   svm.kernel = c("radial"), svm.gamma = NULL, svm.cost = NULL,
-  knn.k = 7,
+  knn.k.max = 11, knn.k = NULL, knn.kernel = c("optimal"),
   ebma.n.draws = 100,
   ebma.tol = c(0.01, 0.005, 0.001, 0.0005, 0.0001, 0.00005, 0.00001),
   verbose = FALSE, uncertainty = FALSE, boot.iter = NULL
@@ -434,7 +446,9 @@ auto_MrP <- function(
     knn.L2.reg = knn.L2.reg,
     lasso.lambda = lasso.lambda,
     lasso.n.iter = lasso.n.iter,
+    knn.k.max = knn.k.max,
     knn.k = knn.k,
+    knn.kernel = knn.kernel,
     uncertainty = uncertainty,
     boot.iter = boot.iter,
     deep.splines = deep.splines
@@ -710,7 +724,8 @@ auto_MrP <- function(
       gb.n.trees.max = gb.n.trees.max,
       gb.n.minobsinnode = gb.n.minobsinnode,
       svm.kernel = svm.kernel, svm.gamma = svm.gamma, svm.cost = svm.cost,
-      knn.k = knn.k, ebma.tol = ebma.tol, ebma.n.draws = ebma.n.draws,
+      knn.k.max = knn.k.max, knn.k = knn.k, knn.kernel = knn.kernel,
+      ebma.tol = ebma.tol, ebma.n.draws = ebma.n.draws,
       cores = cores, verbose = verbose
     )
 
