@@ -16,7 +16,8 @@ error_checks <- function(
   loss.fun, best.subset, lasso, pca, gb, svm, knn, mrp, best.subset.L2.x,
   lasso.L2.x, deep.mrp, gb.L2.x, svm.L2.x, knn.L2.x, mrp.L2.x,
   gb.L2.unit, gb.L2.reg, knn.L2.unit, knn.L2.reg, lasso.lambda,
-  lasso.n.iter, knn.k, deep.splines, uncertainty, boot.iter
+  lasso.n.iter, knn.k.max, knn.k, knn.kernel, deep.splines, uncertainty,
+  boot.iter
 ) {
 
   # Check if y is a character scalar
@@ -720,12 +721,35 @@ error_checks <- function(
                    " either TRUE or FALSE.", sep = ""))
       }
 
+      # Check if knn.k.max is NULL
+      if (!is.null(knn.k.max)) {
+        if (!(dplyr::near(knn.k.max, as.integer(knn.k.max)) &
+              (length(knn.k.max) == 1) & (knn.k.max > 0))) {
+          stop("'knn.k.max' specifies the maximum number of neighbors to be considered in the KNN model. It must be a positive integer-valued scalar.")
+        }
+      }
+
       # Check if knn.k is NULL
       if (!is.null(knn.k)) {
-        if (!(dplyr::near(knn.k, as.integer(knn.k)) &
-              (length(knn.k) == 1) & (knn.k > 0))) {
-          stop("knn.k specifies the number of neighbors to be considered in the KNN model. It must be a positive integer-valued scalar.")
+        if (!(all(dplyr::near(knn.k, as.integer(knn.k))) &
+              (all(knn.k > 0)) & (class(knn.k) %in% c("numeric", "integer")))) {
+          stop("'knn.k' specifies the number of neighbors to be considered in the KNN model. It must be a vector of positive integer values.")
         }
+
+        if (!is.null(knn.k.max)) {
+          warning("The argument 'knn.k.max' will be ignored because 'knn.k' is specified.")
+        }
+      }
+
+      # Check if knn.kernel is correctly specified
+      if (!(knn.kernel %in% c("rectangular", "triangular", "epanechnikov",
+                              "biweight", "triweight", "cos", "inv", "gaussian",
+                              "optimal"))) {
+        stop(paste("'knn.kernel' specifies the kernel to be used in the KNN",
+                   " model. It must be a character-valued scalar taking one of",
+                   " the following values: 'rectangular', 'triangular',",
+                   " 'epanechnikov', 'biweight', 'triweight', 'cos', 'inv',",
+                   " 'gaussian', or 'optimal'.", sep = ""))
       }
     } else {
       # Check if knn.L2.x is NULL
