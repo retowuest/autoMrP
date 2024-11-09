@@ -22,3 +22,36 @@
 #'   verbose output should be printed.
 #' @return The k-nearest neighbors model. A \code{\link[kknn]{kknn}} object.
 
+knn_classifier <- function(
+    y, form, data.train, data.valid, knn.k.value,
+    knn.kernel = c("rectangular", "triangular", "epanechnikov", "biweight",
+                   "triweight", "cos", "inv", "gaussian", "optimal"),
+    verbose = c(TRUE, FALSE)
+) {
+
+  # Train and evaluate model using the supplied value of k
+  if (isTRUE(verbose)) {
+    out <- kknn::kknn(
+      formula = form,
+      train = data.train,
+      test = data.valid,
+      k = knn.k.value,
+      kernel = knn.kernel,
+      scale = TRUE
+    )
+  } else {
+    out <- suppressMessages(suppressWarnings(
+      kknn::kknn(
+        formula = form,
+        train = data.train,
+        test = data.valid,
+        k = knn.k.value,
+        kernel = knn.kernel,
+        scale = TRUE
+      )
+    ))
+  }
+
+  # Function output
+  return(out)
+}
