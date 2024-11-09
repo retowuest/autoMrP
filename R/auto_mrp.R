@@ -545,7 +545,7 @@ auto_MrP <- function(
   census <- tibble::as_tibble(x = census)
 
   # add interactions to survey and census data if deep.mrp is TRUE
-  if (deep.mrp) {
+  if (isTRUE(deep.mrp)) {
 
     # generate all interactions of L1.x
     l1_comb <- unlist(lapply(2:length(L1.x), function(x) {
