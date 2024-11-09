@@ -1,10 +1,11 @@
 # generates out of sample predictions from the tuned classifiers
 get_predictions <- function(
   y, L1.x, L2.x, L2.unit, L2.reg, best.subset.opt, lasso.opt, lasso.L2.x,
-  pca.opt, gb.opt, svm.opt, svm.L2.reg, svm.L2.unit, svm.L2.x, mrp.include,
-  n.minobsinnode, L2.unit.include, L2.reg.include, kernel, mrp.L2.x, deep.mrp,
-  deep.splines, data, ebma.fold, verbose, cv.sampling, k.folds = k.folds,
-  all_data = TRUE
+  pca.opt, gb.opt, svm.opt, svm.L2.reg, svm.L2.unit, svm.L2.x,
+  knn.opt, knn.L2.reg, knn.L2.unit, knn.L2.x, mrp.include,
+  n.minobsinnode, L2.unit.include, L2.reg.include, kernel, knn.kernel,
+  mrp.L2.x, deep.mrp, deep.splines, data, ebma.fold, verbose, cv.sampling,
+  k.folds = k.folds, all_data = TRUE
 ) {
 
   message("this only works for binary dependent variables for now")
@@ -120,7 +121,33 @@ get_predictions <- function(
     # Create model formula
     x <- paste(c(L1.x, svm.L2.x, svm.L2.unit, svm.L2.reg), collapse = " + ")
     form_svm <- as.formula(paste("y_svm ~ ", x, sep = ""))
+  }
 
+  # KNN
+  if (!is.null(knn.opt)) {
+
+    # Determine context-level covariates
+    if (is.null(knn.L2.x)) {
+      knn.L2.x <- L2.x
+    }
+
+    # Evaluate inclusion of L2.unit in KNN
+    if (isTRUE(knn.L2.unit)) {
+      knn.L2.unit <- L2.unit
+    } else {
+      knn.L2.unit <- NULL
+    }
+
+    # Evaluate inclusion of L2.reg in KNN
+    if (isTRUE(knn.L2.reg)) {
+      knn.L2.reg <- L2.reg
+    } else {
+      knn.L2.reg <- NULL
+    }
+
+    # Create model formula
+    x <- paste(c(L1.x, knn.L2.x, knn.L2.unit, knn.L2.reg), collapse = " + ")
+    form_knn <- as.formula(paste(y, " ~ ", x, sep = ""))
   }
 
   # mrp
@@ -337,7 +364,7 @@ get_predictions <- function(
     # 5) svm
     if (!is.null(svm.opt)) {
 
-      # fit gbm model
+      # fit svm model
       svm <- svm_classifier(
         y = "y_svm",
         form = form_svm,
@@ -372,8 +399,27 @@ get_predictions <- function(
 
     }
 
-    # 6) mrp
-    if (isTRUE(mrp.include == TRUE)) {
+    # 6) knn
+    if (!is.null(knn.opt)) {
+
+      # fit knn model
+      knn <- knn_classifier(
+        y = y,
+        form = form_knn,
+        data.train = data_train,
+        data.valid = data_valid,
+        knn.k.value = knn.opt,
+        knn.kernel = knn.kernel,
+        verbose = verbose
+      )
+
+      # predictions on validation set
+      knn_preds <- knn$fitted.values
+
+    }
+
+    # 7) mrp
+    if (isTRUE(mrp.include)) {
 
       # fit mrp model
       mrp <- best_subset_classifier(
@@ -419,6 +465,9 @@ get_predictions <- function(
     }
     if (exists("svm_preds")) {
       preds <- dplyr::mutate(.data = preds, svm = svm_preds)
+    }
+    if (exists("knn_preds")) {
+      preds <- dplyr::mutate(.data = preds, knn = knn_preds)
     }
     if (exists("mrp_preds")) {
       preds <- dplyr::mutate(.data = preds, mrp = mrp_preds)
