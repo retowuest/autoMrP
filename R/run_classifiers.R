@@ -524,6 +524,7 @@ run_classifiers <- function(
     lasso.opt = lasso_out,
     gb.opt = gb_out,
     svm.opt = svm_out,
+    knn.opt = knn_out,
     deep.mrp = deep.mrp,
     pc.names = pc.names,
     verbose = verbose,
