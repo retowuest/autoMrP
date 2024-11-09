@@ -53,7 +53,7 @@ svm_classifier <- function(
   }
 
   # Train and evaluate model using the supplied set of tuning parameters
-  if (isTRUE(verbose == TRUE)) {
+  if (isTRUE(verbose)) {
     out <- e1071::svm(
       formula = form,
       data = data,
