@@ -11,6 +11,8 @@
 #'   classifier A list returned by \code{run_gb()}.
 #' @param svm.opt Optimal tuning parameters from support vector machine
 #'   classifier A list returned by \code{run_svm()}.
+#' @param knn.opt Optimal tuning parameters from k-nearest neighbors
+#'   classifier A list returned by \code{knn_svm()}.
 #' @param mrp.include Whether to run MRP classifier. A logical argument
 #'   indicating whether the standard MRP classifier should be used for
 #'   predicting outcome \code{y}. Passed from \code{autoMrP()} argument
@@ -36,9 +38,10 @@
 
 post_stratification <- function(
   y, L1.x, L2.x, L2.unit, L2.reg, best.subset.opt, lasso.opt, lasso.L2.x,
-  pca.opt, gb.opt, svm.opt, svm.L2.reg, svm.L2.unit, svm.L2.x, mrp.include,
-  n.minobsinnode, L2.unit.include, L2.reg.include, kernel, mrp.L2.x,
-  data, ebma.fold, census, verbose, deep.mrp, deep.splines
+  pca.opt, gb.opt, svm.opt, knn.opt, svm.L2.reg, svm.L2.unit, svm.L2.x,
+  knn.L2.reg, knn.L2.unit, knn.L2.x, mrp.include, n.minobsinnode,
+  L2.unit.include, L2.reg.include, kernel, knn.kernel, mrp.L2.x, data,
+  ebma.fold, census, verbose, deep.mrp, deep.splines
 ) {
 
   # globals
@@ -46,6 +49,7 @@ post_stratification <- function(
   pca <- NULL
   gb <- NULL
   svm <- NULL
+  knn <- NULL
   mrp <- NULL
   best_subset <- NULL
 
@@ -421,14 +425,14 @@ post_stratification <- function(
   if (!is.null(gb.opt)) {
 
     # Evaluate inclusion of L2.unit
-    if (isTRUE(L2.unit.include == TRUE)) {
+    if (isTRUE(L2.unit.include)) {
       L2.unit.gb <- L2.unit
     } else {
       L2.unit.gb <- NULL
     }
 
     # Evaluate inclusion of L2.reg
-    if (isTRUE(L2.reg.include == TRUE)) {
+    if (isTRUE(L2.reg.include)) {
       L2.reg.gb <- L2.reg
     } else {
       L2.reg.gb <- NULL
@@ -496,14 +500,14 @@ post_stratification <- function(
       svm.L2.x <- L2.x
     }
 
-    # Evaluate inclusion of L2.unit in GB
+    # Evaluate inclusion of L2.unit in SVM
     if (isTRUE(svm.L2.unit)) {
       svm.L2.unit <- L2.unit
     } else {
       svm.L2.unit <- NULL
     }
 
-    # Evaluate inclusion of L2.reg in GB
+    # Evaluate inclusion of L2.reg in SVM
     if (isTRUE(svm.L2.reg)) {
       svm.L2.reg <- L2.reg
     } else {
@@ -623,7 +627,72 @@ post_stratification <- function(
     models$svm <- svm_opt_ebma
   }
 
-  # Classifier 6: MRP
+  # Classifier 6: KNN
+  if (!is.null(knn.opt)) {
+
+    # Determine context-level covariates
+    if (is.null(knn.L2.x)) {
+      knn.L2.x <- L2.x
+    }
+
+    # Evaluate inclusion of L2.unit in KNN
+    if (isTRUE(knn.L2.unit)) {
+      knn.L2.unit <- L2.unit
+    } else {
+      knn.L2.unit <- NULL
+    }
+
+    # Evaluate inclusion of L2.reg in KNN
+    if (isTRUE(knn.L2.reg)) {
+      knn.L2.reg <- L2.reg
+    } else {
+      knn.L2.reg <- NULL
+    }
+
+    # Create model formula
+    x <- paste(c(L1.x, knn.L2.x, knn.L2.unit, knn.L2.reg), collapse = " + ")
+    form_knn <- as.formula(paste(y, " ~ ", x, sep = ""))
+
+    # Fit optimal model for EBMA
+    knn_opt_ebma <- knn_classifier(
+      y = y,
+      form = form_knn,
+      data.train = data,
+      data.valid = census,
+      knn.k.value = knn.opt,
+      knn.kernel = knn.kernel,
+      verbose = verbose
+    )
+
+    # Fit optimal model for post-stratification w/o EBMA
+    knn_opt_poststrat_only <- knn_classifier(
+      y = y,
+      form = form_knn,
+      data.train = no_ebma_data,
+      data.valid = census,
+      knn.k.value = knn.opt,
+      knn.kernel = knn.kernel,
+      verbose = verbose
+    )
+
+    # post-stratification
+    knn_preds <- census %>%
+      dplyr::mutate(knn = knn_opt_poststrat_only$fitted.values) %>%
+      dplyr::group_by(!! rlang::sym(L2.unit)) %>%
+      dplyr::summarize(
+        knn = stats::weighted.mean(x = knn, w = prop), .groups = "keep"
+      ) %>%
+      dplyr::ungroup()
+
+    # individual level predictions for EBMA
+    knn_ind <- knn_opt_ebma$fitted.values
+
+    # model for EBMA
+    models$knn <- knn_opt_ebma
+
+  }
+
+  # Classifier 7: MRP
   # Fit model
   if (isTRUE(mrp.include == TRUE)) {
 
@@ -748,6 +817,13 @@ post_stratification <- function(
       by = L2.unit
     )
   }
+  if (exists("knn_preds")) {
+    L2_preds <- dplyr::left_join(
+      x = L2_preds,
+      y = knn_preds,
+      by = L2.unit
+    )
+  }
   if (exists("mrp_preds")) {
     L2_preds <- dplyr::left_join(
       x = L2_preds,
@@ -788,6 +864,12 @@ post_stratification <- function(
       # add svm
       svm = if (exists("svm_ind")) {
         as.numeric(svm_ind)
+      } else {
+        NA
+      },
+      # add knn
+      knn = if (exists("knn_ind")) {
+        as.numeric(knn_ind)
       } else {
         NA
       },
