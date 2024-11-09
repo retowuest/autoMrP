@@ -36,7 +36,7 @@ lasso_classifier <- function(
   }
 
   # Train model on training data with lambda as tuning parameter
-  if (isTRUE(verbose == TRUE)) {
+  if (isTRUE(verbose)) {
     out <- glmmLasso::glmmLasso(
       fix = L2.fix,
       rnd = L1.re,
