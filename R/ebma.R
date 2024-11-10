@@ -29,11 +29,13 @@
 #'   \code{run_gb()}.
 #' @param svm.opt Tuned support vector machine parameters. A list returned from
 #'   \code{run_svm()}.
+#' @param knn.opt Tuned k-nearest neighbors parameters. A list returned from
+#'   \code{run_knn()}.
 
 ebma <- function(
   ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names, post.strat, n.draws, tol,
-  best.subset.opt, pca.opt, lasso.opt, gb.opt, svm.opt, deep.mrp, verbose,
-  cores, preds_all
+  best.subset.opt, pca.opt, lasso.opt, gb.opt, svm.opt, knn.opt, deep.mrp,
+  verbose, cores, preds_all
 ) {
 
   # Run EBMA if at least two classifiers selected
@@ -44,7 +46,7 @@ ebma <- function(
   ) {
 
     if (verbose) {
-      message("Starting bayesian ensemble model averaging tuning")
+      message("Starting ensemble Bayesian model averaging tuning")
     }
 
     # dependent variable type
@@ -59,7 +61,7 @@ ebma <- function(
       dv_type <- "linear"
     }
 
-    # EBMA wihtout L2.x variables
+    # EBMA w/o L2.x variables
     if (all(L2.x == "")) L2.x <- NULL
 
     # Models
@@ -68,6 +70,7 @@ ebma <- function(
     model_lasso <- post.strat$models$lasso
     model_gb <- post.strat$models$gb
     model_svm <- post.strat$models$svm
+    model_knn <- post.strat$models$knn
     model_mrp <- post.strat$models$mrp
 
     # Training predictions
@@ -95,6 +98,7 @@ ebma <- function(
         model.lasso = model_lasso,
         model.gb = model_gb,
         model.svm = model_svm,
+        model.knn = model_knn,
         model.mrp = model_mrp,
         tol = tol,
         n.draws = n.draws,
@@ -582,7 +586,7 @@ ebma_mc_tol <- function(
 
 ebma_mc_draws <- function(
   train.preds, train.y, ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg,
-  pc.names, model.bs, model.pca, model.lasso, model.gb, model.svm,
+  pc.names, model.bs, model.pca, model.lasso, model.gb, model.svm, model.knn,
   model.mrp, tol, n.draws, cores, preds_all, post.strat, dv_type, deep.mrp
 ) {
 
@@ -716,6 +720,17 @@ ebma_mc_draws <- function(
             newdata = test
           )
         }
+      } else {
+        NA
+      },
+      knn = if (!is.null(model.knn)) {
+        # To continue
+        #gbm::predict.gbm(
+          #object = model.gb,
+          #newdata = test,
+          #n.trees = model.gb$n.trees,
+          #type = "response"
+        #)
       } else {
         NA
       },
