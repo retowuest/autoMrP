@@ -579,6 +579,7 @@ run_classifiers <- function(
     pca = pca_runtime,
     gb = gb_runtime,
     svm = svm_runtime,
+    knn = knn_runtime,
     individual_level_predictions = preds_all_runtime,
     post_stratification = ps_runtime,
     ebma = ebma_runtime,
