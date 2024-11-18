@@ -18,9 +18,9 @@ run_classifiers <- function(
   y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg, L2.x.scale, pcs, pc.names, folds,
   bin.proportion, bin.size, cv.folds, cv.data, ebma.fold, census, ebma.size,
   ebma.n.draws, k.folds, cv.sampling, loss.unit, loss.fun, best.subset,
-  lasso, pca, gb, svm, knn, mrp, deep.mrp, best.subset.L2.x, lasso.L2.x, pca.L2.x,
-  gb.L2.x, svm.L2.x, knn.L2.x, gb.L2.unit, gb.L2.reg, svm.L2.unit, svm.L2.reg,
-  knn.L2.unit, knn.L2.reg, deep.splines, lasso.lambda, lasso.n.iter,
+  lasso, pca, gb, svm, knn, mrp, deep.mrp, best.subset.L2.x, lasso.L2.x,
+  pca.L2.x, gb.L2.x, svm.L2.x, knn.L2.x, gb.L2.unit, gb.L2.reg, svm.L2.unit,
+  svm.L2.reg, knn.L2.unit, knn.L2.reg, deep.splines, lasso.lambda, lasso.n.iter,
   gb.interaction.depth, gb.shrinkage, gb.n.trees.init, gb.n.trees.increase,
   gb.n.trees.max, gb.n.minobsinnode, svm.kernel, svm.gamma, svm.cost,
   knn.k.max, knn.k, knn.kernel, ebma.tol, cores, verbose

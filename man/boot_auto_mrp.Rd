@@ -58,8 +58,7 @@ boot_auto_mrp(
 )
 }
 \arguments{
-\item{y}{Outcome variable. A character vector containing the column names of
-the outcome variable. A character scalar containing the column name of
+\item{y}{Outcome variable. A character scalar containing the column name of
 the outcome variable in \code{survey}.}
 
 \item{L1.x}{Individual-level covariates. A character vector containing the
@@ -226,7 +225,7 @@ the column names of the context-level variables in \code{survey} and
 
 \item{svm.L2.unit}{SVM L2.unit. A logical argument indicating whether
 \code{L2.unit} should be included in the SVM classifier. Default is
-\code{FALSE}.}
+\code{TRUE}.}
 
 \item{svm.L2.reg}{SVM L2.reg. A logical argument indicating whether
 \code{L2.reg} should be included in the SVM classifier. Default is
@@ -234,7 +233,7 @@ the column names of the context-level variables in \code{survey} and
 
 \item{gb.L2.unit}{GB L2.unit. A logical argument indicating whether
 \code{L2.unit} should be included in the GB classifier. Default is
-\code{FALSE}.}
+\code{TRUE}.}
 
 \item{gb.L2.reg}{GB L2.reg. A logical argument indicating whether
 \code{L2.reg} should be included in the GB classifier. Default is

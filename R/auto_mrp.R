@@ -334,6 +334,7 @@
 #' @importFrom rlang .data
 #' @importFrom foreach %dopar%
 #' @importFrom doRNG %dorng%
+#' @importFrom kknn contr.dummy
 
 auto_MrP <- function(
   y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE, pcs = NULL,
@@ -439,6 +440,7 @@ auto_MrP <- function(
     lasso.L2.x = lasso.L2.x,
     gb.L2.x = gb.L2.x,
     svm.L2.x = svm.L2.x,
+    knn.L2.x = knn.L2.x,
     mrp.L2.x = mrp.L2.x,
     gb.L2.unit = gb.L2.unit,
     gb.L2.reg = gb.L2.reg,
@@ -711,14 +713,13 @@ auto_MrP <- function(
       cv.sampling = cv.sampling, loss.unit = loss.unit, loss.fun = loss.fun,
       best.subset = best.subset, lasso = lasso, pca = pca,
       gb = gb, svm = svm, knn = knn, mrp = mrp, deep.mrp = deep.mrp,
-      best.subset.L2.x = best.subset.L2.x,
-      lasso.L2.x = lasso.L2.x, pca.L2.x = pca.L2.x, pc.names = pc_names,
-      gb.L2.x = gb.L2.x, gb.L2.unit = gb.L2.unit, gb.L2.reg = gb.L2.reg,
-      svm.L2.x = svm.L2.x, svm.L2.unit = svm.L2.unit, svm.L2.reg = svm.L2.reg,
-      knn.L2.x = knn.L2.x, knn.L2.unit = knn.L2.unit, knn.L2.reg = knn.L2.reg,
-      deep.splines = deep.splines,
-      lasso.lambda = lasso.lambda, lasso.n.iter = lasso.n.iter,
-      gb.interaction.depth = gb.interaction.depth,
+      best.subset.L2.x = best.subset.L2.x, lasso.L2.x = lasso.L2.x,
+      pca.L2.x = pca.L2.x, pc.names = pc_names, gb.L2.x = gb.L2.x,
+      gb.L2.unit = gb.L2.unit, gb.L2.reg = gb.L2.reg, svm.L2.x = svm.L2.x,
+      svm.L2.unit = svm.L2.unit, svm.L2.reg = svm.L2.reg, knn.L2.x = knn.L2.x,
+      knn.L2.unit = knn.L2.unit, knn.L2.reg = knn.L2.reg,
+      deep.splines = deep.splines, lasso.lambda = lasso.lambda,
+      lasso.n.iter = lasso.n.iter, gb.interaction.depth = gb.interaction.depth,
       gb.shrinkage = gb.shrinkage, gb.n.trees.init = gb.n.trees.init,
       gb.n.trees.increase = gb.n.trees.increase,
       gb.n.trees.max = gb.n.trees.max,

@@ -605,29 +605,36 @@ error_checks <- function(
     } else {
       # Check if gb.L2.x is NULL
       if (!is.null(gb.L2.x)) {
-        warning(paste("The argument 'gb.L2.x', specifying the context-level",
-                      " variables to be used by the GB classifier, will be",
-                      " ignored because 'gb' is set to FALSE.", sep = ""))
+        warning(
+          "The argument 'gb.L2.x', specifying the context-level variables to",
+          " be used by the GB classifier, will be ignored because 'gb' is set",
+          " to FALSE."
+        )
       }
 
       # Check if gb.L2.unit has a value other than the default
       if (!isFALSE(gb.L2.unit)) {
-        warning(paste("The argument 'gb.L2.unit', indicating whether 'L2.unit'",
-                      " should be included in the GB classifier, will be",
-                      " ignored because 'gb' is set to FALSE.", sep = ""))
+        warning(
+          "The argument 'gb.L2.unit', indicating whether 'L2.unit' should be",
+          " included in the GB classifier, will be ignored because 'gb' is set",
+          " to FALSE."
+        )
       }
 
       # Check if gb.L2.reg has a value other than the default
       if (!isFALSE(gb.L2.reg)) {
-        warning(paste("The argument 'gb.L2.reg', indicating whether 'L2.reg'",
-                      " should be included in the GB classifier, will be",
-                      " ignored because 'gb' is set to FALSE.", sep = ""))
+        warning(
+          "The argument 'gb.L2.reg', indicating whether 'L2.reg' should be",
+          " included in the GB classifier, will be ignored because 'gb' is set",
+          " to FALSE."
+        )
       }
     }
   } else {
-    stop(paste("The logical argument 'gb', indicating whether the GB",
-               " classifier is to be used for predicting y,",
-               " must be either TRUE or FALSE.", sep = ""))
+    stop(
+      "The logical argument 'gb', indicating whether the GB classifier is to",
+      " be used for predicting y, must be either TRUE or FALSE."
+    )
   }
 
   # Check if svm is logical
@@ -638,41 +645,48 @@ error_checks <- function(
       if (!is.null(svm.L2.x)) {
         # Check if svm.L2.x is a character vector
         if (!is.character(svm.L2.x)) {
-          stop(paste("The argument 'svm.L2.x', specifying the context-level",
-                     " variables to be used by the SVM classifier, must be",
-                     " a character vector.", sep = ""))
+          stop(
+            "The argument 'svm.L2.x', specifying the context-level",
+            " variables to be used by the SVM classifier, must be",
+            " a character vector."
+          )
         }
 
         # Check if svm.L2.x is in survey data
         if (!all(svm.L2.x %in% colnames(survey))) {
-          stop(cat(paste("Context-level variable '",
-                         svm.L2.x[which(!(svm.L2.x %in% colnames(survey)))],
-                         "', specified in argument 'svm.L2.x' to be used by the",
-                         " SVM classifier, is not in your survey data.", sep = ""),
-                   sep = ""))
+          stop(
+            "Context-level variable '",
+            svm.L2.x[which(!(svm.L2.x %in% colnames(survey)))],
+            "', specified in argument 'svm.L2.x' to be used by the SVM ",
+            " classifier, is not in your survey data."
+          )
         }
 
         # Check if svm.L2.x is in census data
         if (!all(svm.L2.x %in% colnames(census))) {
-          stop(cat(paste("Context-level variable '",
-                         svm.L2.x[which(!(svm.L2.x %in% colnames(census)))],
-                         "', specified in argument 'svm.L2.x' to be used by the",
-                         " SVM classifier, is not in your census data.", sep = ""),
-                   sep = ""))
+          stop(
+            "Context-level variable '",
+            svm.L2.x[which(!(svm.L2.x %in% colnames(census)))],
+            "', specified in argument 'svm.L2.x' to be used by the SVM ",
+            " classifier, is not in your census data."
+          )
         }
       }
     } else {
       # Check if svm.L2.x is NULL
       if (!is.null(svm.L2.x)) {
-        warning(paste("The argument 'svm.L2.x', specifying the context-level",
-                      " variables to be used by the SVM classifier, will be",
-                      " ignored because 'svm' is set to FALSE.", sep = ""))
+        warning(
+          "The argument 'svm.L2.x', specifying the context-level variables to",
+          " be used by the SVM classifier, will be ignored because 'svm' is",
+          " set to FALSE."
+        )
       }
     }
   } else {
-    stop(paste("The logical argument 'svm', indicating whether the SVM",
-               " classifier is to be used for predicting y,",
-               " must be either TRUE or FALSE.", sep = ""))
+    stop(
+      "The logical argument 'svm', indicating whether the SVM classifier is to",
+      " be used for predicting y, must be either TRUE or FALSE."
+    )
   }
 
   # Check if knn is logical
@@ -683,100 +697,137 @@ error_checks <- function(
       if (!is.null(knn.L2.x)) {
         # Check if knn.L2.x is a character vector
         if (!is.character(knn.L2.x)) {
-          stop(paste("The argument 'knn.L2.x', specifying the context-level",
-                     " variables to be used by the KNN classifier, must be",
-                     " a character vector.", sep = ""))
+          stop(
+            "The argument 'knn.L2.x', specifying the context-level",
+            " variables to be used by the KNN classifier, must be",
+            " a character vector."
+          )
         }
 
         # Check if knn.L2.x is in survey data
         if (!all(knn.L2.x %in% colnames(survey))) {
-          stop(cat(paste("Context-level variable '",
-                         knn.L2.x[which(!(knn.L2.x %in% colnames(survey)))],
-                         "', specified in argument 'knn.L2.x' to be used by the",
-                         " KNN classifier, is not in your survey data.", sep = ""),
-                   sep = ""))
+          stop(
+            "Context-level variable '",
+            knn.L2.x[which(!(knn.L2.x %in% colnames(survey)))],
+            "', specified in argument 'knn.L2.x' to be used by the KNN ",
+            "classifier, is not in your survey data."
+          )
         }
 
         # Check if knn.L2.x is in census data
         if (!all(knn.L2.x %in% colnames(census))) {
-          stop(cat(paste("Context-level variable '",
-                         knn.L2.x[which(!(knn.L2.x %in% colnames(census)))],
-                         "', specified in argument 'knn.L2.x' to be used by the",
-                         " KNN classifier, is not in your census data.", sep = ""),
-                   sep = ""))
+          stop(
+            "Context-level variable '",
+            knn.L2.x[which(!(knn.L2.x %in% colnames(census)))],
+            "', specified in argument 'knn.L2.x' to be used by the KNN ",
+            "classifier, is not in your census data."
+          )
         }
       }
 
       # Check if knn.L2.unit is logical
       if (!is.logical(knn.L2.unit)) {
-        stop(paste("The logical argument 'knn.L2.unit', indicating whether",
-                   " 'L2.unit' should be included in the KNN classifier must be",
-                   " either TRUE or FALSE.", sep = ""))
+        stop(
+          "The logical argument 'knn.L2.unit', indicating whether 'L2.unit'",
+          " should be included in the KNN classifier must be either TRUE or",
+          " FALSE."
+        )
       }
 
       # Check if knn.L2.reg is logical
       if (!is.logical(knn.L2.reg)) {
-        stop(paste("The logical argument 'knn.L2.reg', indicating whether",
-                   " 'L2.reg' should be included in the KNN classifier must be",
-                   " either TRUE or FALSE.", sep = ""))
+        stop(
+          "The logical argument 'knn.L2.reg', indicating whether",
+          " 'L2.reg' should be included in the KNN classifier must be",
+          " either TRUE or FALSE."
+        )
       }
 
       # Check if knn.k.max is NULL
       if (!is.null(knn.k.max)) {
-        if (!(dplyr::near(knn.k.max, as.integer(knn.k.max)) &
-              (length(knn.k.max) == 1) & (knn.k.max > 0))) {
-          stop("'knn.k.max' specifies the maximum number of neighbors to be considered in the KNN model. It must be a positive integer-valued scalar.")
+        if (!(
+          dplyr::near(knn.k.max, as.integer(knn.k.max)) &&
+            (length(knn.k.max) == 1) && (knn.k.max > 0)
+        )) {
+          stop(
+            "'knn.k.max' specifies the maximum number of neighbors to be",
+            " considered in the KNN model. It must be a positive",
+            " integer-valued scalar."
+          )
         }
       }
 
       # Check if knn.k is NULL
       if (!is.null(knn.k)) {
-        if (!(all(dplyr::near(knn.k, as.integer(knn.k))) &
-              (all(knn.k > 0)) & (class(knn.k) %in% c("numeric", "integer")))) {
-          stop("'knn.k' specifies the number of neighbors to be considered in the KNN model. It must be a vector of positive integer values.")
+        if (
+          !(
+            all(dplyr::near(knn.k, as.integer(knn.k))) &&
+              (all(knn.k > 0)) && (class(knn.k) %in% c("numeric", "integer"))
+          )
+        ) {
+          stop(
+            "'knn.k' specifies the number of neighbors to be considered in the",
+            " KNN model. It must be a vector of positive integer values."
+          )
         }
 
         if (!is.null(knn.k.max)) {
-          warning("The argument 'knn.k.max' will be ignored because 'knn.k' is specified.")
+          warning(
+            "The argument 'knn.k.max' will be ignored because 'knn.k' is",
+            " specified."
+          )
         }
       }
 
       # Check if knn.kernel is correctly specified
-      if (!(knn.kernel %in% c("rectangular", "triangular", "epanechnikov",
-                              "biweight", "triweight", "cos", "inv", "gaussian",
-                              "optimal"))) {
-        stop(paste("'knn.kernel' specifies the kernel to be used in the KNN",
-                   " model. It must be a character-valued scalar taking one of",
-                   " the following values: 'rectangular', 'triangular',",
-                   " 'epanechnikov', 'biweight', 'triweight', 'cos', 'inv',",
-                   " 'gaussian', or 'optimal'.", sep = ""))
+      if (
+        !(knn.kernel %in% c(
+          "rectangular", "triangular", "epanechnikov", "biweight", "triweight",
+          "cos", "inv", "gaussian", "optimal"
+        ))
+      ) {
+        stop(
+          "'knn.kernel' specifies the kernel to be used in the KNN",
+          " model. It must be a character-valued scalar taking one of",
+          " the following values: 'rectangular', 'triangular',",
+          " 'epanechnikov', 'biweight', 'triweight', 'cos', 'inv',",
+          " 'gaussian', or 'optimal'."
+        )
       }
     } else {
       # Check if knn.L2.x is NULL
       if (!is.null(knn.L2.x)) {
-        warning(paste("The argument 'knn.L2.x', specifying the context-level",
-                      " variables to be used by the KNN classifier, will be",
-                      " ignored because 'knn' is set to FALSE.", sep = ""))
+        warning(
+          "The argument 'knn.L2.x', specifying the context-level",
+          " variables to be used by the KNN classifier, will be",
+          " ignored because 'knn' is set to FALSE."
+        )
       }
 
       # Check if knn.L2.unit has a value other than the default
       if (!isFALSE(knn.L2.unit)) {
-        warning(paste("The argument 'knn.L2.unit', indicating whether 'L2.unit'",
-                      " should be included in the KNN classifier, will be",
-                      " ignored because 'knn' is set to FALSE.", sep = ""))
+        warning(
+          "The argument 'knn.L2.unit', indicating whether 'L2.unit'",
+          " should be included in the KNN classifier, will be",
+          " ignored because 'knn' is set to FALSE."
+        )
       }
 
       # Check if knn.L2.reg has a value other than the default
       if (!isFALSE(knn.L2.reg)) {
-        warning(paste("The argument 'knn.L2.reg', indicating whether 'L2.reg'",
-                      " should be included in the KNN classifier, will be",
-                      " ignored because 'knn' is set to FALSE.", sep = ""))
+        warning(
+          "The argument 'knn.L2.reg', indicating whether 'L2.reg'",
+          " should be included in the KNN classifier, will be",
+          " ignored because 'knn' is set to FALSE."
+        )
       }
     }
   } else {
-    stop(paste("The logical argument 'knn', indicating whether the KNN",
-               " classifier is to be used for predicting y,",
-               " must be either TRUE or FALSE.", sep = ""))
+    stop(
+      "The logical argument 'knn', indicating whether the KNN",
+      " classifier is to be used for predicting y,",
+      " must be either TRUE or FALSE."
+    )
   }
 
   # Check if mrp is logical
@@ -1459,7 +1510,8 @@ f1_score <- function(pred, data.valid, y, L2.unit) {
           dplyr::pull(var = fn)
         # f1 score
         f1 <- tp / (tp + 0.5 * (fp + fn))
-      })) %>%
+      })
+    ) %>%
     # unnest f1 values
     tidyr::unnest(f1) %>%
     dplyr::select(!! rlang::sym(L2.unit), f1) %>%

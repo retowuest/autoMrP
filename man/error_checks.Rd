@@ -27,25 +27,31 @@ error_checks(
   pca,
   gb,
   svm,
+  knn,
   mrp,
   best.subset.L2.x,
   lasso.L2.x,
   deep.mrp,
   gb.L2.x,
   svm.L2.x,
+  knn.L2.x,
   mrp.L2.x,
   gb.L2.unit,
   gb.L2.reg,
+  knn.L2.unit,
+  knn.L2.reg,
   lasso.lambda,
   lasso.n.iter,
+  knn.k.max,
+  knn.k,
+  knn.kernel,
   deep.splines,
   uncertainty,
   boot.iter
 )
 }
 \arguments{
-\item{y}{Outcome variable. A character vector containing the column names of
-the outcome variable. A character scalar containing the column name of
+\item{y}{Outcome variable. A character scalar containing the column name of
 the outcome variable in \code{survey}.}
 
 \item{L1.x}{Individual-level covariates. A character vector containing the
@@ -159,6 +165,10 @@ classifier should be used for predicting outcome \code{y}. Default is
 classifier should be used for predicting outcome \code{y}. Default is
 \code{TRUE}.}
 
+\item{knn}{KNN classifier. A logical argument indicating whether the KNN
+classifier should be used for predicting outcome \code{y}. Default is
+\code{TRUE}.}
+
 \item{mrp}{MRP classifier. A logical argument indicating whether the standard
 MRP classifier should be used for predicting outcome \code{y}. Default is
 \code{FALSE}.}
@@ -192,6 +202,12 @@ the column names of the context-level variables in \code{survey} and
 \code{svm} is set to \code{TRUE}, then SVM uses the variables specified in
 \code{L2.x}. Default is \code{NULL}.}
 
+\item{knn.L2.x}{KNN context-level covariates. A character vector containing
+the column names of the context-level variables in \code{survey} and
+\code{census} to be used by the KNN classifier. If \code{NULL} and
+\code{knn} is set to \code{TRUE}, then KNN uses the variables specified in
+\code{L2.x}. Default is \code{NULL}.}
+
 \item{mrp.L2.x}{MRP context-level covariates. A character vector containing
 the column names of the context-level variables in \code{survey} and
 \code{census} to be used by the MRP classifier. The character vector
@@ -202,10 +218,18 @@ For the empty MrP model, set \code{L2.x = NULL} and \code{mrp.L2.x = ""}.}
 
 \item{gb.L2.unit}{GB L2.unit. A logical argument indicating whether
 \code{L2.unit} should be included in the GB classifier. Default is
-\code{FALSE}.}
+\code{TRUE}.}
 
 \item{gb.L2.reg}{GB L2.reg. A logical argument indicating whether
 \code{L2.reg} should be included in the GB classifier. Default is
+\code{FALSE}.}
+
+\item{knn.L2.unit}{KNN L2.unit. A logical argument indicating whether
+\code{L2.unit} should be included in the KNN classifier. Default is
+\code{TRUE}.}
+
+\item{knn.L2.reg}{KNN L2.reg. A logical argument indicating whether
+\code{L2.reg} should be included in the KNN classifier. Default is
 \code{FALSE}.}
 
 \item{lasso.lambda}{Lasso penalty parameter. A numeric \code{vector} of
@@ -218,6 +242,24 @@ number of values is controlled by the \code{lasso.n.iter} parameter.}
 specifying the number of lambda values to search over. Default is
 \eqn{100}. \emph{Note:} Is ignored if a vector of \code{lasso.lambda}
 values is provided.}
+
+\item{knn.k.max}{KNN maximum number of neighbors. An positive integer-valued
+scalar specifying the maximum number of neighbors to be considered in the
+KNN model if \code{knn.k} is \code{NULL}. If \code{knn.k.max} is specified
+and \code{knn.k} is \code{NULL}, then the number of neighbors considered is
+the sequence \code{1:knn.k.max}. Default is \code{11}.}
+
+\item{knn.k}{KNN number of neighbors. A \code{vector} of positive integers
+specifying the number of neighbors to be considered in the KNN model. If
+not \code{NULL}, \code{knn.k} takes precedence over \code{knn.k.max}.
+Default is \code{NULL}.}
+
+\item{knn.kernel}{KNN kernel. A character-valued scalar specifying the kernel
+to be used in the KNN model. The possible values are \code{rectangular}
+(which is standard unweighted KNN), \code{triangular}, \code{epanechnikov}
+(or beta(2,2)), \code{biweight} (or beta(3,3)), \code{triweight} (or
+beta(4,4)), \code{cos}, \code{inv}, \code{gaussian}, and \code{optimal}.
+Default is \code{optimal}.}
 
 \item{deep.splines}{Deep MRP splines. A logical argument indicating whether
 splines should be used in the deep MRP classifier. Default is \code{TRUE}.}

@@ -19,6 +19,7 @@ ebma_mc_draws(
   model.lasso,
   model.gb,
   model.svm,
+  model.knn,
   model.mrp,
   tol,
   n.draws,
@@ -39,8 +40,7 @@ vector.}
 \item{ebma.fold}{New data for EBMA tuning. A list containing the the data
 that must not have been used in classifier training.}
 
-\item{y}{Outcome variable. A character vector containing the column names of
-the outcome variable. A character scalar containing the column name of
+\item{y}{Outcome variable. A character scalar containing the column name of
 the outcome variable in \code{survey}.}
 
 \item{L1.x}{Individual-level covariates. A character vector containing the

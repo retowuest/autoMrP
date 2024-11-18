@@ -103,7 +103,9 @@ run_best_subset <- function(
   best_params <- dplyr::slice(
     loss_score_ranking(
       score = grid_cells,
-      loss.fun = loss.fun), 1)
+      loss.fun = loss.fun
+    ), 1
+  )
 
   # Choose best-performing model
   out <- models[[dplyr::pull(.data = best_params, var = model)]]

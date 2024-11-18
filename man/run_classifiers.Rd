@@ -32,6 +32,7 @@ run_classifiers(
   pca,
   gb,
   svm,
+  knn,
   mrp,
   deep.mrp,
   best.subset.L2.x,
@@ -39,10 +40,13 @@ run_classifiers(
   pca.L2.x,
   gb.L2.x,
   svm.L2.x,
+  knn.L2.x,
   gb.L2.unit,
   gb.L2.reg,
   svm.L2.unit,
   svm.L2.reg,
+  knn.L2.unit,
+  knn.L2.reg,
   deep.splines,
   lasso.lambda,
   lasso.n.iter,
@@ -55,14 +59,16 @@ run_classifiers(
   svm.kernel,
   svm.gamma,
   svm.cost,
+  knn.k.max,
+  knn.k,
+  knn.kernel,
   ebma.tol,
   cores,
   verbose
 )
 }
 \arguments{
-\item{y}{Outcome variable. A character vector containing the column names of
-the outcome variable. A character scalar containing the column name of
+\item{y}{Outcome variable. A character scalar containing the column name of
 the outcome variable in \code{survey}.}
 
 \item{L1.x}{Individual-level covariates. A character vector containing the
@@ -197,6 +203,10 @@ classifier should be used for predicting outcome \code{y}. Default is
 classifier should be used for predicting outcome \code{y}. Default is
 \code{TRUE}.}
 
+\item{knn}{KNN classifier. A logical argument indicating whether the KNN
+classifier should be used for predicting outcome \code{y}. Default is
+\code{TRUE}.}
+
 \item{mrp}{MRP classifier. A logical argument indicating whether the standard
 MRP classifier should be used for predicting outcome \code{y}. Default is
 \code{FALSE}.}
@@ -237,9 +247,15 @@ the column names of the context-level variables in \code{survey} and
 \code{svm} is set to \code{TRUE}, then SVM uses the variables specified in
 \code{L2.x}. Default is \code{NULL}.}
 
+\item{knn.L2.x}{KNN context-level covariates. A character vector containing
+the column names of the context-level variables in \code{survey} and
+\code{census} to be used by the KNN classifier. If \code{NULL} and
+\code{knn} is set to \code{TRUE}, then KNN uses the variables specified in
+\code{L2.x}. Default is \code{NULL}.}
+
 \item{gb.L2.unit}{GB L2.unit. A logical argument indicating whether
 \code{L2.unit} should be included in the GB classifier. Default is
-\code{FALSE}.}
+\code{TRUE}.}
 
 \item{gb.L2.reg}{GB L2.reg. A logical argument indicating whether
 \code{L2.reg} should be included in the GB classifier. Default is
@@ -247,10 +263,18 @@ the column names of the context-level variables in \code{survey} and
 
 \item{svm.L2.unit}{SVM L2.unit. A logical argument indicating whether
 \code{L2.unit} should be included in the SVM classifier. Default is
-\code{FALSE}.}
+\code{TRUE}.}
 
 \item{svm.L2.reg}{SVM L2.reg. A logical argument indicating whether
 \code{L2.reg} should be included in the SVM classifier. Default is
+\code{FALSE}.}
+
+\item{knn.L2.unit}{KNN L2.unit. A logical argument indicating whether
+\code{L2.unit} should be included in the KNN classifier. Default is
+\code{TRUE}.}
+
+\item{knn.L2.reg}{KNN L2.reg. A logical argument indicating whether
+\code{L2.reg} should be included in the KNN classifier. Default is
 \code{FALSE}.}
 
 \item{deep.splines}{Deep MRP splines. A logical argument indicating whether
@@ -308,6 +332,24 @@ maximum = 1e-1, and length = 20 that is equally spaced on the log-scale.}
 cost of constraints violation in SVM. Default is a sequence with minimum =
 0.5, maximum = 10, and length = 5 that is equally spaced on the log-scale.}
 
+\item{knn.k.max}{KNN maximum number of neighbors. An positive integer-valued
+scalar specifying the maximum number of neighbors to be considered in the
+KNN model if \code{knn.k} is \code{NULL}. If \code{knn.k.max} is specified
+and \code{knn.k} is \code{NULL}, then the number of neighbors considered is
+the sequence \code{1:knn.k.max}. Default is \code{11}.}
+
+\item{knn.k}{KNN number of neighbors. A \code{vector} of positive integers
+specifying the number of neighbors to be considered in the KNN model. If
+not \code{NULL}, \code{knn.k} takes precedence over \code{knn.k.max}.
+Default is \code{NULL}.}
+
+\item{knn.kernel}{KNN kernel. A character-valued scalar specifying the kernel
+to be used in the KNN model. The possible values are \code{rectangular}
+(which is standard unweighted KNN), \code{triangular}, \code{epanechnikov}
+(or beta(2,2)), \code{biweight} (or beta(3,3)), \code{triweight} (or
+beta(4,4)), \code{cos}, \code{inv}, \code{gaussian}, and \code{optimal}.
+Default is \code{optimal}.}
+
 \item{ebma.tol}{EBMA tolerance. A numeric vector containing the
 tolerance values for improvements in the log-likelihood before the EM
 algorithm stops optimization. Values should range at least from \eqn{0.01}
@@ -321,6 +363,6 @@ of processor cores used for parallel computing. Default is 1.}
 verbose output should be printed. Default is \code{FALSE}.}
 }
 \description{
-\code{run_classifiers} tunes classifiers, post-stratifies and carries out
-EMBA.
+\code{run_classifiers} tunes classifiers, post-stratifies, and carries out
+EBMA.
 }

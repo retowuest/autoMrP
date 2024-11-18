@@ -27,8 +27,8 @@
 #' @return The tuned \code{knn.k} parameter. An integer-valued scalar.
 
 run_knn <- function(
-    y, L1.x, L2.x, L2.unit, L2.reg, loss.unit, loss.fun,
-    knn.k.max, knn.k, knn.kernel, data, verbose, cores
+  y, L1.x, L2.x, L2.unit, L2.reg, loss.unit, loss.fun, knn.k.max, knn.k,
+  knn.kernel, data, verbose, cores
 ) {
 
   # Create model formula
@@ -42,114 +42,20 @@ run_knn <- function(
     ks <- sort(knn.k)
   }
 
-  # Parallel processing
-  if (cores > 1) {
-    knn_k_errors <- run_knn_mc(
-      y = y, L1.x = L1.x, L2.x = L2.x, L2.unit = L2.unit, L2.reg = L2.reg,
-      form = form, loss.unit = loss.unit, loss.fun = loss.fun, data = data,
-      cores = cores, ks = ks, knn.kernel = knn.kernel, verbose = verbose
-    )
-  } else {
-
-    # Train and evaluate each model sequentially
-    knn_k_errors <- lapply(seq_along(ks), function(ki) {
-
-      # Print current k value
-      if (isTRUE(verbose)) {
-        KS <- length(ks)
-        cat(paste(
-          "KNN: Running k w/ value ", ks[ki],
-          " (k ", ki, " out of max. ",
-          KS, " k values)\n", sep = ""
-        ))
-      }
-
-      # Loop over each fold
-      k_errors <- lapply(seq_along(data), function(k) {
-        # Split data in training and validation sets
-        data_train <- dplyr::bind_rows(data[-k])
-        data_valid <- dplyr::bind_rows(data[k])
-
-        # Train model with kith value on kth training set and use trained model
-        # to make predictions for kth validation set
-        model_ki <- knn_classifier(
-          y = y,
-          form = form,
-          data.train = data_train,
-          data.valid = data_valid,
-          knn.k.value = ks[ki],
-          knn.kernel = knn.kernel,
-          verbose = verbose
-        )
-
-        # Get predictions for kth validation set
-        pred_ki <- model_ki$fitted.values
-
-        # Evaluate predictions based on loss function
-        perform_ki <- loss_function(
-          pred = pred_ki,
-          data.valid = data_valid,
-          loss.unit = loss.unit,
-          loss.fun = loss.fun,
-          y = y,
-          L2.unit = L2.unit
-        )
-      })
-
-      # Mean over loss functions
-      k_errors <- dplyr::bind_rows(k_errors) %>%
-        dplyr::group_by(measure) %>%
-        dplyr::summarise(value = mean(value), .groups = "drop") %>%
-        dplyr::mutate(knn.k.value = ks[ki])
-    })
-  }
-  # Extract best tuning parameters
-  knn_k_errors <- dplyr::bind_rows(knn_k_errors)
-  best_params <- dplyr::slice(
-    loss_score_ranking(score = knn_k_errors, loss.fun = loss.fun), 1
-  )
-
-  # Choose best-performing model
-  out <- dplyr::pull(.data = best_params, var = knn.k.value)
-
-  return(out)
-}
-
-################################################################################
-#                     Multicore tuning for KNN                                 #
-################################################################################
-#' KNN multicore tuning.
-#'
-#' \code{run_knn_mc} is called from within \code{run_knn}. It tunes using
-#' multiple cores.
-#'
-#' @inheritParams run_knn
-#' @param form The model formula. A formula object.
-#' @param ks The hyper-parameter search grid of all values for parameter k. A
-#'   vector.
-#' @return The cross-validation errors for all models. A list.
-
-run_knn_mc <- function(
-    y, L1.x, L2.x, L2.unit, L2.reg, form,
-    loss.unit, loss.fun, data, cores, ks, knn.kernel,
-    verbose
-) {
-
-  # Binding for global variables
-  g <- NULL
-  `%>%` <- dplyr::`%>%`
-
   # Register cores
   cl <- multicore(cores = cores, type = "open", cl = NULL)
 
   # Loop over each value in ks
-  knn_k_errors <- foreach::foreach(ki = seq_along(ks)) %dorng% {
+  knn_k_errors <- foreach::foreach(
+    ki = seq_along(ks), .packages = "autoMrP", .export = "contr.dummy"
+  ) %dorng% {
 
     # Set value for k
     knn_k_value <- ks[ki]
 
     # Loop over each fold
     k_errors <- lapply(seq_along(data), function(k) {
+
       # Split data in training and validation sets
       data_train <- dplyr::bind_rows(data[-k])
       data_valid <- dplyr::bind_rows(data[k])
@@ -185,10 +91,49 @@ run_knn_mc <- function(
       dplyr::group_by(measure) %>%
       dplyr::summarise(value = mean(value), .groups = "drop") %>%
       dplyr::mutate(knn.k.value = ks[ki])
+
+    return(k_errors)
   }
 
   # De-register cluster
   multicore(cores = cores, type = "close", cl = cl)
+
+  # Extract best tuning parameters
+  knn_k_errors <- dplyr::bind_rows(knn_k_errors)
+  best_params <- dplyr::slice(
+    loss_score_ranking(score = knn_k_errors, loss.fun = loss.fun), 1
+  )
+
+  # Choose best-performing model
+  out <- dplyr::pull(.data = best_params, var = knn.k.value)
+
+  return(out)
+}
+
+################################################################################
+#                     Multicore tuning for KNN                                 #
+################################################################################
+#' KNN multicore tuning.
+#'
+#' \code{run_knn_mc} is called from within \code{run_knn}. It tunes using
+#' multiple cores.
+#'
+#' @inheritParams run_knn
+#' @param form The model formula. A formula object.
+#' @param ks The hyper-parameter search grid of all values for parameter k. A
+#'   vector.
+#' @return The cross-validation errors for all models. A list.
+
+run_knn_mc <- function(
+  y, L1.x, L2.x, L2.unit, L2.reg, form, loss.unit, loss.fun, data, cores,
+  ks, knn.kernel, verbose
+) {
+
+  # Binding for global variables
+  g <- NULL
+  `%>%` <- dplyr::`%>%`
+
+
 
   # Function output
   return(knn_k_errors)

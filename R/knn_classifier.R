@@ -23,10 +23,12 @@
 #' @return The k-nearest neighbors model. A \code{\link[kknn]{kknn}} object.
 
 knn_classifier <- function(
-    y, form, data.train, data.valid, knn.k.value,
-    knn.kernel = c("rectangular", "triangular", "epanechnikov", "biweight",
-                   "triweight", "cos", "inv", "gaussian", "optimal"),
-    verbose = c(TRUE, FALSE)
+  y, form, data.train, data.valid, knn.k.value,
+  knn.kernel = c(
+    "rectangular", "triangular", "epanechnikov", "biweight", "triweight", "cos",
+    "inv", "gaussian", "optimal"
+  ),
+  verbose = c(TRUE, FALSE)
 ) {
 
   # Train and evaluate model using the supplied value of k

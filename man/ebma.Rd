@@ -20,6 +20,7 @@ ebma(
   lasso.opt,
   gb.opt,
   svm.opt,
+  knn.opt,
   deep.mrp,
   verbose,
   cores,
@@ -30,8 +31,7 @@ ebma(
 \item{ebma.fold}{New data for EBMA tuning. A list containing the the data
 that must not have been used in classifier training.}
 
-\item{y}{Outcome variable. A character vector containing the column names of
-the outcome variable. A character scalar containing the column name of
+\item{y}{Outcome variable. A character scalar containing the column name of
 the outcome variable in \code{survey}.}
 
 \item{L1.x}{Individual-level covariates. A character vector containing the
@@ -85,6 +85,9 @@ returned from \code{run_pca()}.}
 
 \item{svm.opt}{Tuned support vector machine parameters. A list returned from
 \code{run_svm()}.}
+
+\item{knn.opt}{Tuned k-nearest neighbors parameters. A list returned from
+\code{run_knn()}.}
 
 \item{deep.mrp}{Deep MRP classifier. A logical argument indicating whether
 the deep MRP classifier should be used for best subset prediction. Setting
