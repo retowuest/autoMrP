@@ -35,7 +35,7 @@
 ebma <- function(
   ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names, post.strat, n.draws, tol,
   best.subset.opt, pca.opt, lasso.opt, gb.opt, svm.opt, knn.opt, deep.mrp,
-  verbose, cores, preds_all
+  verbose, cores, preds_all, knn.kernel
 ) {
 
   # Run EBMA if at least two classifiers selected
@@ -106,7 +106,9 @@ ebma <- function(
         preds_all = preds_all,
         post.strat = post.strat,
         dv_type = dv_type,
-        deep.mrp = deep.mrp
+        deep.mrp = deep.mrp,
+        knn.opt = knn.opt,
+        knn.kernel = knn.kernel
       )
       # unlist
       ebma_preds <- final_model_weights$ebma_preds
@@ -136,7 +138,9 @@ ebma <- function(
         preds_all = preds_all,
         post.strat = post.strat,
         dv_type = dv_type,
-        deep.mrp = deep.mrp
+        deep.mrp = deep.mrp,
+        knn.opt = knn.opt,
+        knn.kernel = knn.kernel
       )
       # unlist
       ebma_preds <- final_model_weights$ebma_preds
@@ -248,10 +252,10 @@ ebma <- function(
 #' }
 
 ebma_mc_tol <- function(
-  train.preds, train.y, ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg,
-  pc.names, model.bs, model.pca, model.lasso, model.gb, model.svm,
-  model.mrp, tol, n.draws, cores, preds_all, post.strat, dv_type,
-  deep.mrp
+  train.preds, train.y, ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
+  model.bs, model.pca, model.lasso, model.gb, model.svm, model.knn, model.mrp,
+  tol, n.draws, cores, preds_all, post.strat, dv_type, deep.mrp, knn.opt,
+  knn.kernel
 ) {
 
   # Binding for global variables
@@ -385,6 +389,32 @@ ebma_mc_tol <- function(
       } else {
         NA
       },
+      knn = if (!is.null(model.knn)) {
+        if (dv_type == "binary") {
+          c_pred <- knn_classifier(
+            y = y,
+            form = formula(model.knn$terms),
+            data.train = test %>%
+              dplyr::mutate(!!rlang::sym(y) := as.factor(!!rlang::sym(y))),
+            data.valid = test,
+            knn.k.value = knn.opt,
+            knn.kernel = knn.kernel
+          )
+          c_pred$prob[, "1"]
+        } else {
+          c_pred <- knn_classifier(
+            y = y,
+            form = formula(model.knn$terms),
+            data.train = test,
+            data.valid = test,
+            knn.k.value = knn.opt,
+            knn.kernel = knn.kernel
+          )
+          c_pred$fit
+        }
+      } else {
+        NA
+      },
       mrp = if (!is.null(model.mrp)) {
         predict(
           object = model.mrp,
@@ -413,7 +443,7 @@ ebma_mc_tol <- function(
     # Loop over tolerance values
     ebma_tune <- foreach::foreach(
       idx.tol = seq_along(tol),
-      .packages = c("glmmLasso", "e1071", "gbm", "vglmer")
+      .packages = c("glmmLasso", "e1071", "gbm", "vglmer", "kknn")
     ) %dorng% {
 
       # EBMA
@@ -587,7 +617,8 @@ ebma_mc_tol <- function(
 ebma_mc_draws <- function(
   train.preds, train.y, ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg,
   pc.names, model.bs, model.pca, model.lasso, model.gb, model.svm, model.knn,
-  model.mrp, tol, n.draws, cores, preds_all, post.strat, dv_type, deep.mrp
+  model.mrp, tol, n.draws, cores, preds_all, post.strat, dv_type, deep.mrp,
+  knn.kernel, knn.opt
 ) {
 
   # Binding for global variables
@@ -598,7 +629,7 @@ ebma_mc_draws <- function(
 
   ebma_tune <- foreach::foreach(
     idx.Ndraws = 1:n.draws,
-    .packages = c("glmmLasso", "e1071", "gbm", "vglmer"),
+    .packages = c("glmmLasso", "e1071", "gbm", "vglmer", "kknn"),
     .export = "predict_glmmLasso"
   ) %dorng% {
 
@@ -724,13 +755,28 @@ ebma_mc_draws <- function(
         NA
       },
       knn = if (!is.null(model.knn)) {
-        # To continue
-        #gbm::predict.gbm(
-          #object = model.gb,
-          #newdata = test,
-          #n.trees = model.gb$n.trees,
-          #type = "response"
-        #)
+        if (dv_type == "binary") {
+          c_pred <- knn_classifier(
+            y = y,
+            form = formula(model.knn$terms),
+            data.train = test %>%
+              dplyr::mutate(!!rlang::sym(y) := as.factor(!!rlang::sym(y))),
+            data.valid = test,
+            knn.k.value = knn.opt,
+            knn.kernel = knn.kernel
+          )
+          c_pred$prob[, "1"]
+        } else {
+          c_pred <- knn_classifier(
+            y = y,
+            form = formula(model.knn$terms),
+            data.train = test,
+            data.valid = test,
+            knn.k.value = knn.opt,
+            knn.kernel = knn.kernel
+          )
+          c_pred$fit
+        }
       } else {
         NA
       },

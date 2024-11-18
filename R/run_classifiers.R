@@ -529,7 +529,8 @@ run_classifiers <- function(
     pc.names = pc.names,
     verbose = verbose,
     cores = cores,
-    preds_all = preds_all
+    preds_all = preds_all,
+    knn.kernel = knn.kernel
   )
 
   # get end time

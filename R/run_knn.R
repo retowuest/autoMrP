@@ -47,9 +47,13 @@ run_knn <- function(
 
   # Loop over each value in ks
   knn_k_errors <- foreach::foreach(
-    ki = seq_along(ks),  .packages = "autoMrP"
-  ) %do% {
+    ki = seq_along(ks),  .packages = c("autoMrP", "kknn"),
+    .export = c(
+      "deep_mrp_classifier", "loss_function", "knn_classifier"
+    )
+  ) %dorng% {
 
+    `%>%` <- magrittr::`%>%`
 
     # Set value for k
     knn_k_value <- ks[ki]
@@ -77,7 +81,6 @@ run_knn <- function(
           dplyr::mutate(!!rlang::sym(y) := as.factor(!!rlang::sym(y)))
         data_valid <- data_train %>%
           dplyr::mutate(!!rlang::sym(y) := as.factor(!!rlang::sym(y)))
-
       }
 
       # Train model with kith value on kth training set and use trained model
@@ -93,22 +96,23 @@ run_knn <- function(
       )
 
       # Get predictions for kth validation set
-      pred_ki <- model_ki$fitted.values
-
-      if (dv_type == "binary") {
-        # class predictions to numeric
-        pred_ki <- as.numeric(as.character(pred_ki))
-        # y column in dv_valid back to numeric
-        data_valid <- data_valid %>%
-          dplyr::mutate(
-            !!rlang::sym(y) := as.numeric(as.character(!!rlang::sym(y)))
-          )
+      pred_ki <- if (dv_type == "binary") {
+        kknn:::predict.kknn(model_ki, data_valid, type = "prob")[, "1"]
+      } else {
+        model_ki$fit
       }
 
       # Evaluate predictions based on loss function
       perform_ki <- loss_function(
         pred = pred_ki,
-        data.valid = data_valid,
+        data.valid = if (dv_type == "binary") {
+          data_valid %>%
+            dplyr::mutate(
+              !!rlang::sym(y) := as.numeric(as.character(!!rlang::sym(y)))
+            )
+        } else {
+          data_valid
+        },
         loss.unit = loss.unit,
         loss.fun = loss.fun,
         y = y,

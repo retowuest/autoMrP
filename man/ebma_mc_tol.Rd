@@ -19,6 +19,7 @@ ebma_mc_tol(
   model.lasso,
   model.gb,
   model.svm,
+  model.knn,
   model.mrp,
   tol,
   n.draws,
@@ -26,7 +27,9 @@ ebma_mc_tol(
   preds_all,
   post.strat,
   dv_type,
-  deep.mrp
+  deep.mrp,
+  knn.opt,
+  knn.kernel
 )
 }
 \arguments{
@@ -102,6 +105,16 @@ Either "binary" or "linear".}
 the deep MRP classifier should be used for best subset prediction. Setting
 \code{deep.mrp = TRUE} will include all interactions of L1.x in the best
 subset classifier. Default is \code{FALSE}.}
+
+\item{knn.opt}{Tuned k-nearest neighbors parameters. A list returned from
+\code{run_knn()}.}
+
+\item{knn.kernel}{KNN kernel. A character-valued scalar specifying the kernel
+to be used in the KNN model. The possible values are \code{rectangular}
+(which is standard unweighted KNN), \code{triangular}, \code{epanechnikov}
+(or beta(2,2)), \code{biweight} (or beta(3,3)), \code{triweight} (or
+beta(4,4)), \code{cos}, \code{inv}, \code{gaussian}, and \code{optimal}.
+Default is \code{optimal}.}
 }
 \value{
 The classifier weights. A numeric vector.

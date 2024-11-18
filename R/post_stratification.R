@@ -657,8 +657,13 @@ post_stratification <- function(
     knn_opt_ebma <- knn_classifier(
       y = y,
       form = form_knn,
-      data.train = data,
-      data.valid = census,
+      data.train = if (dv_type == "binary") {
+        data %>%
+          dplyr::mutate(!!rlang::sym(y) := as.factor(!!rlang::sym(y)))
+      } else {
+        data
+      },
+      data.valid = data,
       knn.k.value = knn.opt,
       knn.kernel = knn.kernel,
       verbose = verbose
@@ -668,7 +673,12 @@ post_stratification <- function(
     knn_opt_poststrat_only <- knn_classifier(
       y = y,
       form = form_knn,
-      data.train = no_ebma_data,
+      data.train = if (dv_type == "binary") {
+        no_ebma_data %>%
+          dplyr::mutate(!!rlang::sym(y) := as.factor(!!rlang::sym(y)))
+      } else {
+        no_ebma_data
+      },
       data.valid = census,
       knn.k.value = knn.opt,
       knn.kernel = knn.kernel,
@@ -677,7 +687,16 @@ post_stratification <- function(
 
     # post-stratification
     knn_preds <- census %>%
-      dplyr::mutate(knn = knn_opt_poststrat_only$fitted.values) %>%
+      dplyr::mutate(
+        knn = if (dv_type == "binary") {
+          kknn:::predict.kknn(
+            object = knn_opt_poststrat_only,
+            type = "prob"
+          )[, "1"]
+        } else {
+          knn_opt_poststrat_only$fit
+        }
+      ) %>%
       dplyr::group_by(!! rlang::sym(L2.unit)) %>%
       dplyr::summarize(
         knn = stats::weighted.mean(x = knn, w = prop), .groups = "keep"
@@ -685,7 +704,14 @@ post_stratification <- function(
       dplyr::ungroup()
 
     # individual level predictions for EBMA
-    knn_ind <- knn_opt_ebma$fitted.values
+    knn_ind <- if (dv_type == "binary") {
+      kknn:::predict.kknn(
+        object = knn_opt_ebma,
+        type = "prob"
+      )[, "1"]
+    } else {
+      knn_opt_ebma$fit
+    }
 
     # model for EBMA
     models$knn <- knn_opt_ebma

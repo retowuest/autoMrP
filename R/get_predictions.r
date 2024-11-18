@@ -406,7 +406,12 @@ get_predictions <- function(
       knn <- knn_classifier(
         y = y,
         form = form_knn,
-        data.train = data_train,
+        data.train = if (dv_type == "binary") {
+          data_train %>%
+            dplyr::mutate(!!rlang::sym(y) := as.factor(!!rlang::sym(y)))
+        } else {
+          data_train
+        },
         data.valid = data_valid,
         knn.k.value = knn.opt,
         knn.kernel = knn.kernel,
@@ -414,8 +419,11 @@ get_predictions <- function(
       )
 
       # predictions on validation set
-      knn_preds <- knn$fitted.values
-
+      knn_preds <- if (dv_type == "binary") {
+        kknn:::predict.kknn(knn, type = "prob")[, "1"]
+      } else {
+        knn$fit
+      }
     }
 
     # 7) mrp

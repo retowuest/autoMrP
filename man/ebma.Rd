@@ -24,7 +24,8 @@ ebma(
   deep.mrp,
   verbose,
   cores,
-  preds_all
+  preds_all,
+  knn.kernel
 )
 }
 \arguments{
@@ -99,6 +100,13 @@ verbose output should be printed. Default is \code{FALSE}.}
 
 \item{cores}{The number of cores to be used. An integer indicating the number
 of processor cores used for parallel computing. Default is 1.}
+
+\item{knn.kernel}{KNN kernel. A character-valued scalar specifying the kernel
+to be used in the KNN model. The possible values are \code{rectangular}
+(which is standard unweighted KNN), \code{triangular}, \code{epanechnikov}
+(or beta(2,2)), \code{biweight} (or beta(3,3)), \code{triweight} (or
+beta(4,4)), \code{cos}, \code{inv}, \code{gaussian}, and \code{optimal}.
+Default is \code{optimal}.}
 }
 \description{
 \code{ebma} tunes EBMA and generates weights for classifier averaging.
