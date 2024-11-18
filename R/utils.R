@@ -1408,6 +1408,9 @@ binary_cross_entropy <- function(
   # cross-entropy values
   values <- rep(NA, 2)
 
+  # adjust predictions to avoid log(0), for example, from knn
+  pred <- pmax(pmin(pred, 1 - 1e-15), 1e-15)
+
   # loss unit = "individual"
   values[1] <- (mean(
     data.valid[[y]] * log(pred) + (1 - data.valid[[y]]) * log(1 - pred)

@@ -47,7 +47,8 @@ run_knn <- function(
 
   # Loop over each value in ks
   knn_k_errors <- foreach::foreach(
-    ki = seq_along(ks), .packages = "autoMrP", .export = "contr.dummy"
+    ki = seq_along(ks), .packages = "autoMrP",
+    .export = c("deep_mrp_classifier", "loss_function", "contr.dummy"),
   ) %dorng% {
 
     # Set value for k
@@ -59,6 +60,25 @@ run_knn <- function(
       # Split data in training and validation sets
       data_train <- dplyr::bind_rows(data[-k])
       data_valid <- dplyr::bind_rows(data[k])
+
+      # Determine type of dependent variable
+      if (
+        data_train %>%
+          dplyr::pull(!!y) %>%
+          unique() %>%
+          length() == 2
+      ) {
+        dv_type <- "binary"
+      }
+
+      if (dv_type == "binary") {
+        # Convert the column named "YES" to a factor
+        data_train <- data_train %>%
+          dplyr::mutate(!!rlang::sym(y) := as.factor(!!rlang::sym(y)))
+        data_valid <- data_train %>%
+          dplyr::mutate(!!rlang::sym(y) := as.factor(!!rlang::sym(y)))
+
+      }
 
       # Train model with kith value on kth training set and use trained model
       # to make predictions for kth validation set
@@ -74,6 +94,16 @@ run_knn <- function(
 
       # Get predictions for kth validation set
       pred_ki <- model_ki$fitted.values
+
+      if (dv_type == "binary") {
+        # class predictions to numeric
+        pred_ki <- as.numeric(as.character(pred_ki))
+        # y column in dv_valid back to numeric
+        data_valid <- data_valid %>%
+          dplyr::mutate(
+            !!rlang::sym(y) := as.numeric(as.character(!!rlang::sym(y)))
+          )
+      }
 
       # Evaluate predictions based on loss function
       perform_ki <- loss_function(
