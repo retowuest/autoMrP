@@ -47,9 +47,9 @@ run_knn <- function(
 
   # Loop over each value in ks
   knn_k_errors <- foreach::foreach(
-    ki = seq_along(ks), .packages = "autoMrP",
-    .export = c("deep_mrp_classifier", "loss_function", "contr.dummy"),
-  ) %dorng% {
+    ki = seq_along(ks),  .packages = "autoMrP"
+  ) %do% {
+
 
     # Set value for k
     knn_k_value <- ks[ki]
@@ -114,6 +114,8 @@ run_knn <- function(
         y = y,
         L2.unit = L2.unit
       )
+
+      return(perform_ki)
     })
 
     # Mean over loss functions
@@ -138,33 +140,4 @@ run_knn <- function(
   out <- dplyr::pull(.data = best_params, var = knn.k.value)
 
   return(out)
-}
-
-################################################################################
-#                     Multicore tuning for KNN                                 #
-################################################################################
-#' KNN multicore tuning.
-#'
-#' \code{run_knn_mc} is called from within \code{run_knn}. It tunes using
-#' multiple cores.
-#'
-#' @inheritParams run_knn
-#' @param form The model formula. A formula object.
-#' @param ks The hyper-parameter search grid of all values for parameter k. A
-#'   vector.
-#' @return The cross-validation errors for all models. A list.
-
-run_knn_mc <- function(
-  y, L1.x, L2.x, L2.unit, L2.reg, form, loss.unit, loss.fun, data, cores,
-  ks, knn.kernel, verbose
-) {
-
-  # Binding for global variables
-  g <- NULL
-  `%>%` <- dplyr::`%>%`
-
-
-
-  # Function output
-  return(knn_k_errors)
 }
