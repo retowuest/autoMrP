@@ -35,19 +35,26 @@ run_classifiers(
   knn,
   mrp,
   deep.mrp,
+  deep.splines,
+  best.subset.deep,
+  best.subset.deep.splines,
+  pca.deep,
+  pca.deep.splines,
   best.subset.L2.x,
   lasso.L2.x,
   pca.L2.x,
   gb.L2.x,
   svm.L2.x,
   knn.L2.x,
+  deep.L2.x,
   gb.L2.unit,
-  gb.L2.reg,
   svm.L2.unit,
-  svm.L2.reg,
   knn.L2.unit,
+  deep.L2.unit,
+  gb.L2.reg,
+  svm.L2.reg,
   knn.L2.reg,
-  deep.splines,
+  deep.L2.reg,
   lasso.lambda,
   lasso.n.iter,
   gb.interaction.depth,
@@ -212,9 +219,29 @@ MRP classifier should be used for predicting outcome \code{y}. Default is
 \code{FALSE}.}
 
 \item{deep.mrp}{Deep MRP classifier. A logical argument indicating whether
+the deep MRP classifier should be used for predicting outcome \code{y}.
+Useful to run a specific deep MRP model. Default is \code{FALSE}.}
+
+\item{deep.splines}{Deep MRP splines. A logical argument indicating whether
+splines should be used in the deep MRP classifier. Default is \code{TRUE}.}
+
+\item{best.subset.deep}{A logical argument indicating whether
 the deep MRP classifier should be used for best subset prediction. Setting
-\code{deep.mrp = TRUE} will include all interactions of L1.x in the best
-subset classifier. Default is \code{FALSE}.}
+\code{best.subset.deep = TRUE} will include all interactions of L1.x in the
+best subset classifier. Default is \code{FALSE}.}
+
+\item{best.subset.deep.splines}{Deep MRP splines for Best Subset. A logical
+argument indicating whether splines should be used in the deep MRP
+classifier for best subset selection. Default is \code{TRUE}.}
+
+\item{pca.deep}{A logical argument indicating whether
+the deep MRP classifier should be used for PCA prediction. Setting
+\code{pca.deep = TRUE} will include all interactions of L1.x in the
+pca classifier. Default is \code{FALSE}.}
+
+\item{pca.deep.splines}{Deep MRP splines for PCA. A logical argument
+indicating whether splines should be used in the deep MRP classifier for
+PCA. Default is \code{TRUE}.}
 
 \item{best.subset.L2.x}{Best subset context-level covariates. A character
 vector containing the column names of the context-level variables in
@@ -253,32 +280,42 @@ the column names of the context-level variables in \code{survey} and
 \code{knn} is set to \code{TRUE}, then KNN uses the variables specified in
 \code{L2.x}. Default is \code{NULL}.}
 
+\item{deep.L2.x}{Deep MrP context-level covariates. A character vector
+containing the column names of the context-level variables in
+\code{survey} and \code{census} to be used by the Deep MRP classifier.
+The character vector \emph{empty} if no context-level variables should be
+used by the Deep MRP classifier. If \code{NULL} and \code{deep.mrp} is set
+to \code{TRUE}, then Deep MRP uses the variables specified in \code{L2.x}.
+Default is \code{NULL}. Note: For the empty MrP model, set
+\code{L2.x = NULL} and \code{mrp.L2.x = ""}.}
+
 \item{gb.L2.unit}{GB L2.unit. A logical argument indicating whether
 \code{L2.unit} should be included in the GB classifier. Default is
+\code{TRUE}.}
+
+\item{svm.L2.unit}{SVM L2.unit. A logical argument indicating whether
+\code{L2.unit} should be included in the SVM classifier. Default is
+\code{TRUE}.}
+
+\item{knn.L2.unit}{KNN L2.unit. A logical argument indicating whether
+\code{L2.unit} should be included in the KNN classifier. Default is
 \code{TRUE}.}
 
 \item{gb.L2.reg}{GB L2.reg. A logical argument indicating whether
 \code{L2.reg} should be included in the GB classifier. Default is
 \code{FALSE}.}
 
-\item{svm.L2.unit}{SVM L2.unit. A logical argument indicating whether
-\code{L2.unit} should be included in the SVM classifier. Default is
-\code{TRUE}.}
-
 \item{svm.L2.reg}{SVM L2.reg. A logical argument indicating whether
 \code{L2.reg} should be included in the SVM classifier. Default is
 \code{FALSE}.}
-
-\item{knn.L2.unit}{KNN L2.unit. A logical argument indicating whether
-\code{L2.unit} should be included in the KNN classifier. Default is
-\code{TRUE}.}
 
 \item{knn.L2.reg}{KNN L2.reg. A logical argument indicating whether
 \code{L2.reg} should be included in the KNN classifier. Default is
 \code{FALSE}.}
 
-\item{deep.splines}{Deep MRP splines. A logical argument indicating whether
-splines should be used in the deep MRP classifier. Default is \code{TRUE}.}
+\item{deep.L2.reg}{Deep MRP L2.reg. A logical argument indicating whether
+\code{L2.reg} should be included in the Deep MRP classifier. Default is
+\code{FALSE}.}
 
 \item{lasso.lambda}{Lasso penalty parameter. A numeric \code{vector} of
 non-negative values. The penalty parameter controls the shrinkage of the

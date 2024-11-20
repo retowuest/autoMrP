@@ -15,19 +15,21 @@ ebma_mc_tol(
   L2.reg,
   pc.names,
   model.bs,
+  best.subset.deep,
   model.pca,
+  pca.deep,
   model.lasso,
   model.gb,
   model.svm,
   model.knn,
   model.mrp,
+  model.deep,
   tol,
   n.draws,
   cores,
   preds_all,
   post.strat,
   dv_type,
-  deep.mrp,
   knn.opt,
   knn.kernel
 )
@@ -69,9 +71,19 @@ containing the names of the context-level principal components variables.}
 \item{model.bs}{The tuned model from the multilevel regression with best
 subset selection classifier. An \code{\link[lme4]{glmer}} object.}
 
+\item{best.subset.deep}{A logical argument indicating whether
+the deep MRP classifier should be used for best subset prediction. Setting
+\code{best.subset.deep = TRUE} will include all interactions of L1.x in the
+best subset classifier. Default is \code{FALSE}.}
+
 \item{model.pca}{The tuned model from the multilevel regression with
 principal components as context-level predictors classifier. An
 \code{\link[lme4]{glmer}} object.}
+
+\item{pca.deep}{A logical argument indicating whether
+the deep MRP classifier should be used for PCA prediction. Setting
+\code{pca.deep = TRUE} will include all interactions of L1.x in the
+pca classifier. Default is \code{FALSE}.}
 
 \item{model.lasso}{The tuned model from the multilevel regression with L1
 regularization classifier. A \code{\link[glmmLasso]{glmmLasso}} object.}
@@ -100,11 +112,6 @@ predictions.}
 
 \item{dv_type}{The type of the depenedent variable. A character string.
 Either "binary" or "linear".}
-
-\item{deep.mrp}{Deep MRP classifier. A logical argument indicating whether
-the deep MRP classifier should be used for best subset prediction. Setting
-\code{deep.mrp = TRUE} will include all interactions of L1.x in the best
-subset classifier. Default is \code{FALSE}.}
 
 \item{knn.opt}{Tuned k-nearest neighbors parameters. A list returned from
 \code{run_knn()}.}

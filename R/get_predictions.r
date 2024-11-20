@@ -1,11 +1,12 @@
 # generates out of sample predictions from the tuned classifiers
 get_predictions <- function(
-  y, L1.x, L2.x, L2.unit, L2.reg, best.subset.opt, lasso.opt, lasso.L2.x,
-  pca.opt, gb.opt, svm.opt, svm.L2.reg, svm.L2.unit, svm.L2.x,
-  knn.opt, knn.L2.reg, knn.L2.unit, knn.L2.x, mrp.include,
-  n.minobsinnode, L2.unit.include, L2.reg.include, kernel, knn.kernel,
-  mrp.L2.x, deep.mrp, deep.splines, data, ebma.fold, verbose, cv.sampling,
-  k.folds = k.folds, all_data = TRUE
+  y, L1.x, L2.x, L2.unit, L2.reg, best.subset.opt, best.subset.deep,
+  lasso.opt, lasso.L2.x, pca.opt, pca.deep, gb.opt, svm.opt, svm.L2.reg,
+  svm.L2.unit, svm.L2.x, knn.opt, knn.L2.reg, knn.L2.unit,
+  knn.L2.x, mrp.include, n.minobsinnode, L2.unit.include, L2.reg.include,
+  kernel, knn.kernel, mrp.L2.x, deep.mrp, deep.splines, deep.L2.unit, deep.L2.x,
+  deep.L2.reg, data, ebma.fold, verbose, cv.sampling, k.folds = k.folds,
+  all_data = TRUE
 ) {
 
   message("this only works for binary dependent variables for now")
@@ -40,10 +41,8 @@ get_predictions <- function(
   if (!is.null(svm.opt)) {
     # Prepare data
     cv_data <- cv_data %>%
-      dplyr::mutate(
-        dplyr::across(dplyr::all_of(y), ~as.factor(.), .names = "y_svm")
-      ) %>%
-      dplyr::relocate(y_svm, .after = y)
+      dplyr::mutate(y_svm := as.factor(!!rlang::sym(y))) %>%
+      dplyr::relocate(y_svm, .after = !!rlang::sym(y))
   }
 
   #------------------------------------------------------------
@@ -200,6 +199,93 @@ get_predictions <- function(
     )
   }
 
+  # deep mrp
+  if (deep.mrp) {
+
+    # custom L2x
+    if (!is.null(deep.L2.x)) {
+      L2.x <- deep.L2.x
+    }
+
+    # custom L2.unit
+    if (isTRUE(deep.L2.unit)) {
+      deep.L2.unit <- L2.unit
+    } else {
+      deep.L2.unit <- NULL
+    }
+
+    # custom L2.reg
+    if (isTRUE(deep.L2.reg)) {
+      deep.L2.reg <- L2.reg
+    } else {
+      deep.L2.reg <- NULL
+    }
+
+    # generate all interactions of L1.x
+    l1_comb <- unlist(lapply(2:length(L1.x), function(x) {
+      apply(combn(L1.x, x), 2, paste, collapse = ".")
+    }))
+
+    # generate all interactions of L1.x with L2.unit
+    if (!is.null(deep.L2.unit)) {
+      l1_state <- paste(L1.x, L2.unit, sep = ".")
+    } else {
+      l1_state <- NULL
+    }
+
+    # generate all interactions of L1.x with L2.reg
+    if (!is.null(deep.L2.reg)) {
+      l1_region <- paste(L1.x, L2.reg, sep = ".")
+    } else {
+      l1_region <- NULL
+    }
+
+    # model formula
+    if (!deep.splines) {
+      form <- paste0(
+        # DV
+        y, " ~ ",
+        # L2x
+        paste(L2.x, collapse = " + "), " + ",
+        # individual level variables
+        paste("(1 | ", L1.x, ")", collapse = " + "), " + ",
+        # interactions of L1x
+        paste("(1 | ", l1_comb, ")", collapse = " + "), " + ",
+        # interactions of L1x with L2.unit
+        if (any(!is.null(l1_state))) {
+          paste("(1 | ", l1_state, ")", collapse = " + ")
+        }, " + ",
+        # interactions of L1x with L2.reg
+        if (any(!is.null(l1_region))) {
+          paste("(1 | ", l1_region, ")", collapse = " + ")
+        }
+      )
+    } else {
+      form <- paste0(
+        # DV
+        y, " ~ ",
+        # L2x
+        paste0("v_s(", L2.x, ")", collapse = " + "), " + ",
+        # individual level variables
+        paste("(1 | ", L1.x, ")", collapse = " + "), " + ",
+        # interactions of L1x
+        paste("(1 | ", l1_comb, ")", collapse = " + "), " + ",
+        # interactions of L1x with L2.unit
+        if (any(!is.null(l1_state))) {
+          paste("(1 | ", l1_state, ")", collapse = " + ")
+        }, " + ",
+        # interactions of L1x with L2.reg
+        if (any(!is.null(l1_region))) {
+          paste("(1 | ", l1_region, ")", collapse = " + ")
+        }
+      )
+    }
+
+    # match everything from the beginning to the last ")"
+    # for example if the string ends in +
+    form <- stringr::str_extract(string = form, pattern = "^.*\\)")
+  }
+
   #------------------------------------------------------------
   # cross-validation folds
   #------------------------------------------------------------
@@ -226,7 +312,7 @@ get_predictions <- function(
     if (!is.null(best.subset.opt)) {
 
       # fit best subset model
-      if (deep.mrp) {
+      if (best.subset.deep) {
         best_subset <-  deep_mrp_classifier(
           form = best.subset.opt,
           y = y,
@@ -315,24 +401,56 @@ get_predictions <- function(
     if (!is.null(pca.opt)) {
 
       # fit pca model
-      pca <- best_subset_classifier(
-        y = y,
-        model = pca.opt,
-        data.train = data_train,
-        model.family = binomial(link = "probit"),
-        model.optimizer = "bobyqa",
-        n.iter = 1000000,
-        verbose = verbose
-      )
+      if (pca.deep) {
+        # call deep_mrp_classifier
+        pca <-  deep_mrp_classifier(
+          form = pca.opt,
+          y = y,
+          data = data_train,
+          verbose = TRUE
+        )
+        # predictions based on DV type (binary or continuous)
+        if (dv_type == "binary") {
+          # use trained model to make predictions for kth validation set
+          pca_preds <- vglmer::predict_MAVB(
+            samples = 1000,
+            pca,
+            newdata = data_valid,
+            allow_missing_levels = TRUE
+          )[["mean"]]
 
-      # predict on validation set
-      pca_preds <- stats::predict(
-        object = pca,
-        newdata = data_valid,
-        allow.new.levels = TRUE,
-        type = "response"
-      )
+          # convert to response probabilities
+          pca_preds <- stats::plogis(pca_preds)
 
+        } else if (dv_type == "linear") {
+          # Use trained model to make predictions for kth validation set
+          pca_preds <- predict(
+            samples = 1000,
+            object = pca,
+            newdata = data_valid,
+            allow_missing_levels = TRUE
+          )[["mean"]]
+        }
+      } else {
+        # call best_subset_classifier
+        pca <- best_subset_classifier(
+          y = y,
+          model = pca.opt,
+          data.train = data_train,
+          model.family = binomial(link = "probit"),
+          model.optimizer = "bobyqa",
+          n.iter = 1000000,
+          verbose = verbose
+        )
+
+        # predict on validation set
+        pca_preds <- stats::predict(
+          object = pca,
+          newdata = data_valid,
+          allow.new.levels = TRUE,
+          type = "response"
+        )
+      }
     }
 
     # 4) gbm
@@ -415,7 +533,8 @@ get_predictions <- function(
         data.valid = data_valid,
         knn.k.value = knn.opt,
         knn.kernel = knn.kernel,
-        verbose = verbose
+        verbose = verbose,
+        contr.dummy = kknn:::contr.dummy
       )
 
       # predictions on validation set
@@ -424,6 +543,7 @@ get_predictions <- function(
       } else {
         knn$fit
       }
+
     }
 
     # 7) mrp
@@ -448,6 +568,56 @@ get_predictions <- function(
         type = "response"
       )
 
+    }
+
+    # 8) deep mrp
+    if (deep.mrp) {
+
+      # fit deep mrp model
+      deep_mrp <- deep_mrp_classifier(
+        y = y,
+        form = form,
+        data = data_train,
+        verbose = verbose
+      )
+
+      # Determine type of dependent variable
+      if (
+        data_train %>%
+          dplyr::pull(!!y) %>%
+          unique() %>%
+          length() == 2
+      ) {
+        dv_type <- "binary"
+      } else {
+        dv_type <- "continuous"
+      }
+
+      # binary or continuous DV
+      if (dv_type == "binary") {
+
+        # predict on validation set for binary DV
+        deep_preds <- vglmer::predict_MAVB(
+          samples = 1000,
+          deep_mrp,
+          newdata = data_valid,
+          allow_missing_levels = TRUE
+        )[["mean"]]
+
+        # convert to response probabilities
+        deep_preds <- stats::plogis(deep_preds)
+
+      } else if (dv_type == "continuous") {
+
+        # predict on validation set for continuous DV
+        deep_preds <- predict(
+          samples = 1000,
+          object = deep_mrp,
+          newdata = data_valid,
+          allow_missing_levels = TRUE
+        )[["mean"]]
+
+      }
     }
 
     # combine predictions into one table
@@ -479,6 +649,9 @@ get_predictions <- function(
     }
     if (exists("mrp_preds")) {
       preds <- dplyr::mutate(.data = preds, mrp = mrp_preds)
+    }
+    if (exists("deep_preds")) {
+      preds <- dplyr::mutate(.data = preds, deep_mrp = deep_preds)
     }
 
     # return predictions table

@@ -34,8 +34,8 @@
 
 ebma <- function(
   ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names, post.strat, n.draws, tol,
-  best.subset.opt, pca.opt, lasso.opt, gb.opt, svm.opt, knn.opt, deep.mrp,
-  verbose, cores, preds_all, knn.kernel
+  best.subset.opt, best.subset.deep, pca.opt, pca.deep, lasso.opt, gb.opt,
+  svm.opt, knn.opt, verbose, cores, preds_all, knn.kernel
 ) {
 
   # Run EBMA if at least two classifiers selected
@@ -72,6 +72,7 @@ ebma <- function(
     model_svm <- post.strat$models$svm
     model_knn <- post.strat$models$knn
     model_mrp <- post.strat$models$mrp
+    model_deep <- post.strat$models$deep
 
     # Training predictions
     train_preds <- post.strat$predictions$Level1 %>%
@@ -100,13 +101,15 @@ ebma <- function(
         model.svm = model_svm,
         model.knn = model_knn,
         model.mrp = model_mrp,
+        model.deep = model_deep,
         tol = tol,
         n.draws = n.draws,
         cores = cores,
         preds_all = preds_all,
         post.strat = post.strat,
         dv_type = dv_type,
-        deep.mrp = deep.mrp,
+        best.subset.deep = best.subset.deep,
+        pca.deep = pca.deep,
         knn.opt = knn.opt,
         knn.kernel = knn.kernel
       )
@@ -138,7 +141,8 @@ ebma <- function(
         preds_all = preds_all,
         post.strat = post.strat,
         dv_type = dv_type,
-        deep.mrp = deep.mrp,
+        best.subset.deep = best.subset.deep,
+        pca.deep = pca.deep,
         knn.opt = knn.opt,
         knn.kernel = knn.kernel
       )
@@ -253,9 +257,9 @@ ebma <- function(
 
 ebma_mc_tol <- function(
   train.preds, train.y, ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
-  model.bs, model.pca, model.lasso, model.gb, model.svm, model.knn, model.mrp,
-  tol, n.draws, cores, preds_all, post.strat, dv_type, deep.mrp, knn.opt,
-  knn.kernel
+  model.bs, best.subset.deep, model.pca, pca.deep, model.lasso, model.gb,
+  model.svm, model.knn, model.mrp, model.deep, tol, n.draws, cores, preds_all,
+  post.strat, dv_type, knn.opt, knn.kernel
 ) {
 
   # Binding for global variables
@@ -285,7 +289,7 @@ ebma_mc_tol <- function(
     test_preds <- dplyr::tibble(
       best_subset = if (!is.null(model.bs)) {
         # regular best subset without level 1 interactions
-        if (!deep.mrp) {
+        if (!best.subset.deep) {
           predict(
             object = model.bs,
             newdata = test,
@@ -316,7 +320,7 @@ ebma_mc_tol <- function(
       },
       pca = if (!is.null(model.pca)) {
         # regular pca without level 1 interactions
-        if (!deep.mrp) {
+        if (!pca.deep) {
           predict(
             object = model.pca,
             newdata = test,
@@ -422,6 +426,30 @@ ebma_mc_tol <- function(
           type = "response",
           allow.new.levels = TRUE
         )
+      } else {
+        NA
+      },
+      deep = if (!is.null(model.deep)) {
+        # binary DV
+        if (length(unique(test[[y]])) == 2) {
+          # predictions for post-stratification only (no EBMA)
+          pred_d <- vglmer::predict_MAVB(
+            samples = 1000,
+            model.deep,
+            newdata = test,
+            allow_missing_levels = TRUE
+          )[["mean"]]
+          # convert to response probabilities
+          pred_d <- stats::plogis(pred_d)
+        } else {
+          # continuous DV
+          pred_d <- predict(
+            samples = 1000,
+            object = model.deep,
+            newdata = test,
+            allow_missing_levels = TRUE
+          )[["mean"]]
+        }
       } else {
         NA
       }
@@ -617,8 +645,8 @@ ebma_mc_tol <- function(
 ebma_mc_draws <- function(
   train.preds, train.y, ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg,
   pc.names, model.bs, model.pca, model.lasso, model.gb, model.svm, model.knn,
-  model.mrp, tol, n.draws, cores, preds_all, post.strat, dv_type, deep.mrp,
-  knn.kernel, knn.opt
+  model.mrp, model.deep, tol, n.draws, cores, preds_all, post.strat, dv_type,
+  best.subset.deep, pca.deep, knn.kernel, knn.opt
 ) {
 
   # Binding for global variables
@@ -650,7 +678,7 @@ ebma_mc_draws <- function(
     test_preds <- dplyr::tibble(
       best_subset = if (!is.null(model.bs)) {
         # regular best subset without level 1 interactions
-        if (!deep.mrp) {
+        if (!best.subset.deep) {
           predict(
             object = model.bs,
             newdata = test,
@@ -681,7 +709,7 @@ ebma_mc_draws <- function(
       },
       pca = if (!is.null(model.pca)) {
         # regular pca without level 1 interactions
-        if (!deep.mrp) {
+        if (!pca.deep) {
           predict(
             object = model.pca,
             newdata = test,
@@ -787,6 +815,30 @@ ebma_mc_draws <- function(
           type = "response",
           allow.new.levels = TRUE
         )
+      } else {
+        NA
+      },
+      deep = if (!is.null(model.deep)) {
+        # binary DV
+        if (length(unique(test[[y]])) == 2) {
+          # predictions for post-stratification only (no EBMA)
+          pred_d <- vglmer::predict_MAVB(
+            samples = 1000,
+            model.deep,
+            newdata = test,
+            allow_missing_levels = TRUE
+          )[["mean"]]
+          # convert to response probabilities
+          pred_d <- stats::plogis(pred_d)
+        } else {
+          # continuous DV
+          pred_d <- predict(
+            samples = 1000,
+            object = model.deep,
+            newdata = test,
+            allow_missing_levels = TRUE
+          )[["mean"]]
+        }
       } else {
         NA
       }

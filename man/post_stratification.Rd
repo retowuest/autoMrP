@@ -11,9 +11,11 @@ post_stratification(
   L2.unit,
   L2.reg,
   best.subset.opt,
+  best.subset.deep,
   lasso.opt,
   lasso.L2.x,
   pca.opt,
+  pca.deep,
   gb.opt,
   svm.opt,
   knn.opt,
@@ -35,7 +37,10 @@ post_stratification(
   census,
   verbose,
   deep.mrp,
-  deep.splines
+  deep.splines,
+  deep.L2.x,
+  deep.L2.unit,
+  deep.L2.reg
 )
 }
 \arguments{
@@ -64,6 +69,11 @@ geographic units are grouped (\code{L2.unit} must be nested within
 \item{best.subset.opt}{Optimal tuning parameters from best subset selection
 classifier. A list returned by \code{run_best_subset()}.}
 
+\item{best.subset.deep}{A logical argument indicating whether
+the deep MRP classifier should be used for best subset prediction. Setting
+\code{best.subset.deep = TRUE} will include all interactions of L1.x in the
+best subset classifier. Default is \code{FALSE}.}
+
 \item{lasso.opt}{Optimal tuning parameters from lasso classifier A list
 returned by \code{run_lasso()}.}
 
@@ -75,6 +85,11 @@ variables specified in \code{L2.x}. Default is \code{NULL}.}
 
 \item{pca.opt}{Optimal tuning parameters from best subset selection with
 principal components classifier A list returned by \code{run_pca()}.}
+
+\item{pca.deep}{A logical argument indicating whether
+the deep MRP classifier should be used for PCA prediction. Setting
+\code{pca.deep = TRUE} will include all interactions of L1.x in the
+pca classifier. Default is \code{FALSE}.}
 
 \item{gb.opt}{Optimal tuning parameters from gradient tree boosting
 classifier A list returned by \code{run_gb()}.}
@@ -165,12 +180,24 @@ training.}
 verbose output should be printed. Default is \code{FALSE}.}
 
 \item{deep.mrp}{Deep MRP classifier. A logical argument indicating whether
-the deep MRP classifier should be used for best subset prediction. Setting
-\code{deep.mrp = TRUE} will include all interactions of L1.x in the best
-subset classifier. Default is \code{FALSE}.}
+the deep MRP classifier should be used for predicting outcome \code{y}.
+Useful to run a specific deep MRP model. Default is \code{FALSE}.}
 
 \item{deep.splines}{Deep MRP splines. A logical argument indicating whether
 splines should be used in the deep MRP classifier. Default is \code{TRUE}.}
+
+\item{deep.L2.x}{Deep MrP context-level covariates. A character vector
+containing the column names of the context-level variables in
+\code{survey} and \code{census} to be used by the Deep MRP classifier.
+The character vector \emph{empty} if no context-level variables should be
+used by the Deep MRP classifier. If \code{NULL} and \code{deep.mrp} is set
+to \code{TRUE}, then Deep MRP uses the variables specified in \code{L2.x}.
+Default is \code{NULL}. Note: For the empty MrP model, set
+\code{L2.x = NULL} and \code{mrp.L2.x = ""}.}
+
+\item{deep.L2.reg}{Deep MRP L2.reg. A logical argument indicating whether
+\code{L2.reg} should be included in the Deep MRP classifier. Default is
+\code{FALSE}.}
 }
 \description{
 Apply post-stratification to classifiers.

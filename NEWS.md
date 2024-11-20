@@ -1,3 +1,8 @@
+# autoMrP 1.1.1
+
++ implements knn as an additional classifier
++ best.subset.deep and pca.deep now implements deep interactions for best subset and pca.
+
 # autoMrP 1.1.0
 
 + implements stacking

@@ -12,7 +12,8 @@ knn_classifier(
   knn.k.value,
   knn.kernel = c("rectangular", "triangular", "epanechnikov", "biweight", "triweight",
     "cos", "inv", "gaussian", "optimal"),
-  verbose = c(TRUE, FALSE)
+  verbose = c(TRUE, FALSE),
+  ...
 )
 }
 \arguments{

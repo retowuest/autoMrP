@@ -16,12 +16,13 @@ ebma(
   n.draws,
   tol,
   best.subset.opt,
+  best.subset.deep,
   pca.opt,
+  pca.deep,
   lasso.opt,
   gb.opt,
   svm.opt,
   knn.opt,
-  deep.mrp,
   verbose,
   cores,
   preds_all,
@@ -75,8 +76,18 @@ Passed on from \code{ebma.tol}.}
 \item{best.subset.opt}{Tuned best subset parameters. A list returned from
 \code{run_best_subset()}.}
 
+\item{best.subset.deep}{A logical argument indicating whether
+the deep MRP classifier should be used for best subset prediction. Setting
+\code{best.subset.deep = TRUE} will include all interactions of L1.x in the
+best subset classifier. Default is \code{FALSE}.}
+
 \item{pca.opt}{Tuned best subset with principal components parameters. A list
 returned from \code{run_pca()}.}
+
+\item{pca.deep}{A logical argument indicating whether
+the deep MRP classifier should be used for PCA prediction. Setting
+\code{pca.deep = TRUE} will include all interactions of L1.x in the
+pca classifier. Default is \code{FALSE}.}
 
 \item{lasso.opt}{Tuned lasso parameters. A list returned from
 \code{run_lasso()}.}
@@ -89,11 +100,6 @@ returned from \code{run_pca()}.}
 
 \item{knn.opt}{Tuned k-nearest neighbors parameters. A list returned from
 \code{run_knn()}.}
-
-\item{deep.mrp}{Deep MRP classifier. A logical argument indicating whether
-the deep MRP classifier should be used for best subset prediction. Setting
-\code{deep.mrp = TRUE} will include all interactions of L1.x in the best
-subset classifier. Default is \code{FALSE}.}
 
 \item{verbose}{Verbose output. A logical argument indicating whether or not
 verbose output should be printed. Default is \code{FALSE}.}

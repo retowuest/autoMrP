@@ -32,6 +32,10 @@ auto_MrP(
   mrp = FALSE,
   deep.mrp = FALSE,
   oversampling = FALSE,
+  best.subset.deep = FALSE,
+  best.subset.deep.splines = TRUE,
+  pca.deep = FALSE,
+  pca.deep.splines = TRUE,
   best.subset.L2.x = NULL,
   lasso.L2.x = NULL,
   pca.L2.x = NULL,
@@ -46,6 +50,9 @@ auto_MrP(
   knn.L2.unit = TRUE,
   knn.L2.reg = FALSE,
   deep.splines = TRUE,
+  deep.L2.x = NULL,
+  deep.L2.unit = TRUE,
+  deep.L2.reg = FALSE,
   lasso.lambda = NULL,
   lasso.n.iter = 100,
   gb.interaction.depth = c(1, 2, 3),
@@ -194,12 +201,29 @@ MRP classifier should be used for predicting outcome \code{y}. Default is
 \code{FALSE}.}
 
 \item{deep.mrp}{Deep MRP classifier. A logical argument indicating whether
-the deep MRP classifier should be used for best subset prediction. Setting
-\code{deep.mrp = TRUE} will include all interactions of L1.x in the best
-subset classifier. Default is \code{FALSE}.}
+the deep MRP classifier should be used for predicting outcome \code{y}.
+Useful to run a specific deep MRP model. Default is \code{FALSE}.}
 
 \item{oversampling}{Oversample to create balance on the dependent variable.
 A logical argument. Default is \code{FALSE}.}
+
+\item{best.subset.deep}{A logical argument indicating whether
+the deep MRP classifier should be used for best subset prediction. Setting
+\code{best.subset.deep = TRUE} will include all interactions of L1.x in the
+best subset classifier. Default is \code{FALSE}.}
+
+\item{best.subset.deep.splines}{Deep MRP splines for Best Subset. A logical
+argument indicating whether splines should be used in the deep MRP
+classifier for best subset selection. Default is \code{TRUE}.}
+
+\item{pca.deep}{A logical argument indicating whether
+the deep MRP classifier should be used for PCA prediction. Setting
+\code{pca.deep = TRUE} will include all interactions of L1.x in the
+pca classifier. Default is \code{FALSE}.}
+
+\item{pca.deep.splines}{Deep MRP splines for PCA. A logical argument
+indicating whether splines should be used in the deep MRP classifier for
+PCA. Default is \code{TRUE}.}
 
 \item{best.subset.L2.x}{Best subset context-level covariates. A character
 vector containing the column names of the context-level variables in
@@ -272,6 +296,19 @@ For the empty MrP model, set \code{L2.x = NULL} and \code{mrp.L2.x = ""}.}
 
 \item{deep.splines}{Deep MRP splines. A logical argument indicating whether
 splines should be used in the deep MRP classifier. Default is \code{TRUE}.}
+
+\item{deep.L2.x}{Deep MrP context-level covariates. A character vector
+containing the column names of the context-level variables in
+\code{survey} and \code{census} to be used by the Deep MRP classifier.
+The character vector \emph{empty} if no context-level variables should be
+used by the Deep MRP classifier. If \code{NULL} and \code{deep.mrp} is set
+to \code{TRUE}, then Deep MRP uses the variables specified in \code{L2.x}.
+Default is \code{NULL}. Note: For the empty MrP model, set
+\code{L2.x = NULL} and \code{mrp.L2.x = ""}.}
+
+\item{deep.L2.reg}{Deep MRP L2.reg. A logical argument indicating whether
+\code{L2.reg} should be included in the Deep MRP classifier. Default is
+\code{FALSE}.}
 
 \item{lasso.lambda}{Lasso penalty parameter. A numeric \code{vector} of
 non-negative values. The penalty parameter controls the shrinkage of the
@@ -363,6 +400,9 @@ whether uncertainty estimates should be computed. Default is \code{FALSE}.}
 indicating the number of bootstrap iterations to be computed. Will be
 ignored unless \code{uncertainty = TRUE}. Default is \code{200} if
 \code{uncertainty = TRUE} and \code{NULL} if \code{uncertainty = FALSE}.}
+
+\item{deep.L2.unit.}{A logical argument indicating whether \code{L2.unit}
+should be included in the Deep MRP classifier. Default is \code{TRUE}.}
 }
 \value{
 The context-level predictions. A list with two elements. The first

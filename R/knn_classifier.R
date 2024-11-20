@@ -28,7 +28,7 @@ knn_classifier <- function(
     "rectangular", "triangular", "epanechnikov", "biweight", "triweight", "cos",
     "inv", "gaussian", "optimal"
   ),
-  verbose = c(TRUE, FALSE)
+  verbose = c(TRUE, FALSE), ...
 ) {
 
   # Train and evaluate model using the supplied value of k

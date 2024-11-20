@@ -10,11 +10,12 @@ boot_auto_mrp <- function(
   y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg, L2.x.scale, pcs, folds,
   bin.proportion, bin.size, survey, census, ebma.size, k.folds, cv.sampling,
   loss.unit, loss.fun, best.subset, lasso, pca, gb, svm, mrp, deep.mrp,
-  best.subset.L2.x, lasso.L2.x, pca.L2.x, pc.names, gb.L2.x, svm.L2.x,
-  svm.L2.unit, svm.L2.reg, gb.L2.unit, gb.L2.reg, deep.splines, lasso.lambda,
-  lasso.n.iter, gb.interaction.depth, gb.shrinkage, gb.n.trees.init,
-  gb.n.trees.increase, gb.n.trees.max, gb.n.minobsinnode, svm.kernel, svm.gamma,
-  svm.cost, ebma.tol, boot.iter, cores
+  best.subset.deep, best.subset.deep.splines, best.subset.L2.x, lasso.L2.x,
+  pca.deep, pca.deep.splines, pca.L2.x, pc.names, gb.L2.x, svm.L2.x,
+  svm.L2.unit, svm.L2.reg, gb.L2.unit, gb.L2.reg, deep.splines, deep.L2.x,
+  deep.L2.unit, deep.L2.reg, lasso.lambda, lasso.n.iter, gb.interaction.depth,
+  gb.shrinkage, gb.n.trees.init, gb.n.trees.increase, gb.n.trees.max,
+  gb.n.minobsinnode, svm.kernel, svm.gamma, svm.cost, ebma.tol, boot.iter, cores
 ) {
 
   # Binding for global variables
@@ -51,8 +52,12 @@ boot_auto_mrp <- function(
       svm = svm,
       mrp = mrp,
       deep.mrp = deep.mrp,
+      best.subset.deep = best.subset.deep,
+      best.subset.deep.splines = best.subset.deep.splines,
       best.subset.L2.x = best.subset.L2.x,
       lasso.L2.x = lasso.L2.x,
+      pca.deep = pca.deep,
+      pca.deep.splines = pca.deep.splines,
       pca.L2.x = pca.L2.x,
       pc.names = pc.names,
       gb.L2.x = gb.L2.x,
@@ -62,6 +67,8 @@ boot_auto_mrp <- function(
       gb.L2.unit = gb.L2.unit,
       gb.L2.reg = gb.L2.reg,
       deep.splines = deep.splines,
+      deep.L2.x = deep.L2.x,
+      deep.L2.unit = deep.L2.unit,
       lasso.lambda = lasso.lambda,
       lasso.n.iter = lasso.n.iter,
       gb.interaction.depth = gb.interaction.depth,

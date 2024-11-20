@@ -18,12 +18,15 @@ run_classifiers <- function(
   y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg, L2.x.scale, pcs, pc.names, folds,
   bin.proportion, bin.size, cv.folds, cv.data, ebma.fold, census, ebma.size,
   ebma.n.draws, k.folds, cv.sampling, loss.unit, loss.fun, best.subset,
-  lasso, pca, gb, svm, knn, mrp, deep.mrp, best.subset.L2.x, lasso.L2.x,
-  pca.L2.x, gb.L2.x, svm.L2.x, knn.L2.x, gb.L2.unit, gb.L2.reg, svm.L2.unit,
-  svm.L2.reg, knn.L2.unit, knn.L2.reg, deep.splines, lasso.lambda, lasso.n.iter,
-  gb.interaction.depth, gb.shrinkage, gb.n.trees.init, gb.n.trees.increase,
-  gb.n.trees.max, gb.n.minobsinnode, svm.kernel, svm.gamma, svm.cost,
-  knn.k.max, knn.k, knn.kernel, ebma.tol, cores, verbose
+  lasso, pca, gb, svm, knn, mrp, deep.mrp, deep.splines, best.subset.deep,
+  best.subset.deep.splines, pca.deep, pca.deep.splines,
+  best.subset.L2.x, lasso.L2.x, pca.L2.x, gb.L2.x, svm.L2.x, knn.L2.x,
+  deep.L2.x, gb.L2.unit, svm.L2.unit, knn.L2.unit, deep.L2.unit, gb.L2.reg,
+  svm.L2.reg, knn.L2.reg,
+  deep.L2.reg,  lasso.lambda, lasso.n.iter, gb.interaction.depth, gb.shrinkage,
+  gb.n.trees.init, gb.n.trees.increase, gb.n.trees.max, gb.n.minobsinnode,
+  svm.kernel, svm.gamma, svm.cost, knn.k.max, knn.k, knn.kernel, ebma.tol,
+  cores, verbose
 ) {
 
   # Classifier 1: Best Subset
@@ -32,19 +35,23 @@ run_classifiers <- function(
     # get start time
     best_subset_start_time <- Sys.time()
 
-    if (verbose) {
-      cli::cli_progress_step(
-        "Tuning multilevel regression with best subset selection classifier"
-      )
-    }
-
     # Determine context-level covariates
     if (is.null(best.subset.L2.x)) {
       best.subset.L2.x <- L2.x
     }
 
     # interactions of L1.x yes/no
-    if (isTRUE(deep.mrp)) {
+    if (isTRUE(best.subset.deep)) {
+
+      if (verbose) {
+        cli::cli_progress_step(
+          paste0(
+            "Tuning multilevel regression with best subset selection",
+            " classifier including deep interactions of L1.x"
+          )
+        )
+      }
+
       # Run classifier with L1.x interactions
       best_subset_out <- run_deep_bs(
         y = y,
@@ -52,7 +59,7 @@ run_classifiers <- function(
         L2.x = best.subset.L2.x,
         L2.unit = L2.unit,
         L2.reg = L2.reg,
-        deep.splines = deep.splines,
+        deep.splines = best.subset.deep.splines,
         loss.unit = loss.unit,
         loss.fun = loss.fun,
         k.folds = k.folds,
@@ -61,6 +68,16 @@ run_classifiers <- function(
         cores = cores
       )
     } else {
+
+      if (verbose) {
+        cli::cli_progress_step(
+          paste0(
+            "Tuning multilevel regression with best subset selection",
+            " classifier excluding deep interactions of L1.x"
+          )
+        )
+      }
+
       # Run classifier without L1.x interactions
       best_subset_out <- run_best_subset(
         y = y,
@@ -158,17 +175,18 @@ run_classifiers <- function(
     # get start time
     pca_start_time <- Sys.time()
 
-    if (verbose) {
-      cli::cli_progress_step(
-        paste0(
-          "Tuning multilevel regression with principal components as context",
-          " level variables"
-        )
-      )
-    }
-
     # interactions of L1.x yes/no
-    if (isTRUE(deep.mrp)) {
+    if (isTRUE(pca.deep)) {
+
+      if (verbose) {
+        cli::cli_progress_step(
+          paste0(
+            "Tuning multilevel regression with principal components as context",
+            " level variables including deep interactions of L1.x"
+          )
+        )
+      }
+
       # Run classifier with L1.x interactions
       pca_out <- run_deep_pca(
         y = y,
@@ -176,7 +194,7 @@ run_classifiers <- function(
         L2.x = pc.names,
         L2.unit = L2.unit,
         L2.reg = L2.reg,
-        deep.splines = deep.splines,
+        deep.splines = pca.deep.splines,
         loss.unit = loss.unit,
         loss.fun = loss.fun,
         data = cv.folds,
@@ -184,6 +202,16 @@ run_classifiers <- function(
         cores = cores
       )
     } else {
+
+      if (verbose) {
+        cli::cli_progress_step(
+          paste0(
+            "Tuning multilevel regression with principal components as context",
+            " level variables excluding deep interactions of L1.x"
+          )
+        )
+      }
+
       # run classifier without L1.x interactions
       pca_out <- run_pca(
         y = y,
@@ -414,9 +442,11 @@ run_classifiers <- function(
         L2.unit = L2.unit,
         L2.reg = L2.reg,
         best.subset.opt = best_subset_out,
+        best.subset.deep = best.subset.deep,
         lasso.opt = lasso_out,
         lasso.L2.x = lasso.L2.x,
         pca.opt = pca_out,
+        pca.deep = pca.deep,
         gb.opt = gb_out,
         svm.opt = svm_out,
         svm.L2.reg = svm.L2.reg,
@@ -434,6 +464,9 @@ run_classifiers <- function(
         knn.kernel = knn.kernel,
         mrp.L2.x = mrp.L2.x,
         deep.mrp = deep.mrp,
+        deep.L2.x = deep.L2.x,
+        deep.L2.unit = deep.L2.unit,
+        deep.L2.reg = deep.L2.reg,
         deep.splines = deep.splines,
         data = cv.folds,
         ebma.fold = ebma.fold,
@@ -469,9 +502,11 @@ run_classifiers <- function(
     L2.unit = L2.unit,
     L2.reg = L2.reg,
     best.subset.opt = best_subset_out,
+    best.subset.deep = best.subset.deep,
     lasso.opt = lasso_out,
     lasso.L2.x = lasso.L2.x,
     pca.opt = pca_out,
+    pca.deep = pca.deep,
     gb.opt = gb_out,
     svm.opt = svm_out,
     knn.opt = knn_out,
@@ -490,6 +525,9 @@ run_classifiers <- function(
     mrp.L2.x = mrp.L2.x,
     deep.mrp = deep.mrp,
     deep.splines = deep.splines,
+    deep.L2.x = deep.L2.x,
+    deep.L2.unit = deep.L2.unit,
+    deep.L2.reg = deep.L2.reg,
     data = cv.data,
     ebma.fold = ebma.fold,
     census = census,
@@ -520,12 +558,13 @@ run_classifiers <- function(
     n.draws = ebma.n.draws,
     tol = ebma.tol,
     best.subset.opt = best_subset_out,
+    best.subset.deep = best.subset.deep,
     pca.opt = pca_out,
+    pca.deep = pca.deep,
     lasso.opt = lasso_out,
     gb.opt = gb_out,
     svm.opt = svm_out,
     knn.opt = knn_out,
-    deep.mrp = deep.mrp,
     pc.names = pc.names,
     verbose = verbose,
     cores = cores,

@@ -186,9 +186,8 @@ containing the column names of the context-level variables in
 variables specified in \code{L2.x}. Default is \code{NULL}.}
 
 \item{deep.mrp}{Deep MRP classifier. A logical argument indicating whether
-the deep MRP classifier should be used for best subset prediction. Setting
-\code{deep.mrp = TRUE} will include all interactions of L1.x in the best
-subset classifier. Default is \code{FALSE}.}
+the deep MRP classifier should be used for predicting outcome \code{y}.
+Useful to run a specific deep MRP model. Default is \code{FALSE}.}
 
 \item{gb.L2.x}{GB context-level covariates. A character vector containing the
 column names of the context-level variables in \code{survey} and

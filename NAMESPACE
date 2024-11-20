@@ -3,6 +3,7 @@
 S3method(plot,autoMrP)
 S3method(summary,autoMrP)
 export(auto_MrP)
+export(contr.dummy)
 export(plot.autoMrP)
 export(summary.autoMrP)
 importFrom(doRNG,"%dorng%")

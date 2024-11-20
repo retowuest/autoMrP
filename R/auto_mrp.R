@@ -105,9 +105,8 @@
 #'   MRP classifier should be used for predicting outcome \code{y}. Default is
 #'   \code{FALSE}.
 #' @param deep.mrp Deep MRP classifier. A logical argument indicating whether
-#'   the deep MRP classifier should be used for best subset prediction. Setting
-#'   \code{deep.mrp = TRUE} will include all interactions of L1.x in the best
-#'   subset classifier. Default is \code{FALSE}.
+#'   the deep MRP classifier should be used for predicting outcome \code{y}.
+#'   Useful to run a specific deep MRP model. Default is \code{FALSE}.
 #' @param oversampling Oversample to create balance on the dependent variable.
 #'   A logical argument. Default is \code{FALSE}.
 #' @param best.subset.L2.x Best subset context-level covariates. A character
@@ -115,11 +114,25 @@
 #'   \code{survey} and \code{census} to be used by the best subset classifier.
 #'   If \code{NULL} and \code{best.subset} is set to \code{TRUE}, then best
 #'   subset uses the variables specified in \code{L2.x}. Default is \code{NULL}.
+#' @param best.subset.deep A logical argument indicating whether
+#'   the deep MRP classifier should be used for best subset prediction. Setting
+#'   \code{best.subset.deep = TRUE} will include all interactions of L1.x in the
+#'   best subset classifier. Default is \code{FALSE}.
+#' @param best.subset.deep.splines Deep MRP splines for Best Subset. A logical
+#'  argument indicating whether splines should be used in the deep MRP
+#'  classifier for best subset selection. Default is \code{TRUE}.
 #' @param lasso.L2.x Lasso context-level covariates. A character vector
 #'   containing the column names of the context-level variables in
 #'   \code{survey} and \code{census} to be used by the lasso classifier. If
 #'   \code{NULL} and \code{lasso} is set to \code{TRUE}, then lasso uses the
 #'   variables specified in \code{L2.x}. Default is \code{NULL}.
+#' @param pca.deep A logical argument indicating whether
+#'   the deep MRP classifier should be used for PCA prediction. Setting
+#'   \code{pca.deep = TRUE} will include all interactions of L1.x in the
+#'   pca classifier. Default is \code{FALSE}.
+#' @param pca.deep.splines Deep MRP splines for PCA. A logical argument
+#'  indicating whether splines should be used in the deep MRP classifier for
+#'  PCA. Default is \code{TRUE}.
 #' @param pca.L2.x PCA context-level covariates. A character vector containing
 #'   the column names of the context-level variables in \code{survey} and
 #'   \code{census} whose principal components are to be used by the PCA
@@ -168,6 +181,19 @@
 #'   \code{FALSE}.
 #' @param deep.splines Deep MRP splines. A logical argument indicating whether
 #'  splines should be used in the deep MRP classifier. Default is \code{TRUE}.
+#' @param deep.L2.x Deep MrP context-level covariates. A character vector
+#'   containing the column names of the context-level variables in
+#'   \code{survey} and \code{census} to be used by the Deep MRP classifier.
+#'   The character vector \emph{empty} if no context-level variables should be
+#'   used by the Deep MRP classifier. If \code{NULL} and \code{deep.mrp} is set
+#'   to \code{TRUE}, then Deep MRP uses the variables specified in \code{L2.x}.
+#'   Default is \code{NULL}. Note: For the empty MrP model, set
+#'   \code{L2.x = NULL} and \code{mrp.L2.x = ""}.
+#' @param deep.L2.unit. A logical argument indicating whether \code{L2.unit}
+#'   should be included in the Deep MRP classifier. Default is \code{TRUE}.
+#' @param deep.L2.reg Deep MRP L2.reg. A logical argument indicating whether
+#'   \code{L2.reg} should be included in the Deep MRP classifier. Default is
+#'   \code{FALSE}.
 #' @param lasso.lambda Lasso penalty parameter. A numeric \code{vector} of
 #'   non-negative values. The penalty parameter controls the shrinkage of the
 #'   context-level variables in the lasso model. Default is a sequence with
@@ -335,6 +361,7 @@
 #' @importFrom foreach %dopar%
 #' @importFrom doRNG %dorng%
 #' @importFrom kknn contr.dummy
+#' @export contr.dummy
 
 auto_MrP <- function(
   y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE, pcs = NULL,
@@ -346,12 +373,14 @@ auto_MrP <- function(
   best.subset = TRUE, lasso = TRUE, pca = TRUE, gb = TRUE, svm = TRUE,
   knn = TRUE, mrp = FALSE,
   deep.mrp = FALSE, oversampling = FALSE,
+  best.subset.deep = FALSE, best.subset.deep.splines = TRUE,
+  pca.deep = FALSE, pca.deep.splines = TRUE,
   best.subset.L2.x = NULL, lasso.L2.x = NULL, pca.L2.x = NULL,
   gb.L2.x = NULL, svm.L2.x = NULL, knn.L2.x = NULL, mrp.L2.x = NULL,
   gb.L2.unit = TRUE, gb.L2.reg = FALSE, svm.L2.unit = TRUE, svm.L2.reg = FALSE,
   knn.L2.unit = TRUE, knn.L2.reg = FALSE,
-  deep.splines = TRUE,
-  lasso.lambda = NULL, lasso.n.iter = 100,
+  deep.splines = TRUE, deep.L2.x = NULL, deep.L2.unit = TRUE,
+  deep.L2.reg = FALSE, lasso.lambda = NULL, lasso.n.iter = 100,
   gb.interaction.depth = c(1, 2, 3),
   gb.shrinkage = c(0.04, 0.01, 0.008, 0.005, 0.001),
   gb.n.trees.init = 50, gb.n.trees.increase = 50,
@@ -547,7 +576,7 @@ auto_MrP <- function(
   census <- tibble::as_tibble(x = census)
 
   # add interactions to survey and census data if deep.mrp is TRUE
-  if (isTRUE(deep.mrp)) {
+  if (any(deep.mrp, best.subset.deep, pca.deep)) {
 
     # generate all interactions of L1.x
     l1_comb <- unlist(lapply(2:length(L1.x), function(x) {
@@ -713,13 +742,18 @@ auto_MrP <- function(
       cv.sampling = cv.sampling, loss.unit = loss.unit, loss.fun = loss.fun,
       best.subset = best.subset, lasso = lasso, pca = pca,
       gb = gb, svm = svm, knn = knn, mrp = mrp, deep.mrp = deep.mrp,
+      best.subset.deep = best.subset.deep,
+      best.subset.deep.splines = best.subset.deep.splines,
+      pca.deep = pca.deep, pca.deep.splines = pca.deep.splines,
       best.subset.L2.x = best.subset.L2.x, lasso.L2.x = lasso.L2.x,
       pca.L2.x = pca.L2.x, pc.names = pc_names, gb.L2.x = gb.L2.x,
       gb.L2.unit = gb.L2.unit, gb.L2.reg = gb.L2.reg, svm.L2.x = svm.L2.x,
       svm.L2.unit = svm.L2.unit, svm.L2.reg = svm.L2.reg, knn.L2.x = knn.L2.x,
       knn.L2.unit = knn.L2.unit, knn.L2.reg = knn.L2.reg,
-      deep.splines = deep.splines, lasso.lambda = lasso.lambda,
-      lasso.n.iter = lasso.n.iter, gb.interaction.depth = gb.interaction.depth,
+      deep.splines = deep.splines, deep.L2.x = deep.L2.x,
+      deep.L2.unit = deep.L2.unit, deep.L2.reg = deep.L2.reg,
+      lasso.lambda = lasso.lambda, lasso.n.iter = lasso.n.iter,
+      gb.interaction.depth = gb.interaction.depth,
       gb.shrinkage = gb.shrinkage, gb.n.trees.init = gb.n.trees.init,
       gb.n.trees.increase = gb.n.trees.increase,
       gb.n.trees.max = gb.n.trees.max,
@@ -764,6 +798,10 @@ auto_MrP <- function(
       svm = svm,
       mrp = mrp,
       deep.mrp = deep.mrp,
+      best.subset.deep = best.subset.deep,
+      best.subset.deep.splines = best.subset.deep.splines,
+      pca.deep = pca.deep,
+      pca.deep.splines = pca.deep.splines,
       best.subset.L2.x = best.subset.L2.x,
       lasso.L2.x = lasso.L2.x,
       pca.L2.x = pca.L2.x,
@@ -775,6 +813,9 @@ auto_MrP <- function(
       svm.L2.unit = svm.L2.unit,
       svm.L2.reg = svm.L2.reg,
       deep.splines = deep.splines,
+      deep.L2.x = deep.L2.x,
+      deep.L2.unit = deep.L2.unit,
+      deep.L2.reg = deep.L2.reg,
       lasso.lambda = lasso.lambda,
       lasso.n.iter = lasso.n.iter,
       gb.interaction.depth = gb.interaction.depth,

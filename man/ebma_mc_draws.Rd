@@ -21,13 +21,15 @@ ebma_mc_draws(
   model.svm,
   model.knn,
   model.mrp,
+  model.deep,
   tol,
   n.draws,
   cores,
   preds_all,
   post.strat,
   dv_type,
-  deep.mrp,
+  best.subset.deep,
+  pca.deep,
   knn.kernel,
   knn.opt
 )
@@ -106,10 +108,15 @@ predictions.}
 \item{dv_type}{The type of the depenedent variable. A character string.
 Either "binary" or "linear".}
 
-\item{deep.mrp}{Deep MRP classifier. A logical argument indicating whether
+\item{best.subset.deep}{A logical argument indicating whether
 the deep MRP classifier should be used for best subset prediction. Setting
-\code{deep.mrp = TRUE} will include all interactions of L1.x in the best
-subset classifier. Default is \code{FALSE}.}
+\code{best.subset.deep = TRUE} will include all interactions of L1.x in the
+best subset classifier. Default is \code{FALSE}.}
+
+\item{pca.deep}{A logical argument indicating whether
+the deep MRP classifier should be used for PCA prediction. Setting
+\code{pca.deep = TRUE} will include all interactions of L1.x in the
+pca classifier. Default is \code{FALSE}.}
 
 \item{knn.kernel}{KNN kernel. A character-valued scalar specifying the kernel
 to be used in the KNN model. The possible values are \code{rectangular}
