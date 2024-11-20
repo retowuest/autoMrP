@@ -421,7 +421,8 @@ stacking_weights <- function(preds, ebma_out, L2.unit, k.folds, cores) {
 
       # sort the stacked predictions by id
       stack_out <- stack_out %>%
-        dplyr::arrange(id)
+        dplyr::arrange(id) %>%
+        dplyr::select_if(~ !all(is.na(.)))
 
       #----------------------------------------------------------------
       # 2nd round of stacking: stack of stacking algorithms
@@ -768,7 +769,6 @@ stacking_weights <- function(preds, ebma_out, L2.unit, k.folds, cores) {
       # merge predictions into stack_out
       stack_out <- stack_out %>%
         dplyr::left_join(stack_of_stacks_ebma, by = "id")
-
 
       # stacking weights container
       stack_weights$stack_of_stacks_ebma <- stack3_w

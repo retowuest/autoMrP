@@ -59,7 +59,10 @@ apply_stack_weights <- function(ebma_out, stack_out, L2.unit, preds_all, y) {
       dplyr::mutate(stack_ornstein = as.numeric(ornstein_stack))
 
     # 5) stack of stacks
-    stack_of_stacks <- as.matrix(stacked_preds[, -1]) %*%
+    stack_of_stacks <- as.matrix(
+      stacked_preds[, -1] %>%
+        dplyr::select_if(~ !all(is.na(.)))
+    ) %*%
       stack_out$stack_weights$stack_of_stacks
 
     # add stack of stacks to stack predictions
