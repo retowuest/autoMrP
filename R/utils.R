@@ -391,50 +391,6 @@ error_checks <- function(
                " must be either TRUE or FALSE.", sep = ""))
   }
 
-  # Check if deep.mrp is logical
-  if (is.logical(deep.mrp)) {
-    # Check if deep.mrp is TRUE
-    if (isTRUE(deep.mrp))
-      # Check if best.subset is FALSE
-      if (!isTRUE(best.subset) && !isTRUE(pca)) {
-        stop(
-          "The argument 'deep.mrp' can only be set to TRUE if 'best.subset' or",
-          " 'pca' is TRUE."
-        )
-      }
-  } else {
-    stop(
-      "The logical argument 'deep.mrp', indicating whether all interactions",
-      " of L2.x should be used within the best subset classifier, must be",
-      " either TRUE or FALSE."
-    )
-  }
-
-  # Check if deep.splines is logical
-  if (is.logical(deep.splines)) {
-    # Check if deep.splines is TRUE
-    if (isTRUE(deep.mrp)) {
-      # Check if best.subset is FALSE
-      if (!isTRUE(best.subset) && !isTRUE(pca)) {
-        stop(
-          "The argument 'deep.splines' can only be set to TRUE if ",
-          " 'best.subset' or 'pca' is TRUE."
-        )
-      }
-    } else {
-      stop(
-        "The argument 'deep.splines' can only be set to TRUE if 'deep.mrp' is",
-        " TRUE."
-      )
-    }
-  } else {
-    stop(
-      "The logical argument 'deep.splines', indicating whether splines should",
-      " be used within the best subset classifier using all interactions of",
-      " L2.x must be either TRUE or FALSE."
-    )
-  }
-
   # Check if lasso is logical
   if (is.logical(lasso)) {
     # Check if lasso is TRUE
