@@ -477,7 +477,7 @@ error_checks <- function(
       # Check if pca.deep is TRUE
       if (pca.deep) {
         # Check whether pca.deep.splines is user supplied
-        if (missing(pca.deep.splines)){
+        if (missing(pca.deep.splines)) {
           stop(
             "The argument 'pca.deep.splines' must be set to TRUE or FALSE when",
             " 'pca.deep' is set to TRUE."

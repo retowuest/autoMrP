@@ -350,9 +350,12 @@ stacking_weights <- function(preds, ebma_out, L2.unit, k.folds, cores) {
       optim_w <- apply(optim_w, 2, function(x) {
         weighted.mean(x = x, w = optim_e)
       })
-
-      # individual level predictions
-      final_prediction <- stack_predictions %*% optim_w
+      if (any(is.na(optim_w))) {
+        final_prediction <- rep(NA, nrow(stack_out))
+      } else {
+        # individual level predictions
+        final_prediction <- stack_predictions %*% optim_w
+      }
 
       # stacked predictions output
       stack_out <- stack_out %>%
@@ -446,11 +449,13 @@ stacking_weights <- function(preds, ebma_out, L2.unit, k.folds, cores) {
         data_train <- dplyr::bind_rows(cv_folds[-k])
         stack_predictions <- data_train %>%
           dplyr::select(-y, -!!rlang::sym(L2.unit), -id) %>%
+          dplyr::select_if(~ !all(is.na(.))) %>%
           as.matrix()
 
         # evaluate based on test data
         data_test <- cv_folds[[k]] %>%
           dplyr::select(-y, -!!rlang::sym(L2.unit), -id) %>%
+          dplyr::select_if(~ !all(is.na(.))) %>%
           as.matrix()
 
         true_labels <- data_train$y
@@ -552,6 +557,7 @@ stacking_weights <- function(preds, ebma_out, L2.unit, k.folds, cores) {
       stack_predictions <- cv_folds %>%
         dplyr::bind_rows() %>%
         dplyr::select(-y, -!!rlang::sym(L2.unit), -id) %>%
+        dplyr::select_if(~ !all(is.na(.))) %>%
         as.matrix()
 
       # 2nd round of stacking output
