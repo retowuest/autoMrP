@@ -304,7 +304,7 @@ run_classifiers <- function(
   }
 
   # Classifier 5: SVM
-  if (isTRUE(svm)) {
+  if (svm) {
 
     # get start time
     svm_start_time <- Sys.time()
@@ -364,7 +364,7 @@ run_classifiers <- function(
   }
 
   # Classifier 6: KNN
-  if (isTRUE(knn)) {
+  if (knn) {
 
     # get start time
     knn_start_time <- Sys.time()

@@ -23,8 +23,12 @@ error_checks(
   loss.unit,
   loss.fun,
   best.subset,
+  best.subset.deep,
+  best.subset.deep.splines,
   lasso,
   pca,
+  pca.deep,
+  pca.deep.splines,
   gb,
   svm,
   knn,
@@ -149,6 +153,15 @@ search grid.}
 whether the best subset classifier should be used for predicting outcome
 \code{y}. Default is \code{TRUE}.}
 
+\item{best.subset.deep}{A logical argument indicating whether
+the deep MRP classifier should be used for best subset prediction. Setting
+\code{best.subset.deep = TRUE} will include all interactions of L1.x in the
+best subset classifier. Default is \code{FALSE}.}
+
+\item{best.subset.deep.splines}{Deep MRP splines for Best Subset. A logical
+argument indicating whether splines should be used in the deep MRP
+classifier for best subset selection. Must be user supplied.}
+
 \item{lasso}{Lasso classifier. A logical argument indicating whether the
 lasso classifier should be used for predicting outcome \code{y}. Default is
 \code{TRUE}.}
@@ -156,6 +169,15 @@ lasso classifier should be used for predicting outcome \code{y}. Default is
 \item{pca}{PCA classifier. A logical argument indicating whether the PCA
 classifier should be used for predicting outcome \code{y}. Default is
 \code{TRUE}.}
+
+\item{pca.deep}{A logical argument indicating whether
+the deep MRP classifier should be used for PCA prediction. Setting
+\code{pca.deep = TRUE} will include all interactions of L1.x in the
+pca classifier. Default is \code{FALSE}.}
+
+\item{pca.deep.splines}{Deep MRP splines for PCA. A logical argument
+indicating whether splines should be used in the deep MRP classifier for
+PCA. Must be user supplied.}
 
 \item{gb}{GB classifier. A logical argument indicating whether the GB
 classifier should be used for predicting outcome \code{y}. Default is

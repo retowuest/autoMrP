@@ -33,9 +33,9 @@ auto_MrP(
   deep.mrp = FALSE,
   oversampling = FALSE,
   best.subset.deep = FALSE,
-  best.subset.deep.splines = TRUE,
+  best.subset.deep.splines = FALSE,
   pca.deep = FALSE,
-  pca.deep.splines = TRUE,
+  pca.deep.splines = FALSE,
   best.subset.L2.x = NULL,
   lasso.L2.x = NULL,
   pca.L2.x = NULL,
@@ -214,7 +214,7 @@ best subset classifier. Default is \code{FALSE}.}
 
 \item{best.subset.deep.splines}{Deep MRP splines for Best Subset. A logical
 argument indicating whether splines should be used in the deep MRP
-classifier for best subset selection. Default is \code{TRUE}.}
+classifier for best subset selection. Must be user supplied.}
 
 \item{pca.deep}{A logical argument indicating whether
 the deep MRP classifier should be used for PCA prediction. Setting
@@ -223,7 +223,7 @@ pca classifier. Default is \code{FALSE}.}
 
 \item{pca.deep.splines}{Deep MRP splines for PCA. A logical argument
 indicating whether splines should be used in the deep MRP classifier for
-PCA. Default is \code{TRUE}.}
+PCA. Must be user supplied.}
 
 \item{best.subset.L2.x}{Best subset context-level covariates. A character
 vector containing the column names of the context-level variables in

@@ -120,7 +120,7 @@
 #'   best subset classifier. Default is \code{FALSE}.
 #' @param best.subset.deep.splines Deep MRP splines for Best Subset. A logical
 #'  argument indicating whether splines should be used in the deep MRP
-#'  classifier for best subset selection. Default is \code{TRUE}.
+#'  classifier for best subset selection. Must be user supplied.
 #' @param lasso.L2.x Lasso context-level covariates. A character vector
 #'   containing the column names of the context-level variables in
 #'   \code{survey} and \code{census} to be used by the lasso classifier. If
@@ -132,7 +132,7 @@
 #'   pca classifier. Default is \code{FALSE}.
 #' @param pca.deep.splines Deep MRP splines for PCA. A logical argument
 #'  indicating whether splines should be used in the deep MRP classifier for
-#'  PCA. Default is \code{TRUE}.
+#'  PCA. Must be user supplied.
 #' @param pca.L2.x PCA context-level covariates. A character vector containing
 #'   the column names of the context-level variables in \code{survey} and
 #'   \code{census} whose principal components are to be used by the PCA
@@ -373,8 +373,8 @@ auto_MrP <- function(
   best.subset = TRUE, lasso = TRUE, pca = TRUE, gb = TRUE, svm = TRUE,
   knn = TRUE, mrp = FALSE,
   deep.mrp = FALSE, oversampling = FALSE,
-  best.subset.deep = FALSE, best.subset.deep.splines = TRUE,
-  pca.deep = FALSE, pca.deep.splines = TRUE,
+  best.subset.deep = FALSE, best.subset.deep.splines = FALSE,
+  pca.deep = FALSE, pca.deep.splines = FALSE,
   best.subset.L2.x = NULL, lasso.L2.x = NULL, pca.L2.x = NULL,
   gb.L2.x = NULL, svm.L2.x = NULL, knn.L2.x = NULL, mrp.L2.x = NULL,
   gb.L2.unit = TRUE, gb.L2.reg = FALSE, svm.L2.unit = TRUE, svm.L2.reg = FALSE,
@@ -458,8 +458,12 @@ auto_MrP <- function(
     loss.unit = loss.unit,
     loss.fun = loss.fun,
     best.subset = best.subset,
+    best.subset.deep = best.subset.deep,
+    best.subset.deep.splines = best.subset.deep.splines,
     lasso = lasso,
     pca = pca,
+    pca.deep = pca.deep,
+    pca.deep.splines = pca.deep.splines,
     gb = gb,
     svm = svm,
     knn = knn,

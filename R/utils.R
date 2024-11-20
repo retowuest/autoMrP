@@ -13,8 +13,9 @@
 error_checks <- function(
   y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs, folds, bin.proportion,
   bin.size, survey, census, ebma.size, k.folds, cv.sampling, loss.unit,
-  loss.fun, best.subset, lasso, pca, gb, svm, knn, mrp, best.subset.L2.x,
-  lasso.L2.x, deep.mrp, gb.L2.x, svm.L2.x, knn.L2.x, mrp.L2.x,
+  loss.fun, best.subset, best.subset.deep, best.subset.deep.splines,
+  lasso, pca, pca.deep, pca.deep.splines, gb, svm, knn, mrp,
+  best.subset.L2.x, lasso.L2.x, deep.mrp, gb.L2.x, svm.L2.x, knn.L2.x, mrp.L2.x,
   gb.L2.unit, gb.L2.reg, knn.L2.unit, knn.L2.reg, lasso.lambda,
   lasso.n.iter, knn.k.max, knn.k, knn.kernel, deep.splines, uncertainty,
   boot.iter
@@ -350,6 +351,19 @@ error_checks <- function(
   if (is.logical(best.subset)) {
     # Check if best.subset is TRUE
     if (isTRUE(best.subset)) {
+      # Check if best.subset.deep is logical
+      if (is.logical(best.subset.deep)) {
+        # Check whether best.subset.deep is TRUE
+        if (best.subset.deep) {
+          # Check whether best.subset.deep.splines is user supplied
+          if (missing(best.subset.deep.splines)) {
+            stop(
+              "The argument 'best.subset.deep.splines' must be set to TRUE or",
+              " FALSE when 'best.subset.deep' is set to TRUE."
+            )
+          }
+        }
+      }
       # Check if best.subset.L2.x is NULL
       if (!is.null(best.subset.L2.x)) {
         # Check if best.subset.L2.x is a character vector
@@ -460,13 +474,24 @@ error_checks <- function(
   if (is.logical(pca)) {
     # Check if pca is TRUE
     if (isTRUE(pca)) {
+      # Check if pca.deep is TRUE
+      if (pca.deep) {
+        # Check whether pca.deep.splines is user supplied
+        if (missing(pca.deep.splines)){
+          stop(
+            "The argument 'pca.deep.splines' must be set to TRUE or FALSE when",
+            " 'pca.deep' is set to TRUE."
+          )
+        }
+      }
       # Check if pcs is NULL
       if (!is.null(pcs)) {
         # Check if pcs is a character vector
         if (!is.character(pcs)) {
-          stop(paste("The argument 'pcs', specifying the principal components of",
-                     " the context-level variables, must be a character vector.",
-                     sep = ""))
+          stop(
+            "The argument 'pcs', specifying the principal components of",
+            " the context-level variables, must be a character vector."
+          )
         }
 
         # Check if pcs is in survey data
@@ -502,9 +527,25 @@ error_checks <- function(
     } else {
       # Check if pcs is NULL
       if (!is.null(pcs)) {
-        warning(paste("The argument 'pcs', specifying the principal components",
-                      " of the context-level variables, will be ignored because",
-                      " 'pca' is set to FALSE.", sep = ""))
+        warning(
+          "The argument 'pcs', specifying the principal components of the",
+          " context-level variables, will be ignored because 'pca' is set to",
+          " FALSE."
+        )
+      }
+      # Check if pca.deep is TRUE
+      if (isTRUE(pca.deep)) {
+        warning(
+          "The argument 'pca.deep' is set to TRUE but 'pca' is set to FALSE.",
+          " 'pca.deep' will be ignored."
+        )
+      }
+      # Check if pca.deep.splines is TRUE
+      if (isTRUE(pca.deep.splines)) {
+        warning(
+          "The argument 'pca.deep.splines' is set to TRUE but 'pca' is set to",
+          " FALSE. 'pca.deep.splines' will be ignored."
+        )
       }
     }
   } else {
@@ -564,15 +605,6 @@ error_checks <- function(
         warning(
           "The argument 'gb.L2.x', specifying the context-level variables to",
           " be used by the GB classifier, will be ignored because 'gb' is set",
-          " to FALSE."
-        )
-      }
-
-      # Check if gb.L2.unit has a value other than the default
-      if (!isFALSE(gb.L2.unit)) {
-        warning(
-          "The argument 'gb.L2.unit', indicating whether 'L2.unit' should be",
-          " included in the GB classifier, will be ignored because 'gb' is set",
           " to FALSE."
         )
       }
@@ -842,12 +874,31 @@ error_checks <- function(
     }
   }
 
-  # # Check if supplied seed is integer
-  # if (!is.null(seed)){
-  #   if (isFALSE(dplyr::near(seed, as.integer(seed)))) {
-  #     stop("Seed must be either NULL or an integer-valued scalar.")
-  #   }
-  # }
+  # Check whether more than two classifiers are supplied
+  if (sum(best.subset, pca, lasso, gb, svm, knn, mrp, deep.mrp) > 1) {
+    # Check whether ebma.size = 0
+    if (ebma.size == 0) {
+      # classifier names
+      elements <- c(
+        best.subset = best.subset,
+        pca = pca,
+        lasso = lasso,
+        gb = gb,
+        svm = svm,
+        knn = knn,
+        mrp = mrp,
+        deep.mrp = deep.mrp
+      )
+      # keep the elements that are in use
+      true_elements <- names(elements)[elements]
+      stop(
+        "The following calssifiers are in use: ",
+        paste(true_elements, collapse = ", "),
+        ". With more than 1 classifier, EBMA will be executed and ebma.size",
+        " must be > 0."
+      )
+    }
+  }
 }
 
 

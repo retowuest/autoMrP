@@ -46,7 +46,9 @@ ebma <- function(
   ) {
 
     if (verbose) {
-      message("Starting ensemble Bayesian model averaging tuning")
+      cli::cli_progress_step(
+        "Starting bayesian ensemble model averaging tuning"
+      )
     }
 
     # dependent variable type

@@ -202,7 +202,7 @@ best subset classifier. Default is \code{FALSE}.}
 
 \item{best.subset.deep.splines}{Deep MRP splines for Best Subset. A logical
 argument indicating whether splines should be used in the deep MRP
-classifier for best subset selection. Default is \code{TRUE}.}
+classifier for best subset selection. Must be user supplied.}
 
 \item{best.subset.L2.x}{Best subset context-level covariates. A character
 vector containing the column names of the context-level variables in
@@ -223,7 +223,7 @@ pca classifier. Default is \code{FALSE}.}
 
 \item{pca.deep.splines}{Deep MRP splines for PCA. A logical argument
 indicating whether splines should be used in the deep MRP classifier for
-PCA. Default is \code{TRUE}.}
+PCA. Must be user supplied.}
 
 \item{pca.L2.x}{PCA context-level covariates. A character vector containing
 the column names of the context-level variables in \code{survey} and

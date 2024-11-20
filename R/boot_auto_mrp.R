@@ -82,6 +82,7 @@ boot_auto_mrp <- function(
       svm.cost = svm.cost,
       ebma.tol = ebma.tol
     )
+    return(boot_mrp)
   } # end of foreach loop
 
   # Median and standard deviation of EBMA estimates
