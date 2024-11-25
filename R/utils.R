@@ -791,9 +791,8 @@ error_checks <- function(
           " ignored because 'knn' is set to FALSE."
         )
       }
-
       # Check if knn.L2.unit has a value other than the default
-      if (!isFALSE(knn.L2.unit)) {
+      if (isFALSE(knn.L2.unit)) {
         warning(
           "The argument 'knn.L2.unit', indicating whether 'L2.unit'",
           " should be included in the KNN classifier, will be",
