@@ -47,7 +47,7 @@ ebma <- function(
 
     if (verbose) {
       cli::cli_progress_step(
-        "Starting bayesian ensemble model averaging tuning"
+        "Performing ensemble Bayesian model averaging"
       )
     }
 

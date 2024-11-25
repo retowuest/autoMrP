@@ -45,10 +45,7 @@ run_classifiers <- function(
 
       if (verbose) {
         cli::cli_progress_step(
-          paste0(
-            "Tuning multilevel regression with best subset selection",
-            " classifier including deep interactions of L1.x"
-          )
+          "Tuning best subset selection w/ deep interactions"
         )
       }
 
@@ -71,10 +68,7 @@ run_classifiers <- function(
 
       if (verbose) {
         cli::cli_progress_step(
-          paste0(
-            "Tuning multilevel regression with best subset selection",
-            " classifier excluding deep interactions of L1.x"
-          )
+          "Tuning best subset selection w/o deep interactions"
         )
       }
 
@@ -123,7 +117,7 @@ run_classifiers <- function(
 
     if (verbose) {
       cli::cli_progress_step(
-        "Tuning multilevel regression with L1 regularization"
+        "Tuning L1 regularization"
       )
     }
 
@@ -180,10 +174,7 @@ run_classifiers <- function(
 
       if (verbose) {
         cli::cli_progress_step(
-          paste0(
-            "Tuning multilevel regression with principal components as context",
-            " level variables including deep interactions of L1.x"
-          )
+          "Tuning principal components w/ deep interactions"
         )
       }
 
@@ -205,10 +196,7 @@ run_classifiers <- function(
 
       if (verbose) {
         cli::cli_progress_step(
-          paste0(
-            "Tuning multilevel regression with principal components as context",
-            " level variables excluding deep interactions of L1.x"
-          )
+          "Tuning principal components w/o deep interactions"
         )
       }
 
@@ -426,7 +414,7 @@ run_classifiers <- function(
 
   if (verbose) {
     cli::cli_progress_step(
-      "Generating out of sample predictions from tuned classifiers"
+      "Generating out of sample predictions"
     )
   }
 
@@ -489,7 +477,7 @@ run_classifiers <- function(
   # Post-stratification -----------------------------------------------------
 
   if (verbose) {
-    cli::cli_progress_step("Post-stratification")
+    cli::cli_progress_step("Post-stratifying")
   }
 
   # get start time
