@@ -268,7 +268,8 @@ values is provided.}
 scalar specifying the maximum number of neighbors to be considered in the
 KNN model if \code{knn.k} is \code{NULL}. If \code{knn.k.max} is specified
 and \code{knn.k} is \code{NULL}, then the number of neighbors considered is
-the sequence \code{1:knn.k.max}. Default is \code{sqrt(nrow(survey))}.}
+the sequence \code{1:knn.k.max}. Default is
+\code{max(20, sqrt(nrow(survey)))}.}
 
 \item{knn.k}{KNN number of neighbors. A \code{vector} of positive integers
 specifying the number of neighbors to be considered in the KNN model. If

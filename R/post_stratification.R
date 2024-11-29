@@ -723,6 +723,8 @@ post_stratification <- function(
   # Fit model
   if (isTRUE(mrp.include == TRUE)) {
 
+    mrp_start_time <- Sys.time()
+
     # Create model formula
     # Individual-level random effects
     L1_re <- paste(paste("(1 | ", L1.x, ")", sep = ""), collapse = " + ")
@@ -801,11 +803,19 @@ post_stratification <- function(
 
     # model for EBMA
     models$mrp <- mrp_model_ebma
+    mrp_end_time <- Sys.time()
+    mrp_runtime <- difftime(
+      time1 = mrp_end_time, time2 = mrp_start_time, units = "mins"
+    )
+  } else {
+    mrp_runtime <- NULL
   }
 
   # Classifier 8: deep MRP
   # Fit model
   if (deep.mrp) {
+
+    deep_start_time <- Sys.time()
 
     # custom L2x
     if (!is.null(deep.L2.x)) {
@@ -975,8 +985,14 @@ post_stratification <- function(
 
     # model for EBMA
     models$deep_mrp <- deep_mrp_model
+    deep_end_time <- Sys.time()
+    deep_runtime <- difftime(
+      time1 = deep_end_time, time2 = deep_start_time, units = "mins"
+    )
 
-  } # end of deep.mrp
+  } else {
+    deep_runtime <- NULL
+  }
 
   # --------------------------- combine l2 level predictions ------------------
 
@@ -1111,7 +1127,9 @@ post_stratification <- function(
         Level1 = L1_preds,
         Level2 = L2_preds
       ),
-      models = models
+      models = models,
+      mrp_runtime = mrp_runtime,
+      deep_mrp_runtime = deep_runtime
     )
   )
 }

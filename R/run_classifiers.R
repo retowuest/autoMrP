@@ -616,10 +616,11 @@ run_classifiers <- function(
     gb = gb_runtime,
     svm = svm_runtime,
     knn = knn_runtime,
-    individual_level_predictions = preds_all_runtime,
+    mrp = ps_out$mrp_runtime,
+    deep_mrp = ps_out$deep_mrp_runtime,
     post_stratification = ps_runtime,
     ebma = ebma_runtime,
-    stacking = stack_runtime
+    stacking = stack_runtime + preds_all_runtime
   )
   ebma_out$runtime <- runtime_detailed
 
