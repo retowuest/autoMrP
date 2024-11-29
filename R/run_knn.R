@@ -79,7 +79,7 @@ run_knn <- function(
         # Convert the column named "YES" to a factor
         data_train <- data_train %>%
           dplyr::mutate(!!rlang::sym(y) := as.factor(!!rlang::sym(y)))
-        data_valid <- data_train %>%
+        data_valid <- data_valid %>%
           dplyr::mutate(!!rlang::sym(y) := as.factor(!!rlang::sym(y)))
       }
 
