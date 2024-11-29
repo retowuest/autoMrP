@@ -239,7 +239,8 @@
 #'   scalar specifying the maximum number of neighbors to be considered in the
 #'   KNN model if \code{knn.k} is \code{NULL}. If \code{knn.k.max} is specified
 #'   and \code{knn.k} is \code{NULL}, then the number of neighbors considered is
-#'   the sequence \code{1:knn.k.max}. Default is \code{11}.
+#'   the sequence \code{1:knn.k.max}. Default is
+#'   \code{max(20, sqrt(nrow(survey)))}.
 #' @param knn.k KNN number of neighbors. A \code{vector} of positive integers
 #'   specifying the number of neighbors to be considered in the KNN model. If
 #'   not \code{NULL}, \code{knn.k} takes precedence over \code{knn.k.max}.
@@ -386,7 +387,7 @@ auto_MrP <- function(
   gb.n.trees.init = 50, gb.n.trees.increase = 50,
   gb.n.trees.max = 1000, gb.n.minobsinnode = 20,
   svm.kernel = c("radial"), svm.gamma = NULL, svm.cost = NULL,
-  knn.k.max = 11, knn.k = NULL, knn.kernel = c("optimal"),
+  knn.k.max = NULL, knn.k = NULL, knn.kernel = c("optimal"),
   ebma.n.draws = 100,
   ebma.tol = c(0.01, 0.005, 0.001, 0.0005, 0.0001, 0.00005, 0.00001),
   verbose = FALSE, uncertainty = FALSE, boot.iter = NULL

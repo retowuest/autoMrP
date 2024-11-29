@@ -361,6 +361,13 @@ run_classifiers <- function(
       cli::cli_progress_step("Tuning k-nearest neighbors")
     }
 
+    # Determine the maximum value of k if knn.k.max is not specified
+    if (is.null(knn.k.max)) {
+      knn.k.max <- max(
+        20, as.integer(sqrt(nrow(dplyr::bind_rows(cv.folds))))
+      )
+    }
+
     # Determine context-level covariates
     if (is.null(knn.L2.x)) {
       knn.L2.x <- L2.x
