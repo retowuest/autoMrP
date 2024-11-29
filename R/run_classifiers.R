@@ -537,6 +537,7 @@ run_classifiers <- function(
 
   ebma_out <- ebma(
     ebma.fold = ebma.fold,
+    cv.data = cv.data,
     y = y,
     L1.x = L1.x,
     L2.x = L2.x,

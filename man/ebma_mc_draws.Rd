@@ -8,6 +8,7 @@ ebma_mc_draws(
   train.preds,
   train.y,
   ebma.fold,
+  cv.data,
   y,
   L1.x,
   L2.x,

@@ -33,9 +33,9 @@
 #'   \code{run_knn()}.
 
 ebma <- function(
-  ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names, post.strat, n.draws, tol,
-  best.subset.opt, best.subset.deep, pca.opt, pca.deep, lasso.opt, gb.opt,
-  svm.opt, knn.opt, verbose, cores, preds_all, knn.kernel
+  ebma.fold, cv.data, y, L1.x, L2.x, L2.unit, L2.reg, pc.names, post.strat,
+  n.draws, tol, best.subset.opt, best.subset.deep, pca.opt, pca.deep,
+  lasso.opt, gb.opt, svm.opt, knn.opt, verbose, cores, preds_all, knn.kernel
 ) {
 
   # Run EBMA if at least two classifiers selected
@@ -76,6 +76,16 @@ ebma <- function(
     model_mrp <- post.strat$models$mrp
     model_deep <- post.strat$models$deep
 
+    # CV data to NULL if not needed
+    if (is.null(model_knn)) {
+      cv.data <- NULL
+    } else {
+      if (dv_type == "binary") {
+        cv.data <- cv.data %>%
+          dplyr::mutate(!!rlang::sym(y) := as.factor(!!rlang::sym(y)))
+      }
+    }
+
     # Training predictions
     train_preds <- post.strat$predictions$Level1 %>%
       dplyr::select(-dplyr::one_of(y))
@@ -90,6 +100,7 @@ ebma <- function(
         train.preds = train_preds,
         train.y = train_y,
         ebma.fold = ebma.fold,
+        cv.data = cv.data,
         y = y,
         L1.x = L1.x,
         L2.x = L2.x,
@@ -125,6 +136,7 @@ ebma <- function(
         train.preds = train_preds,
         train.y = train_y,
         ebma.fold = ebma.fold,
+        cv.data = cv.data,
         y = y,
         L1.x = L1.x,
         L2.x = L2.x,
@@ -258,10 +270,9 @@ ebma <- function(
 #' }
 
 ebma_mc_tol <- function(
-  train.preds, train.y, ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names,
-  model.bs, best.subset.deep, model.pca, pca.deep, model.lasso, model.gb,
-  model.svm, model.knn, model.mrp, model.deep, tol, n.draws, cores, preds_all,
-  post.strat, dv_type, knn.opt, knn.kernel
+  train.preds, train.y, ebma.fold, cv.data, y, L1.x, L2.x, L2.unit, L2.reg,
+  pc.names, model.bs, best.subset.deep, model.pca, pca.deep, model.lasso,
+  model.gb, model.svm, model.knn, model.mrp, model.deep, tol, n.draws, cores, preds_all, post.strat, dv_type, knn.opt, knn.kernel
 ) {
 
   # Binding for global variables
@@ -400,8 +411,7 @@ ebma_mc_tol <- function(
           c_pred <- knn_classifier(
             y = y,
             form = formula(model.knn$terms),
-            data.train = test %>%
-              dplyr::mutate(!!rlang::sym(y) := as.factor(!!rlang::sym(y))),
+            data.train = cv.data,
             data.valid = test,
             knn.k.value = knn.opt,
             knn.kernel = knn.kernel
@@ -411,7 +421,7 @@ ebma_mc_tol <- function(
           c_pred <- knn_classifier(
             y = y,
             form = formula(model.knn$terms),
-            data.train = test,
+            data.train = cv.data,
             data.valid = test,
             knn.k.value = knn.opt,
             knn.kernel = knn.kernel
@@ -645,7 +655,7 @@ ebma_mc_tol <- function(
 #' @return The classifier weights. A numeric vector.
 
 ebma_mc_draws <- function(
-  train.preds, train.y, ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg,
+  train.preds, train.y, ebma.fold, cv.data, y, L1.x, L2.x, L2.unit, L2.reg,
   pc.names, model.bs, model.pca, model.lasso, model.gb, model.svm, model.knn,
   model.mrp, model.deep, tol, n.draws, cores, preds_all, post.strat, dv_type,
   best.subset.deep, pca.deep, knn.kernel, knn.opt
@@ -789,8 +799,7 @@ ebma_mc_draws <- function(
           c_pred <- knn_classifier(
             y = y,
             form = formula(model.knn$terms),
-            data.train = test %>%
-              dplyr::mutate(!!rlang::sym(y) := as.factor(!!rlang::sym(y))),
+            data.train = cv.data,
             data.valid = test,
             knn.k.value = knn.opt,
             knn.kernel = knn.kernel
@@ -800,7 +809,7 @@ ebma_mc_draws <- function(
           c_pred <- knn_classifier(
             y = y,
             form = formula(model.knn$terms),
-            data.train = test,
+            data.train = cv.data,
             data.valid = test,
             knn.k.value = knn.opt,
             knn.kernel = knn.kernel

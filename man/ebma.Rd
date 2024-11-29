@@ -6,6 +6,7 @@
 \usage{
 ebma(
   ebma.fold,
+  cv.data,
   y,
   L1.x,
   L2.x,
