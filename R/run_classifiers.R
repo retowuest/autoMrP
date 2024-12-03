@@ -597,6 +597,7 @@ run_classifiers <- function(
     stack_out = stack_out,
     L2.unit = L2.unit,
     y = y,
+    L1.x = L1.x,
     preds_all = preds_all
   )
 
@@ -607,6 +608,52 @@ run_classifiers <- function(
   stack_runtime <- difftime(
     time1 = stack_end_time, time2 = stack_start_time, units = "mins"
   )
+
+  # aggregate ebma predictions to state-level
+  ebma_out$ebma <- tibble::tibble(
+    !!rlang::sym(L2.unit) := dplyr::pull(
+      .data = ebma_out$classifiers, var = L2.unit
+    ),
+    prop = dplyr::pull(.data = ebma_out$classifiers, var = "prop"),
+    ebma = ebma_out$ebma
+  ) %>%
+    dplyr::group_by(!!rlang::sym(L2.unit)) %>%
+    dplyr::summarize(
+      ebma = stats::weighted.mean(ebma, w = prop, na.rm = TRUE)
+    )
+
+  # census level predictions
+  ebma_out$census_level_predictions <- dplyr::bind_cols(
+    ebma_out$classifiers,
+    ebma_out$stacking %>%
+      dplyr::select(dplyr::starts_with("stack_"))
+  )
+
+  # remove ebma from classifiers
+  if ("ebma" %in% names(ebma_out$classifiers)) ebma_out$classifiers$ebma <- NULL
+
+  # aggregate classifier predictions to state-level
+  ebma_out$classifiers <- ebma_out$classifiers %>%
+    dplyr::select(-dplyr::all_of(L1.x)) %>%
+    dplyr::group_by(!!rlang::sym(L2.unit)) %>%
+    dplyr::summarize(
+      dplyr::across(
+        .cols = dplyr::everything(),
+        .fns = ~ stats::weighted.mean(.x, w = prop, na.rm = TRUE)
+      )
+    ) %>%
+    dplyr::select(-prop)
+
+  # aggregate stacking predictions to state-level
+  ebma_out$stacking <- ebma_out$stacking %>%
+    dplyr::group_by(!!rlang::sym(L2.unit)) %>%
+    dplyr::summarize(
+      dplyr::across(
+        .cols = dplyr::everything(),
+        .fns = ~ stats::weighted.mean(.x, w = prop, na.rm = TRUE)
+      )
+    ) %>%
+    dplyr::select(-prop)
 
   # Detailed runtime ---------------------------------------------------------
   runtime_detailed <- tibble::tibble(

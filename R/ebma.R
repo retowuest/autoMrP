@@ -201,12 +201,13 @@ ebma <- function(
     }
 
     # L2 preds object
-    L2_preds <- dplyr::tibble(
-      !! rlang::sym(L2.unit) := dplyr::pull(
-        .data = post.strat$predictions$Level2, var = L2.unit
-      ),
-      ebma = w_avg
-    )
+    # L2_preds <- dplyr::tibble(
+    #   !! rlang::sym(L2.unit) := dplyr::pull(
+    #     .data = post.strat$predictions$Level2, var = L2.unit
+    #   ),
+    #   ebma = w_avg
+    # )
+    L2_preds <- post.strat$predictions$Level2$ebma <- w_avg
 
     # function output
     return(

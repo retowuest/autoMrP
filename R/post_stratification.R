@@ -125,11 +125,15 @@ post_stratification <- function(
             )[["mean"]] %>%
               stats::plogis()
           ) %>%
-          dplyr::group_by(!! rlang::sym(L2.unit)) %>%
-          dplyr::summarize(best_subset = stats::weighted.mean(
-            x = best_subset, w = prop
-          ), .groups = "keep") %>%
-          dplyr::ungroup()
+          dplyr::select(
+            !! rlang::sym(L2.unit), dplyr::one_of(L1.x), prop, best_subset
+          )
+
+          # dplyr::group_by(!! rlang::sym(L2.unit)) %>%
+          # dplyr::summarize(best_subset = stats::weighted.mean(
+          #   x = best_subset, w = prop
+          # ), .groups = "keep") %>%
+          # dplyr::ungroup()
 
         # individual level predictions for EBMA
         bs_ind <- vglmer::predict_MAVB(
@@ -155,11 +159,15 @@ post_stratification <- function(
               allow_missing_levels = TRUE
             )[["mean"]]
           ) %>%
-          dplyr::group_by(!! rlang::sym(L2.unit)) %>%
-          dplyr::summarize(best_subset = stats::weighted.mean(
-            x = best_subset, w = prop
-          ), .groups = "keep") %>%
-          dplyr::ungroup()
+          dplyr::select(
+            !! rlang::sym(L2.unit), dplyr::one_of(L1.x), prop, best_subset
+          )
+
+          # dplyr::group_by(!! rlang::sym(L2.unit)) %>%
+          # dplyr::summarize(best_subset = stats::weighted.mean(
+          #   x = best_subset, w = prop
+          # ), .groups = "keep") %>%
+          # dplyr::ungroup()
 
         # individual level predictions for EBMA
         bs_ind <- vglmer::predict_MAVB(
@@ -207,11 +215,15 @@ post_stratification <- function(
             type = "response"
           )
         ) %>%
-        dplyr::group_by(!! rlang::sym(L2.unit)) %>%
-        dplyr::summarize(best_subset = stats::weighted.mean(
-          x = best_subset, w = prop
-        ), .groups = "keep") %>%
-        dplyr::ungroup()
+        dplyr::select(
+          !! rlang::sym(L2.unit), dplyr::one_of(L1.x), prop, best_subset
+        )
+
+        # dplyr::group_by(!! rlang::sym(L2.unit)) %>%
+        # dplyr::summarize(best_subset = stats::weighted.mean(
+        #   x = best_subset, w = prop
+        # ), .groups = "keep") %>%
+        # dplyr::ungroup()
 
       # individual level predictions for EBMA
       bs_ind <- stats::predict(object = best_subset_opt_ebma, type = "response")
@@ -280,11 +292,13 @@ post_stratification <- function(
     # post-stratification
     lasso_preds <- census %>%
       dplyr::mutate(lasso = lasso_ests) %>%
-      dplyr::group_by(!! rlang::sym(L2.unit)) %>%
-      dplyr::summarize(
-        lasso = stats::weighted.mean(x = lasso, w = prop), .groups = "keep"
-      ) %>%
-      dplyr::ungroup()
+      dplyr::select(!! rlang::sym(L2.unit), dplyr::one_of(L1.x), prop, lasso)
+
+      # dplyr::group_by(!! rlang::sym(L2.unit)) %>%
+      # dplyr::summarize(
+      #   lasso = stats::weighted.mean(x = lasso, w = prop), .groups = "keep"
+      # ) %>%
+      # dplyr::ungroup()
 
     # individual level predictions for EBMA
     lasso_ind <- stats::predict(object = lasso_opt_ebma, type = "response")
@@ -330,11 +344,12 @@ post_stratification <- function(
             )[["mean"]] %>%
               stats::plogis()
           ) %>%
-          dplyr::group_by(!! rlang::sym(L2.unit)) %>%
-          dplyr::summarize(
-            pca = stats::weighted.mean(x = pca, w = prop), .groups = "keep"
-          ) %>%
-          dplyr::ungroup()
+          dplyr::select(!! rlang::sym(L2.unit), dplyr::one_of(L1.x), prop, pca)
+          # dplyr::group_by(!! rlang::sym(L2.unit)) %>%
+          # dplyr::summarize(
+          #   pca = stats::weighted.mean(x = pca, w = prop), .groups = "keep"
+          # ) %>%
+          # dplyr::ungroup()
 
         # individual level predictions for EBMA
         pca_ind <- vglmer::predict_MAVB(
@@ -357,11 +372,13 @@ post_stratification <- function(
               allow_missing_levels = TRUE
             )[["mean"]]
           ) %>%
-          dplyr::group_by(!! rlang::sym(L2.unit)) %>%
-          dplyr::summarize(
-            pca = stats::weighted.mean(x = pca, w = prop), .groups = "keep"
-          ) %>%
-          dplyr::ungroup()
+          dplyr::select(!! rlang::sym(L2.unit), dplyr::one_of(L1.x), prop, pca)
+
+          # dplyr::group_by(!! rlang::sym(L2.unit)) %>%
+          # dplyr::summarize(
+          #   pca = stats::weighted.mean(x = pca, w = prop), .groups = "keep"
+          # ) %>%
+          # dplyr::ungroup()
 
         # individual level predictions for EBMA
         pca_ind <- vglmer::predict_MAVB(
@@ -408,11 +425,12 @@ post_stratification <- function(
           allow.new.levels = TRUE,
           type = "response"
         )) %>%
-        dplyr::group_by(!! rlang::sym(L2.unit)) %>%
-        dplyr::summarize(
-          pca = stats::weighted.mean(x = pca, w = prop), .groups = "keep"
-        ) %>%
-        dplyr::ungroup()
+        dplyr::select(!! rlang::sym(L2.unit), dplyr::one_of(L1.x), prop, pca)
+        # dplyr::group_by(!! rlang::sym(L2.unit)) %>%
+        # dplyr::summarize(
+        #   pca = stats::weighted.mean(x = pca, w = prop), .groups = "keep"
+        # ) %>%
+        # dplyr::ungroup()
 
       # individual level predictions for EBMA
       pca_ind <- stats::predict(object = pca_opt_ebma, type = "response")
@@ -477,11 +495,13 @@ post_stratification <- function(
         n.trees = gb.opt$n_trees,
         type = "response"
       )) %>%
-      dplyr::group_by(!! rlang::sym(L2.unit)) %>%
-      dplyr::summarize(
-        gb = stats::weighted.mean(x = gb, w = prop), .groups = "keep"
-      ) %>%
-      dplyr::ungroup()
+      dplyr::select(!! rlang::sym(L2.unit), dplyr::one_of(L1.x), prop, gb)
+
+      # dplyr::group_by(!! rlang::sym(L2.unit)) %>%
+      # dplyr::summarize(
+      #   gb = stats::weighted.mean(x = gb, w = prop), .groups = "keep"
+      # ) %>%
+      # dplyr::ungroup()
 
     # individual level predictions for EBMA
     gb_ind <- gbm::predict.gbm(
@@ -598,11 +618,12 @@ post_stratification <- function(
 
     # post-stratification step 3: weighted mean
     svm_preds <- svm_preds %>%
-      dplyr::group_by(!!rlang::sym(L2.unit)) %>%
-      dplyr::summarize(
-        svm = stats::weighted.mean(x = svm, w = prop), .groups = "keep"
-      ) %>%
-      dplyr::ungroup()
+      dplyr::select(!! rlang::sym(L2.unit), dplyr::one_of(L1.x), prop, svm)
+      # dplyr::group_by(!!rlang::sym(L2.unit)) %>%
+      # dplyr::summarize(
+      #   svm = stats::weighted.mean(x = svm, w = prop), .groups = "keep"
+      # ) %>%
+      # dplyr::ungroup()
 
     # individual level predictions for EBMA
     if (
@@ -698,11 +719,13 @@ post_stratification <- function(
           knn_opt_poststrat_only$fit
         }
       ) %>%
-      dplyr::group_by(!! rlang::sym(L2.unit)) %>%
-      dplyr::summarize(
-        knn = stats::weighted.mean(x = knn, w = prop), .groups = "keep"
-      ) %>%
-      dplyr::ungroup()
+      dplyr::select(!! rlang::sym(L2.unit), dplyr::one_of(L1.x), prop, knn)
+
+      # dplyr::group_by(!! rlang::sym(L2.unit)) %>%
+      # dplyr::summarize(
+      #   knn = stats::weighted.mean(x = knn, w = prop), .groups = "keep"
+      # ) %>%
+      # dplyr::ungroup()
 
     # individual level predictions for EBMA
     knn_ind <- if (dv_type == "binary") {
@@ -792,11 +815,13 @@ post_stratification <- function(
           type = "response"
         )
       ) %>%
-      dplyr::group_by(!! rlang::sym(L2.unit)) %>%
-      dplyr::summarize(
-        mrp = stats::weighted.mean(x = mrp, w = prop), .groups = "keep"
-      ) %>%
-      dplyr::ungroup()
+      dplyr::select(!! rlang::sym(L2.unit), dplyr::one_of(L1.x), prop, mrp)
+
+      # dplyr::group_by(!! rlang::sym(L2.unit)) %>%
+      # dplyr::summarize(
+      #   mrp = stats::weighted.mean(x = mrp, w = prop), .groups = "keep"
+      # ) %>%
+      # dplyr::ungroup()
 
     # individual level predictions for EBMA
     mrp_ind <- stats::predict(object = mrp_model_ebma, type = "response")
@@ -954,12 +979,14 @@ post_stratification <- function(
     # post-stratification
     deep_preds <- census %>%
       dplyr::mutate(deep_mrp = pred_d) %>%
-      dplyr::group_by(!!rlang::sym(L2.unit)) %>%
-      dplyr::summarize(
-        deep_mrp = stats::weighted.mean(
-          x = deep_mrp, w = prop
-        ), .groups = "keep"
-      )
+      dplyr::select(!! rlang::sym(L2.unit), dplyr::one_of(L1.x), prop, deep_mrp)
+
+      # dplyr::group_by(!!rlang::sym(L2.unit)) %>%
+      # dplyr::summarize(
+      #   deep_mrp = stats::weighted.mean(
+      #     x = deep_mrp, w = prop
+      #   ), .groups = "keep"
+      # )
 
     # binary or continuous DV
     if (dv_type == "binary") {
@@ -997,65 +1024,125 @@ post_stratification <- function(
   # --------------------------- combine l2 level predictions ------------------
 
   # tibble of L2 units
-  L2_preds <- dplyr::select(census, one_of(L2.unit)) %>%
-    dplyr::distinct()
-  # add existing classifiers
+  L2_preds <- dplyr::select(
+    census, dplyr::one_of(L2.unit), dplyr::one_of(L1.x), prop
+  )
   if (exists("bs_preds")) {
     L2_preds <- dplyr::left_join(
       x = L2_preds,
       y = bs_preds,
-      by = L2.unit
+      by = c(L2.unit, L1.x, "prop")
     )
   }
   if (exists("lasso_preds")) {
     L2_preds <- dplyr::left_join(
       x = L2_preds,
       y = lasso_preds,
-      by = L2.unit
+      by = c(L2.unit, L1.x, "prop")
     )
   }
   if (exists("pca_preds")) {
     L2_preds <- dplyr::left_join(
       x = L2_preds,
       y = pca_preds,
-      by = L2.unit
+      by = c(L2.unit, L1.x, "prop")
     )
   }
   if (exists("gb_preds")) {
     L2_preds <- dplyr::left_join(
       x = L2_preds,
       y = gb_preds,
-      by = L2.unit
+      by = c(L2.unit, L1.x, "prop")
     )
   }
   if (exists("svm_preds")) {
     L2_preds <- dplyr::left_join(
       x = L2_preds,
       y = svm_preds,
-      by = L2.unit
+      by = c(L2.unit, L1.x, "prop")
     )
   }
   if (exists("knn_preds")) {
     L2_preds <- dplyr::left_join(
       x = L2_preds,
       y = knn_preds,
-      by = L2.unit
+      by = c(L2.unit, L1.x, "prop")
     )
   }
   if (exists("mrp_preds")) {
     L2_preds <- dplyr::left_join(
       x = L2_preds,
       y = mrp_preds,
-      by = L2.unit
+      by = c(L2.unit, L1.x, "prop")
     )
   }
   if (exists("deep_preds")) {
     L2_preds <- dplyr::left_join(
       x = L2_preds,
       y = deep_preds,
-      by = L2.unit
+      by = c(L2.unit, L1.x, "prop")
     )
   }
+
+  # L2_preds <- dplyr::select(census, one_of(L2.unit)) %>%
+  #   dplyr::distinct()
+  # # add existing classifiers
+  # if (exists("bs_preds")) {
+  #   L2_preds <- dplyr::left_join(
+  #     x = L2_preds,
+  #     y = bs_preds,
+  #     by = L2.unit
+  #   )
+  # }
+  # if (exists("lasso_preds")) {
+  #   L2_preds <- dplyr::left_join(
+  #     x = L2_preds,
+  #     y = lasso_preds,
+  #     by = L2.unit
+  #   )
+  # }
+  # if (exists("pca_preds")) {
+  #   L2_preds <- dplyr::left_join(
+  #     x = L2_preds,
+  #     y = pca_preds,
+  #     by = L2.unit
+  #   )
+  # }
+  # if (exists("gb_preds")) {
+  #   L2_preds <- dplyr::left_join(
+  #     x = L2_preds,
+  #     y = gb_preds,
+  #     by = L2.unit
+  #   )
+  # }
+  # if (exists("svm_preds")) {
+  #   L2_preds <- dplyr::left_join(
+  #     x = L2_preds,
+  #     y = svm_preds,
+  #     by = L2.unit
+  #   )
+  # }
+  # if (exists("knn_preds")) {
+  #   L2_preds <- dplyr::left_join(
+  #     x = L2_preds,
+  #     y = knn_preds,
+  #     by = L2.unit
+  #   )
+  # }
+  # if (exists("mrp_preds")) {
+  #   L2_preds <- dplyr::left_join(
+  #     x = L2_preds,
+  #     y = mrp_preds,
+  #     by = L2.unit
+  #   )
+  # }
+  # if (exists("deep_preds")) {
+  #   L2_preds <- dplyr::left_join(
+  #     x = L2_preds,
+  #     y = deep_preds,
+  #     by = L2.unit
+  #   )
+  # }
 
 
   # individual predictions for EBMA
