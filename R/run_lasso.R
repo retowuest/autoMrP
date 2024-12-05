@@ -75,18 +75,6 @@ run_lasso <- function(
         data_train <- dplyr::bind_rows(data[-k])
         data_valid <- dplyr::bind_rows(data[k])
 
-        # Convert individual-level, geographic unit, and geographic region
-        # covariates to factor variables in training and validation sets
-        data_train <- data_train %>%
-          dplyr::mutate_at(.vars = c(L1.x, L2.unit, L2.reg), as.factor) %>%
-          dplyr::select(dplyr::all_of(c(y, L1.x, L2.x, L2.unit, L2.reg))) %>%
-          tidyr::drop_na()
-
-        data_valid <- data_valid %>%
-          dplyr::mutate_at(.vars = c(L1.x, L2.unit, L2.reg), as.factor) %>%
-          dplyr::select(dplyr::all_of(c(y, L1.x, L2.x, L2.unit, L2.reg))) %>%
-          tidyr::drop_na()
-
         # Train model using lambda value on kth training set
         model_l <- lasso_classifier(
           y = y,
