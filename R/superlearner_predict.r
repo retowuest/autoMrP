@@ -235,7 +235,7 @@ superlearner_predict <- function(
         model.family = binomial(link = "probit"),
         model.optimizer = "bobyqa",
         n.iter = 1000000,
-        verbose = verbose
+        verbose = FALSE
       )
 
       # best subset predictions
@@ -307,7 +307,7 @@ superlearner_predict <- function(
         model.family = binomial(link = "probit"),
         model.optimizer = "bobyqa",
         n.iter = 1000000,
-        verbose = verbose
+        verbose = FALSE
       )
 
       # pca predictions
