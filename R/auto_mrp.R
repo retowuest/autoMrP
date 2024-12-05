@@ -396,6 +396,9 @@ auto_MrP <- function(
   # auto_MrP start time
   automrp_start <- Sys.time()
 
+  # autoMrP call
+  call <- match.call()
+
   # Error checks ------------------------------------------------------------
 
   # variables to drop missing values on
@@ -862,6 +865,11 @@ auto_MrP <- function(
     ebma_out$weights <- "EBMA step skipped (only 1 classifier run)"
     class(ebma_out$weights) <- c("autoMrP", "weights", class(ebma_out$weights))
   }
+
+  # store evaluated arguments as attributes
+  evaluated_args <- as.list(match.call()[-1])
+  evaluated_args <- lapply(evaluated_args, eval, parent.frame())
+  attr(ebma_out, "evaluated_args") <- evaluated_args
 
   # auto_MrP end time
   automrp_end <- Sys.time()

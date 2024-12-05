@@ -76,7 +76,7 @@ run_knn <- function(
       }
 
       if (dv_type == "binary") {
-        # Convert the column named "YES" to a factor
+        # Convert the dependent variable to a factor
         data_train <- data_train %>%
           dplyr::mutate(!!rlang::sym(y) := as.factor(!!rlang::sym(y)))
         data_valid <- data_valid %>%

@@ -564,7 +564,7 @@ run_classifiers <- function(
     pc.names = pc.names,
     verbose = verbose,
     cores = cores,
-    preds_all = preds_all,
+    preds_all = preds_all$preds,
     knn.kernel = knn.kernel
   )
 
@@ -587,7 +587,7 @@ run_classifiers <- function(
 
   # get stacking weights
   stack_out <- autoMrP:::stacking_weights(
-    preds = preds_all, ebma_out = ebma_out, L2.unit = L2.unit,
+    preds = preds_all$preds, ebma_out = ebma_out, L2.unit = L2.unit,
     k.folds = k.folds, cores = cores
   )
 
@@ -598,7 +598,7 @@ run_classifiers <- function(
     L2.unit = L2.unit,
     y = y,
     L1.x = L1.x,
-    preds_all = preds_all
+    preds_all = preds_all$preds
   )
 
   # get end time
@@ -608,6 +608,8 @@ run_classifiers <- function(
   stack_runtime <- difftime(
     time1 = stack_end_time, time2 = stack_start_time, units = "mins"
   )
+
+  # Format output  -----------------------------------------------------------
 
   # aggregate ebma predictions to state-level
   ebma_out$ebma <- tibble::tibble(
@@ -655,6 +657,9 @@ run_classifiers <- function(
     ) %>%
     dplyr::select(-prop)
 
+  # add tuned hyperparameters to output
+  attr(ebma_out, "tuned_hyperparameters") <- preds_all$best_classifiers
+
   # Detailed runtime ---------------------------------------------------------
   runtime_detailed <- tibble::tibble(
     best_subset = best_subset_runtime,
@@ -670,6 +675,7 @@ run_classifiers <- function(
     stacking = stack_runtime + preds_all_runtime
   )
   ebma_out$runtime <- runtime_detailed
+
 
   return(ebma_out)
 }

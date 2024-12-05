@@ -129,12 +129,6 @@ post_stratification <- function(
             !! rlang::sym(L2.unit), dplyr::one_of(L1.x), prop, best_subset
           )
 
-          # dplyr::group_by(!! rlang::sym(L2.unit)) %>%
-          # dplyr::summarize(best_subset = stats::weighted.mean(
-          #   x = best_subset, w = prop
-          # ), .groups = "keep") %>%
-          # dplyr::ungroup()
-
         # individual level predictions for EBMA
         bs_ind <- vglmer::predict_MAVB(
           samples = 1000,
@@ -817,12 +811,6 @@ post_stratification <- function(
       ) %>%
       dplyr::select(!! rlang::sym(L2.unit), dplyr::one_of(L1.x), prop, mrp)
 
-      # dplyr::group_by(!! rlang::sym(L2.unit)) %>%
-      # dplyr::summarize(
-      #   mrp = stats::weighted.mean(x = mrp, w = prop), .groups = "keep"
-      # ) %>%
-      # dplyr::ungroup()
-
     # individual level predictions for EBMA
     mrp_ind <- stats::predict(object = mrp_model_ebma, type = "response")
 
@@ -981,13 +969,6 @@ post_stratification <- function(
       dplyr::mutate(deep_mrp = pred_d) %>%
       dplyr::select(!! rlang::sym(L2.unit), dplyr::one_of(L1.x), prop, deep_mrp)
 
-      # dplyr::group_by(!!rlang::sym(L2.unit)) %>%
-      # dplyr::summarize(
-      #   deep_mrp = stats::weighted.mean(
-      #     x = deep_mrp, w = prop
-      #   ), .groups = "keep"
-      # )
-
     # binary or continuous DV
     if (dv_type == "binary") {
       # individual level predictions for EBMA
@@ -1083,66 +1064,6 @@ post_stratification <- function(
       by = c(L2.unit, L1.x, "prop")
     )
   }
-
-  # L2_preds <- dplyr::select(census, one_of(L2.unit)) %>%
-  #   dplyr::distinct()
-  # # add existing classifiers
-  # if (exists("bs_preds")) {
-  #   L2_preds <- dplyr::left_join(
-  #     x = L2_preds,
-  #     y = bs_preds,
-  #     by = L2.unit
-  #   )
-  # }
-  # if (exists("lasso_preds")) {
-  #   L2_preds <- dplyr::left_join(
-  #     x = L2_preds,
-  #     y = lasso_preds,
-  #     by = L2.unit
-  #   )
-  # }
-  # if (exists("pca_preds")) {
-  #   L2_preds <- dplyr::left_join(
-  #     x = L2_preds,
-  #     y = pca_preds,
-  #     by = L2.unit
-  #   )
-  # }
-  # if (exists("gb_preds")) {
-  #   L2_preds <- dplyr::left_join(
-  #     x = L2_preds,
-  #     y = gb_preds,
-  #     by = L2.unit
-  #   )
-  # }
-  # if (exists("svm_preds")) {
-  #   L2_preds <- dplyr::left_join(
-  #     x = L2_preds,
-  #     y = svm_preds,
-  #     by = L2.unit
-  #   )
-  # }
-  # if (exists("knn_preds")) {
-  #   L2_preds <- dplyr::left_join(
-  #     x = L2_preds,
-  #     y = knn_preds,
-  #     by = L2.unit
-  #   )
-  # }
-  # if (exists("mrp_preds")) {
-  #   L2_preds <- dplyr::left_join(
-  #     x = L2_preds,
-  #     y = mrp_preds,
-  #     by = L2.unit
-  #   )
-  # }
-  # if (exists("deep_preds")) {
-  #   L2_preds <- dplyr::left_join(
-  #     x = L2_preds,
-  #     y = deep_preds,
-  #     by = L2.unit
-  #   )
-  # }
 
 
   # individual predictions for EBMA

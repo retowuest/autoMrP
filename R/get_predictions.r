@@ -662,5 +662,71 @@ get_predictions <- function(
   # combine predictions into one table
   preds <- dplyr::bind_rows(k_preds)
 
-  return(preds)
+  # return model formulas
+  best_classifiers <- list(
+    best_subset = if (!is.null(pca.opt)) {
+      list(
+        form = best.subset.opt
+      )
+    } else {
+      NULL
+    },
+    lasso = if (!is.null(lasso.opt)) {
+      list(
+        L2.fe.form = L2_fe_form,
+        L1.re = L1_re,
+        lasso.lambda = lasso.opt
+      )
+    } else {
+      NULL
+    },
+    pca = if (!is.null(pca.opt)) {
+      list(
+        form = pca.opt
+      )
+    } else {
+      NULL
+    },
+    gb = if (!is.null(gb.opt)) {
+      list(
+        form = form_gb,
+        interaction.depth = gb.opt$interaction_depth,
+        shrinkage = gb.opt$shrinkage,
+        n.trees = gb.opt$n_trees
+      )
+    } else {
+      NULL
+    },
+    svm = if (!is.null(svm.opt)) {
+      list(
+        form = form_svm,
+        gamma = svm.opt$gamma,
+        cost = svm.opt$cost,
+        kernel = svm.opt$kernel
+      )
+    } else {
+      NULL
+    },
+    knn = if (!is.null(knn.opt)) {
+      list(
+        form = form_knn,
+        knn.k = knn.opt,
+        knn.kernel = knn.kernel
+      )
+    } else {
+      NULL
+    },
+    mrp = if (mrp.include) {
+      form_mrp
+    } else {
+      NULL
+    },
+    deep_mrp = if (deep.mrp) {
+      form
+    } else {
+      NULL
+    }
+  )
+
+  return(list(preds = preds, best_classifiers = best_classifiers))
 }
