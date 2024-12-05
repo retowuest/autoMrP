@@ -245,7 +245,9 @@ superlearner_predict <- function(
       )
 
     }
-  } # end of best subset
+  } else {
+    preds_bs <- NULL
+  }
 
   # lasso predictions
   if (attr(obj, "evaluated_args")$lasso) {
@@ -264,6 +266,8 @@ superlearner_predict <- function(
     # Use trained model to make predictions for data.test
     preds_l <- stats::predict(model_l, newdata = data.frame(data.test))
 
+  } else {
+    preds_l <- NULL
   }
 
   # pca predictions
@@ -312,7 +316,9 @@ superlearner_predict <- function(
         allow.new.levels = TRUE
       )
     }
-  } # end of pca
+  } else {
+    preds_pca <- NULL
+  }
 
   # GB predictions
   if (attr(obj, "evaluated_args")$gb) {
@@ -352,6 +358,8 @@ superlearner_predict <- function(
         n.trees = model_gb$n.trees
       )
     }
+  } else {
+    preds_gb <- NULL
   }
 
   # svm predictions
@@ -395,6 +403,8 @@ superlearner_predict <- function(
     if (!is.null(attr(preds_svm, "probabilities")[, "1"])) {
       preds_svm <- as.numeric(attr(preds_svm, "probabilities")[, "1"])
     }
+  } else {
+    preds_svm <- NULL
   }
 
 
@@ -439,6 +449,8 @@ superlearner_predict <- function(
     } else {
       model_knn$fit
     }
+  } else {
+    preds_knn <- NULL
   }
 
   # MrP predictions
@@ -460,6 +472,8 @@ superlearner_predict <- function(
       model_mrp, newdata = data.test,
       type = "response", allow.new.levels = TRUE
     )
+  } else {
+    preds_mrp <- NULL
   }
 
   # deep MrP predictions
@@ -485,12 +499,18 @@ superlearner_predict <- function(
     if (dv_type == "binary") {
       preds_deep <- stats::plogis(preds_deep)
     }
+  } else {
+    preds_deep <- NULL
   }
 
   # combine classifier predictions to a tibble
   preds <- tibble::tibble(
     best_subset = preds_bs,
-    lasso = as.numeric(preds_l),
+    lasso = if (!is.null(preds_l)) {
+      as.numeric(preds_l)
+    } else {
+      NULL
+    },
     pca = preds_pca,
     gb = preds_gb,
     svm = preds_svm,
@@ -500,7 +520,7 @@ superlearner_predict <- function(
   )
 
   # add EBMA predictions
-  if (!"EBMA step skipped (only 1 classifier run)" %in% obj$weights) {
+  if (!is.null(obj$weights)) {
     preds$ebma <- as.numeric(as.matrix(preds) %*% as.matrix(obj$weights))
   }
 

@@ -612,24 +612,30 @@ run_classifiers <- function(
   # Format output  -----------------------------------------------------------
 
   # aggregate ebma predictions to state-level
-  ebma_out$ebma <- tibble::tibble(
-    !!rlang::sym(L2.unit) := dplyr::pull(
-      .data = ebma_out$classifiers, var = L2.unit
-    ),
-    prop = dplyr::pull(.data = ebma_out$classifiers, var = "prop"),
-    ebma = ebma_out$ebma
-  ) %>%
-    dplyr::group_by(!!rlang::sym(L2.unit)) %>%
-    dplyr::summarize(
-      ebma = stats::weighted.mean(ebma, w = prop, na.rm = TRUE)
-    )
+  if (!"EBMA step skipped (only 1 classifier run)" %in% ebma_out$ebma) {
+    ebma_out$ebma <- tibble::tibble(
+      !!rlang::sym(L2.unit) := dplyr::pull(
+        .data = ebma_out$classifiers, var = L2.unit
+      ),
+      prop = dplyr::pull(.data = ebma_out$classifiers, var = "prop"),
+      ebma = ebma_out$ebma
+    ) %>%
+      dplyr::group_by(!!rlang::sym(L2.unit)) %>%
+      dplyr::summarize(
+        ebma = stats::weighted.mean(ebma, w = prop, na.rm = TRUE)
+      )
+  }
 
   # census level predictions
-  ebma_out$census_level_predictions <- dplyr::bind_cols(
-    ebma_out$classifiers,
-    ebma_out$stacking %>%
-      dplyr::select(dplyr::starts_with("stack_"))
-  )
+  if (!"Stacking step skipped (only 1 classifier run)" %in% ebma_out$stacking) {
+    ebma_out$census_level_predictions <- dplyr::bind_cols(
+      ebma_out$classifiers,
+      ebma_out$stacking %>%
+        dplyr::select(dplyr::starts_with("stack_"))
+    )
+  } else {
+    ebma_out$census_level_predictions <- ebma_out$classifiers
+  }
 
   # remove ebma from classifiers
   if ("ebma" %in% names(ebma_out$classifiers)) ebma_out$classifiers$ebma <- NULL
@@ -647,15 +653,17 @@ run_classifiers <- function(
     dplyr::select(-prop)
 
   # aggregate stacking predictions to state-level
-  ebma_out$stacking <- ebma_out$stacking %>%
-    dplyr::group_by(!!rlang::sym(L2.unit)) %>%
-    dplyr::summarize(
-      dplyr::across(
-        .cols = dplyr::everything(),
-        .fns = ~ stats::weighted.mean(.x, w = prop, na.rm = TRUE)
-      )
-    ) %>%
-    dplyr::select(-prop)
+  if (!"Stacking step skipped (only 1 classifier run)" %in% ebma_out$stacking) {
+    ebma_out$stacking <- ebma_out$stacking %>%
+      dplyr::group_by(!!rlang::sym(L2.unit)) %>%
+      dplyr::summarize(
+        dplyr::across(
+          .cols = dplyr::everything(),
+          .fns = ~ stats::weighted.mean(.x, w = prop, na.rm = TRUE)
+        )
+      ) %>%
+      dplyr::select(-prop)
+  }
 
   # add tuned hyperparameters to output
   attr(ebma_out, "tuned_hyperparameters") <- preds_all$best_classifiers
