@@ -399,6 +399,32 @@ auto_MrP <- function(
   # autoMrP call
   call <- match.call()
 
+  # default arguments
+  default_args <- list(
+    L2.reg = NULL, L2.x.scale = TRUE, pcs = NULL, folds = NULL,
+    bin.proportion = NULL, bin.size = NULL, ebma.size = 1 / 3, cores = 1,
+    k.folds = 5, cv.sampling = "L2 units",
+    loss.unit = c("individuals", "L2 units"),
+    loss.fun = c("msfe", "cross-entropy", "f1", "MSE"), best.subset = TRUE,
+    lasso = TRUE, pca = TRUE, gb = TRUE, svm = TRUE, knn = TRUE, mrp = FALSE,
+    deep.mrp = FALSE, oversampling = FALSE, best.subset.deep = FALSE,
+    best.subset.deep.splines = FALSE, pca.deep = FALSE,
+    pca.deep.splines = FALSE, best.subset.L2.x = NULL, lasso.L2.x = NULL,
+    pca.L2.x = NULL, gb.L2.x = NULL, svm.L2.x = NULL, knn.L2.x = NULL,
+    mrp.L2.x = NULL, gb.L2.unit = TRUE, gb.L2.reg = FALSE, svm.L2.unit = TRUE,
+    svm.L2.reg = FALSE, knn.L2.unit = TRUE, knn.L2.reg = FALSE,
+    deep.splines = TRUE, deep.L2.x = NULL, deep.L2.unit = TRUE,
+    deep.L2.reg = FALSE, lasso.lambda = NULL, lasso.n.iter = 100,
+    gb.interaction.depth = c(1, 2, 3),
+    gb.shrinkage = c(0.04, 0.01, 0.008, 0.005, 0.001), gb.n.trees.init = 50,
+    gb.n.trees.increase = 50, gb.n.trees.max = 1000, gb.n.minobsinnode = 20,
+    svm.kernel = c("radial"), svm.gamma = NULL, svm.cost = NULL,
+    knn.k.max = NULL, knn.k = NULL, knn.kernel = c("optimal"),
+    ebma.n.draws = 100,
+    ebma.tol = c(0.01, 0.005, 0.001, 0.0005, 0.0001, 0.00005, 0.00001),
+    verbose = FALSE, uncertainty = FALSE, boot.iter = NULL
+  )
+
   # Error checks ------------------------------------------------------------
 
   # variables to drop missing values on
@@ -869,6 +895,7 @@ auto_MrP <- function(
   # store evaluated arguments as attributes
   evaluated_args <- as.list(match.call()[-1])
   evaluated_args <- lapply(evaluated_args, eval, parent.frame())
+  evaluated_args <- modifyList(default_args, evaluated_args)
   attr(ebma_out, "evaluated_args") <- evaluated_args
 
   # auto_MrP end time
