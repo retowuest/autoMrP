@@ -568,6 +568,10 @@ run_classifiers <- function(
     knn.kernel = knn.kernel
   )
 
+  if (!"character" %in% class(ebma_out$ebma)) {
+    preds_all$best_classifiers$ebma_tolerance <- ebma_out$ebma_tolerance
+  }
+
   # get end time
   ebma_end_time <- Sys.time()
 

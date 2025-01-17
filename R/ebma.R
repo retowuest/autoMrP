@@ -128,6 +128,7 @@ ebma <- function(
       )
       # unlist
       ebma_preds <- final_model_weights$ebma_preds
+      best_tolerance <- final_model_weights$best_tolerance
       final_model_weights <- final_model_weights$final_model_weights
 
     } else {
@@ -162,6 +163,7 @@ ebma <- function(
       )
       # unlist
       ebma_preds <- final_model_weights$ebma_preds
+      best_tolerance <- final_model_weights$best_tolerance
       final_model_weights <- final_model_weights$final_model_weights
     }
 
@@ -200,13 +202,6 @@ ebma <- function(
       w_avg[m_idx] <- no_NA_avg
     }
 
-    # L2 preds object
-    # L2_preds <- dplyr::tibble(
-    #   !! rlang::sym(L2.unit) := dplyr::pull(
-    #     .data = post.strat$predictions$Level2, var = L2.unit
-    #   ),
-    #   ebma = w_avg
-    # )
     L2_preds <- post.strat$predictions$Level2$ebma <- w_avg
 
     # function output
@@ -215,6 +210,7 @@ ebma <- function(
         ebma = L2_preds,
         classifiers = post.strat$predictions$Level2,
         weights = final_model_weights,
+        ebma_tolerance = best_tolerance,
         individual_level_predictions = ebma_preds
       )
     )
@@ -578,10 +574,12 @@ ebma_mc_tol <- function(
   train_preds <- as.matrix(preds_all[, -c(1, 2)])
 
   # Select best weights per draw
+  tol_container <- rep(NA, length(draws))
   for (idx_w in seq_along(draws)) {
 
     # Tolerance with lowest MSE in draw idx_w
     best_tolerance <- which(draws[[idx_w]]$MSEs == min(draws[[idx_w]]$MSEs))
+    tol_container[idx_w] <- tol[max(best_tolerance)]
 
     if (length(best_tolerance) > 1) {
       wgt[idx_w, ] <- apply(draws[[idx_w]]$weights[best_tolerance, ], 2, mean)
@@ -615,6 +613,10 @@ ebma_mc_tol <- function(
   # Average model weights
   final_model_weights <- apply(wgt, 2, mean)
   names(final_model_weights) <- names(train.preds)
+  best_tol_out <- unique(tol_container)
+  best_tolerance <- best_tol_out[
+    which.max(tabulate(match(tol_container, best_tol_out)))
+  ]
 
   # average EBMA individual level predictions
   ebma_preds <- apply(individual_preds, 1, mean)
@@ -635,7 +637,8 @@ ebma_mc_tol <- function(
         y = as.numeric(preds_all$y),
         !!rlang::sym(L2.unit) := preds_all %>% dplyr::pull(var = L2.unit),
         ebma_preds = ebma_preds
-      )
+      ),
+      best_tolerance = best_tolerance
     )
   )
 
@@ -797,7 +800,7 @@ ebma_mc_draws <- function(
       },
       knn = if (!is.null(model.knn)) {
         if (dv_type == "binary") {
-          c_pred <- knn_classifier(
+          c_pred <- autoMrP:::knn_classifier(
             y = y,
             form = formula(model.knn$terms),
             data.train = cv.data,
@@ -807,7 +810,7 @@ ebma_mc_draws <- function(
           )
           c_pred$prob[, "1"]
         } else {
-          c_pred <- knn_classifier(
+          c_pred <- autoMrP:::knn_classifier(
             y = y,
             form = formula(model.knn$terms),
             data.train = cv.data,
@@ -950,12 +953,14 @@ ebma_mc_draws <- function(
   train_preds <- as.matrix(preds_all[, -c(1, 2)])
 
   # Select best weights per draw
+  tol_container <- rep(NA, length(ebma_tune))
   for (idx_w in seq_along(ebma_tune)) {
 
     # Tolerance with lowest MSE in draw idx_w
     best_tolerance <- which(
       ebma_tune[[idx_w]]$MSEs == min(ebma_tune[[idx_w]]$MSEs)
     )
+    tol_container[idx_w] <- tol[max(best_tolerance)]
 
     if (length(best_tolerance) > 1) {
       wgt[idx_w, ] <- apply(
@@ -993,6 +998,10 @@ ebma_mc_draws <- function(
   # Average model weights
   final_model_weights <- apply(wgt, 2, mean)
   names(final_model_weights) <- names(train.preds)
+  best_tol_out <- unique(tol_container)
+  best_tolerance <- best_tol_out[
+    which.max(tabulate(match(tol_container, best_tol_out)))
+  ]
 
   # average EBMA individual level predictions
   ebma_preds <- apply(individual_preds, 1, mean)
@@ -1005,7 +1014,8 @@ ebma_mc_draws <- function(
         y = as.numeric(preds_all$y),
         !!rlang::sym(L2.unit) := preds_all %>% dplyr::pull(var = L2.unit),
         ebma_preds = ebma_preds
-      )
+      ),
+      best_tolerance = best_tolerance
     )
   )
 }
