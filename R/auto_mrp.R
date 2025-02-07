@@ -641,14 +641,19 @@ auto_MrP <- function(
         .[!is.na(.)]
 
       # take each column of data and combine its values into a single string
-      df_x <- survey %>%
-        dplyr::select({{y}}) %>%
-        dplyr::rowwise() %>%
-        dplyr::mutate({{x}} := paste(dplyr::c_across(
-          dplyr::everything()
-        ), collapse = "-")) %>%
-        dplyr::ungroup() %>%
-        dplyr::select(ncol(.))
+      df_x <- data.frame(
+        tmp = as.character(
+          do.call(
+            interaction,
+            c(
+              survey[, y, drop = FALSE],
+              list(drop = TRUE, sep = "-")
+            )
+          )
+        ),
+        stringsAsFactors = FALSE
+      )
+      colnames(df_x) <- x
 
       return(df_x)
     }) %>%
@@ -669,14 +674,19 @@ auto_MrP <- function(
         .[!is.na(.)]
 
       # take each column of data and combine its values into a single string
-      df_x <- census %>%
-        dplyr::select({{y}}) %>%
-        dplyr::rowwise() %>%
-        dplyr::mutate({{x}} := paste(dplyr::c_across(
-          dplyr::everything()
-        ), collapse = "-")) %>%
-        dplyr::ungroup() %>%
-        dplyr::select(ncol(.))
+      df_x <- data.frame(
+        tmp = as.character(
+          do.call(
+            interaction,
+            c(
+              census[, y, drop = FALSE],
+              list(drop = TRUE, sep = "-")
+            )
+          )
+        ),
+        stringsAsFactors = FALSE
+      )
+      colnames(df_x) <- x
 
       return(df_x)
     }) %>%
