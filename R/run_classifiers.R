@@ -393,6 +393,7 @@ run_classifiers <- function(
       L1.x = L1.x,
       L2.x = knn.L2.x,
       L2.unit = knn.L2.unit,
+      L2.eval.unit = L2.unit,
       L2.reg = knn.L2.reg,
       loss.unit = loss.unit,
       loss.fun = loss.fun,

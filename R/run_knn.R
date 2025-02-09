@@ -27,13 +27,16 @@
 #' @return The tuned \code{knn.k} parameter. An integer-valued scalar.
 
 run_knn <- function(
-  y, L1.x, L2.x, L2.unit, L2.reg, loss.unit, loss.fun, knn.k.max, knn.k,
-  knn.kernel, data, verbose, cores
+  y, L1.x, L2.x, L2.unit, L2.eval.unit, L2.reg, loss.unit, loss.fun, knn.k.max,
+  knn.k, knn.kernel, data, verbose, cores
 ) {
 
   # Create model formula
   x <- paste(c(L1.x, L2.x, L2.unit, L2.reg), collapse = " + ")
   form <- as.formula(paste(y, " ~ ", x, sep = ""))
+
+  # loss function needs the L2.unit variable is set to "L2 units"
+  if (is.null(L2.unit) && "L2 units" %in% loss.unit) L2.unit <- L2.eval.unit
 
   # ks search grid
   if (is.null(knn.k)) {

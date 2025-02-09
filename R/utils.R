@@ -1324,7 +1324,7 @@ mean_squared_error <- function(pred, data.valid, y, L2.unit){
   l2 <- data.valid %>%
     dplyr::mutate(pred = pred) %>%
     dplyr::rowwise() %>%
-    dplyr::mutate(sqe = (.data[[y]] - pred)^2 ) %>%
+    dplyr::mutate(sqe = (.data[[y]] - pred)^2) %>%
     dplyr::ungroup() %>%
     dplyr::group_by(!! rlang::sym(L2.unit)) %>%
     dplyr::summarise(mse = mean(sqe), .groups = "drop")
