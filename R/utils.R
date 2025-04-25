@@ -419,17 +419,12 @@ error_checks <- function(
           " 'best.subset' or 'pca' is TRUE."
         )
       }
-    } else {
-      stop(
-        "The argument 'deep.splines' can only be set to TRUE if 'deep.mrp' is",
-        " TRUE."
-      )
     }
   } else {
     stop(
-      "The logical argument 'deep.splines', indicating whether splines should",
-      " be used within the best subset classifier using all interactions of",
-      " L2.x must be either TRUE or FALSE."
+      "The logical argument 'deep.splines', indicating whether splines",
+      " should be used within the best subset classifier using all",
+      " interactions of L2.x must be either TRUE or FALSE."
     )
   }
 
