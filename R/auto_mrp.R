@@ -483,21 +483,24 @@ auto_MrP <- function(
   if (isTRUE(L2.x.scale) && all(L2.x != "")) {
 
     # mean and standard deviation of context-level variables in survey
-    df_scale <- survey |>
-      dplyr::summarize(
-        dplyr::across(
-          .cols = dplyr::all_of(L2.x),
-          .fns = list(
-            autoMrP_mean = ~ mean(.x, na.rm = TRUE),
-            autoMrP_sd = ~ sd(.x, na.rm = TRUE)
-          )
-        )
-      ) |>
-      tidyr::pivot_longer(
-        cols = dplyr::everything(),
-        names_to = c(".value", "statistic"),
-        names_pattern = "(.*)_(autoMrP_mean|autoMrP_sd)"
-      )
+    df_scale <- rbind(
+      # means
+      (function() {
+        result <- data.frame(statistic = "mean")
+        for (var in L2.x) {
+          result[[var]] <- mean(survey[[var]], na.rm = TRUE)
+        }
+        return(result)
+      })(),
+      # standard deviations
+      (function() {
+        result <- data.frame(statistic = "sd")
+        for (var in L2.x) {
+          result[[var]] <- sd(survey[[var]], na.rm = TRUE)
+        }
+        return(result)
+      })()
+    )
 
     # scale context-level variables in survey using mean and sd from survey
     survey <- survey |>
@@ -506,10 +509,10 @@ auto_MrP <- function(
         .fns = ~ {
           var_name <- dplyr::cur_column()
           mean_val <- df_scale |>
-            dplyr::filter(statistic == "autoMrP_mean") |>
+            dplyr::filter(statistic == "mean") |>
             dplyr::pull(var_name)
           sd_val <- df_scale |>
-            dplyr::filter(statistic == "autoMrP_sd") |>
+            dplyr::filter(statistic == "sd") |>
             dplyr::pull(var_name)
           (. - mean_val) / sd_val
         }
@@ -522,10 +525,10 @@ auto_MrP <- function(
         .fns = ~ {
           var_name <- dplyr::cur_column()
           mean_val <- df_scale |>
-            dplyr::filter(statistic == "autoMrP_mean") |>
+            dplyr::filter(statistic == "mean") |>
             dplyr::pull(var_name)
           sd_val <- df_scale |>
-            dplyr::filter(statistic == "autoMrP_sd") |>
+            dplyr::filter(statistic == "sd") |>
             dplyr::pull(var_name)
           (. - mean_val) / sd_val
         }
