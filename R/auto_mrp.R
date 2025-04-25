@@ -482,9 +482,6 @@ auto_MrP <- function(
   # Scale context-level variables in survey and census data
   if (isTRUE(L2.x.scale) && all(L2.x != "")) {
 
-  # Scale context-level variables in survey and census data
-  if (isTRUE(L2.x.scale) && all(L2.x != "")) {
-
     # mean and standard deviation of context-level variables in survey
     df_scale <- survey |>
       dplyr::summarize(
