@@ -586,23 +586,55 @@ auto_MrP <- function(
   # Scale context-level variables in survey and census data
   if (isTRUE(L2.x.scale) && all(L2.x != "")) {
 
-    # scale context-level variables in survey
-    survey <- dplyr::mutate_at(
-      .tbl = survey,
-      .vars = L2.x,
-      .funs = function(x) {
-        base::as.numeric(base::scale(x = x, center = TRUE, scale = TRUE))
-      }
-    )
+    # mean and standard deviation of context-level variables in survey
+    df_scale <- survey |>
+      dplyr::summarize(
+        dplyr::across(
+          .cols = dplyr::all_of(L2.x),
+          .fns = list(
+            autoMrP_mean = ~ mean(.x, na.rm = TRUE),
+            autoMrP_sd = ~ sd(.x, na.rm = TRUE)
+          )
+        )
+      ) |>
+      tidyr::pivot_longer(
+        cols = dplyr::everything(),
+        names_to = c(".value", "statistic"),
+        names_pattern = "(.*)_(autoMrP_mean|autoMrP_sd)"
+      )
 
-    # scale context-level variables in census
-    census <- dplyr::mutate_at(
-      .tbl = census,
-      .vars = L2.x,
-      .funs = function(x) {
-        base::as.numeric(base::scale(x = x, center = TRUE, scale = TRUE))
-      }
-    )
+    # scale context-level variables in survey using mean and sd from survey
+    survey <- survey |>
+      dplyr::mutate(dplyr::across(
+        .cols = dplyr::all_of(L2.x),
+        .fns = ~ {
+          var_name <- dplyr::cur_column()
+          mean_val <- df_scale |>
+            dplyr::filter(statistic == "autoMrP_mean") |>
+            dplyr::pull(var_name)
+          sd_val <- df_scale |>
+            dplyr::filter(statistic == "autoMrP_sd") |>
+            dplyr::pull(var_name)
+          (. - mean_val) / sd_val
+        }
+      ))
+
+    # scale context-level variables in census using mean and sd from survey
+    census <- census |>
+      dplyr::mutate(dplyr::across(
+        .cols = dplyr::all_of(L2.x),
+        .fns = ~ {
+          var_name <- dplyr::cur_column()
+          mean_val <- df_scale |>
+            dplyr::filter(statistic == "autoMrP_mean") |>
+            dplyr::pull(var_name)
+          sd_val <- df_scale |>
+            dplyr::filter(statistic == "autoMrP_sd") |>
+            dplyr::pull(var_name)
+          (. - mean_val) / sd_val
+        }
+      ))
+    rm(df_scale)
   }
 
   # Convert survey and census data to tibble
