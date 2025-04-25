@@ -541,7 +541,7 @@ auto_MrP <- function(
   census <- tibble::as_tibble(x = census)
 
   # add interactions to survey and census data if deep.mrp is TRUE
-  if (deep.mrp) {
+  if (any(deep.mrp, best.subset.deep, pca.deep)) {
 
     # generate all interactions of L1.x
     l1_comb <- unlist(lapply(2:length(L1.x), function(x) {
@@ -572,14 +572,19 @@ auto_MrP <- function(
         .[!is.na(.)]
 
       # take each column of data and combine its values into a single string
-      df_x <- survey %>%
-        dplyr::select({{y}}) %>%
-        dplyr::rowwise() %>%
-        dplyr::mutate({{x}} := paste(dplyr::c_across(
-          dplyr::everything()
-        ), collapse = "-")) %>%
-        dplyr::ungroup() %>%
-        dplyr::select(ncol(.))
+      df_x <- data.frame(
+        tmp = as.character(
+          do.call(
+            interaction,
+            c(
+              survey[, y, drop = FALSE],
+              list(drop = TRUE, sep = "-")
+            )
+          )
+        ),
+        stringsAsFactors = FALSE
+      )
+      colnames(df_x) <- x
 
       return(df_x)
     }) %>%
@@ -600,14 +605,19 @@ auto_MrP <- function(
         .[!is.na(.)]
 
       # take each column of data and combine its values into a single string
-      df_x <- census %>%
-        dplyr::select({{y}}) %>%
-        dplyr::rowwise() %>%
-        dplyr::mutate({{x}} := paste(dplyr::c_across(
-          dplyr::everything()
-        ), collapse = "-")) %>%
-        dplyr::ungroup() %>%
-        dplyr::select(ncol(.))
+      df_x <- data.frame(
+        tmp = as.character(
+          do.call(
+            interaction,
+            c(
+              census[, y, drop = FALSE],
+              list(drop = TRUE, sep = "-")
+            )
+          )
+        ),
+        stringsAsFactors = FALSE
+      )
+      colnames(df_x) <- x
 
       return(df_x)
     }) %>%
