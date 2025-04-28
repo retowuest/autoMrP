@@ -471,35 +471,35 @@ run_classifiers <- function(
 
   # Stacking  ----------------------------------------------------------------
 
-  # get start time
-  stack_start_time <- Sys.time()
+  # # get start time
+  # stack_start_time <- Sys.time()
 
-  if (verbose) {
-    cli::cli_progress_step("Stacking")
-  }
+  # if (verbose) {
+  #   cli::cli_progress_step("Stacking")
+  # }
 
-  # get stacking weights
-  stack_out <- autoMrP:::stacking_weights(
-    preds = preds_all, ebma_out = ebma_out, L2.unit = L2.unit,
-    k.folds = k.folds, cores = cores
-  )
+  # # get stacking weights
+  # stack_out <- autoMrP:::stacking_weights(
+  #   preds = preds_all, ebma_out = ebma_out, L2.unit = L2.unit,
+  #   k.folds = k.folds, cores = cores
+  # )
 
-  # apply stacking weights
-  ebma_out <- apply_stack_weights(
-    ebma_out = ebma_out,
-    stack_out = stack_out,
-    L2.unit = L2.unit,
-    y = y,
-    preds_all = preds_all
-  )
+  # # apply stacking weights
+  # ebma_out <- apply_stack_weights(
+  #   ebma_out = ebma_out,
+  #   stack_out = stack_out,
+  #   L2.unit = L2.unit,
+  #   y = y,
+  #   preds_all = preds_all
+  # )
 
-  # get end time
-  stack_end_time <- Sys.time()
+  # # get end time
+  # stack_end_time <- Sys.time()
 
-  # stack runtime
-  stack_runtime <- difftime(
-    time1 = stack_end_time, time2 = stack_start_time, units = "mins"
-  )
+  # # stack runtime
+  # stack_runtime <- difftime(
+  #   time1 = stack_end_time, time2 = stack_start_time, units = "mins"
+  # )
 
   # Detailed runtime ---------------------------------------------------------
   runtime_detailed <- tibble::tibble(
@@ -510,8 +510,8 @@ run_classifiers <- function(
     svm = svm_runtime,
     individual_level_predictions = preds_all_runtime,
     post_stratification = ps_runtime,
-    ebma = ebma_runtime,
-    stacking = stack_runtime
+    ebma = ebma_runtime#,
+    #stacking = stack_runtime
   )
   ebma_out$runtime <- runtime_detailed
 
