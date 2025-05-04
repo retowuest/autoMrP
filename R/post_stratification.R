@@ -705,10 +705,7 @@ post_stratification <- function(
     knn_preds <- census %>%
       dplyr::mutate(
         knn = if (dv_type == "binary") {
-          kknn:::predict.kknn(
-            object = knn_opt_poststrat_only,
-            type = "prob"
-          )[, "1"]
+          knn_opt_poststrat_only$prob[, "1"]
         } else {
           knn_opt_poststrat_only$fit
         }
@@ -723,10 +720,7 @@ post_stratification <- function(
 
     # individual level predictions for EBMA
     knn_ind <- if (dv_type == "binary") {
-      kknn:::predict.kknn(
-        object = knn_opt_ebma,
-        type = "prob"
-      )[, "1"]
+      knn_opt_ebma$prob[, "1"]
     } else {
       knn_opt_ebma$fit
     }

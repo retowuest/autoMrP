@@ -539,7 +539,7 @@ get_predictions <- function(
 
       # predictions on validation set
       knn_preds <- if (dv_type == "binary") {
-        kknn:::predict.kknn(knn, type = "prob")[, "1"]
+        knn$prob[, 1]
       } else {
         knn$fit
       }

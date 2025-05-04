@@ -9,6 +9,7 @@ run_knn(
   L1.x,
   L2.x,
   L2.unit,
+  L2.eval.unit,
   L2.reg,
   loss.unit,
   loss.fun,

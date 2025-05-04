@@ -100,7 +100,7 @@ run_knn <- function(
 
       # Get predictions for kth validation set
       pred_ki <- if (dv_type == "binary") {
-        kknn:::predict.kknn(model_ki, data_valid, type = "prob")[, "1"]
+        model_ki$prob[, "1"]
       } else {
         model_ki$fit
       }
