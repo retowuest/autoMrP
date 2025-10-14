@@ -7,8 +7,7 @@
 deep_mrp_classifier(y, form, data, verbose)
 }
 \arguments{
-\item{y}{Outcome variable. A character vector containing the column names of
-the outcome variable. A character scalar containing the column name of
+\item{y}{Outcome variable. A character scalar containing the column name of
 the outcome variable in \code{survey}.}
 
 \item{form}{Model formula. A two-sided linear formula describing

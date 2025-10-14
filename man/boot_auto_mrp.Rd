@@ -30,8 +30,12 @@ boot_auto_mrp(
   svm,
   mrp,
   deep.mrp,
+  best.subset.deep,
+  best.subset.deep.splines,
   best.subset.L2.x,
   lasso.L2.x,
+  pca.deep,
+  pca.deep.splines,
   pca.L2.x,
   pc.names,
   gb.L2.x,
@@ -41,6 +45,9 @@ boot_auto_mrp(
   gb.L2.unit,
   gb.L2.reg,
   deep.splines,
+  deep.L2.x,
+  deep.L2.unit,
+  deep.L2.reg,
   lasso.lambda,
   lasso.n.iter,
   gb.interaction.depth,
@@ -58,8 +65,7 @@ boot_auto_mrp(
 )
 }
 \arguments{
-\item{y}{Outcome variable. A character vector containing the column names of
-the outcome variable. A character scalar containing the column name of
+\item{y}{Outcome variable. A character scalar containing the column name of
 the outcome variable in \code{survey}.}
 
 \item{L1.x}{Individual-level covariates. A character vector containing the
@@ -105,7 +111,8 @@ to which an observation is allocated. The variable should contain integers
 running from \eqn{1} to \eqn{k + 1}, where \eqn{k} is the number of
 cross-validation folds. Value \eqn{k + 1} refers to the EBMA fold. Default
 is \code{NULL}. \emph{Note:} if \code{folds} is \code{NULL}, then
-\code{ebma.size}, \code{k.folds}, and \code{cv.sampling} must be specified.}
+\code{ebma.size}, \code{k.folds}, and \code{cv.sampling} must be specified.
+To skip EBMA and stacking, set \code{ebma.size = 0}.}
 
 \item{bin.proportion}{Proportion of ideal types. A character scalar
 containing the column name of the variable in \code{census} that indicates
@@ -186,9 +193,17 @@ MRP classifier should be used for predicting outcome \code{y}. Default is
 \code{FALSE}.}
 
 \item{deep.mrp}{Deep MRP classifier. A logical argument indicating whether
+the deep MRP classifier should be used for predicting outcome \code{y}.
+Useful to run a specific deep MRP model. Default is \code{FALSE}.}
+
+\item{best.subset.deep}{A logical argument indicating whether
 the deep MRP classifier should be used for best subset prediction. Setting
-\code{deep.mrp = TRUE} will include all interactions of L1.x in the best
-subset classifier. Default is \code{FALSE}.}
+\code{best.subset.deep = TRUE} will include all interactions of L1.x in the
+best subset classifier. Default is \code{FALSE}.}
+
+\item{best.subset.deep.splines}{Deep MRP splines for Best Subset. A logical
+argument indicating whether splines should be used in the deep MRP
+classifier for best subset selection. Must be user supplied.}
 
 \item{best.subset.L2.x}{Best subset context-level covariates. A character
 vector containing the column names of the context-level variables in
@@ -201,6 +216,15 @@ containing the column names of the context-level variables in
 \code{survey} and \code{census} to be used by the lasso classifier. If
 \code{NULL} and \code{lasso} is set to \code{TRUE}, then lasso uses the
 variables specified in \code{L2.x}. Default is \code{NULL}.}
+
+\item{pca.deep}{A logical argument indicating whether
+the deep MRP classifier should be used for PCA prediction. Setting
+\code{pca.deep = TRUE} will include all interactions of L1.x in the
+pca classifier. Default is \code{FALSE}.}
+
+\item{pca.deep.splines}{Deep MRP splines for PCA. A logical argument
+indicating whether splines should be used in the deep MRP classifier for
+PCA. Must be user supplied.}
 
 \item{pca.L2.x}{PCA context-level covariates. A character vector containing
 the column names of the context-level variables in \code{survey} and
@@ -226,7 +250,7 @@ the column names of the context-level variables in \code{survey} and
 
 \item{svm.L2.unit}{SVM L2.unit. A logical argument indicating whether
 \code{L2.unit} should be included in the SVM classifier. Default is
-\code{FALSE}.}
+\code{TRUE}.}
 
 \item{svm.L2.reg}{SVM L2.reg. A logical argument indicating whether
 \code{L2.reg} should be included in the SVM classifier. Default is
@@ -234,7 +258,7 @@ the column names of the context-level variables in \code{survey} and
 
 \item{gb.L2.unit}{GB L2.unit. A logical argument indicating whether
 \code{L2.unit} should be included in the GB classifier. Default is
-\code{FALSE}.}
+\code{TRUE}.}
 
 \item{gb.L2.reg}{GB L2.reg. A logical argument indicating whether
 \code{L2.reg} should be included in the GB classifier. Default is
@@ -242,6 +266,19 @@ the column names of the context-level variables in \code{survey} and
 
 \item{deep.splines}{Deep MRP splines. A logical argument indicating whether
 splines should be used in the deep MRP classifier. Default is \code{TRUE}.}
+
+\item{deep.L2.x}{Deep MrP context-level covariates. A character vector
+containing the column names of the context-level variables in
+\code{survey} and \code{census} to be used by the Deep MRP classifier.
+The character vector \emph{empty} if no context-level variables should be
+used by the Deep MRP classifier. If \code{NULL} and \code{deep.mrp} is set
+to \code{TRUE}, then Deep MRP uses the variables specified in \code{L2.x}.
+Default is \code{NULL}. Note: For the empty MrP model, set
+\code{L2.x = NULL} and \code{mrp.L2.x = ""}.}
+
+\item{deep.L2.reg}{Deep MRP L2.reg. A logical argument indicating whether
+\code{L2.reg} should be included in the Deep MRP classifier. Default is
+\code{FALSE}.}
 
 \item{lasso.lambda}{Lasso penalty parameter. A numeric \code{vector} of
 non-negative values. The penalty parameter controls the shrinkage of the

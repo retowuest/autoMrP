@@ -1,0 +1,148 @@
+#' Apply KNN classifier to MrP.
+#'
+#' \code{run_knn} is a wrapper function that applies the KNN classifier to data
+#' provided by the user, evaluates prediction performance, and chooses the
+#' best-performing model.
+#'
+#' @inheritParams auto_MrP
+#' @param knn.k KNN number of neighbors. A \code{vector} of positive integers
+#'   specifying the number of neighbors to be considered in the KNN model. If
+#'   not \code{NULL}, \code{knn.k} takes precedence over \code{knn.k.min}.
+#'   Default is \code{NULL}.
+#' @param knn.kernel KNN kernel. A character-valued scalar specifying the kernel
+#'   to be used in the KNN model. The possible values are \code{rectangular}
+#'   (which is standard unweighted KNN), \code{triangular}, \code{epanechnikov}
+#'   (or beta(2,2)), \code{biweight} (or beta(3,3)), \code{triweight} (or
+#'   beta(4,4)), \code{cos}, \code{inv}, \code{gaussian}, and \code{optimal}.
+#'   Default is \code{optimal}.
+#' @param data Data for cross-validation. A \code{list} of \eqn{k}
+#'   \code{data.frames}, one for each fold to be used in \eqn{k}-fold
+#'   cross-validation.
+#'
+#' @return The tuned \code{knn.k} parameter. An integer-valued scalar.
+
+run_knn <- function(
+  y, L1.x, L2.x, L2.unit, L2.eval.unit, L2.reg, loss.unit, loss.fun, knn.k.min,
+  knn.k, knn.kernel, data, verbose, cores
+) {
+
+  # Create model formula
+  x <- paste(c(L1.x, L2.x, L2.unit, L2.reg), collapse = " + ")
+  form <- as.formula(paste(y, " ~ ", x, sep = ""))
+
+  # loss function needs the L2.unit variable is set to "L2 units"
+  if (is.null(L2.unit) && "L2 units" %in% loss.unit) L2.unit <- L2.eval.unit
+
+  # ks search grid
+  if (is.null(knn.k)) {
+    ks <- knn.k.min:sqrt(nrow(dplyr::bind_rows(data)))
+  } else {
+    ks <- sort(knn.k)
+  }
+
+  # Register cores
+  cl <- multicore(cores = cores, type = "open", cl = NULL)
+
+  # Loop over each value in ks
+  knn_k_errors <- foreach::foreach(
+    ki = seq_along(ks),  .packages = c("autoMrP", "kknn"),
+    .export = c(
+      "deep_mrp_classifier", "loss_function", "knn_classifier"
+    )
+  ) %dorng% {
+
+    `%>%` <- magrittr::`%>%`
+
+    # Set value for k
+    knn_k_value <- ks[ki]
+
+    # Loop over each fold
+    k_errors <- lapply(seq_along(data), function(k) {
+
+      # Split data in training and validation sets
+      data_train <- dplyr::bind_rows(data[-k])
+      data_valid <- dplyr::bind_rows(data[k])
+
+      # Determine type of dependent variable
+      if (
+        data_train %>%
+          dplyr::pull(!!y) %>%
+          unique() %>%
+          length() == 2
+      ) {
+        dv_type <- "binary"
+      }
+
+      if (dv_type == "binary") {
+        # Convert the dependent variable to a factor
+        data_train <- data_train %>%
+          dplyr::mutate(!!rlang::sym(y) := as.factor(!!rlang::sym(y)))
+        data_valid <- data_valid %>%
+          dplyr::mutate(!!rlang::sym(y) := as.factor(!!rlang::sym(y)))
+      }
+
+      # Train model with kith value on kth training set and use trained model
+      # to make predictions for kth validation set
+      model_ki <- knn_classifier(
+        y = y,
+        L1.x = L1.x,
+        L2.unit = L2.unit,
+        L2.reg = L2.reg,
+        form = form,
+        data.train = data_train,
+        data.valid = data_valid,
+        knn.k.value = knn_k_value,
+        knn.kernel = knn.kernel,
+        verbose = verbose
+      )
+
+      # Get predictions for kth validation set
+      pred_ki <- if (dv_type == "binary") {
+        model_ki$prob[, "1"]
+      } else {
+        model_ki$fit
+      }
+
+      # Evaluate predictions based on loss function
+      perform_ki <- loss_function(
+        pred = pred_ki,
+        data.valid = if (dv_type == "binary") {
+          data_valid %>%
+            dplyr::mutate(
+              !!rlang::sym(y) := as.numeric(as.character(!!rlang::sym(y)))
+            )
+        } else {
+          data_valid
+        },
+        loss.unit = loss.unit,
+        loss.fun = loss.fun,
+        y = y,
+        L2.unit = L2.unit
+      )
+
+      return(perform_ki)
+    })
+
+    # Mean over loss functions
+    k_errors <- dplyr::bind_rows(k_errors) %>%
+      dplyr::group_by(measure) %>%
+      dplyr::summarise(value = mean(value), .groups = "drop") %>%
+      dplyr::mutate(knn.k.value = ks[ki])
+
+    return(k_errors)
+  }
+
+  # De-register cluster
+  multicore(cores = cores, type = "close", cl = cl)
+
+  # Extract best tuning parameters
+  knn_k_errors <- dplyr::bind_rows(knn_k_errors)
+  best_params <- dplyr::slice(
+    loss_score_ranking(score = knn_k_errors, loss.fun = loss.fun), 1
+  )
+
+  # Choose best-performing model
+  out <- dplyr::pull(.data = best_params, var = knn.k.value)
+
+  return(out)
+}

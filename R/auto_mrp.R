@@ -1,11 +1,10 @@
 #' Improve MrP through ensemble learning.
 #'
 #' This package improves the prediction performance of multilevel
-#' regression with post-stratification (MrP) by combining a number of machine
+#' regression and post-stratification (MrP) by combining a number of machine
 #' learning methods through ensemble Bayesian model averaging (EBMA).
 #'
-#' @param y Outcome variable. A character vector containing the column names of
-#'   the outcome variable. A character scalar containing the column name of
+#' @param y Outcome variable. A character scalar containing the column name of
 #'   the outcome variable in \code{survey}.
 #' @param L1.x Individual-level covariates. A character vector containing the
 #'   column names of the individual-level variables in \code{survey} and
@@ -37,6 +36,7 @@
 #'   cross-validation folds. Value \eqn{k + 1} refers to the EBMA fold. Default
 #'   is \code{NULL}. \emph{Note:} if \code{folds} is \code{NULL}, then
 #'   \code{ebma.size}, \code{k.folds}, and \code{cv.sampling} must be specified.
+#'   To skip EBMA and stacking, set \code{ebma.size = 0}.
 #' @param bin.proportion Proportion of ideal types. A character scalar
 #'   containing the column name of the variable in \code{census} that indicates
 #'   the proportion of individuals by ideal type and geographic unit. Default is
@@ -99,25 +99,41 @@
 #' @param svm SVM classifier. A logical argument indicating whether the SVM
 #'   classifier should be used for predicting outcome \code{y}. Default is
 #'   \code{TRUE}.
+#' @param knn KNN classifier. A logical argument indicating whether the KNN
+#'   classifier should be used for predicting outcome \code{y}. Default is
+#'   \code{TRUE}.
 #' @param mrp MRP classifier. A logical argument indicating whether the standard
 #'   MRP classifier should be used for predicting outcome \code{y}. Default is
 #'   \code{FALSE}.
 #' @param deep.mrp Deep MRP classifier. A logical argument indicating whether
-#'   the deep MRP classifier should be used for best subset prediction. Setting
-#'   \code{deep.mrp = TRUE} will include all interactions of L1.x in the best
-#'   subset classifier. Default is \code{FALSE}.
-#' @param oversampling Over sample to create balance on the dependent variable.
+#'   the deep MRP classifier should be used for predicting outcome \code{y}.
+#'   Useful to run a specific deep MRP model. Default is \code{FALSE}.
+#' @param oversampling Oversample to create balance on the dependent variable.
 #'   A logical argument. Default is \code{FALSE}.
 #' @param best.subset.L2.x Best subset context-level covariates. A character
 #'   vector containing the column names of the context-level variables in
 #'   \code{survey} and \code{census} to be used by the best subset classifier.
 #'   If \code{NULL} and \code{best.subset} is set to \code{TRUE}, then best
 #'   subset uses the variables specified in \code{L2.x}. Default is \code{NULL}.
+#' @param best.subset.deep A logical argument indicating whether
+#'   the deep MRP classifier should be used for best subset prediction. Setting
+#'   \code{best.subset.deep = TRUE} will include all interactions of L1.x in the
+#'   best subset classifier. Default is \code{FALSE}.
+#' @param best.subset.deep.splines Deep MRP splines for Best Subset. A logical
+#'  argument indicating whether splines should be used in the deep MRP
+#'  classifier for best subset selection. Must be user supplied.
 #' @param lasso.L2.x Lasso context-level covariates. A character vector
 #'   containing the column names of the context-level variables in
 #'   \code{survey} and \code{census} to be used by the lasso classifier. If
 #'   \code{NULL} and \code{lasso} is set to \code{TRUE}, then lasso uses the
 #'   variables specified in \code{L2.x}. Default is \code{NULL}.
+#' @param pca.deep A logical argument indicating whether
+#'   the deep MRP classifier should be used for PCA prediction. Setting
+#'   \code{pca.deep = TRUE} will include all interactions of L1.x in the
+#'   pca classifier. Default is \code{FALSE}.
+#' @param pca.deep.splines Deep MRP splines for PCA. A logical argument
+#'  indicating whether splines should be used in the deep MRP classifier for
+#'  PCA. Must be user supplied.
 #' @param pca.L2.x PCA context-level covariates. A character vector containing
 #'   the column names of the context-level variables in \code{survey} and
 #'   \code{census} whose principal components are to be used by the PCA
@@ -134,6 +150,11 @@
 #'   \code{census} to be used by the SVM classifier. If \code{NULL} and
 #'   \code{svm} is set to \code{TRUE}, then SVM uses the variables specified in
 #'   \code{L2.x}. Default is \code{NULL}.
+#' @param knn.L2.x KNN context-level covariates. A character vector containing
+#'   the column names of the context-level variables in \code{survey} and
+#'   \code{census} to be used by the KNN classifier. If \code{NULL} and
+#'   \code{knn} is set to \code{TRUE}, then KNN uses the variables specified in
+#'   \code{L2.x}. Default is \code{NULL}.
 #' @param mrp.L2.x MRP context-level covariates. A character vector containing
 #'   the column names of the context-level variables in \code{survey} and
 #'   \code{census} to be used by the MRP classifier. The character vector
@@ -143,18 +164,37 @@
 #'   For the empty MrP model, set \code{L2.x = NULL} and \code{mrp.L2.x = ""}.
 #' @param gb.L2.unit GB L2.unit. A logical argument indicating whether
 #'   \code{L2.unit} should be included in the GB classifier. Default is
-#'   \code{FALSE}.
+#'   \code{TRUE}.
 #' @param gb.L2.reg GB L2.reg. A logical argument indicating whether
 #'   \code{L2.reg} should be included in the GB classifier. Default is
 #'   \code{FALSE}.
 #' @param svm.L2.unit SVM L2.unit. A logical argument indicating whether
 #'   \code{L2.unit} should be included in the SVM classifier. Default is
-#'   \code{FALSE}.
+#'   \code{TRUE}.
 #' @param svm.L2.reg SVM L2.reg. A logical argument indicating whether
 #'   \code{L2.reg} should be included in the SVM classifier. Default is
 #'   \code{FALSE}.
+#' @param knn.L2.unit KNN L2.unit. A logical argument indicating whether
+#'   \code{L2.unit} should be included in the KNN classifier. Default is
+#'   \code{TRUE}.
+#' @param knn.L2.reg KNN L2.reg. A logical argument indicating whether
+#'   \code{L2.reg} should be included in the KNN classifier. Default is
+#'   \code{FALSE}.
 #' @param deep.splines Deep MRP splines. A logical argument indicating whether
 #'  splines should be used in the deep MRP classifier. Default is \code{TRUE}.
+#' @param deep.L2.x Deep MrP context-level covariates. A character vector
+#'   containing the column names of the context-level variables in
+#'   \code{survey} and \code{census} to be used by the Deep MRP classifier.
+#'   The character vector \emph{empty} if no context-level variables should be
+#'   used by the Deep MRP classifier. If \code{NULL} and \code{deep.mrp} is set
+#'   to \code{TRUE}, then Deep MRP uses the variables specified in \code{L2.x}.
+#'   Default is \code{NULL}. Note: For the empty MrP model, set
+#'   \code{L2.x = NULL} and \code{mrp.L2.x = ""}.
+#' @param deep.L2.unit. A logical argument indicating whether \code{L2.unit}
+#'   should be included in the Deep MRP classifier. Default is \code{TRUE}.
+#' @param deep.L2.reg Deep MRP L2.reg. A logical argument indicating whether
+#'   \code{L2.reg} should be included in the Deep MRP classifier. Default is
+#'   \code{FALSE}.
 #' @param lasso.lambda Lasso penalty parameter. A numeric \code{vector} of
 #'   non-negative values. The penalty parameter controls the shrinkage of the
 #'   context-level variables in the lasso model. Default is a sequence with
@@ -196,6 +236,21 @@
 #' @param svm.cost SVM cost parameter. A numeric vector whose values specify the
 #'   cost of constraints violation in SVM. Default is a sequence with minimum =
 #'   0.5, maximum = 10, and length = 5 that is equally spaced on the log-scale.
+#' @param knn.k.min KNN minimum number of neighbors. An positive integer-valued
+#'   scalar specifying the minimum number of neighbors to be considered in the
+#'   KNN model if \code{knn.k} is \code{NULL}. If \code{knn.k.min} is specified
+#'   and \code{knn.k} is \code{NULL}, then the number of neighbors considered is
+#'   the sequence \code{knn.k.min:sqrt(nrow(survey))}. Default is 5L.
+#' @param knn.k KNN number of neighbors. A \code{vector} of positive integers
+#'   specifying the number of neighbors to be considered in the KNN model. If
+#'   not \code{NULL}, \code{knn.k} takes precedence over \code{knn.k.min}.
+#'   Default is \code{NULL}.
+#' @param knn.kernel KNN kernel. A character-valued scalar specifying the kernel
+#'   to be used in the KNN model. The possible values are \code{rectangular}
+#'   (which is standard unweighted KNN), \code{triangular}, \code{epanechnikov}
+#'   (or beta(2,2)), \code{biweight} (or beta(3,3)), \code{triweight} (or
+#'   beta(4,4)), \code{cos}, \code{inv}, \code{gaussian}, and \code{optimal}.
+#'   Default is \code{optimal}.
 #' @param ebma.n.draws EBMA number of samples. An integer-valued scalar
 #'   specifying the number of bootstrapped samples to be drawn from the EBMA
 #'   fold and used for tuning EBMA. Default is \eqn{100}.
@@ -213,8 +268,8 @@
 #' @param verbose Verbose output. A logical argument indicating whether or not
 #'   verbose output should be printed. Default is \code{FALSE}.
 #' @return The context-level predictions. A list with two elements. The first
-#'   element, \code{EBMA}, contains the post-stratified ensemble bayesian model
-#'   avaeraging (EBMA) predictions. The second element, \code{classifiers},
+#'   element, \code{EBMA}, contains the post-stratified ensemble Bayesian model
+#'   averaging (EBMA) predictions. The second element, \code{classifiers},
 #'   contains the post-stratified predictions from all estimated classifiers.
 #' @details Bootstrapping samples the level two units, sometimes referred to as
 #'   the cluster bootstrap. For the multilevel model, for example, when running
@@ -247,6 +302,7 @@
 #'   pca = FALSE,
 #'   gb = FALSE,
 #'   svm = FALSE,
+#'   knn = FALSE,
 #'   mrp = TRUE
 #' )
 #'
@@ -271,6 +327,7 @@
 #'   pca = FALSE,
 #'   gb = FALSE,
 #'   svm = FALSE,
+#'   knn = FALSE,
 #'   mrp = TRUE
 #'   )
 #'
@@ -292,6 +349,7 @@
 #'   census = taxes_census,
 #'   gb.L2.reg = TRUE,
 #'   svm.L2.reg = TRUE,
+#'   knn.L2.reg = TRUE,
 #'   cores = min(2, max_cores)
 #'   )
 #' }
@@ -303,6 +361,8 @@
 #' @importFrom rlang .data
 #' @importFrom foreach %dopar%
 #' @importFrom doRNG %dorng%
+#' @importFrom kknn contr.dummy
+#' @export contr.dummy
 
 auto_MrP <- function(
   y, L1.x, L2.x, L2.unit, L2.reg = NULL, L2.x.scale = TRUE, pcs = NULL,
@@ -312,18 +372,22 @@ auto_MrP <- function(
   loss.unit = c("individuals", "L2 units"),
   loss.fun = c("msfe", "cross-entropy", "f1", "MSE"),
   best.subset = TRUE, lasso = TRUE, pca = TRUE, gb = TRUE, svm = TRUE,
-  mrp = FALSE,
+  knn = TRUE, mrp = FALSE,
   deep.mrp = FALSE, oversampling = FALSE,
+  best.subset.deep = FALSE, best.subset.deep.splines = FALSE,
+  pca.deep = FALSE, pca.deep.splines = FALSE,
   best.subset.L2.x = NULL, lasso.L2.x = NULL, pca.L2.x = NULL,
-  gb.L2.x = NULL, svm.L2.x = NULL, mrp.L2.x = NULL, gb.L2.unit = TRUE,
-  gb.L2.reg = FALSE, svm.L2.unit = TRUE, svm.L2.reg = FALSE,
-  deep.splines = TRUE,
-  lasso.lambda = NULL, lasso.n.iter = 100,
+  gb.L2.x = NULL, svm.L2.x = NULL, knn.L2.x = NULL, mrp.L2.x = NULL,
+  gb.L2.unit = TRUE, gb.L2.reg = FALSE, svm.L2.unit = TRUE, svm.L2.reg = FALSE,
+  knn.L2.unit = TRUE, knn.L2.reg = FALSE,
+  deep.splines = TRUE, deep.L2.x = NULL, deep.L2.unit = TRUE,
+  deep.L2.reg = FALSE, lasso.lambda = NULL, lasso.n.iter = 100,
   gb.interaction.depth = c(1, 2, 3),
   gb.shrinkage = c(0.04, 0.01, 0.008, 0.005, 0.001),
   gb.n.trees.init = 50, gb.n.trees.increase = 50,
   gb.n.trees.max = 1000, gb.n.minobsinnode = 20,
   svm.kernel = c("radial"), svm.gamma = NULL, svm.cost = NULL,
+  knn.k.min = NULL, knn.k = NULL, knn.kernel = c("optimal"),
   ebma.n.draws = 100,
   ebma.tol = c(0.01, 0.005, 0.001, 0.0005, 0.0001, 0.00005, 0.00001),
   verbose = FALSE, uncertainty = FALSE, boot.iter = NULL
@@ -332,16 +396,45 @@ auto_MrP <- function(
   # auto_MrP start time
   automrp_start <- Sys.time()
 
+  # autoMrP call
+  call <- match.call()
+
+  # default arguments
+  default_args <- list(
+    L2.reg = NULL, L2.x.scale = TRUE, pcs = NULL, folds = NULL,
+    bin.proportion = NULL, bin.size = NULL, ebma.size = 1 / 3, cores = 1,
+    k.folds = 5, cv.sampling = "L2 units",
+    loss.unit = c("individuals", "L2 units"),
+    loss.fun = c("msfe", "cross-entropy", "f1", "MSE"), best.subset = TRUE,
+    lasso = TRUE, pca = TRUE, gb = TRUE, svm = TRUE, knn = TRUE, mrp = FALSE,
+    deep.mrp = FALSE, oversampling = FALSE, best.subset.deep = FALSE,
+    best.subset.deep.splines = FALSE, pca.deep = FALSE,
+    pca.deep.splines = FALSE, best.subset.L2.x = NULL, lasso.L2.x = NULL,
+    pca.L2.x = NULL, gb.L2.x = NULL, svm.L2.x = NULL, knn.L2.x = NULL,
+    mrp.L2.x = NULL, gb.L2.unit = TRUE, gb.L2.reg = FALSE, svm.L2.unit = TRUE,
+    svm.L2.reg = FALSE, knn.L2.unit = TRUE, knn.L2.reg = FALSE,
+    deep.splines = TRUE, deep.L2.x = NULL, deep.L2.unit = TRUE,
+    deep.L2.reg = FALSE, lasso.lambda = NULL, lasso.n.iter = 100,
+    gb.interaction.depth = c(1, 2, 3),
+    gb.shrinkage = c(0.04, 0.01, 0.008, 0.005, 0.001), gb.n.trees.init = 50,
+    gb.n.trees.increase = 50, gb.n.trees.max = 1000, gb.n.minobsinnode = 20,
+    svm.kernel = c("radial"), svm.gamma = NULL, svm.cost = NULL,
+    knn.k.min = NULL, knn.k = NULL, knn.kernel = c("optimal"),
+    ebma.n.draws = 100,
+    ebma.tol = c(0.01, 0.005, 0.001, 0.0005, 0.0001, 0.00005, 0.00001),
+    verbose = FALSE, uncertainty = FALSE, boot.iter = NULL
+  )
+
   # Error checks ------------------------------------------------------------
 
   # variables to drop missing values on
   drop_na_vars <- c(y, L1.x, L2.x, L2.unit, L2.reg)
 
-  # drop mssing values on survey
+  # drop missing values on survey
   if (any(is.na(survey[, drop_na_vars]))) {
     message(
       "Survey data contains missing values. Missings on any of y, L1.x, L2.x,
-      L2.unit, L2.reg  will be dropped."
+      L2.unit, L2.reg will be dropped."
     )
     # number of rows in data before dropping missings
     old_n <- nrow(survey)
@@ -357,11 +450,11 @@ auto_MrP <- function(
 
   # dependent variable is not in census data
   drop_na_vars <- drop_na_vars[-1]
-  # drop mssing values on census
+  # drop missing values on census
   if (any(is.na(census[, drop_na_vars]))) {
     message(
       "Census data contains missing values. Missings on any of L1.x, L2.x,
-      L2.unit, L2.reg  will be dropped."
+      L2.unit, L2.reg will be dropped."
     )
     # number of rows in data before dropping missings
     old_n <- nrow(census)
@@ -395,21 +488,32 @@ auto_MrP <- function(
     loss.unit = loss.unit,
     loss.fun = loss.fun,
     best.subset = best.subset,
+    best.subset.deep = best.subset.deep,
+    best.subset.deep.splines = best.subset.deep.splines,
     lasso = lasso,
     pca = pca,
+    pca.deep = pca.deep,
+    pca.deep.splines = pca.deep.splines,
     gb = gb,
     svm = svm,
+    knn = knn,
     mrp = mrp,
     deep.mrp = deep.mrp,
     best.subset.L2.x = best.subset.L2.x,
     lasso.L2.x = lasso.L2.x,
     gb.L2.x = gb.L2.x,
     svm.L2.x = svm.L2.x,
+    knn.L2.x = knn.L2.x,
     mrp.L2.x = mrp.L2.x,
     gb.L2.unit = gb.L2.unit,
     gb.L2.reg = gb.L2.reg,
+    knn.L2.unit = knn.L2.unit,
+    knn.L2.reg = knn.L2.reg,
     lasso.lambda = lasso.lambda,
     lasso.n.iter = lasso.n.iter,
+    knn.k.min = knn.k.min,
+    knn.k = knn.k,
+    knn.kernel = knn.kernel,
     uncertainty = uncertainty,
     boot.iter = boot.iter,
     deep.splines = deep.splines
@@ -472,9 +576,11 @@ auto_MrP <- function(
     pc_names <- colnames(pca_out$x)
 
     census <- census %>%
-      dplyr::left_join(unique(survey %>% dplyr::select(
-        all_of(L2.unit), all_of(pc_names)
-      )), by = L2.unit)
+      dplyr::left_join(unique(survey %>%
+        dplyr::select(
+          all_of(L2.unit), all_of(pc_names)
+        )
+      ), by = L2.unit)
   } else {
     pc_names <- pcs
   }
@@ -541,7 +647,7 @@ auto_MrP <- function(
   census <- tibble::as_tibble(x = census)
 
   # add interactions to survey and census data if deep.mrp is TRUE
-  if (deep.mrp) {
+  if (any(deep.mrp, best.subset.deep, pca.deep)) {
 
     # generate all interactions of L1.x
     l1_comb <- unlist(lapply(2:length(L1.x), function(x) {
@@ -710,30 +816,35 @@ auto_MrP <- function(
     # Optimal individual classifiers ------------------------------------------
 
     ebma_out <- run_classifiers(
-      y = y, L1.x = L1.x, L2.x = L2.x, mrp.L2.x = mrp.L2.x,
-      L2.unit = L2.unit, L2.reg = L2.reg, pcs = pcs,
-      folds = folds, cv.folds = cv_folds, cv.data = cv_data,
-      ebma.fold = ebma_fold, census = census, k.folds = k.folds,
-      cv.sampling = cv.sampling, loss.unit = loss.unit, loss.fun = loss.fun,
-      best.subset = best.subset, lasso = lasso, pca = pca,
-      gb = gb, svm = svm, mrp = mrp, deep.mrp = deep.mrp,
-      best.subset.L2.x = best.subset.L2.x,
-      lasso.L2.x = lasso.L2.x, pca.L2.x = pca.L2.x, pc.names = pc_names,
-      gb.L2.x = gb.L2.x, svm.L2.x = svm.L2.x, svm.L2.unit = svm.L2.unit,
-      svm.L2.reg = svm.L2.reg, gb.L2.unit = gb.L2.unit, gb.L2.reg = gb.L2.reg,
-      deep.splines = deep.splines, lasso.lambda = lasso.lambda,
-      lasso.n.iter = lasso.n.iter,
+      y = y, L1.x = L1.x, L2.x = L2.x, mrp.L2.x = mrp.L2.x, L2.unit = L2.unit,
+      L2.reg = L2.reg, pcs = pcs, folds = folds, cv.folds = cv_folds,
+      cv.data = cv_data, ebma.fold = ebma_fold, census = census,
+      k.folds = k.folds, cv.sampling = cv.sampling, loss.unit = loss.unit,
+      loss.fun = loss.fun, best.subset = best.subset, lasso = lasso, pca = pca,
+      gb = gb, svm = svm, knn = knn, mrp = mrp, deep.mrp = deep.mrp,
+      best.subset.deep = best.subset.deep,
+      best.subset.deep.splines = best.subset.deep.splines,
+      pca.deep = pca.deep, pca.deep.splines = pca.deep.splines,
+      best.subset.L2.x = best.subset.L2.x, lasso.L2.x = lasso.L2.x,
+      pca.L2.x = pca.L2.x, pc.names = pc_names, gb.L2.x = gb.L2.x,
+      gb.L2.unit = gb.L2.unit, gb.L2.reg = gb.L2.reg, svm.L2.x = svm.L2.x,
+      svm.L2.unit = svm.L2.unit, svm.L2.reg = svm.L2.reg, knn.L2.x = knn.L2.x,
+      knn.L2.unit = knn.L2.unit, knn.L2.reg = knn.L2.reg,
+      deep.splines = deep.splines, deep.L2.x = deep.L2.x,
+      deep.L2.unit = deep.L2.unit, deep.L2.reg = deep.L2.reg,
+      lasso.lambda = lasso.lambda, lasso.n.iter = lasso.n.iter,
       gb.interaction.depth = gb.interaction.depth,
       gb.shrinkage = gb.shrinkage, gb.n.trees.init = gb.n.trees.init,
       gb.n.trees.increase = gb.n.trees.increase,
       gb.n.trees.max = gb.n.trees.max,
       gb.n.minobsinnode = gb.n.minobsinnode,
       svm.kernel = svm.kernel, svm.gamma = svm.gamma, svm.cost = svm.cost,
-      ebma.tol = ebma.tol, ebma.n.draws = ebma.n.draws,
+      knn.k.min = knn.k.min, knn.k = knn.k, knn.kernel = knn.kernel,
+      ebma.size = ebma.size, ebma.tol = ebma.tol, ebma.n.draws = ebma.n.draws,
       cores = cores, verbose = verbose
     )
 
-    # Boostrapping wrapper ----------------------------------------------------
+    # Bootstrapping wrapper ----------------------------------------------------
 
   } else {
 
@@ -767,17 +878,24 @@ auto_MrP <- function(
       svm = svm,
       mrp = mrp,
       deep.mrp = deep.mrp,
+      best.subset.deep = best.subset.deep,
+      best.subset.deep.splines = best.subset.deep.splines,
+      pca.deep = pca.deep,
+      pca.deep.splines = pca.deep.splines,
       best.subset.L2.x = best.subset.L2.x,
       lasso.L2.x = lasso.L2.x,
       pca.L2.x = pca.L2.x,
       pc.names = pc_names,
       gb.L2.x = gb.L2.x,
+      gb.L2.unit = gb.L2.unit,
+      gb.L2.reg = gb.L2.reg,
       svm.L2.x = svm.L2.x,
       svm.L2.unit = svm.L2.unit,
       svm.L2.reg = svm.L2.reg,
-      gb.L2.unit = gb.L2.unit,
-      gb.L2.reg = gb.L2.reg,
       deep.splines = deep.splines,
+      deep.L2.x = deep.L2.x,
+      deep.L2.unit = deep.L2.unit,
+      deep.L2.reg = deep.L2.reg,
       lasso.lambda = lasso.lambda,
       lasso.n.iter = lasso.n.iter,
       gb.interaction.depth = gb.interaction.depth,
@@ -819,6 +937,12 @@ auto_MrP <- function(
     ebma_out$weights <- "EBMA step skipped (only 1 classifier run)"
     class(ebma_out$weights) <- c("autoMrP", "weights", class(ebma_out$weights))
   }
+
+  # store evaluated arguments as attributes
+  evaluated_args <- as.list(match.call()[-1])
+  evaluated_args <- lapply(evaluated_args, eval, parent.frame())
+  evaluated_args <- modifyList(default_args, evaluated_args)
+  attr(ebma_out, "evaluated_args") <- evaluated_args
 
   # auto_MrP end time
   automrp_end <- Sys.time()

@@ -24,10 +24,8 @@
 #' @return A gradient tree boosting model. A \code{\link[gbm]{gbm}} object.
 
 gb_classifier <- function(
-  y, form, distribution, data.train,
-  n.trees, interaction.depth,
-  n.minobsinnode, shrinkage,
-  verbose = c(TRUE, FALSE)
+  y, form, distribution, data.train, n.trees, interaction.depth, n.minobsinnode,
+  shrinkage, verbose = c(TRUE, FALSE)
 ) {
 
   # Determine type of dependent variable

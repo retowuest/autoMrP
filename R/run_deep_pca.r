@@ -39,15 +39,15 @@ run_deep_pca <- function(
   )
 
   # no nesting with deep interactions
-  if (!is.null(L2.reg)) {
+  if (!is.null(L2.reg) && !is.null(L2.unit)) {
     models <- lapply(models, function(x) {
       # model formula to character
       m_form <- as.character(x)
       # replace (1 | region/state) with (1 | region) + (1 | state)
       m_form <- stringr::str_replace_all(
         string = m_form,
-        pattern = "\\(1 \\| region/state\\)",
-        replacement = "\\(1 | state\\) + \\(1 | region\\)"
+        pattern = sprintf("\\(1 \\| %s/%s\\)", L2.reg, L2.unit),
+        replacement = sprintf("\\(1 | %s\\) + \\(1 | %s\\)", L2.unit, L2.reg)
       )
       # character to formula
       m_form <- as.formula(sprintf("%s%s%s", m_form[2], m_form[1], m_form[3]))
@@ -61,8 +61,8 @@ run_deep_pca <- function(
     c_l1_x <- x %>%
       as.character() %>%
       .[3] %>%
-      stringr::str_extract_all(pattern = "L1x\\d+") %>%
-      unlist()
+      stringr::str_detect(pattern = L1.x)
+    c_l1_x <- L1.x[c_l1_x]
 
     # generate all interactions of L1.x
     l1_comb <- unlist(lapply(2:length(c_l1_x), function(x) {

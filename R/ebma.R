@@ -29,22 +29,27 @@
 #'   \code{run_gb()}.
 #' @param svm.opt Tuned support vector machine parameters. A list returned from
 #'   \code{run_svm()}.
+#' @param knn.opt Tuned k-nearest neighbors parameters. A list returned from
+#'   \code{run_knn()}.
 
 ebma <- function(
-  ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg, pc.names, post.strat, n.draws, tol,
-  best.subset.opt, pca.opt, lasso.opt, gb.opt, svm.opt, deep.mrp, verbose,
-  cores, preds_all
+  ebma.fold, cv.data, y, L1.x, L2.x, L2.unit, L2.reg, pc.names, post.strat,
+  n.draws, tol, best.subset.opt, best.subset.deep, pca.opt, pca.deep,
+  lasso.opt, gb.opt, svm.opt, knn.opt, verbose, cores, preds_all, knn.kernel,
+  ebma.size
 ) {
 
   # Run EBMA if at least two classifiers selected
   if (
     sum(
       unlist(lapply(X = post.strat$models, FUN = function(x) !is.null(x)))
-    ) > 1
+    ) > 1 && ebma.size > 0
   ) {
 
     if (verbose) {
-      message("Starting bayesian ensemble model averaging tuning")
+      cli::cli_progress_step(
+        "Performing ensemble Bayesian model averaging"
+      )
     }
 
     # dependent variable type
@@ -59,7 +64,7 @@ ebma <- function(
       dv_type <- "linear"
     }
 
-    # EBMA wihtout L2.x variables
+    # EBMA w/o L2.x variables
     if (all(L2.x == "")) L2.x <- NULL
 
     # Models
@@ -68,7 +73,19 @@ ebma <- function(
     model_lasso <- post.strat$models$lasso
     model_gb <- post.strat$models$gb
     model_svm <- post.strat$models$svm
+    model_knn <- post.strat$models$knn
     model_mrp <- post.strat$models$mrp
+    model_deep <- post.strat$models$deep
+
+    # CV data to NULL if not needed
+    if (is.null(model_knn)) {
+      cv.data <- NULL
+    } else {
+      if (dv_type == "binary") {
+        cv.data <- cv.data %>%
+          dplyr::mutate(!!rlang::sym(y) := as.factor(!!rlang::sym(y)))
+      }
+    }
 
     # Training predictions
     train_preds <- post.strat$predictions$Level1 %>%
@@ -84,6 +101,7 @@ ebma <- function(
         train.preds = train_preds,
         train.y = train_y,
         ebma.fold = ebma.fold,
+        cv.data = cv.data,
         y = y,
         L1.x = L1.x,
         L2.x = L2.x,
@@ -95,17 +113,23 @@ ebma <- function(
         model.lasso = model_lasso,
         model.gb = model_gb,
         model.svm = model_svm,
+        model.knn = model_knn,
         model.mrp = model_mrp,
+        model.deep = model_deep,
         tol = tol,
         n.draws = n.draws,
         cores = cores,
         preds_all = preds_all,
         post.strat = post.strat,
         dv_type = dv_type,
-        deep.mrp = deep.mrp
+        best.subset.deep = best.subset.deep,
+        pca.deep = pca.deep,
+        knn.opt = knn.opt,
+        knn.kernel = knn.kernel
       )
       # unlist
       ebma_preds <- final_model_weights$ebma_preds
+      best_tolerance <- final_model_weights$best_tolerance
       final_model_weights <- final_model_weights$final_model_weights
 
     } else {
@@ -114,6 +138,7 @@ ebma <- function(
         train.preds = train_preds,
         train.y = train_y,
         ebma.fold = ebma.fold,
+        cv.data = cv.data,
         y = y,
         L1.x = L1.x,
         L2.x = L2.x,
@@ -132,10 +157,14 @@ ebma <- function(
         preds_all = preds_all,
         post.strat = post.strat,
         dv_type = dv_type,
-        deep.mrp = deep.mrp
+        best.subset.deep = best.subset.deep,
+        pca.deep = pca.deep,
+        knn.opt = knn.opt,
+        knn.kernel = knn.kernel
       )
       # unlist
       ebma_preds <- final_model_weights$ebma_preds
+      best_tolerance <- final_model_weights$best_tolerance
       final_model_weights <- final_model_weights$final_model_weights
     }
 
@@ -174,13 +203,7 @@ ebma <- function(
       w_avg[m_idx] <- no_NA_avg
     }
 
-    # L2 preds object
-    L2_preds <- dplyr::tibble(
-      !! rlang::sym(L2.unit) := dplyr::pull(
-        .data = post.strat$predictions$Level2, var = L2.unit
-      ),
-      ebma = w_avg
-    )
+    L2_preds <- post.strat$predictions$Level2$ebma <- w_avg
 
     # function output
     return(
@@ -188,19 +211,28 @@ ebma <- function(
         ebma = L2_preds,
         classifiers = post.strat$predictions$Level2,
         weights = final_model_weights,
+        ebma_tolerance = best_tolerance,
         individual_level_predictions = ebma_preds
       )
     )
 
   } else {
     if (verbose) {
-      message("\n Skipping EBMA (only 1 classifier selected) \n")
+      if (
+        sum(
+          unlist(lapply(X = post.strat$models, FUN = function(x) !is.null(x)))
+        ) == 1
+      ) {
+        message("\n Skipping EBMA (only 1 classifier selected) \n")
+      } else if (ebma.size == 0) {
+        message("\n Skipping EBMA (ebma.size = 0) \n")
+      }
     }
 
     # function output
     return(
       list(
-        ebma = "EBMA step skipped (only 1 classifier run)",
+        ebma = "EBMA step skipped",
         classifiers = post.strat$predictions$Level2
       )
     )
@@ -244,10 +276,9 @@ ebma <- function(
 #' }
 
 ebma_mc_tol <- function(
-  train.preds, train.y, ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg,
-  pc.names, model.bs, model.pca, model.lasso, model.gb, model.svm,
-  model.mrp, tol, n.draws, cores, preds_all, post.strat, dv_type,
-  deep.mrp
+  train.preds, train.y, ebma.fold, cv.data, y, L1.x, L2.x, L2.unit, L2.reg,
+  pc.names, model.bs, best.subset.deep, model.pca, pca.deep, model.lasso,
+  model.gb, model.svm, model.knn, model.mrp, model.deep, tol, n.draws, cores, preds_all, post.strat, dv_type, knn.opt, knn.kernel
 ) {
 
   # Binding for global variables
@@ -264,6 +295,8 @@ ebma_mc_tol <- function(
     n_per_group <- as.integer(nrow(ebma.fold) / length(
       levels(ebma.fold[[L2.unit]])
     ))
+    if (n_per_group == 0L) n_per_group <- 1L
+
 
     # Test set with n_per_group persons per state (with resampling)
     test <- ebma.fold %>%
@@ -277,7 +310,7 @@ ebma_mc_tol <- function(
     test_preds <- dplyr::tibble(
       best_subset = if (!is.null(model.bs)) {
         # regular best subset without level 1 interactions
-        if (!deep.mrp) {
+        if (!best.subset.deep) {
           predict(
             object = model.bs,
             newdata = test,
@@ -308,7 +341,7 @@ ebma_mc_tol <- function(
       },
       pca = if (!is.null(model.pca)) {
         # regular pca without level 1 interactions
-        if (!deep.mrp) {
+        if (!pca.deep) {
           predict(
             object = model.pca,
             newdata = test,
@@ -381,6 +414,37 @@ ebma_mc_tol <- function(
       } else {
         NA
       },
+      knn = if (!is.null(model.knn)) {
+        if (dv_type == "binary") {
+          c_pred <- knn_classifier(
+            y = y,
+            L1.x = L1.x,
+            L2.unit = L2.unit,
+            L2.reg = L2.reg,
+            form = formula(model.knn$terms),
+            data.train = cv.data,
+            data.valid = test,
+            knn.k.value = knn.opt,
+            knn.kernel = knn.kernel
+          )
+          c_pred$prob[, "1"]
+        } else {
+          c_pred <- knn_classifier(
+            y = y,
+            L1.x = L1.x,
+            L2.unit = L2.unit,
+            L2.reg = L2.reg,
+            form = formula(model.knn$terms),
+            data.train = cv.data,
+            data.valid = test,
+            knn.k.value = knn.opt,
+            knn.kernel = knn.kernel
+          )
+          c_pred$fit
+        }
+      } else {
+        NA
+      },
       mrp = if (!is.null(model.mrp)) {
         predict(
           object = model.mrp,
@@ -388,6 +452,30 @@ ebma_mc_tol <- function(
           type = "response",
           allow.new.levels = TRUE
         )
+      } else {
+        NA
+      },
+      deep = if (!is.null(model.deep)) {
+        # binary DV
+        if (length(unique(test[[y]])) == 2) {
+          # predictions for post-stratification only (no EBMA)
+          pred_d <- vglmer::predict_MAVB(
+            samples = 1000,
+            model.deep,
+            newdata = test,
+            allow_missing_levels = TRUE
+          )[["mean"]]
+          # convert to response probabilities
+          pred_d <- stats::plogis(pred_d)
+        } else {
+          # continuous DV
+          pred_d <- predict(
+            samples = 1000,
+            object = model.deep,
+            newdata = test,
+            allow_missing_levels = TRUE
+          )[["mean"]]
+        }
       } else {
         NA
       }
@@ -409,7 +497,7 @@ ebma_mc_tol <- function(
     # Loop over tolerance values
     ebma_tune <- foreach::foreach(
       idx.tol = seq_along(tol),
-      .packages = c("glmmLasso", "e1071", "gbm", "vglmer")
+      .packages = c("glmmLasso", "e1071", "gbm", "vglmer", "kknn")
     ) %dorng% {
 
       # EBMA
@@ -503,10 +591,12 @@ ebma_mc_tol <- function(
   train_preds <- as.matrix(preds_all[, -c(1, 2)])
 
   # Select best weights per draw
+  tol_container <- rep(NA, length(draws))
   for (idx_w in seq_along(draws)) {
 
     # Tolerance with lowest MSE in draw idx_w
     best_tolerance <- which(draws[[idx_w]]$MSEs == min(draws[[idx_w]]$MSEs))
+    tol_container[idx_w] <- tol[max(best_tolerance)]
 
     if (length(best_tolerance) > 1) {
       wgt[idx_w, ] <- apply(draws[[idx_w]]$weights[best_tolerance, ], 2, mean)
@@ -540,6 +630,10 @@ ebma_mc_tol <- function(
   # Average model weights
   final_model_weights <- apply(wgt, 2, mean)
   names(final_model_weights) <- names(train.preds)
+  best_tol_out <- unique(tol_container)
+  best_tolerance <- best_tol_out[
+    which.max(tabulate(match(tol_container, best_tol_out)))
+  ]
 
   # average EBMA individual level predictions
   ebma_preds <- apply(individual_preds, 1, mean)
@@ -560,7 +654,8 @@ ebma_mc_tol <- function(
         y = as.numeric(preds_all$y),
         !!rlang::sym(L2.unit) := preds_all %>% dplyr::pull(var = L2.unit),
         ebma_preds = ebma_preds
-      )
+      ),
+      best_tolerance = best_tolerance
     )
   )
 
@@ -581,9 +676,10 @@ ebma_mc_tol <- function(
 #' @return The classifier weights. A numeric vector.
 
 ebma_mc_draws <- function(
-  train.preds, train.y, ebma.fold, y, L1.x, L2.x, L2.unit, L2.reg,
-  pc.names, model.bs, model.pca, model.lasso, model.gb, model.svm,
-  model.mrp, tol, n.draws, cores, preds_all, post.strat, dv_type, deep.mrp
+  train.preds, train.y, ebma.fold, cv.data, y, L1.x, L2.x, L2.unit, L2.reg,
+  pc.names, model.bs, model.pca, model.lasso, model.gb, model.svm, model.knn,
+  model.mrp, model.deep, tol, n.draws, cores, preds_all, post.strat, dv_type,
+  best.subset.deep, pca.deep, knn.kernel, knn.opt
 ) {
 
   # Binding for global variables
@@ -594,7 +690,7 @@ ebma_mc_draws <- function(
 
   ebma_tune <- foreach::foreach(
     idx.Ndraws = 1:n.draws,
-    .packages = c("glmmLasso", "e1071", "gbm", "vglmer"),
+    .packages = c("glmmLasso", "e1071", "gbm", "vglmer", "kknn"),
     .export = "predict_glmmLasso"
   ) %dorng% {
 
@@ -602,6 +698,7 @@ ebma_mc_draws <- function(
     n_per_group <- as.integer(
       nrow(ebma.fold) / length(levels(ebma.fold[[L2.unit]]))
     )
+    if (n_per_group == 0L) n_per_group <- 1L
 
     # Test set with n_per_group persons per state (with resampling)
     test <- ebma.fold %>%
@@ -615,7 +712,7 @@ ebma_mc_draws <- function(
     test_preds <- dplyr::tibble(
       best_subset = if (!is.null(model.bs)) {
         # regular best subset without level 1 interactions
-        if (!deep.mrp) {
+        if (!best.subset.deep) {
           predict(
             object = model.bs,
             newdata = test,
@@ -646,7 +743,7 @@ ebma_mc_draws <- function(
       },
       pca = if (!is.null(model.pca)) {
         # regular pca without level 1 interactions
-        if (!deep.mrp) {
+        if (!pca.deep) {
           predict(
             object = model.pca,
             newdata = test,
@@ -719,6 +816,37 @@ ebma_mc_draws <- function(
       } else {
         NA
       },
+      knn = if (!is.null(model.knn)) {
+        if (dv_type == "binary") {
+          c_pred <- autoMrP:::knn_classifier(
+            y = y,
+            L1.x = L1.x,
+            L2.unit = L2.unit,
+            L2.reg = L2.reg,
+            form = formula(model.knn$terms),
+            data.train = cv.data,
+            data.valid = test,
+            knn.k.value = knn.opt,
+            knn.kernel = knn.kernel
+          )
+          c_pred$prob[, "1"]
+        } else {
+          c_pred <- autoMrP:::knn_classifier(
+            y = y,
+            L1.x = L1.x,
+            L2.unit = L2.unit,
+            L2.reg = L2.reg,
+            form = formula(model.knn$terms),
+            data.train = cv.data,
+            data.valid = test,
+            knn.k.value = knn.opt,
+            knn.kernel = knn.kernel
+          )
+          c_pred$fit
+        }
+      } else {
+        NA
+      },
       mrp = if (!is.null(model.mrp)) {
         predict(
           object = model.mrp,
@@ -726,6 +854,30 @@ ebma_mc_draws <- function(
           type = "response",
           allow.new.levels = TRUE
         )
+      } else {
+        NA
+      },
+      deep = if (!is.null(model.deep)) {
+        # binary DV
+        if (length(unique(test[[y]])) == 2) {
+          # predictions for post-stratification only (no EBMA)
+          pred_d <- vglmer::predict_MAVB(
+            samples = 1000,
+            model.deep,
+            newdata = test,
+            allow_missing_levels = TRUE
+          )[["mean"]]
+          # convert to response probabilities
+          pred_d <- stats::plogis(pred_d)
+        } else {
+          # continuous DV
+          pred_d <- predict(
+            samples = 1000,
+            object = model.deep,
+            newdata = test,
+            allow_missing_levels = TRUE
+          )[["mean"]]
+        }
       } else {
         NA
       }
@@ -825,12 +977,14 @@ ebma_mc_draws <- function(
   train_preds <- as.matrix(preds_all[, -c(1, 2)])
 
   # Select best weights per draw
+  tol_container <- rep(NA, length(ebma_tune))
   for (idx_w in seq_along(ebma_tune)) {
 
     # Tolerance with lowest MSE in draw idx_w
     best_tolerance <- which(
       ebma_tune[[idx_w]]$MSEs == min(ebma_tune[[idx_w]]$MSEs)
     )
+    tol_container[idx_w] <- tol[max(best_tolerance)]
 
     if (length(best_tolerance) > 1) {
       wgt[idx_w, ] <- apply(
@@ -868,6 +1022,10 @@ ebma_mc_draws <- function(
   # Average model weights
   final_model_weights <- apply(wgt, 2, mean)
   names(final_model_weights) <- names(train.preds)
+  best_tol_out <- unique(tol_container)
+  best_tolerance <- best_tol_out[
+    which.max(tabulate(match(tol_container, best_tol_out)))
+  ]
 
   # average EBMA individual level predictions
   ebma_preds <- apply(individual_preds, 1, mean)
@@ -880,7 +1038,8 @@ ebma_mc_draws <- function(
         y = as.numeric(preds_all$y),
         !!rlang::sym(L2.unit) := preds_all %>% dplyr::pull(var = L2.unit),
         ebma_preds = ebma_preds
-      )
+      ),
+      best_tolerance = best_tolerance
     )
   )
 }

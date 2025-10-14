@@ -6,6 +6,7 @@
 \usage{
 ebma(
   ebma.fold,
+  cv.data,
   y,
   L1.x,
   L2.x,
@@ -16,22 +17,25 @@ ebma(
   n.draws,
   tol,
   best.subset.opt,
+  best.subset.deep,
   pca.opt,
+  pca.deep,
   lasso.opt,
   gb.opt,
   svm.opt,
-  deep.mrp,
+  knn.opt,
   verbose,
   cores,
-  preds_all
+  preds_all,
+  knn.kernel,
+  ebma.size
 )
 }
 \arguments{
 \item{ebma.fold}{New data for EBMA tuning. A list containing the the data
 that must not have been used in classifier training.}
 
-\item{y}{Outcome variable. A character vector containing the column names of
-the outcome variable. A character scalar containing the column name of
+\item{y}{Outcome variable. A character scalar containing the column name of
 the outcome variable in \code{survey}.}
 
 \item{L1.x}{Individual-level covariates. A character vector containing the
@@ -74,8 +78,18 @@ Passed on from \code{ebma.tol}.}
 \item{best.subset.opt}{Tuned best subset parameters. A list returned from
 \code{run_best_subset()}.}
 
+\item{best.subset.deep}{A logical argument indicating whether
+the deep MRP classifier should be used for best subset prediction. Setting
+\code{best.subset.deep = TRUE} will include all interactions of L1.x in the
+best subset classifier. Default is \code{FALSE}.}
+
 \item{pca.opt}{Tuned best subset with principal components parameters. A list
 returned from \code{run_pca()}.}
+
+\item{pca.deep}{A logical argument indicating whether
+the deep MRP classifier should be used for PCA prediction. Setting
+\code{pca.deep = TRUE} will include all interactions of L1.x in the
+pca classifier. Default is \code{FALSE}.}
 
 \item{lasso.opt}{Tuned lasso parameters. A list returned from
 \code{run_lasso()}.}
@@ -86,16 +100,26 @@ returned from \code{run_pca()}.}
 \item{svm.opt}{Tuned support vector machine parameters. A list returned from
 \code{run_svm()}.}
 
-\item{deep.mrp}{Deep MRP classifier. A logical argument indicating whether
-the deep MRP classifier should be used for best subset prediction. Setting
-\code{deep.mrp = TRUE} will include all interactions of L1.x in the best
-subset classifier. Default is \code{FALSE}.}
+\item{knn.opt}{Tuned k-nearest neighbors parameters. A list returned from
+\code{run_knn()}.}
 
 \item{verbose}{Verbose output. A logical argument indicating whether or not
 verbose output should be printed. Default is \code{FALSE}.}
 
 \item{cores}{The number of cores to be used. An integer indicating the number
 of processor cores used for parallel computing. Default is 1.}
+
+\item{knn.kernel}{KNN kernel. A character-valued scalar specifying the kernel
+to be used in the KNN model. The possible values are \code{rectangular}
+(which is standard unweighted KNN), \code{triangular}, \code{epanechnikov}
+(or beta(2,2)), \code{biweight} (or beta(3,3)), \code{triweight} (or
+beta(4,4)), \code{cos}, \code{inv}, \code{gaussian}, and \code{optimal}.
+Default is \code{optimal}.}
+
+\item{ebma.size}{EBMA fold size. A number in the open unit interval
+indicating the proportion of respondents to be allocated to the EBMA fold.
+Default is \eqn{1/3}. \emph{Note:} ignored if \code{folds} is provided, but
+must be specified otherwise.}
 }
 \description{
 \code{ebma} tunes EBMA and generates weights for classifier averaging.

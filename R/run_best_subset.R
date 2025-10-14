@@ -103,7 +103,9 @@ run_best_subset <- function(
   best_params <- dplyr::slice(
     loss_score_ranking(
       score = grid_cells,
-      loss.fun = loss.fun), 1)
+      loss.fun = loss.fun
+    ), 1
+  )
 
   # Choose best-performing model
   out <- models[[dplyr::pull(.data = best_params, var = model)]]
@@ -176,6 +178,7 @@ run_best_subset_mc <- function(
 
     # Loop over each fold
     k_errors <- lapply(seq_along(data), function(k) {
+
       # Split data in training and validation sets
       data_train <- dplyr::bind_rows(data[-k])
       data_valid <- dplyr::bind_rows(data[k])

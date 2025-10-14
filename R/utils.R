@@ -13,9 +13,12 @@
 error_checks <- function(
   y, L1.x, L2.x, L2.unit, L2.reg, L2.x.scale, pcs, folds, bin.proportion,
   bin.size, survey, census, ebma.size, k.folds, cv.sampling, loss.unit,
-  loss.fun, best.subset, lasso, pca, gb, svm, mrp, best.subset.L2.x, lasso.L2.x,
-  deep.mrp, gb.L2.x, svm.L2.x, mrp.L2.x, gb.L2.unit, gb.L2.reg, lasso.lambda,
-  lasso.n.iter, deep.splines, uncertainty, boot.iter
+  loss.fun, best.subset, best.subset.deep, best.subset.deep.splines,
+  lasso, pca, pca.deep, pca.deep.splines, gb, svm, knn, mrp,
+  best.subset.L2.x, lasso.L2.x, deep.mrp, gb.L2.x, svm.L2.x, knn.L2.x, mrp.L2.x,
+  gb.L2.unit, gb.L2.reg, knn.L2.unit, knn.L2.reg, lasso.lambda,
+  lasso.n.iter, knn.k.min, knn.k, knn.kernel, deep.splines, uncertainty,
+  boot.iter
 ) {
 
   # Check if y is a character scalar
@@ -99,6 +102,7 @@ error_checks <- function(
 
   # Check if L2.reg is NULL
   if (!is.null(L2.reg)) {
+
     # Check if L2.reg is a character scalar
     if (!(is.character(L2.reg) & length(L2.reg) == 1)) {
       stop(paste("The argument 'L2.reg', specifying the geographic region,",
@@ -188,17 +192,6 @@ error_checks <- function(
                    " respondents to be allocated to the EBMA fold, must take a",
                    " number in the open unit interval.", sep = ""))
       }
-      # Check if ebma.size is 0
-      if (ebma.size == 0){
-        # Check if all classifiers are turned off and mrp is turned on
-        if (sum(isTRUE(best.subset), isTRUE(lasso), isTRUE(pca), isTRUE(gb),
-                isTRUE(svm),isTRUE(mrp)) > 1){
-          stop(paste("If ebma.size = 0, then only 1 classifier out of best.subset,",
-                     " lasso, pca, gb, svm, and mrp can be set to TRUE and all",
-                     " other classifiers must be set to FALSE. Try setting these",
-                     " explicitly.", sep = ""))
-        }
-       }
     }
 
     # Check if k.folds is NULL
@@ -348,6 +341,19 @@ error_checks <- function(
   if (is.logical(best.subset)) {
     # Check if best.subset is TRUE
     if (isTRUE(best.subset)) {
+      # Check if best.subset.deep is logical
+      if (is.logical(best.subset.deep)) {
+        # Check whether best.subset.deep is TRUE
+        if (best.subset.deep) {
+          # Check whether best.subset.deep.splines is user supplied
+          if (missing(best.subset.deep.splines)) {
+            stop(
+              "The argument 'best.subset.deep.splines' must be set to TRUE or",
+              " FALSE when 'best.subset.deep' is set to TRUE."
+            )
+          }
+        }
+      }
       # Check if best.subset.L2.x is NULL
       if (!is.null(best.subset.L2.x)) {
         # Check if best.subset.L2.x is a character vector
@@ -389,45 +395,6 @@ error_checks <- function(
                " must be either TRUE or FALSE.", sep = ""))
   }
 
-  # Check if deep.mrp is logical
-  if (is.logical(deep.mrp)) {
-    # Check if deep.mrp is TRUE
-    if (isTRUE(deep.mrp))
-      # Check if best.subset is FALSE
-      if (!isTRUE(best.subset) && !isTRUE(pca)) {
-        stop(
-          "The argument 'deep.mrp' can only be set to TRUE if 'best.subset' or",
-          " 'pca' is TRUE."
-        )
-      }
-  } else {
-    stop(
-      "The logical argument 'deep.mrp', indicating whether all interactions",
-      " of L2.x should be used within the best subset classifier, must be",
-      " either TRUE or FALSE."
-    )
-  }
-
-  # Check if deep.splines is logical
-  if (is.logical(deep.splines)) {
-    # Check if deep.splines is TRUE
-    if (isTRUE(deep.mrp)) {
-      # Check if best.subset is FALSE
-      if (!isTRUE(best.subset) && !isTRUE(pca)) {
-        stop(
-          "The argument 'deep.splines' can only be set to TRUE if ",
-          " 'best.subset' or 'pca' is TRUE."
-        )
-      }
-    }
-  } else {
-    stop(
-      "The logical argument 'deep.splines', indicating whether splines",
-      " should be used within the best subset classifier using all",
-      " interactions of L2.x must be either TRUE or FALSE."
-    )
-  }
-
   # Check if lasso is logical
   if (is.logical(lasso)) {
     # Check if lasso is TRUE
@@ -460,7 +427,7 @@ error_checks <- function(
         }
       }
 
-      # Check if is provided but not a numeric vector
+      # Check if lasso.lambda is provided but not a numeric vector
       if (!is.null(lasso.lambda)){
         if (!is.numeric(lasso.lambda)){
           stop("lasso.lambda must be 'NULL' or a non-negative numeric vector.")
@@ -497,13 +464,24 @@ error_checks <- function(
   if (is.logical(pca)) {
     # Check if pca is TRUE
     if (isTRUE(pca)) {
+      # Check if pca.deep is TRUE
+      if (pca.deep) {
+        # Check whether pca.deep.splines is user supplied
+        if (missing(pca.deep.splines)) {
+          stop(
+            "The argument 'pca.deep.splines' must be set to TRUE or FALSE when",
+            " 'pca.deep' is set to TRUE."
+          )
+        }
+      }
       # Check if pcs is NULL
       if (!is.null(pcs)) {
         # Check if pcs is a character vector
         if (!is.character(pcs)) {
-          stop(paste("The argument 'pcs', specifying the principal components of",
-                     " the context-level variables, must be a character vector.",
-                     sep = ""))
+          stop(
+            "The argument 'pcs', specifying the principal components of",
+            " the context-level variables, must be a character vector."
+          )
         }
 
         # Check if pcs is in survey data
@@ -539,9 +517,25 @@ error_checks <- function(
     } else {
       # Check if pcs is NULL
       if (!is.null(pcs)) {
-        warning(paste("The argument 'pcs', specifying the principal components",
-                      " of the context-level variables, will be ignored because",
-                      " 'pca' is set to FALSE.", sep = ""))
+        warning(
+          "The argument 'pcs', specifying the principal components of the",
+          " context-level variables, will be ignored because 'pca' is set to",
+          " FALSE."
+        )
+      }
+      # Check if pca.deep is TRUE
+      if (isTRUE(pca.deep)) {
+        warning(
+          "The argument 'pca.deep' is set to TRUE but 'pca' is set to FALSE.",
+          " 'pca.deep' will be ignored."
+        )
+      }
+      # Check if pca.deep.splines is TRUE
+      if (isTRUE(pca.deep.splines)) {
+        warning(
+          "The argument 'pca.deep.splines' is set to TRUE but 'pca' is set to",
+          " FALSE. 'pca.deep.splines' will be ignored."
+        )
       }
     }
   } else {
@@ -598,29 +592,27 @@ error_checks <- function(
     } else {
       # Check if gb.L2.x is NULL
       if (!is.null(gb.L2.x)) {
-        warning(paste("The argument 'gb.L2.x', specifying the context-level",
-                      " variables to be used by the GB classifier, will be",
-                      " ignored because 'gb' is set to FALSE.", sep = ""))
+        warning(
+          "The argument 'gb.L2.x', specifying the context-level variables to",
+          " be used by the GB classifier, will be ignored because 'gb' is set",
+          " to FALSE."
+        )
       }
-
-      # Check if gb.L2.unit has a value other than the default
-      # if (!isFALSE(gb.L2.unit)) {
-      #   stop(paste("The argument 'gb.L2.unit', indicating whether 'L2.unit'",
-      #              " should be included in the GB classifier, will be",
-      #              " ignored because 'gb' is set to FALSE.", sep = ""))
-      # }
 
       # Check if gb.L2.reg has a value other than the default
       if (!isFALSE(gb.L2.reg)) {
-        stop(paste("The argument 'gb.L2.reg', indicating whether 'L2.reg'",
-                   " should be included in the GB classifier, will be",
-                   " ignored because 'gb' is set to FALSE.", sep = ""))
+        warning(
+          "The argument 'gb.L2.reg', indicating whether 'L2.reg' should be",
+          " included in the GB classifier, will be ignored because 'gb' is set",
+          " to FALSE."
+        )
       }
     }
   } else {
-    stop(paste("The logical argument 'gb', indicating whether the GB",
-               " classifier is to be used for predicting y,",
-               " must be either TRUE or FALSE.", sep = ""))
+    stop(
+      "The logical argument 'gb', indicating whether the GB classifier is to",
+      " be used for predicting y, must be either TRUE or FALSE."
+    )
   }
 
   # Check if svm is logical
@@ -631,41 +623,188 @@ error_checks <- function(
       if (!is.null(svm.L2.x)) {
         # Check if svm.L2.x is a character vector
         if (!is.character(svm.L2.x)) {
-          stop(paste("The argument 'svm.L2.x', specifying the context-level",
-                     " variables to be used by the SVM classifier, must be",
-                     " a character vector.", sep = ""))
+          stop(
+            "The argument 'svm.L2.x', specifying the context-level",
+            " variables to be used by the SVM classifier, must be",
+            " a character vector."
+          )
         }
 
         # Check if svm.L2.x is in survey data
         if (!all(svm.L2.x %in% colnames(survey))) {
-          stop(cat(paste("Context-level variable '",
-                         svm.L2.x[which(!(svm.L2.x %in% colnames(survey)))],
-                         "', specified in argument 'svm.L2.x' to be used by the",
-                         " SVM classifier, is not in your survey data.", sep = ""),
-                   sep = ""))
+          stop(
+            "Context-level variable '",
+            svm.L2.x[which(!(svm.L2.x %in% colnames(survey)))],
+            "', specified in argument 'svm.L2.x' to be used by the SVM ",
+            " classifier, is not in your survey data."
+          )
         }
 
         # Check if svm.L2.x is in census data
         if (!all(svm.L2.x %in% colnames(census))) {
-          stop(cat(paste("Context-level variable '",
-                         svm.L2.x[which(!(svm.L2.x %in% colnames(census)))],
-                         "', specified in argument 'svm.L2.x' to be used by the",
-                         " SVM classifier, is not in your census data.", sep = ""),
-                   sep = ""))
+          stop(
+            "Context-level variable '",
+            svm.L2.x[which(!(svm.L2.x %in% colnames(census)))],
+            "', specified in argument 'svm.L2.x' to be used by the SVM ",
+            " classifier, is not in your census data."
+          )
         }
       }
     } else {
       # Check if svm.L2.x is NULL
       if (!is.null(svm.L2.x)) {
-        warning(paste("The argument 'svm.L2.x', specifying the context-level",
-                      " variables to be used by the SVM classifier, will be",
-                      " ignored because 'svm' is set to FALSE.", sep = ""))
+        warning(
+          "The argument 'svm.L2.x', specifying the context-level variables to",
+          " be used by the SVM classifier, will be ignored because 'svm' is",
+          " set to FALSE."
+        )
       }
     }
   } else {
-    stop(paste("The logical argument 'svm', indicating whether the SVM",
-               " classifier is to be used for predicting y,",
-               " must be either TRUE or FALSE.", sep = ""))
+    stop(
+      "The logical argument 'svm', indicating whether the SVM classifier is to",
+      " be used for predicting y, must be either TRUE or FALSE."
+    )
+  }
+
+  # Check if knn is logical
+  if (is.logical(knn)) {
+    # Check if knn is TRUE
+    if (isTRUE(knn)) {
+      # Check if knn.L2.x is NULL
+      if (!is.null(knn.L2.x)) {
+        # Check if knn.L2.x is a character vector
+        if (!is.character(knn.L2.x)) {
+          stop(
+            "The argument 'knn.L2.x', specifying the context-level",
+            " variables to be used by the KNN classifier, must be",
+            " a character vector."
+          )
+        }
+
+        # Check if knn.L2.x is in survey data
+        if (!all(knn.L2.x %in% colnames(survey))) {
+          stop(
+            "Context-level variable '",
+            knn.L2.x[which(!(knn.L2.x %in% colnames(survey)))],
+            "', specified in argument 'knn.L2.x' to be used by the KNN ",
+            "classifier, is not in your survey data."
+          )
+        }
+
+        # Check if knn.L2.x is in census data
+        if (!all(knn.L2.x %in% colnames(census))) {
+          stop(
+            "Context-level variable '",
+            knn.L2.x[which(!(knn.L2.x %in% colnames(census)))],
+            "', specified in argument 'knn.L2.x' to be used by the KNN ",
+            "classifier, is not in your census data."
+          )
+        }
+      }
+
+      # Check if knn.L2.unit is logical
+      if (!is.logical(knn.L2.unit)) {
+        stop(
+          "The logical argument 'knn.L2.unit', indicating whether 'L2.unit'",
+          " should be included in the KNN classifier must be either TRUE or",
+          " FALSE."
+        )
+      }
+
+      # Check if knn.L2.reg is logical
+      if (!is.logical(knn.L2.reg)) {
+        stop(
+          "The logical argument 'knn.L2.reg', indicating whether",
+          " 'L2.reg' should be included in the KNN classifier must be",
+          " either TRUE or FALSE."
+        )
+      }
+
+      # Check if knn.k.min is NULL
+      if (!is.null(knn.k.min)) {
+        if (!(
+          dplyr::near(knn.k.min, as.integer(knn.k.min)) &&
+            (length(knn.k.min) == 1) && (knn.k.min > 0)
+        )) {
+          stop(
+            "'knn.k.min' specifies the minimum number of neighbors to be",
+            " considered in the KNN model. It must be a positive",
+            " integer-valued scalar."
+          )
+        }
+      }
+
+      # Check if knn.k is NULL
+      if (!is.null(knn.k)) {
+        if (
+          !(
+            all(dplyr::near(knn.k, as.integer(knn.k))) &&
+              (all(knn.k > 0)) && (class(knn.k) %in% c("numeric", "integer"))
+          )
+        ) {
+          stop(
+            "'knn.k' specifies the number of neighbors to be considered in the",
+            " KNN model. It must be a vector of positive integer values."
+          )
+        }
+
+        if (!is.null(knn.k.min)) {
+          warning(
+            "The argument 'knn.k.min' will be ignored because 'knn.k' is",
+            " specified."
+          )
+        }
+      }
+
+      # Check if knn.kernel is correctly specified
+      if (
+        !(knn.kernel %in% c(
+          "rectangular", "triangular", "epanechnikov", "biweight", "triweight",
+          "cos", "inv", "gaussian", "optimal"
+        ))
+      ) {
+        stop(
+          "'knn.kernel' specifies the kernel to be used in the KNN",
+          " model. It must be a character-valued scalar taking one of",
+          " the following values: 'rectangular', 'triangular',",
+          " 'epanechnikov', 'biweight', 'triweight', 'cos', 'inv',",
+          " 'gaussian', or 'optimal'."
+        )
+      }
+    } else {
+      # Check if knn.L2.x is NULL
+      if (!is.null(knn.L2.x)) {
+        warning(
+          "The argument 'knn.L2.x', specifying the context-level",
+          " variables to be used by the KNN classifier, will be",
+          " ignored because 'knn' is set to FALSE."
+        )
+      }
+      # Check if knn.L2.unit has a value other than the default
+      if (isFALSE(knn.L2.unit)) {
+        warning(
+          "The argument 'knn.L2.unit', indicating whether 'L2.unit'",
+          " should be included in the KNN classifier, will be",
+          " ignored because 'knn' is set to FALSE."
+        )
+      }
+
+      # Check if knn.L2.reg has a value other than the default
+      if (!isFALSE(knn.L2.reg)) {
+        warning(
+          "The argument 'knn.L2.reg', indicating whether 'L2.reg'",
+          " should be included in the KNN classifier, will be",
+          " ignored because 'knn' is set to FALSE."
+        )
+      }
+    }
+  } else {
+    stop(
+      "The logical argument 'knn', indicating whether the KNN",
+      " classifier is to be used for predicting y,",
+      " must be either TRUE or FALSE."
+    )
   }
 
   # Check if mrp is logical
@@ -723,13 +862,6 @@ error_checks <- function(
       warning("boot.iter is ignored unless uncertainty = TRUE.")
     }
   }
-
-  # # Check if supplied seed is integer
-  # if (!is.null(seed)){
-  #   if (isFALSE(dplyr::near(seed, as.integer(seed)))) {
-  #     stop("Seed must be either NULL or an integer-valued scalar.")
-  #   }
-  # }
 }
 
 
@@ -777,17 +909,20 @@ ebma_folding <- function(data, L2.unit, ebma.size) {
   data <- data %>%
     dplyr::filter(!(index %in% one_per_unit))
 
-  remainder <- sample(
-    data$index,
-    size = ebma.size - length(one_per_unit),
-    replace = FALSE
-  )
+  if (ebma.size - length(one_per_unit) > 0) {
+    remainder <- sample(
+      data$index,
+      size = ebma.size - length(one_per_unit),
+      replace = FALSE
+    )
 
-  ebma_remainder <- data %>%
-    dplyr::filter(index %in% remainder)
+    ebma_remainder <- data %>%
+      dplyr::filter(index %in% remainder)
 
-  ebma_fold <- ebma_fold %>%
-    dplyr::bind_rows(ebma_remainder)
+    ebma_fold <- ebma_fold %>%
+      dplyr::bind_rows(ebma_remainder)
+
+  }
 
   # Extract EBMA hold-out fold from survey sample
   cv_data <- data %>%
@@ -1156,7 +1291,7 @@ mean_squared_error <- function(pred, data.valid, y, L2.unit){
   l2 <- data.valid %>%
     dplyr::mutate(pred = pred) %>%
     dplyr::rowwise() %>%
-    dplyr::mutate(sqe = (.data[[y]] - pred)^2 ) %>%
+    dplyr::mutate(sqe = (.data[[y]] - pred)^2) %>%
     dplyr::ungroup() %>%
     dplyr::group_by(!! rlang::sym(L2.unit)) %>%
     dplyr::summarise(mse = mean(sqe), .groups = "drop")
@@ -1245,6 +1380,9 @@ binary_cross_entropy <- function(
 
   # cross-entropy values
   values <- rep(NA, 2)
+
+  # adjust predictions to avoid log(0), for example, from knn
+  pred <- pmax(pmin(pred, 1 - 1e-15), 1e-15)
 
   # loss unit = "individual"
   values[1] <- (mean(
@@ -1347,8 +1485,9 @@ f1_score <- function(pred, data.valid, y, L2.unit) {
           dplyr::summarise(fn = sum(!! rlang::sym(y))) %>%
           dplyr::pull(var = fn)
         # f1 score
-        f1 <- tp / (tp + 0.5 * (fp + fn)) 
-      })) %>%
+        f1 <- tp / (tp + 0.5 * (fp + fn))
+      })
+    ) %>%
     # unnest f1 values
     tidyr::unnest(f1) %>%
     dplyr::select(!! rlang::sym(L2.unit), f1) %>%
@@ -1574,7 +1713,9 @@ predict_glmmLasso <- function(
   } else {
     lasso_preds <- cbind(fixed_effects, ind_ranef, state_ranef)
   }
-  lasso_preds <- base::apply(X = lasso_preds, MARGIN = 1, FUN = sum)
+
+  lasso_preds <- data.matrix(as.data.frame(lasso_preds))
+  lasso_preds <- rowSums(lasso_preds)
 
   # binary DV through the link function
   if (type == "response") {
@@ -2253,9 +2394,11 @@ log_spaced <- function(min, max, n) {
 boot_fun <- function(
   survey, L2.unit, y, L1.x, L2.x, mrp.L2.x, L2.reg, L2.x.scale, pcs, folds,
   bin.proportion, bin.size, census, k.folds, cv.sampling, loss.unit, loss.fun,
-  best.subset, lasso, pca, gb, svm, mrp, deep.mrp, best.subset.L2.x, lasso.L2.x,
-  pca.L2.x, pc.names, gb.L2.x, svm.L2.x, svm.L2.unit, svm.L2.reg, gb.L2.unit,
-  gb.L2.reg, deep.splines, lasso.lambda, lasso.n.iter, gb.interaction.depth,
+  best.subset, lasso, pca, gb, svm, mrp, deep.mrp, best.subset.deep,
+  best.subset.deep.splines, pca.deep, pca.deep.splines, best.subset.L2.x,
+  lasso.L2.x, pca.L2.x, pc.names, gb.L2.x, svm.L2.x, svm.L2.unit, svm.L2.reg,
+  gb.L2.unit, gb.L2.reg, deep.splines, deep.L2.x, deep.L2.unit, deep.L2.reg,
+  lasso.lambda, lasso.n.iter, gb.interaction.depth,
   gb.shrinkage, gb.n.trees.init, gb.n.trees.increase, gb.n.trees.max,
   gb.n.minobsinnode, svm.kernel, svm.gamma, svm.cost, ebma.tol, ebma.size
 ) {
@@ -2354,6 +2497,10 @@ boot_fun <- function(
     svm = svm,
     mrp = mrp,
     deep.mrp = deep.mrp,
+    best.subset.deep = best.subset.deep,
+    best.subset.deep.splines = best.subset.deep.splines,
+    pca.deep = pca.deep,
+    pca.deep.splines = pca.deep.splines,
     best.subset.L2.x = best.subset.L2.x,
     lasso.L2.x = lasso.L2.x,
     pca.L2.x = pca.L2.x,
@@ -2365,6 +2512,9 @@ boot_fun <- function(
     gb.L2.unit = gb.L2.unit,
     gb.L2.reg = gb.L2.reg,
     deep.splines = deep.splines,
+    deep.L2.x = deep.L2.x,
+    deep.L2.unit = deep.L2.unit,
+    deep.L2.reg = deep.L2.reg,
     lasso.lambda = lasso.lambda,
     lasso.n.iter = lasso.n.iter,
     gb.interaction.depth = gb.interaction.depth,

@@ -11,31 +11,40 @@ post_stratification(
   L2.unit,
   L2.reg,
   best.subset.opt,
+  best.subset.deep,
   lasso.opt,
   lasso.L2.x,
   pca.opt,
+  pca.deep,
   gb.opt,
   svm.opt,
+  knn.opt,
   svm.L2.reg,
   svm.L2.unit,
   svm.L2.x,
+  knn.L2.reg,
+  knn.L2.unit,
+  knn.L2.x,
   mrp.include,
   n.minobsinnode,
   L2.unit.include,
   L2.reg.include,
   kernel,
+  knn.kernel,
   mrp.L2.x,
   data,
   ebma.fold,
   census,
   verbose,
   deep.mrp,
-  deep.splines
+  deep.splines,
+  deep.L2.x,
+  deep.L2.unit,
+  deep.L2.reg
 )
 }
 \arguments{
-\item{y}{Outcome variable. A character vector containing the column names of
-the outcome variable. A character scalar containing the column name of
+\item{y}{Outcome variable. A character scalar containing the column name of
 the outcome variable in \code{survey}.}
 
 \item{L1.x}{Individual-level covariates. A character vector containing the
@@ -60,6 +69,11 @@ geographic units are grouped (\code{L2.unit} must be nested within
 \item{best.subset.opt}{Optimal tuning parameters from best subset selection
 classifier. A list returned by \code{run_best_subset()}.}
 
+\item{best.subset.deep}{A logical argument indicating whether
+the deep MRP classifier should be used for best subset prediction. Setting
+\code{best.subset.deep = TRUE} will include all interactions of L1.x in the
+best subset classifier. Default is \code{FALSE}.}
+
 \item{lasso.opt}{Optimal tuning parameters from lasso classifier A list
 returned by \code{run_lasso()}.}
 
@@ -72,11 +86,19 @@ variables specified in \code{L2.x}. Default is \code{NULL}.}
 \item{pca.opt}{Optimal tuning parameters from best subset selection with
 principal components classifier A list returned by \code{run_pca()}.}
 
+\item{pca.deep}{A logical argument indicating whether
+the deep MRP classifier should be used for PCA prediction. Setting
+\code{pca.deep = TRUE} will include all interactions of L1.x in the
+pca classifier. Default is \code{FALSE}.}
+
 \item{gb.opt}{Optimal tuning parameters from gradient tree boosting
 classifier A list returned by \code{run_gb()}.}
 
 \item{svm.opt}{Optimal tuning parameters from support vector machine
 classifier A list returned by \code{run_svm()}.}
+
+\item{knn.opt}{Optimal tuning parameters from k-nearest neighbors
+classifier A list returned by \code{knn_svm()}.}
 
 \item{svm.L2.reg}{SVM L2.reg. A logical argument indicating whether
 \code{L2.reg} should be included in the SVM classifier. Default is
@@ -84,12 +106,26 @@ classifier A list returned by \code{run_svm()}.}
 
 \item{svm.L2.unit}{SVM L2.unit. A logical argument indicating whether
 \code{L2.unit} should be included in the SVM classifier. Default is
-\code{FALSE}.}
+\code{TRUE}.}
 
 \item{svm.L2.x}{SVM context-level covariates. A character vector containing
 the column names of the context-level variables in \code{survey} and
 \code{census} to be used by the SVM classifier. If \code{NULL} and
 \code{svm} is set to \code{TRUE}, then SVM uses the variables specified in
+\code{L2.x}. Default is \code{NULL}.}
+
+\item{knn.L2.reg}{KNN L2.reg. A logical argument indicating whether
+\code{L2.reg} should be included in the KNN classifier. Default is
+\code{FALSE}.}
+
+\item{knn.L2.unit}{KNN L2.unit. A logical argument indicating whether
+\code{L2.unit} should be included in the KNN classifier. Default is
+\code{TRUE}.}
+
+\item{knn.L2.x}{KNN context-level covariates. A character vector containing
+the column names of the context-level variables in \code{survey} and
+\code{census} to be used by the KNN classifier. If \code{NULL} and
+\code{knn} is set to \code{TRUE}, then KNN uses the variables specified in
 \code{L2.x}. Default is \code{NULL}.}
 
 \item{mrp.include}{Whether to run MRP classifier. A logical argument
@@ -115,6 +151,13 @@ be used by SVM. The possible values are \code{linear}, \code{polynomial},
 \code{radial}, and \code{sigmoid}. Passed from \code{autoMrP()} argument
 \code{svm.kernel}.}
 
+\item{knn.kernel}{KNN kernel. A character-valued scalar specifying the kernel
+to be used in the KNN model. The possible values are \code{rectangular}
+(which is standard unweighted KNN), \code{triangular}, \code{epanechnikov}
+(or beta(2,2)), \code{biweight} (or beta(3,3)), \code{triweight} (or
+beta(4,4)), \code{cos}, \code{inv}, \code{gaussian}, and \code{optimal}.
+Default is \code{optimal}.}
+
 \item{mrp.L2.x}{MRP context-level covariates. A character vector containing
 the column names of the context-level variables in \code{survey} and
 \code{census} to be used by the MRP classifier. The character vector
@@ -137,12 +180,24 @@ training.}
 verbose output should be printed. Default is \code{FALSE}.}
 
 \item{deep.mrp}{Deep MRP classifier. A logical argument indicating whether
-the deep MRP classifier should be used for best subset prediction. Setting
-\code{deep.mrp = TRUE} will include all interactions of L1.x in the best
-subset classifier. Default is \code{FALSE}.}
+the deep MRP classifier should be used for predicting outcome \code{y}.
+Useful to run a specific deep MRP model. Default is \code{FALSE}.}
 
 \item{deep.splines}{Deep MRP splines. A logical argument indicating whether
 splines should be used in the deep MRP classifier. Default is \code{TRUE}.}
+
+\item{deep.L2.x}{Deep MrP context-level covariates. A character vector
+containing the column names of the context-level variables in
+\code{survey} and \code{census} to be used by the Deep MRP classifier.
+The character vector \emph{empty} if no context-level variables should be
+used by the Deep MRP classifier. If \code{NULL} and \code{deep.mrp} is set
+to \code{TRUE}, then Deep MRP uses the variables specified in \code{L2.x}.
+Default is \code{NULL}. Note: For the empty MrP model, set
+\code{L2.x = NULL} and \code{mrp.L2.x = ""}.}
+
+\item{deep.L2.reg}{Deep MRP L2.reg. A logical argument indicating whether
+\code{L2.reg} should be included in the Deep MRP classifier. Default is
+\code{FALSE}.}
 }
 \description{
 Apply post-stratification to classifiers.

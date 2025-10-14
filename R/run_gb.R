@@ -58,9 +58,8 @@
 #'   trees to be grown.
 
 run_gb <- function(
-  y, L1.x, L2.x, L2.eval.unit, L2.unit, L2.reg,
-  loss.unit, loss.fun, interaction.depth, shrinkage,
-  n.trees.init, n.trees.increase, n.trees.max,
+  y, L1.x, L2.x, L2.eval.unit, L2.unit, L2.reg, loss.unit, loss.fun,
+  interaction.depth, shrinkage, n.trees.init, n.trees.increase, n.trees.max,
   cores = cores, n.minobsinnode, data, verbose
 ) {
 

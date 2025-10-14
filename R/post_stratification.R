@@ -11,6 +11,8 @@
 #'   classifier A list returned by \code{run_gb()}.
 #' @param svm.opt Optimal tuning parameters from support vector machine
 #'   classifier A list returned by \code{run_svm()}.
+#' @param knn.opt Optimal tuning parameters from k-nearest neighbors
+#'   classifier A list returned by \code{knn_svm()}.
 #' @param mrp.include Whether to run MRP classifier. A logical argument
 #'   indicating whether the standard MRP classifier should be used for
 #'   predicting outcome \code{y}. Passed from \code{autoMrP()} argument
@@ -35,10 +37,12 @@
 #'   training.
 
 post_stratification <- function(
-  y, L1.x, L2.x, L2.unit, L2.reg, best.subset.opt, lasso.opt, lasso.L2.x,
-  pca.opt, gb.opt, svm.opt, svm.L2.reg, svm.L2.unit, svm.L2.x, mrp.include,
-  n.minobsinnode, L2.unit.include, L2.reg.include, kernel, mrp.L2.x,
-  data, ebma.fold, census, verbose, deep.mrp, deep.splines
+  y, L1.x, L2.x, L2.unit, L2.reg, best.subset.opt, best.subset.deep,
+  lasso.opt, lasso.L2.x, pca.opt, pca.deep, gb.opt, svm.opt, knn.opt,
+  svm.L2.reg, svm.L2.unit, svm.L2.x, knn.L2.reg, knn.L2.unit, knn.L2.x,
+  mrp.include, n.minobsinnode, L2.unit.include, L2.reg.include, kernel,
+  knn.kernel, mrp.L2.x, data, ebma.fold, census, verbose, deep.mrp,
+  deep.splines, deep.L2.x, deep.L2.unit, deep.L2.reg
 ) {
 
   # globals
@@ -46,6 +50,7 @@ post_stratification <- function(
   pca <- NULL
   gb <- NULL
   svm <- NULL
+  knn <- NULL
   mrp <- NULL
   best_subset <- NULL
 
@@ -89,7 +94,7 @@ post_stratification <- function(
   if (!is.null(best.subset.opt)) {
 
     # deep MrP or not
-    if (deep.mrp) {
+    if (best.subset.deep) {
 
       # Fit optimal model for EBMA
       best_subset_opt_ebma <- deep_mrp_classifier(
@@ -120,11 +125,9 @@ post_stratification <- function(
             )[["mean"]] %>%
               stats::plogis()
           ) %>%
-          dplyr::group_by(!! rlang::sym(L2.unit)) %>%
-          dplyr::summarize(best_subset = stats::weighted.mean(
-            x = best_subset, w = prop
-          ), .groups = "keep") %>%
-          dplyr::ungroup()
+          dplyr::select(
+            !! rlang::sym(L2.unit), dplyr::one_of(L1.x), prop, best_subset
+          )
 
         # individual level predictions for EBMA
         bs_ind <- vglmer::predict_MAVB(
@@ -150,11 +153,15 @@ post_stratification <- function(
               allow_missing_levels = TRUE
             )[["mean"]]
           ) %>%
-          dplyr::group_by(!! rlang::sym(L2.unit)) %>%
-          dplyr::summarize(best_subset = stats::weighted.mean(
-            x = best_subset, w = prop
-          ), .groups = "keep") %>%
-          dplyr::ungroup()
+          dplyr::select(
+            !! rlang::sym(L2.unit), dplyr::one_of(L1.x), prop, best_subset
+          )
+
+          # dplyr::group_by(!! rlang::sym(L2.unit)) %>%
+          # dplyr::summarize(best_subset = stats::weighted.mean(
+          #   x = best_subset, w = prop
+          # ), .groups = "keep") %>%
+          # dplyr::ungroup()
 
         # individual level predictions for EBMA
         bs_ind <- vglmer::predict_MAVB(
@@ -202,11 +209,9 @@ post_stratification <- function(
             type = "response"
           )
         ) %>%
-        dplyr::group_by(!! rlang::sym(L2.unit)) %>%
-        dplyr::summarize(best_subset = stats::weighted.mean(
-          x = best_subset, w = prop
-        ), .groups = "keep") %>%
-        dplyr::ungroup()
+        dplyr::select(
+          !! rlang::sym(L2.unit), dplyr::one_of(L1.x), prop, best_subset
+        )
 
       # individual level predictions for EBMA
       bs_ind <- stats::predict(object = best_subset_opt_ebma, type = "response")
@@ -275,11 +280,7 @@ post_stratification <- function(
     # post-stratification
     lasso_preds <- census %>%
       dplyr::mutate(lasso = lasso_ests) %>%
-      dplyr::group_by(!! rlang::sym(L2.unit)) %>%
-      dplyr::summarize(
-        lasso = stats::weighted.mean(x = lasso, w = prop), .groups = "keep"
-      ) %>%
-      dplyr::ungroup()
+      dplyr::select(!! rlang::sym(L2.unit), dplyr::one_of(L1.x), prop, lasso)
 
     # individual level predictions for EBMA
     lasso_ind <- stats::predict(object = lasso_opt_ebma, type = "response")
@@ -293,7 +294,7 @@ post_stratification <- function(
   if (!is.null(pca.opt)) {
 
     # deep MrP or not
-    if (deep.mrp) {
+    if (pca.deep) {
 
       # Fit optimal model for EBMA
       pca_opt_ebma <- deep_mrp_classifier(
@@ -325,11 +326,12 @@ post_stratification <- function(
             )[["mean"]] %>%
               stats::plogis()
           ) %>%
-          dplyr::group_by(!! rlang::sym(L2.unit)) %>%
-          dplyr::summarize(
-            pca = stats::weighted.mean(x = pca, w = prop), .groups = "keep"
-          ) %>%
-          dplyr::ungroup()
+          dplyr::select(!! rlang::sym(L2.unit), dplyr::one_of(L1.x), prop, pca)
+          # dplyr::group_by(!! rlang::sym(L2.unit)) %>%
+          # dplyr::summarize(
+          #   pca = stats::weighted.mean(x = pca, w = prop), .groups = "keep"
+          # ) %>%
+          # dplyr::ungroup()
 
         # individual level predictions for EBMA
         pca_ind <- vglmer::predict_MAVB(
@@ -352,11 +354,13 @@ post_stratification <- function(
               allow_missing_levels = TRUE
             )[["mean"]]
           ) %>%
-          dplyr::group_by(!! rlang::sym(L2.unit)) %>%
-          dplyr::summarize(
-            pca = stats::weighted.mean(x = pca, w = prop), .groups = "keep"
-          ) %>%
-          dplyr::ungroup()
+          dplyr::select(!! rlang::sym(L2.unit), dplyr::one_of(L1.x), prop, pca)
+
+          # dplyr::group_by(!! rlang::sym(L2.unit)) %>%
+          # dplyr::summarize(
+          #   pca = stats::weighted.mean(x = pca, w = prop), .groups = "keep"
+          # ) %>%
+          # dplyr::ungroup()
 
         # individual level predictions for EBMA
         pca_ind <- vglmer::predict_MAVB(
@@ -403,11 +407,7 @@ post_stratification <- function(
           allow.new.levels = TRUE,
           type = "response"
         )) %>%
-        dplyr::group_by(!! rlang::sym(L2.unit)) %>%
-        dplyr::summarize(
-          pca = stats::weighted.mean(x = pca, w = prop), .groups = "keep"
-        ) %>%
-        dplyr::ungroup()
+        dplyr::select(!! rlang::sym(L2.unit), dplyr::one_of(L1.x), prop, pca)
 
       # individual level predictions for EBMA
       pca_ind <- stats::predict(object = pca_opt_ebma, type = "response")
@@ -421,14 +421,14 @@ post_stratification <- function(
   if (!is.null(gb.opt)) {
 
     # Evaluate inclusion of L2.unit
-    if (isTRUE(L2.unit.include == TRUE)) {
+    if (isTRUE(L2.unit.include)) {
       L2.unit.gb <- L2.unit
     } else {
       L2.unit.gb <- NULL
     }
 
     # Evaluate inclusion of L2.reg
-    if (isTRUE(L2.reg.include == TRUE)) {
+    if (isTRUE(L2.reg.include)) {
       L2.reg.gb <- L2.reg
     } else {
       L2.reg.gb <- NULL
@@ -472,11 +472,7 @@ post_stratification <- function(
         n.trees = gb.opt$n_trees,
         type = "response"
       )) %>%
-      dplyr::group_by(!! rlang::sym(L2.unit)) %>%
-      dplyr::summarize(
-        gb = stats::weighted.mean(x = gb, w = prop), .groups = "keep"
-      ) %>%
-      dplyr::ungroup()
+      dplyr::select(!! rlang::sym(L2.unit), dplyr::one_of(L1.x), prop, gb)
 
     # individual level predictions for EBMA
     gb_ind <- gbm::predict.gbm(
@@ -496,14 +492,14 @@ post_stratification <- function(
       svm.L2.x <- L2.x
     }
 
-    # Evaluate inclusion of L2.unit in GB
+    # Evaluate inclusion of L2.unit in SVM
     if (isTRUE(svm.L2.unit)) {
       svm.L2.unit <- L2.unit
     } else {
       svm.L2.unit <- NULL
     }
 
-    # Evaluate inclusion of L2.reg in GB
+    # Evaluate inclusion of L2.reg in SVM
     if (isTRUE(svm.L2.reg)) {
       svm.L2.reg <- L2.reg
     } else {
@@ -593,11 +589,7 @@ post_stratification <- function(
 
     # post-stratification step 3: weighted mean
     svm_preds <- svm_preds %>%
-      dplyr::group_by(!!rlang::sym(L2.unit)) %>%
-      dplyr::summarize(
-        svm = stats::weighted.mean(x = svm, w = prop), .groups = "keep"
-      ) %>%
-      dplyr::ungroup()
+      dplyr::select(!! rlang::sym(L2.unit), dplyr::one_of(L1.x), prop, svm)
 
     # individual level predictions for EBMA
     if (
@@ -623,9 +615,98 @@ post_stratification <- function(
     models$svm <- svm_opt_ebma
   }
 
-  # Classifier 6: MRP
+  # Classifier 6: KNN
+  if (!is.null(knn.opt)) {
+
+    # Determine context-level covariates
+    if (is.null(knn.L2.x)) {
+      knn.L2.x <- L2.x
+    }
+
+    # Evaluate inclusion of L2.unit in KNN
+    if (isTRUE(knn.L2.unit)) {
+      knn.L2.unit <- L2.unit
+    } else {
+      knn.L2.unit <- NULL
+    }
+
+    # Evaluate inclusion of L2.reg in KNN
+    if (isTRUE(knn.L2.reg)) {
+      knn.L2.reg <- L2.reg
+    } else {
+      knn.L2.reg <- NULL
+    }
+
+    # Create model formula
+    x <- paste(c(L1.x, knn.L2.x, knn.L2.unit, knn.L2.reg), collapse = " + ")
+    form_knn <- as.formula(paste(y, " ~ ", x, sep = ""))
+
+    # Fit optimal model for EBMA
+    knn_opt_ebma <- knn_classifier(
+      y = y,
+      L1.x = L1.x,
+      L2.unit = knn.L2.unit,
+      L2.reg = knn.L2.reg,
+      form = form_knn,
+      data.train = if (dv_type == "binary") {
+        data %>%
+          dplyr::mutate(!!rlang::sym(y) := as.factor(!!rlang::sym(y)))
+      } else {
+        data
+      },
+      data.valid = data,
+      knn.k.value = knn.opt,
+      knn.kernel = knn.kernel,
+      verbose = verbose
+    )
+
+    # Fit optimal model for post-stratification w/o EBMA
+    knn_opt_poststrat_only <- knn_classifier(
+      y = y,
+      L1.x = L1.x,
+      L2.unit = knn.L2.unit,
+      L2.reg = knn.L2.reg,
+      form = form_knn,
+      data.train = if (dv_type == "binary") {
+        no_ebma_data %>%
+          dplyr::mutate(!!rlang::sym(y) := as.factor(!!rlang::sym(y)))
+      } else {
+        no_ebma_data
+      },
+      data.valid = census,
+      knn.k.value = knn.opt,
+      knn.kernel = knn.kernel,
+      verbose = verbose
+    )
+
+    # post-stratification
+    knn_preds <- census %>%
+      dplyr::mutate(
+        knn = if (dv_type == "binary") {
+          knn_opt_poststrat_only$prob[, "1"]
+        } else {
+          knn_opt_poststrat_only$fit
+        }
+      ) %>%
+      dplyr::select(!! rlang::sym(L2.unit), dplyr::one_of(L1.x), prop, knn)
+
+    # individual level predictions for EBMA
+    knn_ind <- if (dv_type == "binary") {
+      knn_opt_ebma$prob[, "1"]
+    } else {
+      knn_opt_ebma$fit
+    }
+
+    # model for EBMA
+    models$knn <- knn_opt_ebma
+
+  }
+
+  # Classifier 7: MRP
   # Fit model
   if (isTRUE(mrp.include == TRUE)) {
+
+    mrp_start_time <- Sys.time()
 
     # Create model formula
     # Individual-level random effects
@@ -694,67 +775,262 @@ post_stratification <- function(
           type = "response"
         )
       ) %>%
-      dplyr::group_by(!! rlang::sym(L2.unit)) %>%
-      dplyr::summarize(
-        mrp = stats::weighted.mean(x = mrp, w = prop), .groups = "keep"
-      ) %>%
-      dplyr::ungroup()
+      dplyr::select(!! rlang::sym(L2.unit), dplyr::one_of(L1.x), prop, mrp)
 
     # individual level predictions for EBMA
     mrp_ind <- stats::predict(object = mrp_model_ebma, type = "response")
 
     # model for EBMA
     models$mrp <- mrp_model_ebma
+    mrp_end_time <- Sys.time()
+    mrp_runtime <- difftime(
+      time1 = mrp_end_time, time2 = mrp_start_time, units = "mins"
+    )
+  } else {
+    mrp_runtime <- NULL
+  }
+
+  # Classifier 8: deep MRP
+  # Fit model
+  if (deep.mrp) {
+
+    deep_start_time <- Sys.time()
+
+    # custom L2x
+    if (!is.null(deep.L2.x)) {
+      L2.x <- deep.L2.x
+    }
+
+    # custom L2.unit
+    if (isTRUE(deep.L2.unit)) {
+      deep.L2.unit <- L2.unit
+    } else {
+      deep.L2.unit <- NULL
+    }
+
+    # custom L2.reg
+    if (isTRUE(deep.L2.reg)) {
+      deep.L2.reg <- L2.reg
+    } else {
+      deep.L2.reg <- NULL
+    }
+
+    # generate all interactions of L1.x
+    l1_comb <- unlist(lapply(2:length(L1.x), function(x) {
+      apply(combn(L1.x, x), 2, paste, collapse = ".")
+    }))
+
+    # generate all interactions of L1.x with L2.unit
+    if (!is.null(deep.L2.unit)) {
+      l1_state <- paste(L1.x, L2.unit, sep = ".")
+    } else {
+      l1_state <- NULL
+    }
+
+    # generate all interactions of L1.x with L2.reg
+    if (!is.null(deep.L2.reg)) {
+      l1_region <- paste(L1.x, L2.reg, sep = ".")
+    } else {
+      l1_region <- NULL
+    }
+
+    # model formula
+    if (!deep.splines) {
+      form <- paste0(
+        # DV
+        y, " ~ ",
+        # L2x
+        paste(L2.x, collapse = " + "), " + ",
+        # individual level variables
+        paste("(1 | ", L1.x, ")", collapse = " + "), " + ",
+        # interactions of L1x
+        paste("(1 | ", l1_comb, ")", collapse = " + "), " + ",
+        # interactions of L1x with L2.unit
+        if (any(!is.null(l1_state))) {
+          paste("(1 | ", l1_state, ")", collapse = " + ")
+        }, " + ",
+        # interactions of L1x with L2.reg
+        if (any(!is.null(l1_region))) {
+          paste("(1 | ", l1_region, ")", collapse = " + ")
+        }
+      )
+    } else {
+      form <- paste0(
+        # DV
+        y, " ~ ",
+        # L2x
+        paste0("v_s(", L2.x, ")", collapse = " + "), " + ",
+        # individual level variables
+        paste("(1 | ", L1.x, ")", collapse = " + "), " + ",
+        # interactions of L1x
+        paste("(1 | ", l1_comb, ")", collapse = " + "), " + ",
+        # interactions of L1x with L2.unit
+        if (any(!is.null(l1_state))) {
+          paste("(1 | ", l1_state, ")", collapse = " + ")
+        }, " + ",
+        # interactions of L1x with L2.reg
+        if (any(!is.null(l1_region))) {
+          paste("(1 | ", l1_region, ")", collapse = " + ")
+        }
+      )
+    }
+
+    # match everything from the beginning to the last ")"
+    # for example if the string ends in +
+    form <- stringr::str_extract(string = form, pattern = "^.*\\)")
+
+    # run deep mrp model for ebma
+    deep_mrp_model <- deep_mrp_classifier(
+      y = y,
+      form = form,
+      data = data,
+      verbose = verbose
+    )
+
+    # run deep mrp model for postratification only
+    deep_mrp_model_poststrat_only <- deep_mrp_classifier(
+      y = y,
+      form = form,
+      data = no_ebma_data,
+      verbose = verbose
+    )
+
+    # Determine type of dependent variable
+    if (
+      data %>%
+        dplyr::pull(!!y) %>%
+        unique() %>%
+        length() == 2
+    ) {
+      dv_type <- "binary"
+    } else {
+      dv_type <- "linear"
+    }
+
+    # binary or continuous DV
+    if (dv_type == "binary") {
+      # predictions for post-stratification only (no EBMA)
+      pred_d <- vglmer::predict_MAVB(
+        samples = 1000,
+        deep_mrp_model_poststrat_only,
+        newdata = census,
+        allow_missing_levels = TRUE
+      )[["mean"]]
+
+      # convert to response probabilities
+      pred_d <- stats::plogis(pred_d)
+
+    } else if (dv_type == "linear") {
+      # predictions for post-stratification only (no EBMA)
+      pred_d <- predict(
+        samples = 1000,
+        object = deep_mrp_model_poststrat_only,
+        newdata = census,
+        allow_missing_levels = TRUE
+      )[["mean"]]
+    }
+
+    # post-stratification
+    deep_preds <- census %>%
+      dplyr::mutate(deep_mrp = pred_d) %>%
+      dplyr::select(!! rlang::sym(L2.unit), dplyr::one_of(L1.x), prop, deep_mrp)
+
+    # binary or continuous DV
+    if (dv_type == "binary") {
+      # individual level predictions for EBMA
+      deep_mrp_ind <- vglmer::predict_MAVB(
+        samples = 1000,
+        deep_mrp_model,
+        newdata = data,
+        allow_missing_levels = TRUE
+      )[["mean"]]
+
+      # convert response to probabilities
+      deep_mrp_ind <- stats::plogis(deep_mrp_ind)
+    } else if (dv_type == "linear") {
+      # individual level predictions for EBMA
+      deep_mrp_ind <- predict(
+        samples = 1000,
+        object = deep_mrp_model,
+        newdata = data,
+        allow_missing_levels = TRUE
+      )[["mean"]]
+    }
+
+    # model for EBMA
+    models$deep_mrp <- deep_mrp_model
+    deep_end_time <- Sys.time()
+    deep_runtime <- difftime(
+      time1 = deep_end_time, time2 = deep_start_time, units = "mins"
+    )
+
+  } else {
+    deep_runtime <- NULL
   }
 
   # --------------------------- combine l2 level predictions ------------------
 
   # tibble of L2 units
-  L2_preds <- dplyr::select(census, one_of(L2.unit)) %>%
-    dplyr::distinct()
-  # add existing classifiers
+  L2_preds <- dplyr::select(
+    census, dplyr::one_of(L2.unit), dplyr::one_of(L1.x), prop
+  )
   if (exists("bs_preds")) {
     L2_preds <- dplyr::left_join(
       x = L2_preds,
       y = bs_preds,
-      by = L2.unit
+      by = c(L2.unit, L1.x, "prop")
     )
   }
   if (exists("lasso_preds")) {
     L2_preds <- dplyr::left_join(
       x = L2_preds,
       y = lasso_preds,
-      by = L2.unit
+      by = c(L2.unit, L1.x, "prop")
     )
   }
   if (exists("pca_preds")) {
     L2_preds <- dplyr::left_join(
       x = L2_preds,
       y = pca_preds,
-      by = L2.unit
+      by = c(L2.unit, L1.x, "prop")
     )
   }
   if (exists("gb_preds")) {
     L2_preds <- dplyr::left_join(
       x = L2_preds,
       y = gb_preds,
-      by = L2.unit
+      by = c(L2.unit, L1.x, "prop")
     )
   }
   if (exists("svm_preds")) {
     L2_preds <- dplyr::left_join(
       x = L2_preds,
       y = svm_preds,
-      by = L2.unit
+      by = c(L2.unit, L1.x, "prop")
+    )
+  }
+  if (exists("knn_preds")) {
+    L2_preds <- dplyr::left_join(
+      x = L2_preds,
+      y = knn_preds,
+      by = c(L2.unit, L1.x, "prop")
     )
   }
   if (exists("mrp_preds")) {
     L2_preds <- dplyr::left_join(
       x = L2_preds,
       y = mrp_preds,
-      by = L2.unit
+      by = c(L2.unit, L1.x, "prop")
     )
   }
+  if (exists("deep_preds")) {
+    L2_preds <- dplyr::left_join(
+      x = L2_preds,
+      y = deep_preds,
+      by = c(L2.unit, L1.x, "prop")
+    )
+  }
+
 
   # individual predictions for EBMA
   L1_preds <- data %>%
@@ -791,9 +1067,21 @@ post_stratification <- function(
       } else {
         NA
       },
+      # add knn
+      knn = if (exists("knn_ind")) {
+        as.numeric(knn_ind)
+      } else {
+        NA
+      },
       # add MrP
       mrp = if (exists("mrp_ind")) {
         as.numeric(mrp_ind)
+      } else {
+        NA
+      },
+      # add deep MrP
+      deep_mrp = if (exists("deep_mrp_ind")) {
+        as.numeric(deep_mrp_ind)
       } else {
         NA
       }
@@ -813,7 +1101,9 @@ post_stratification <- function(
         Level1 = L1_preds,
         Level2 = L2_preds
       ),
-      models = models
+      models = models,
+      mrp_runtime = mrp_runtime,
+      deep_mrp_runtime = deep_runtime
     )
   )
 }

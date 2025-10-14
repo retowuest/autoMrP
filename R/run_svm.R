@@ -76,7 +76,7 @@ run_svm <- function(
       cores = cores
     )
 
-  # Train all models sequentially
+    # Train all models sequentially
   } else {
     # loop over tuning grid
     grid_cells <- apply(svm_grid, 1, function(g) {

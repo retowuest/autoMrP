@@ -1,7 +1,7 @@
 #' Optimal individual classifiers
 #'
-#' \code{run_classifiers} tunes classifiers, post-stratifies and carries out
-#' EMBA.
+#' \code{run_classifiers} tunes classifiers, post-stratifies, and carries out
+#' EBMA.
 #'
 #' @inheritParams auto_MrP
 #' @param cv.folds Data for cross-validation. A \code{list} of \eqn{k}
@@ -18,11 +18,15 @@ run_classifiers <- function(
   y, L1.x, L2.x, mrp.L2.x, L2.unit, L2.reg, L2.x.scale, pcs, pc.names, folds,
   bin.proportion, bin.size, cv.folds, cv.data, ebma.fold, census, ebma.size,
   ebma.n.draws, k.folds, cv.sampling, loss.unit, loss.fun, best.subset,
-  lasso, pca, gb, svm, mrp, deep.mrp, best.subset.L2.x, lasso.L2.x, pca.L2.x,
-  gb.L2.x, svm.L2.x, gb.L2.unit, gb.L2.reg, svm.L2.unit, svm.L2.reg,
-  deep.splines, lasso.lambda, lasso.n.iter, gb.interaction.depth, gb.shrinkage,
+  lasso, pca, gb, svm, knn, mrp, deep.mrp, deep.splines, best.subset.deep,
+  best.subset.deep.splines, pca.deep, pca.deep.splines,
+  best.subset.L2.x, lasso.L2.x, pca.L2.x, gb.L2.x, svm.L2.x, knn.L2.x,
+  deep.L2.x, gb.L2.unit, svm.L2.unit, knn.L2.unit, deep.L2.unit, gb.L2.reg,
+  svm.L2.reg, knn.L2.reg,
+  deep.L2.reg,  lasso.lambda, lasso.n.iter, gb.interaction.depth, gb.shrinkage,
   gb.n.trees.init, gb.n.trees.increase, gb.n.trees.max, gb.n.minobsinnode,
-  svm.kernel, svm.gamma, svm.cost, ebma.tol, cores, verbose
+  svm.kernel, svm.gamma, svm.cost, knn.k.min, knn.k, knn.kernel, ebma.tol,
+  cores, verbose
 ) {
 
   # Classifier 1: Best Subset
@@ -31,19 +35,20 @@ run_classifiers <- function(
     # get start time
     best_subset_start_time <- Sys.time()
 
-    if (verbose) {
-      cli::cli_progress_step(
-        "Tuning multilevel regression with best subset selection classifier"
-      )
-    }
-
     # Determine context-level covariates
     if (is.null(best.subset.L2.x)) {
       best.subset.L2.x <- L2.x
     }
 
     # interactions of L1.x yes/no
-    if (isTRUE(deep.mrp)) {
+    if (isTRUE(best.subset.deep)) {
+
+      if (verbose) {
+        cli::cli_progress_step(
+          "Tuning best subset selection w/ deep interactions"
+        )
+      }
+
       # Run classifier with L1.x interactions
       best_subset_out <- run_deep_bs(
         y = y,
@@ -51,7 +56,7 @@ run_classifiers <- function(
         L2.x = best.subset.L2.x,
         L2.unit = L2.unit,
         L2.reg = L2.reg,
-        deep.splines = deep.splines,
+        deep.splines = best.subset.deep.splines,
         loss.unit = loss.unit,
         loss.fun = loss.fun,
         k.folds = k.folds,
@@ -60,6 +65,13 @@ run_classifiers <- function(
         cores = cores
       )
     } else {
+
+      if (verbose) {
+        cli::cli_progress_step(
+          "Tuning best subset selection w/o deep interactions"
+        )
+      }
+
       # Run classifier without L1.x interactions
       best_subset_out <- run_best_subset(
         y = y,
@@ -105,7 +117,7 @@ run_classifiers <- function(
 
     if (verbose) {
       cli::cli_progress_step(
-        "Tuning multilevel regression with L1 regularization"
+        "Tuning L1 regularization"
       )
     }
 
@@ -157,17 +169,15 @@ run_classifiers <- function(
     # get start time
     pca_start_time <- Sys.time()
 
-    if (verbose) {
-      cli::cli_progress_step(
-        paste0(
-          "Tuning multilevel regression with principal components as context",
-          " level variables"
-        )
-      )
-    }
-
     # interactions of L1.x yes/no
-    if (isTRUE(deep.mrp)) {
+    if (isTRUE(pca.deep)) {
+
+      if (verbose) {
+        cli::cli_progress_step(
+          "Tuning principal components w/ deep interactions"
+        )
+      }
+
       # Run classifier with L1.x interactions
       pca_out <- run_deep_pca(
         y = y,
@@ -175,7 +185,7 @@ run_classifiers <- function(
         L2.x = pc.names,
         L2.unit = L2.unit,
         L2.reg = L2.reg,
-        deep.splines = deep.splines,
+        deep.splines = pca.deep.splines,
         loss.unit = loss.unit,
         loss.fun = loss.fun,
         data = cv.folds,
@@ -183,6 +193,13 @@ run_classifiers <- function(
         cores = cores
       )
     } else {
+
+      if (verbose) {
+        cli::cli_progress_step(
+          "Tuning principal components w/o deep interactions"
+        )
+      }
+
       # run classifier without L1.x interactions
       pca_out <- run_pca(
         y = y,
@@ -275,7 +292,7 @@ run_classifiers <- function(
   }
 
   # Classifier 5: SVM
-  if (isTRUE(svm)) {
+  if (svm) {
 
     # get start time
     svm_start_time <- Sys.time()
@@ -289,14 +306,14 @@ run_classifiers <- function(
       svm.L2.x <- L2.x
     }
 
-    # Evaluate inclusion of L2.unit in GB
+    # Evaluate inclusion of L2.unit in SVM
     if (svm.L2.unit) {
       svm.L2.unit <- L2.unit
     } else {
       svm.L2.unit <- NULL
     }
 
-    # Evaluate inclusion of L2.reg in GB
+    # Evaluate inclusion of L2.reg in SVM
     if (isTRUE(svm.L2.reg)) {
       svm.L2.reg <- L2.reg
     } else {
@@ -321,7 +338,7 @@ run_classifiers <- function(
       cores = cores
     )
 
-    # get start time
+    # get end time
     svm_end_time <- Sys.time()
 
     # svm runtime
@@ -334,11 +351,76 @@ run_classifiers <- function(
     svm_runtime <- NULL
   }
 
+  # Classifier 6: KNN
+  if (knn) {
+
+    # get start time
+    knn_start_time <- Sys.time()
+
+    if (verbose) {
+      cli::cli_progress_step("Tuning k-nearest neighbors")
+    }
+
+    # Determine the minimum value of k if knn.k.min is not specified
+    if (is.null(knn.k.min)) {
+      knn.k.min <- 5
+    }
+
+    # Determine context-level covariates
+    if (is.null(knn.L2.x)) {
+      knn.L2.x <- L2.x
+    }
+
+    # Evaluate inclusion of L2.unit in KNN
+    if (knn.L2.unit) {
+      knn.L2.unit <- L2.unit
+    } else {
+      knn.L2.unit <- NULL
+    }
+
+    # Evaluate inclusion of L2.reg in KNN
+    if (knn.L2.reg) {
+      knn.L2.reg <- L2.reg
+    } else {
+      knn.L2.reg <- NULL
+    }
+
+    # Run classifier
+    knn_out <- run_knn(
+      y = y,
+      L1.x = L1.x,
+      L2.x = knn.L2.x,
+      L2.unit = knn.L2.unit,
+      L2.eval.unit = L2.unit,
+      L2.reg = knn.L2.reg,
+      loss.unit = loss.unit,
+      loss.fun = loss.fun,
+      knn.k.min = knn.k.min,
+      knn.k = knn.k,
+      knn.kernel = knn.kernel,
+      data = cv.folds,
+      verbose = verbose,
+      cores = cores
+    )
+
+    # get end time
+    knn_end_time <- Sys.time()
+
+    # knn runtime
+    knn_runtime <- difftime(
+      time1 = knn_end_time, time2 = knn_start_time, units = "mins"
+    )
+
+  } else {
+    knn_out <- NULL
+    knn_runtime <- NULL
+  }
+
   # Individual level predictions for all data -------------------------------
 
   if (verbose) {
     cli::cli_progress_step(
-      "Generating out of sample predictions from tuned classifiers"
+      "Generating out of sample predictions"
     )
   }
 
@@ -354,21 +436,31 @@ run_classifiers <- function(
         L2.unit = L2.unit,
         L2.reg = L2.reg,
         best.subset.opt = best_subset_out,
+        best.subset.deep = best.subset.deep,
         lasso.opt = lasso_out,
         lasso.L2.x = lasso.L2.x,
         pca.opt = pca_out,
+        pca.deep = pca.deep,
         gb.opt = gb_out,
         svm.opt = svm_out,
         svm.L2.reg = svm.L2.reg,
         svm.L2.unit = svm.L2.unit,
         svm.L2.x = svm.L2.x,
+        knn.opt = knn_out,
+        knn.L2.reg = knn.L2.reg,
+        knn.L2.unit = knn.L2.unit,
+        knn.L2.x = knn.L2.x,
         mrp.include = mrp,
         n.minobsinnode = gb.n.minobsinnode,
         L2.unit.include = gb.L2.unit,
         L2.reg.include = gb.L2.reg,
         kernel = svm.kernel,
+        knn.kernel = knn.kernel,
         mrp.L2.x = mrp.L2.x,
         deep.mrp = deep.mrp,
+        deep.L2.x = deep.L2.x,
+        deep.L2.unit = deep.L2.unit,
+        deep.L2.reg = deep.L2.reg,
         deep.splines = deep.splines,
         data = cv.folds,
         ebma.fold = ebma.fold,
@@ -391,7 +483,7 @@ run_classifiers <- function(
   # Post-stratification -----------------------------------------------------
 
   if (verbose) {
-    cli::cli_progress_step("Post-stratification")
+    cli::cli_progress_step("Post-stratifying")
   }
 
   # get start time
@@ -404,22 +496,32 @@ run_classifiers <- function(
     L2.unit = L2.unit,
     L2.reg = L2.reg,
     best.subset.opt = best_subset_out,
+    best.subset.deep = best.subset.deep,
     lasso.opt = lasso_out,
     lasso.L2.x = lasso.L2.x,
     pca.opt = pca_out,
+    pca.deep = pca.deep,
     gb.opt = gb_out,
     svm.opt = svm_out,
+    knn.opt = knn_out,
     svm.L2.reg = svm.L2.reg,
     svm.L2.unit = svm.L2.unit,
     svm.L2.x = svm.L2.x,
+    knn.L2.reg = knn.L2.reg,
+    knn.L2.unit = knn.L2.unit,
+    knn.L2.x = knn.L2.x,
     mrp.include = mrp,
     n.minobsinnode = gb.n.minobsinnode,
     L2.unit.include = gb.L2.unit,
     L2.reg.include = gb.L2.reg,
     kernel = svm.kernel,
+    knn.kernel = knn.kernel,
     mrp.L2.x = mrp.L2.x,
     deep.mrp = deep.mrp,
     deep.splines = deep.splines,
+    deep.L2.x = deep.L2.x,
+    deep.L2.unit = deep.L2.unit,
+    deep.L2.reg = deep.L2.reg,
     data = cv.data,
     ebma.fold = ebma.fold,
     census = census,
@@ -441,6 +543,7 @@ run_classifiers <- function(
 
   ebma_out <- ebma(
     ebma.fold = ebma.fold,
+    cv.data = cv.data,
     y = y,
     L1.x = L1.x,
     L2.x = L2.x,
@@ -450,16 +553,24 @@ run_classifiers <- function(
     n.draws = ebma.n.draws,
     tol = ebma.tol,
     best.subset.opt = best_subset_out,
+    best.subset.deep = best.subset.deep,
     pca.opt = pca_out,
+    pca.deep = pca.deep,
     lasso.opt = lasso_out,
     gb.opt = gb_out,
     svm.opt = svm_out,
-    deep.mrp = deep.mrp,
+    knn.opt = knn_out,
     pc.names = pc.names,
     verbose = verbose,
     cores = cores,
-    preds_all = preds_all
+    preds_all = preds_all$preds,
+    knn.kernel = knn.kernel,
+    ebma.size = ebma.size
   )
+
+  if (!"character" %in% class(ebma_out$ebma)) {
+    preds_all$best_classifiers$ebma_tolerance <- ebma_out$ebma_tolerance
+  }
 
   # get end time
   ebma_end_time <- Sys.time()
@@ -471,35 +582,95 @@ run_classifiers <- function(
 
   # Stacking  ----------------------------------------------------------------
 
-  # # get start time
-  # stack_start_time <- Sys.time()
+  # get start time
+  stack_start_time <- Sys.time()
 
-  # if (verbose) {
-  #   cli::cli_progress_step("Stacking")
-  # }
+  if (verbose) {
+    cli::cli_progress_step("Stacking")
+  }
 
-  # # get stacking weights
-  # stack_out <- autoMrP:::stacking_weights(
-  #   preds = preds_all, ebma_out = ebma_out, L2.unit = L2.unit,
-  #   k.folds = k.folds, cores = cores
-  # )
+  # get stacking weights
+  stack_out <- autoMrP:::stacking_weights(
+    preds = preds_all$preds, ebma_out = ebma_out, L2.unit = L2.unit,
+    k.folds = k.folds, cores = cores
+  )
 
-  # # apply stacking weights
-  # ebma_out <- apply_stack_weights(
-  #   ebma_out = ebma_out,
-  #   stack_out = stack_out,
-  #   L2.unit = L2.unit,
-  #   y = y,
-  #   preds_all = preds_all
-  # )
+  # apply stacking weights
+  ebma_out <- apply_stack_weights(
+    ebma_out = ebma_out,
+    stack_out = stack_out,
+    L2.unit = L2.unit,
+    y = y,
+    L1.x = L1.x,
+    preds_all = preds_all$preds
+  )
 
-  # # get end time
-  # stack_end_time <- Sys.time()
+  # get end time
+  stack_end_time <- Sys.time()
 
-  # # stack runtime
-  # stack_runtime <- difftime(
-  #   time1 = stack_end_time, time2 = stack_start_time, units = "mins"
-  # )
+  # stack runtime
+  stack_runtime <- difftime(
+    time1 = stack_end_time, time2 = stack_start_time, units = "mins"
+  )
+
+  # Format output  -----------------------------------------------------------
+
+  # aggregate ebma predictions to state-level
+  if (!"EBMA step skipped" %in% ebma_out$ebma) {
+    ebma_out$ebma <- tibble::tibble(
+      !!rlang::sym(L2.unit) := dplyr::pull(
+        .data = ebma_out$classifiers, var = L2.unit
+      ),
+      prop = dplyr::pull(.data = ebma_out$classifiers, var = "prop"),
+      ebma = ebma_out$ebma
+    ) %>%
+      dplyr::group_by(!!rlang::sym(L2.unit)) %>%
+      dplyr::summarize(
+        ebma = stats::weighted.mean(ebma, w = prop, na.rm = TRUE)
+      )
+  }
+
+  # census level predictions
+  if (!"Stacking step skipped" %in% ebma_out$stacking) {
+    ebma_out$census_level_predictions <- dplyr::bind_cols(
+      ebma_out$classifiers,
+      ebma_out$stacking %>%
+        dplyr::select(dplyr::starts_with("stack_"))
+    )
+  } else {
+    ebma_out$census_level_predictions <- ebma_out$classifiers
+  }
+
+  # remove ebma from classifiers
+  if ("ebma" %in% names(ebma_out$classifiers)) ebma_out$classifiers$ebma <- NULL
+
+  # aggregate classifier predictions to state-level
+  ebma_out$classifiers <- ebma_out$classifiers %>%
+    dplyr::select(-dplyr::all_of(L1.x)) %>%
+    dplyr::group_by(!!rlang::sym(L2.unit)) %>%
+    dplyr::summarize(
+      dplyr::across(
+        .cols = dplyr::everything(),
+        .fns = ~ stats::weighted.mean(.x, w = prop, na.rm = TRUE)
+      )
+    ) %>%
+    dplyr::select(-prop)
+
+  # aggregate stacking predictions to state-level
+  if ("stacking" %in% names(ebma_out)) {
+    ebma_out$stacking <- ebma_out$stacking %>%
+      dplyr::group_by(!!rlang::sym(L2.unit)) %>%
+      dplyr::summarize(
+        dplyr::across(
+          .cols = dplyr::everything(),
+          .fns = ~ stats::weighted.mean(.x, w = prop, na.rm = TRUE)
+        )
+      ) %>%
+      dplyr::select(-prop)
+  }
+
+  # add tuned hyperparameters to output
+  attr(ebma_out, "tuned_hyperparameters") <- preds_all$best_classifiers
 
   # Detailed runtime ---------------------------------------------------------
   runtime_detailed <- tibble::tibble(
@@ -508,12 +679,15 @@ run_classifiers <- function(
     pca = pca_runtime,
     gb = gb_runtime,
     svm = svm_runtime,
-    individual_level_predictions = preds_all_runtime,
+    knn = knn_runtime,
+    mrp = ps_out$mrp_runtime,
+    deep_mrp = ps_out$deep_mrp_runtime,
     post_stratification = ps_runtime,
-    ebma = ebma_runtime#,
-    #stacking = stack_runtime
+    ebma = ebma_runtime,
+    stacking = stack_runtime + preds_all_runtime
   )
   ebma_out$runtime <- runtime_detailed
+
 
   return(ebma_out)
 }

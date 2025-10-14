@@ -1,3 +1,12 @@
+# autoMrP 1.1.2
+
++ adds a superlearner_predict() function that predicts individual-level data on new unseen survey data. This is useful for combining autoMrP into an ensemble with other models.
+
+# autoMrP 1.1.1
+
++ implements knn as an additional classifier
++ best.subset.deep and pca.deep now implements deep interactions for best subset and pca.
+
 # autoMrP 1.1.0
 
 + implements stacking

@@ -35,7 +35,7 @@ census
 }
 \description{
 The census file is generated from the full 2008 Cooperative Congressional Election Studies
-item cc418_1 by dissaggregating the 64 ideal type combinations of the individual level variables
-L1x1, L2x2 and L1x3. A row is an ideal type in a given state.
+item cc418_1 by dissaggregating the 96 ideal type combinations of the individual level variables
+L1x1, L1x2, and L1x3. A row is an ideal type in a given state.
 }
 \keyword{datasets}

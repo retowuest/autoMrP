@@ -28,20 +28,31 @@ auto_MrP(
   pca = TRUE,
   gb = TRUE,
   svm = TRUE,
+  knn = TRUE,
   mrp = FALSE,
   deep.mrp = FALSE,
   oversampling = FALSE,
+  best.subset.deep = FALSE,
+  best.subset.deep.splines = FALSE,
+  pca.deep = FALSE,
+  pca.deep.splines = FALSE,
   best.subset.L2.x = NULL,
   lasso.L2.x = NULL,
   pca.L2.x = NULL,
   gb.L2.x = NULL,
   svm.L2.x = NULL,
+  knn.L2.x = NULL,
   mrp.L2.x = NULL,
   gb.L2.unit = TRUE,
   gb.L2.reg = FALSE,
   svm.L2.unit = TRUE,
   svm.L2.reg = FALSE,
+  knn.L2.unit = TRUE,
+  knn.L2.reg = FALSE,
   deep.splines = TRUE,
+  deep.L2.x = NULL,
+  deep.L2.unit = TRUE,
+  deep.L2.reg = FALSE,
   lasso.lambda = NULL,
   lasso.n.iter = 100,
   gb.interaction.depth = c(1, 2, 3),
@@ -53,6 +64,9 @@ auto_MrP(
   svm.kernel = c("radial"),
   svm.gamma = NULL,
   svm.cost = NULL,
+  knn.k.min = NULL,
+  knn.k = NULL,
+  knn.kernel = c("optimal"),
   ebma.n.draws = 100,
   ebma.tol = c(0.01, 0.005, 0.001, 5e-04, 1e-04, 5e-05, 1e-05),
   verbose = FALSE,
@@ -61,8 +75,7 @@ auto_MrP(
 )
 }
 \arguments{
-\item{y}{Outcome variable. A character vector containing the column names of
-the outcome variable. A character scalar containing the column name of
+\item{y}{Outcome variable. A character scalar containing the column name of
 the outcome variable in \code{survey}.}
 
 \item{L1.x}{Individual-level covariates. A character vector containing the
@@ -100,7 +113,8 @@ to which an observation is allocated. The variable should contain integers
 running from \eqn{1} to \eqn{k + 1}, where \eqn{k} is the number of
 cross-validation folds. Value \eqn{k + 1} refers to the EBMA fold. Default
 is \code{NULL}. \emph{Note:} if \code{folds} is \code{NULL}, then
-\code{ebma.size}, \code{k.folds}, and \code{cv.sampling} must be specified.}
+\code{ebma.size}, \code{k.folds}, and \code{cv.sampling} must be specified.
+To skip EBMA and stacking, set \code{ebma.size = 0}.}
 
 \item{bin.proportion}{Proportion of ideal types. A character scalar
 containing the column name of the variable in \code{census} that indicates
@@ -179,17 +193,38 @@ classifier should be used for predicting outcome \code{y}. Default is
 classifier should be used for predicting outcome \code{y}. Default is
 \code{TRUE}.}
 
+\item{knn}{KNN classifier. A logical argument indicating whether the KNN
+classifier should be used for predicting outcome \code{y}. Default is
+\code{TRUE}.}
+
 \item{mrp}{MRP classifier. A logical argument indicating whether the standard
 MRP classifier should be used for predicting outcome \code{y}. Default is
 \code{FALSE}.}
 
 \item{deep.mrp}{Deep MRP classifier. A logical argument indicating whether
-the deep MRP classifier should be used for best subset prediction. Setting
-\code{deep.mrp = TRUE} will include all interactions of L1.x in the best
-subset classifier. Default is \code{FALSE}.}
+the deep MRP classifier should be used for predicting outcome \code{y}.
+Useful to run a specific deep MRP model. Default is \code{FALSE}.}
 
-\item{oversampling}{Over sample to create balance on the dependent variable.
+\item{oversampling}{Oversample to create balance on the dependent variable.
 A logical argument. Default is \code{FALSE}.}
+
+\item{best.subset.deep}{A logical argument indicating whether
+the deep MRP classifier should be used for best subset prediction. Setting
+\code{best.subset.deep = TRUE} will include all interactions of L1.x in the
+best subset classifier. Default is \code{FALSE}.}
+
+\item{best.subset.deep.splines}{Deep MRP splines for Best Subset. A logical
+argument indicating whether splines should be used in the deep MRP
+classifier for best subset selection. Must be user supplied.}
+
+\item{pca.deep}{A logical argument indicating whether
+the deep MRP classifier should be used for PCA prediction. Setting
+\code{pca.deep = TRUE} will include all interactions of L1.x in the
+pca classifier. Default is \code{FALSE}.}
+
+\item{pca.deep.splines}{Deep MRP splines for PCA. A logical argument
+indicating whether splines should be used in the deep MRP classifier for
+PCA. Must be user supplied.}
 
 \item{best.subset.L2.x}{Best subset context-level covariates. A character
 vector containing the column names of the context-level variables in
@@ -222,6 +257,12 @@ the column names of the context-level variables in \code{survey} and
 \code{svm} is set to \code{TRUE}, then SVM uses the variables specified in
 \code{L2.x}. Default is \code{NULL}.}
 
+\item{knn.L2.x}{KNN context-level covariates. A character vector containing
+the column names of the context-level variables in \code{survey} and
+\code{census} to be used by the KNN classifier. If \code{NULL} and
+\code{knn} is set to \code{TRUE}, then KNN uses the variables specified in
+\code{L2.x}. Default is \code{NULL}.}
+
 \item{mrp.L2.x}{MRP context-level covariates. A character vector containing
 the column names of the context-level variables in \code{survey} and
 \code{census} to be used by the MRP classifier. The character vector
@@ -232,7 +273,7 @@ For the empty MrP model, set \code{L2.x = NULL} and \code{mrp.L2.x = ""}.}
 
 \item{gb.L2.unit}{GB L2.unit. A logical argument indicating whether
 \code{L2.unit} should be included in the GB classifier. Default is
-\code{FALSE}.}
+\code{TRUE}.}
 
 \item{gb.L2.reg}{GB L2.reg. A logical argument indicating whether
 \code{L2.reg} should be included in the GB classifier. Default is
@@ -240,14 +281,35 @@ For the empty MrP model, set \code{L2.x = NULL} and \code{mrp.L2.x = ""}.}
 
 \item{svm.L2.unit}{SVM L2.unit. A logical argument indicating whether
 \code{L2.unit} should be included in the SVM classifier. Default is
-\code{FALSE}.}
+\code{TRUE}.}
 
 \item{svm.L2.reg}{SVM L2.reg. A logical argument indicating whether
 \code{L2.reg} should be included in the SVM classifier. Default is
 \code{FALSE}.}
 
+\item{knn.L2.unit}{KNN L2.unit. A logical argument indicating whether
+\code{L2.unit} should be included in the KNN classifier. Default is
+\code{TRUE}.}
+
+\item{knn.L2.reg}{KNN L2.reg. A logical argument indicating whether
+\code{L2.reg} should be included in the KNN classifier. Default is
+\code{FALSE}.}
+
 \item{deep.splines}{Deep MRP splines. A logical argument indicating whether
 splines should be used in the deep MRP classifier. Default is \code{TRUE}.}
+
+\item{deep.L2.x}{Deep MrP context-level covariates. A character vector
+containing the column names of the context-level variables in
+\code{survey} and \code{census} to be used by the Deep MRP classifier.
+The character vector \emph{empty} if no context-level variables should be
+used by the Deep MRP classifier. If \code{NULL} and \code{deep.mrp} is set
+to \code{TRUE}, then Deep MRP uses the variables specified in \code{L2.x}.
+Default is \code{NULL}. Note: For the empty MrP model, set
+\code{L2.x = NULL} and \code{mrp.L2.x = ""}.}
+
+\item{deep.L2.reg}{Deep MRP L2.reg. A logical argument indicating whether
+\code{L2.reg} should be included in the Deep MRP classifier. Default is
+\code{FALSE}.}
 
 \item{lasso.lambda}{Lasso penalty parameter. A numeric \code{vector} of
 non-negative values. The penalty parameter controls the shrinkage of the
@@ -301,6 +363,24 @@ maximum = 1e-1, and length = 20 that is equally spaced on the log-scale.}
 cost of constraints violation in SVM. Default is a sequence with minimum =
 0.5, maximum = 10, and length = 5 that is equally spaced on the log-scale.}
 
+\item{knn.k.min}{KNN minimum number of neighbors. An positive integer-valued
+scalar specifying the minimum number of neighbors to be considered in the
+KNN model if \code{knn.k} is \code{NULL}. If \code{knn.k.min} is specified
+and \code{knn.k} is \code{NULL}, then the number of neighbors considered is
+the sequence \code{knn.k.min:sqrt(nrow(survey))}. Default is 5L.}
+
+\item{knn.k}{KNN number of neighbors. A \code{vector} of positive integers
+specifying the number of neighbors to be considered in the KNN model. If
+not \code{NULL}, \code{knn.k} takes precedence over \code{knn.k.min}.
+Default is \code{NULL}.}
+
+\item{knn.kernel}{KNN kernel. A character-valued scalar specifying the kernel
+to be used in the KNN model. The possible values are \code{rectangular}
+(which is standard unweighted KNN), \code{triangular}, \code{epanechnikov}
+(or beta(2,2)), \code{biweight} (or beta(3,3)), \code{triweight} (or
+beta(4,4)), \code{cos}, \code{inv}, \code{gaussian}, and \code{optimal}.
+Default is \code{optimal}.}
+
 \item{ebma.n.draws}{EBMA number of samples. An integer-valued scalar
 specifying the number of bootstrapped samples to be drawn from the EBMA
 fold and used for tuning EBMA. Default is \eqn{100}.}
@@ -321,16 +401,19 @@ whether uncertainty estimates should be computed. Default is \code{FALSE}.}
 indicating the number of bootstrap iterations to be computed. Will be
 ignored unless \code{uncertainty = TRUE}. Default is \code{200} if
 \code{uncertainty = TRUE} and \code{NULL} if \code{uncertainty = FALSE}.}
+
+\item{deep.L2.unit.}{A logical argument indicating whether \code{L2.unit}
+should be included in the Deep MRP classifier. Default is \code{TRUE}.}
 }
 \value{
 The context-level predictions. A list with two elements. The first
-  element, \code{EBMA}, contains the post-stratified ensemble bayesian model
-  avaeraging (EBMA) predictions. The second element, \code{classifiers},
+  element, \code{EBMA}, contains the post-stratified ensemble Bayesian model
+  averaging (EBMA) predictions. The second element, \code{classifiers},
   contains the post-stratified predictions from all estimated classifiers.
 }
 \description{
 This package improves the prediction performance of multilevel
-regression with post-stratification (MrP) by combining a number of machine
+regression and post-stratification (MrP) by combining a number of machine
 learning methods through ensemble Bayesian model averaging (EBMA).
 }
 \details{
@@ -364,6 +447,7 @@ m <- auto_MrP(
   pca = FALSE,
   gb = FALSE,
   svm = FALSE,
+  knn = FALSE,
   mrp = TRUE
 )
 
@@ -388,6 +472,7 @@ m <- auto_MrP(
   pca = FALSE,
   gb = FALSE,
   svm = FALSE,
+  knn = FALSE,
   mrp = TRUE
   )
 
@@ -409,6 +494,7 @@ ml_out <- auto_MrP(
   census = taxes_census,
   gb.L2.reg = TRUE,
   svm.L2.reg = TRUE,
+  knn.L2.reg = TRUE,
   cores = min(2, max_cores)
   )
 }

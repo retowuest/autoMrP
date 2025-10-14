@@ -32,18 +32,29 @@ run_classifiers(
   pca,
   gb,
   svm,
+  knn,
   mrp,
   deep.mrp,
+  deep.splines,
+  best.subset.deep,
+  best.subset.deep.splines,
+  pca.deep,
+  pca.deep.splines,
   best.subset.L2.x,
   lasso.L2.x,
   pca.L2.x,
   gb.L2.x,
   svm.L2.x,
+  knn.L2.x,
+  deep.L2.x,
   gb.L2.unit,
-  gb.L2.reg,
   svm.L2.unit,
+  knn.L2.unit,
+  deep.L2.unit,
+  gb.L2.reg,
   svm.L2.reg,
-  deep.splines,
+  knn.L2.reg,
+  deep.L2.reg,
   lasso.lambda,
   lasso.n.iter,
   gb.interaction.depth,
@@ -55,14 +66,16 @@ run_classifiers(
   svm.kernel,
   svm.gamma,
   svm.cost,
+  knn.k.min,
+  knn.k,
+  knn.kernel,
   ebma.tol,
   cores,
   verbose
 )
 }
 \arguments{
-\item{y}{Outcome variable. A character vector containing the column names of
-the outcome variable. A character scalar containing the column name of
+\item{y}{Outcome variable. A character scalar containing the column name of
 the outcome variable in \code{survey}.}
 
 \item{L1.x}{Individual-level covariates. A character vector containing the
@@ -111,7 +124,8 @@ to which an observation is allocated. The variable should contain integers
 running from \eqn{1} to \eqn{k + 1}, where \eqn{k} is the number of
 cross-validation folds. Value \eqn{k + 1} refers to the EBMA fold. Default
 is \code{NULL}. \emph{Note:} if \code{folds} is \code{NULL}, then
-\code{ebma.size}, \code{k.folds}, and \code{cv.sampling} must be specified.}
+\code{ebma.size}, \code{k.folds}, and \code{cv.sampling} must be specified.
+To skip EBMA and stacking, set \code{ebma.size = 0}.}
 
 \item{bin.proportion}{Proportion of ideal types. A character scalar
 containing the column name of the variable in \code{census} that indicates
@@ -197,14 +211,38 @@ classifier should be used for predicting outcome \code{y}. Default is
 classifier should be used for predicting outcome \code{y}. Default is
 \code{TRUE}.}
 
+\item{knn}{KNN classifier. A logical argument indicating whether the KNN
+classifier should be used for predicting outcome \code{y}. Default is
+\code{TRUE}.}
+
 \item{mrp}{MRP classifier. A logical argument indicating whether the standard
 MRP classifier should be used for predicting outcome \code{y}. Default is
 \code{FALSE}.}
 
 \item{deep.mrp}{Deep MRP classifier. A logical argument indicating whether
+the deep MRP classifier should be used for predicting outcome \code{y}.
+Useful to run a specific deep MRP model. Default is \code{FALSE}.}
+
+\item{deep.splines}{Deep MRP splines. A logical argument indicating whether
+splines should be used in the deep MRP classifier. Default is \code{TRUE}.}
+
+\item{best.subset.deep}{A logical argument indicating whether
 the deep MRP classifier should be used for best subset prediction. Setting
-\code{deep.mrp = TRUE} will include all interactions of L1.x in the best
-subset classifier. Default is \code{FALSE}.}
+\code{best.subset.deep = TRUE} will include all interactions of L1.x in the
+best subset classifier. Default is \code{FALSE}.}
+
+\item{best.subset.deep.splines}{Deep MRP splines for Best Subset. A logical
+argument indicating whether splines should be used in the deep MRP
+classifier for best subset selection. Must be user supplied.}
+
+\item{pca.deep}{A logical argument indicating whether
+the deep MRP classifier should be used for PCA prediction. Setting
+\code{pca.deep = TRUE} will include all interactions of L1.x in the
+pca classifier. Default is \code{FALSE}.}
+
+\item{pca.deep.splines}{Deep MRP splines for PCA. A logical argument
+indicating whether splines should be used in the deep MRP classifier for
+PCA. Must be user supplied.}
 
 \item{best.subset.L2.x}{Best subset context-level covariates. A character
 vector containing the column names of the context-level variables in
@@ -237,24 +275,48 @@ the column names of the context-level variables in \code{survey} and
 \code{svm} is set to \code{TRUE}, then SVM uses the variables specified in
 \code{L2.x}. Default is \code{NULL}.}
 
+\item{knn.L2.x}{KNN context-level covariates. A character vector containing
+the column names of the context-level variables in \code{survey} and
+\code{census} to be used by the KNN classifier. If \code{NULL} and
+\code{knn} is set to \code{TRUE}, then KNN uses the variables specified in
+\code{L2.x}. Default is \code{NULL}.}
+
+\item{deep.L2.x}{Deep MrP context-level covariates. A character vector
+containing the column names of the context-level variables in
+\code{survey} and \code{census} to be used by the Deep MRP classifier.
+The character vector \emph{empty} if no context-level variables should be
+used by the Deep MRP classifier. If \code{NULL} and \code{deep.mrp} is set
+to \code{TRUE}, then Deep MRP uses the variables specified in \code{L2.x}.
+Default is \code{NULL}. Note: For the empty MrP model, set
+\code{L2.x = NULL} and \code{mrp.L2.x = ""}.}
+
 \item{gb.L2.unit}{GB L2.unit. A logical argument indicating whether
 \code{L2.unit} should be included in the GB classifier. Default is
-\code{FALSE}.}
-
-\item{gb.L2.reg}{GB L2.reg. A logical argument indicating whether
-\code{L2.reg} should be included in the GB classifier. Default is
-\code{FALSE}.}
+\code{TRUE}.}
 
 \item{svm.L2.unit}{SVM L2.unit. A logical argument indicating whether
 \code{L2.unit} should be included in the SVM classifier. Default is
+\code{TRUE}.}
+
+\item{knn.L2.unit}{KNN L2.unit. A logical argument indicating whether
+\code{L2.unit} should be included in the KNN classifier. Default is
+\code{TRUE}.}
+
+\item{gb.L2.reg}{GB L2.reg. A logical argument indicating whether
+\code{L2.reg} should be included in the GB classifier. Default is
 \code{FALSE}.}
 
 \item{svm.L2.reg}{SVM L2.reg. A logical argument indicating whether
 \code{L2.reg} should be included in the SVM classifier. Default is
 \code{FALSE}.}
 
-\item{deep.splines}{Deep MRP splines. A logical argument indicating whether
-splines should be used in the deep MRP classifier. Default is \code{TRUE}.}
+\item{knn.L2.reg}{KNN L2.reg. A logical argument indicating whether
+\code{L2.reg} should be included in the KNN classifier. Default is
+\code{FALSE}.}
+
+\item{deep.L2.reg}{Deep MRP L2.reg. A logical argument indicating whether
+\code{L2.reg} should be included in the Deep MRP classifier. Default is
+\code{FALSE}.}
 
 \item{lasso.lambda}{Lasso penalty parameter. A numeric \code{vector} of
 non-negative values. The penalty parameter controls the shrinkage of the
@@ -308,6 +370,24 @@ maximum = 1e-1, and length = 20 that is equally spaced on the log-scale.}
 cost of constraints violation in SVM. Default is a sequence with minimum =
 0.5, maximum = 10, and length = 5 that is equally spaced on the log-scale.}
 
+\item{knn.k.min}{KNN minimum number of neighbors. An positive integer-valued
+scalar specifying the minimum number of neighbors to be considered in the
+KNN model if \code{knn.k} is \code{NULL}. If \code{knn.k.min} is specified
+and \code{knn.k} is \code{NULL}, then the number of neighbors considered is
+the sequence \code{knn.k.min:sqrt(nrow(survey))}. Default is 5L.}
+
+\item{knn.k}{KNN number of neighbors. A \code{vector} of positive integers
+specifying the number of neighbors to be considered in the KNN model. If
+not \code{NULL}, \code{knn.k} takes precedence over \code{knn.k.min}.
+Default is \code{NULL}.}
+
+\item{knn.kernel}{KNN kernel. A character-valued scalar specifying the kernel
+to be used in the KNN model. The possible values are \code{rectangular}
+(which is standard unweighted KNN), \code{triangular}, \code{epanechnikov}
+(or beta(2,2)), \code{biweight} (or beta(3,3)), \code{triweight} (or
+beta(4,4)), \code{cos}, \code{inv}, \code{gaussian}, and \code{optimal}.
+Default is \code{optimal}.}
+
 \item{ebma.tol}{EBMA tolerance. A numeric vector containing the
 tolerance values for improvements in the log-likelihood before the EM
 algorithm stops optimization. Values should range at least from \eqn{0.01}
@@ -321,6 +401,6 @@ of processor cores used for parallel computing. Default is 1.}
 verbose output should be printed. Default is \code{FALSE}.}
 }
 \description{
-\code{run_classifiers} tunes classifiers, post-stratifies and carries out
-EMBA.
+\code{run_classifiers} tunes classifiers, post-stratifies, and carries out
+EBMA.
 }
