@@ -27,7 +27,8 @@ ebma(
   verbose,
   cores,
   preds_all,
-  knn.kernel
+  knn.kernel,
+  ebma.size
 )
 }
 \arguments{
@@ -114,6 +115,11 @@ to be used in the KNN model. The possible values are \code{rectangular}
 (or beta(2,2)), \code{biweight} (or beta(3,3)), \code{triweight} (or
 beta(4,4)), \code{cos}, \code{inv}, \code{gaussian}, and \code{optimal}.
 Default is \code{optimal}.}
+
+\item{ebma.size}{EBMA fold size. A number in the open unit interval
+indicating the proportion of respondents to be allocated to the EBMA fold.
+Default is \eqn{1/3}. \emph{Note:} ignored if \code{folds} is provided, but
+must be specified otherwise.}
 }
 \description{
 \code{ebma} tunes EBMA and generates weights for classifier averaging.

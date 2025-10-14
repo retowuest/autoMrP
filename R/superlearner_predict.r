@@ -414,6 +414,17 @@ superlearner_predict <- function(
     # Train mth model on kth training set
     model_knn <- knn_classifier(
       y = attr(obj, "evaluated_args")$y,
+      L1.x = attr(obj, "evaluated_args")$L1.x,
+      L2.unit = if (attr(obj, "evaluated_args")$knn.L2.unit) {
+        attr(obj, "evaluated_args")$L2.unit
+      } else {
+        NULL
+      },
+      L2.reg = if (attr(obj, "evaluated_args")$knn.L2.reg) {
+        attr(obj, "evaluated_args")$L2.reg
+      } else {
+        NULL
+      },
       form = attr(obj, "tuned_hyperparameters")$knn$form,
       data.train = if (dv_type == "binary") {
         data.train %>%
@@ -438,14 +449,7 @@ superlearner_predict <- function(
 
     # Get predictions for data.test
     preds_knn <- if (dv_type == "binary") {
-      kknn:::predict.kknn(
-        model_knn,
-        data.test %>%
-          dplyr::mutate(!!attr(obj, "evaluated_args")$y := as.factor(
-            !!rlang::sym(attr(obj, "evaluated_args")$y)
-          )),
-        type = "prob"
-      )[, "1"]
+      preds_knn <- predict(model_knn, type = "prob")[, "1"]
     } else {
       model_knn$fit
     }

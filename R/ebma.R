@@ -35,14 +35,15 @@
 ebma <- function(
   ebma.fold, cv.data, y, L1.x, L2.x, L2.unit, L2.reg, pc.names, post.strat,
   n.draws, tol, best.subset.opt, best.subset.deep, pca.opt, pca.deep,
-  lasso.opt, gb.opt, svm.opt, knn.opt, verbose, cores, preds_all, knn.kernel
+  lasso.opt, gb.opt, svm.opt, knn.opt, verbose, cores, preds_all, knn.kernel,
+  ebma.size
 ) {
 
   # Run EBMA if at least two classifiers selected
   if (
     sum(
       unlist(lapply(X = post.strat$models, FUN = function(x) !is.null(x)))
-    ) > 1
+    ) > 1 && ebma.size > 0
   ) {
 
     if (verbose) {
@@ -217,13 +218,21 @@ ebma <- function(
 
   } else {
     if (verbose) {
-      message("\n Skipping EBMA (only 1 classifier selected) \n")
+      if (
+        sum(
+          unlist(lapply(X = post.strat$models, FUN = function(x) !is.null(x)))
+        ) == 1
+      ) {
+        message("\n Skipping EBMA (only 1 classifier selected) \n")
+      } else if (ebma.size == 0) {
+        message("\n Skipping EBMA (ebma.size = 0) \n")
+      }
     }
 
     # function output
     return(
       list(
-        ebma = "EBMA step skipped (only 1 classifier run)",
+        ebma = "EBMA step skipped",
         classifiers = post.strat$predictions$Level2
       )
     )
@@ -286,6 +295,8 @@ ebma_mc_tol <- function(
     n_per_group <- as.integer(nrow(ebma.fold) / length(
       levels(ebma.fold[[L2.unit]])
     ))
+    if (n_per_group == 0L) n_per_group <- 1L
+
 
     # Test set with n_per_group persons per state (with resampling)
     test <- ebma.fold %>%
@@ -407,6 +418,9 @@ ebma_mc_tol <- function(
         if (dv_type == "binary") {
           c_pred <- knn_classifier(
             y = y,
+            L1.x = L1.x,
+            L2.unit = L2.unit,
+            L2.reg = L2.reg,
             form = formula(model.knn$terms),
             data.train = cv.data,
             data.valid = test,
@@ -417,6 +431,9 @@ ebma_mc_tol <- function(
         } else {
           c_pred <- knn_classifier(
             y = y,
+            L1.x = L1.x,
+            L2.unit = L2.unit,
+            L2.reg = L2.reg,
             form = formula(model.knn$terms),
             data.train = cv.data,
             data.valid = test,
@@ -681,6 +698,7 @@ ebma_mc_draws <- function(
     n_per_group <- as.integer(
       nrow(ebma.fold) / length(levels(ebma.fold[[L2.unit]]))
     )
+    if (n_per_group == 0L) n_per_group <- 1L
 
     # Test set with n_per_group persons per state (with resampling)
     test <- ebma.fold %>%
@@ -802,6 +820,9 @@ ebma_mc_draws <- function(
         if (dv_type == "binary") {
           c_pred <- autoMrP:::knn_classifier(
             y = y,
+            L1.x = L1.x,
+            L2.unit = L2.unit,
+            L2.reg = L2.reg,
             form = formula(model.knn$terms),
             data.train = cv.data,
             data.valid = test,
@@ -812,6 +833,9 @@ ebma_mc_draws <- function(
         } else {
           c_pred <- autoMrP:::knn_classifier(
             y = y,
+            L1.x = L1.x,
+            L2.unit = L2.unit,
+            L2.reg = L2.reg,
             form = formula(model.knn$terms),
             data.train = cv.data,
             data.valid = test,

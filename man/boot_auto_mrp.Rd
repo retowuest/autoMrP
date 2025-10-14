@@ -111,7 +111,8 @@ to which an observation is allocated. The variable should contain integers
 running from \eqn{1} to \eqn{k + 1}, where \eqn{k} is the number of
 cross-validation folds. Value \eqn{k + 1} refers to the EBMA fold. Default
 is \code{NULL}. \emph{Note:} if \code{folds} is \code{NULL}, then
-\code{ebma.size}, \code{k.folds}, and \code{cv.sampling} must be specified.}
+\code{ebma.size}, \code{k.folds}, and \code{cv.sampling} must be specified.
+To skip EBMA and stacking, set \code{ebma.size = 0}.}
 
 \item{bin.proportion}{Proportion of ideal types. A character scalar
 containing the column name of the variable in \code{census} that indicates

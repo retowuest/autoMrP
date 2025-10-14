@@ -25,7 +25,7 @@ run_classifiers <- function(
   svm.L2.reg, knn.L2.reg,
   deep.L2.reg,  lasso.lambda, lasso.n.iter, gb.interaction.depth, gb.shrinkage,
   gb.n.trees.init, gb.n.trees.increase, gb.n.trees.max, gb.n.minobsinnode,
-  svm.kernel, svm.gamma, svm.cost, knn.k.max, knn.k, knn.kernel, ebma.tol,
+  svm.kernel, svm.gamma, svm.cost, knn.k.min, knn.k, knn.kernel, ebma.tol,
   cores, verbose
 ) {
 
@@ -361,11 +361,9 @@ run_classifiers <- function(
       cli::cli_progress_step("Tuning k-nearest neighbors")
     }
 
-    # Determine the maximum value of k if knn.k.max is not specified
-    if (is.null(knn.k.max)) {
-      knn.k.max <- max(
-        20, as.integer(sqrt(nrow(dplyr::bind_rows(cv.folds))))
-      )
+    # Determine the minimum value of k if knn.k.min is not specified
+    if (is.null(knn.k.min)) {
+      knn.k.min <- 5
     }
 
     # Determine context-level covariates
@@ -397,7 +395,7 @@ run_classifiers <- function(
       L2.reg = knn.L2.reg,
       loss.unit = loss.unit,
       loss.fun = loss.fun,
-      knn.k.max = knn.k.max,
+      knn.k.min = knn.k.min,
       knn.k = knn.k,
       knn.kernel = knn.kernel,
       data = cv.folds,
@@ -566,7 +564,8 @@ run_classifiers <- function(
     verbose = verbose,
     cores = cores,
     preds_all = preds_all$preds,
-    knn.kernel = knn.kernel
+    knn.kernel = knn.kernel,
+    ebma.size = ebma.size
   )
 
   if (!"character" %in% class(ebma_out$ebma)) {
@@ -617,7 +616,7 @@ run_classifiers <- function(
   # Format output  -----------------------------------------------------------
 
   # aggregate ebma predictions to state-level
-  if (!"EBMA step skipped (only 1 classifier run)" %in% ebma_out$ebma) {
+  if (!"EBMA step skipped" %in% ebma_out$ebma) {
     ebma_out$ebma <- tibble::tibble(
       !!rlang::sym(L2.unit) := dplyr::pull(
         .data = ebma_out$classifiers, var = L2.unit
@@ -632,7 +631,7 @@ run_classifiers <- function(
   }
 
   # census level predictions
-  if (!"Stacking step skipped (only 1 classifier run)" %in% ebma_out$stacking) {
+  if (!"Stacking step skipped" %in% ebma_out$stacking) {
     ebma_out$census_level_predictions <- dplyr::bind_cols(
       ebma_out$classifiers,
       ebma_out$stacking %>%
@@ -658,7 +657,7 @@ run_classifiers <- function(
     dplyr::select(-prop)
 
   # aggregate stacking predictions to state-level
-  if (!"Stacking step skipped (only 1 classifier run)" %in% ebma_out$stacking) {
+  if ("stacking" %in% names(ebma_out)) {
     ebma_out$stacking <- ebma_out$stacking %>%
       dplyr::group_by(!!rlang::sym(L2.unit)) %>%
       dplyr::summarize(

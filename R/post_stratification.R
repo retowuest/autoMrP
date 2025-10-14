@@ -213,12 +213,6 @@ post_stratification <- function(
           !! rlang::sym(L2.unit), dplyr::one_of(L1.x), prop, best_subset
         )
 
-        # dplyr::group_by(!! rlang::sym(L2.unit)) %>%
-        # dplyr::summarize(best_subset = stats::weighted.mean(
-        #   x = best_subset, w = prop
-        # ), .groups = "keep") %>%
-        # dplyr::ungroup()
-
       # individual level predictions for EBMA
       bs_ind <- stats::predict(object = best_subset_opt_ebma, type = "response")
 
@@ -287,12 +281,6 @@ post_stratification <- function(
     lasso_preds <- census %>%
       dplyr::mutate(lasso = lasso_ests) %>%
       dplyr::select(!! rlang::sym(L2.unit), dplyr::one_of(L1.x), prop, lasso)
-
-      # dplyr::group_by(!! rlang::sym(L2.unit)) %>%
-      # dplyr::summarize(
-      #   lasso = stats::weighted.mean(x = lasso, w = prop), .groups = "keep"
-      # ) %>%
-      # dplyr::ungroup()
 
     # individual level predictions for EBMA
     lasso_ind <- stats::predict(object = lasso_opt_ebma, type = "response")
@@ -420,11 +408,6 @@ post_stratification <- function(
           type = "response"
         )) %>%
         dplyr::select(!! rlang::sym(L2.unit), dplyr::one_of(L1.x), prop, pca)
-        # dplyr::group_by(!! rlang::sym(L2.unit)) %>%
-        # dplyr::summarize(
-        #   pca = stats::weighted.mean(x = pca, w = prop), .groups = "keep"
-        # ) %>%
-        # dplyr::ungroup()
 
       # individual level predictions for EBMA
       pca_ind <- stats::predict(object = pca_opt_ebma, type = "response")
@@ -490,12 +473,6 @@ post_stratification <- function(
         type = "response"
       )) %>%
       dplyr::select(!! rlang::sym(L2.unit), dplyr::one_of(L1.x), prop, gb)
-
-      # dplyr::group_by(!! rlang::sym(L2.unit)) %>%
-      # dplyr::summarize(
-      #   gb = stats::weighted.mean(x = gb, w = prop), .groups = "keep"
-      # ) %>%
-      # dplyr::ungroup()
 
     # individual level predictions for EBMA
     gb_ind <- gbm::predict.gbm(
@@ -613,11 +590,6 @@ post_stratification <- function(
     # post-stratification step 3: weighted mean
     svm_preds <- svm_preds %>%
       dplyr::select(!! rlang::sym(L2.unit), dplyr::one_of(L1.x), prop, svm)
-      # dplyr::group_by(!!rlang::sym(L2.unit)) %>%
-      # dplyr::summarize(
-      #   svm = stats::weighted.mean(x = svm, w = prop), .groups = "keep"
-      # ) %>%
-      # dplyr::ungroup()
 
     # individual level predictions for EBMA
     if (
@@ -672,6 +644,9 @@ post_stratification <- function(
     # Fit optimal model for EBMA
     knn_opt_ebma <- knn_classifier(
       y = y,
+      L1.x = L1.x,
+      L2.unit = knn.L2.unit,
+      L2.reg = knn.L2.reg,
       form = form_knn,
       data.train = if (dv_type == "binary") {
         data %>%
@@ -688,6 +663,9 @@ post_stratification <- function(
     # Fit optimal model for post-stratification w/o EBMA
     knn_opt_poststrat_only <- knn_classifier(
       y = y,
+      L1.x = L1.x,
+      L2.unit = knn.L2.unit,
+      L2.reg = knn.L2.reg,
       form = form_knn,
       data.train = if (dv_type == "binary") {
         no_ebma_data %>%
@@ -711,12 +689,6 @@ post_stratification <- function(
         }
       ) %>%
       dplyr::select(!! rlang::sym(L2.unit), dplyr::one_of(L1.x), prop, knn)
-
-      # dplyr::group_by(!! rlang::sym(L2.unit)) %>%
-      # dplyr::summarize(
-      #   knn = stats::weighted.mean(x = knn, w = prop), .groups = "keep"
-      # ) %>%
-      # dplyr::ungroup()
 
     # individual level predictions for EBMA
     knn_ind <- if (dv_type == "binary") {

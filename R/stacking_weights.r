@@ -36,9 +36,11 @@ stacking_weights <- function(preds, ebma_out, L2.unit, k.folds, cores) {
     # add IDs
     preds <- preds %>%
       dplyr::mutate(id = seq_len(nrow(.)))
-    ebma_out$individual_level_predictions <-
-      ebma_out$individual_level_predictions %>%
-      dplyr::mutate(id = seq_len(nrow(.)))
+    if (!is.null(ebma_out$individual_level_predictions)) {
+      ebma_out$individual_level_predictions <-
+        ebma_out$individual_level_predictions %>%
+        dplyr::mutate(id = seq_len(nrow(.)))
+    }
 
     # generate folds for stacking
     cv_folds <- cv_folding(
@@ -598,180 +600,182 @@ stacking_weights <- function(preds, ebma_out, L2.unit, k.folds, cores) {
       # 3rd round of stacking: stack of stacks with ebma
       #----------------------------------------------------------------
 
-      # data for third round of stacking
-      stack_data3 <- stack_out %>%
-        dplyr::select(id, y, !!rlang::sym(L2.unit), stack_of_stacks)
+      if (class(ebma_out$ebma) != "character") {
+        # data for third round of stacking
+        stack_data3 <- stack_out %>%
+          dplyr::select(id, y, !!rlang::sym(L2.unit), stack_of_stacks)
 
-      # ebma predictions
-      ebma_preds <- ebma_out$individual_level_predictions %>%
-        dplyr::select(id, ebma_preds)
+        # ebma predictions
+        ebma_preds <- ebma_out$individual_level_predictions %>%
+          dplyr::select(id, ebma_preds)
 
-      # join ebma predictions
-      stack_data3 <- stack_data3 %>%
-        dplyr::left_join(ebma_preds, by = "id")
+        # join ebma predictions
+        stack_data3 <- stack_data3 %>%
+          dplyr::left_join(ebma_preds, by = "id")
 
-      # generate folds
-      cv_folds <- cv_folding(
-        data = stack_data3,
-        L2.unit = L2.unit,
-        k.folds = k.folds,
-        cv.sampling = "L2 units"
-      )
-
-      # Register cores
-      cl <- multicore(cores = cores, type = "open", cl = NULL)
-
-      # loop over k folds
-      k_weights <- foreach::foreach(
-        k = seq_along(cv_folds), .packages = "autoMrP"
-      ) %dorng% {
-
-        `%>%` <- magrittr::`%>%`
-
-        # generate weights based on training data
-        data_train <- dplyr::bind_rows(cv_folds[-k])
-        stack_predictions <- data_train %>%
-          dplyr::select(-y, -!!rlang::sym(L2.unit), -id) %>%
-          as.matrix()
-
-        # evaluate based on test data
-        data_test <- cv_folds[[k]] %>%
-          dplyr::select(-y, -!!rlang::sym(L2.unit), -id) %>%
-          as.matrix()
-
-        true_labels <- data_train$y
-
-        #--------------------------------------------------
-        # Stacks without EBMA via Ornstein hillclimbing
-        #--------------------------------------------------
-
-        # initial weights for hill climbing
-        weights_ornstein <- rep(x = 1, times = ncol(stack_predictions))
-
-        # predictions based on hillclimbing weights
-        stack_ornstein <- stack_predictions %*% weights_ornstein /
-          sum(weights_ornstein)
-
-        # compute log loss
-        c_log_loss <- -mean(
-          true_labels * log(stack_ornstein) + (1 - true_labels) *
-            log(1 - stack_ornstein)
+        # generate folds
+        cv_folds <- cv_folding(
+          data = stack_data3,
+          L2.unit = L2.unit,
+          k.folds = k.folds,
+          cv.sampling = "L2 units"
         )
 
-        # container for best log loss
-        best_log_loss <- c_log_loss
+        # Register cores
+        cl <- multicore(cores = cores, type = "open", cl = NULL)
 
-        # while loop control
-        keep_going <- TRUE
+        # loop over k folds
+        k_weights <- foreach::foreach(
+          k = seq_along(cv_folds), .packages = "autoMrP"
+        ) %dorng% {
 
-        # hill climbing until number of iterations is reached or no improvement
-        # through addition of models
-        while (keep_going) {
+          `%>%` <- magrittr::`%>%`
 
-          # keep track of which model would be best 'greedy' addition to
-          # ensemble
-          best_addition <- 0L
+          # generate weights based on training data
+          data_train <- dplyr::bind_rows(cv_folds[-k])
+          stack_predictions <- data_train %>%
+            dplyr::select(-y, -!!rlang::sym(L2.unit), -id) %>%
+            as.matrix()
 
-          # iterate over all models
-          for (j in seq_along(weights_ornstein)) {
+          # evaluate based on test data
+          data_test <- cv_folds[[k]] %>%
+            dplyr::select(-y, -!!rlang::sym(L2.unit), -id) %>%
+            as.matrix()
 
-            # increase model weight by 1
-            weights_ornstein[j] <- weights_ornstein[j] + 1L
+          true_labels <- data_train$y
 
-            # generate predictions with updated weights
-            preds_update <- stack_predictions %*% weights_ornstein /
-              sum(weights_ornstein)
+          #--------------------------------------------------
+          # Stacks without EBMA via Ornstein hillclimbing
+          #--------------------------------------------------
 
-            # compute log loss of updated predictions
-            updated_loglos <- -mean(
-              true_labels * log(preds_update) + (1 - true_labels) *
-                log(1 - preds_update)
-            )
+          # initial weights for hill climbing
+          weights_ornstein <- rep(x = 1, times = ncol(stack_predictions))
 
-            # check whether updated log loss is better than current best
-            if (updated_loglos < best_log_loss) {
-              best_log_loss <- updated_loglos
-              # model addition that best improves log loss
-              best_addition <- j
-            }
+          # predictions based on hillclimbing weights
+          stack_ornstein <- stack_predictions %*% weights_ornstein /
+            sum(weights_ornstein)
 
-            # reset weights
-            weights_ornstein[j] <- weights_ornstein[j] - 1L
-          } # end of loop over all models
-
-          # if we found an improvement (and we're below the cutoff number of
-          # iterations), then add the best model
-          if (sum(weights_ornstein) < 1000 && best_log_loss < c_log_loss) {
-
-            weights_ornstein[best_addition] <- weights_ornstein[best_addition] +
-              1L
-            c_log_loss <- best_log_loss
-
-          } else {
-            # stop the while loop if no model addition improves log loss
-            keep_going <- FALSE
-          }
-        } # end of while loop
-
-        # normalize the weights
-        weights_ornstein <- weights_ornstein %>%
-          magrittr::divide_by(sum(weights_ornstein))
-        names(weights_ornstein) <- colnames(stack_predictions)
-
-        # evaluate based on test data
-        test_preds <- data_test %*% weights_ornstein
-        test_error <- log_loss_fun(cv_folds[[k]]$y, test_preds)
-
-        # store results
-        return(
-          list(
-            weights = weights_ornstein,
-            test_error = test_error
+          # compute log loss
+          c_log_loss <- -mean(
+            true_labels * log(stack_ornstein) + (1 - true_labels) *
+              log(1 - stack_ornstein)
           )
-        )
-      }
 
-      # De-register cluster
-      multicore(cores = cores, type = "close", cl = cl)
+          # container for best log loss
+          best_log_loss <- c_log_loss
 
-      # all data
-      stack_predictions <- cv_folds %>%
-        dplyr::bind_rows() %>%
-        dplyr::select(-y, -!!rlang::sym(L2.unit), -id) %>%
-        as.matrix()
+          # while loop control
+          keep_going <- TRUE
 
-      # 3rd round of stacking output
-      # weights
-      stack3_w <- do.call(rbind, k_weights)[, "weights"] %>%
-        dplyr::bind_rows()
-      # test error
-      stack3_e <- do.call(rbind, k_weights)[, "test_error"] %>%
-        unlist()
-      stack3_e <- 1 / stack3_e
-      stack3_e <- stack3_e / sum(stack3_e)
-      # genearte a weighted mean of stacking_weights based on test error
-      stack3_w <- apply(stack3_w, 2, function(x) {
-        weighted.mean(x = x, w = stack3_e)
-      })
+          # hill climbing until number of iterations is reached or no
+          # improvement through addition of models
+          while (keep_going) {
 
-      # individual level predictions
-      final_prediction <- stack_predictions %*% stack3_w
+            # keep track of which model would be best 'greedy' addition to
+            # ensemble
+            best_addition <- 0L
 
-      # stck of stacks output
-      stack_of_stacks_ebma <- tibble::tibble(
-        id = cv_folds %>%
+            # iterate over all models
+            for (j in seq_along(weights_ornstein)) {
+
+              # increase model weight by 1
+              weights_ornstein[j] <- weights_ornstein[j] + 1L
+
+              # generate predictions with updated weights
+              preds_update <- stack_predictions %*% weights_ornstein /
+                sum(weights_ornstein)
+
+              # compute log loss of updated predictions
+              updated_loglos <- -mean(
+                true_labels * log(preds_update) + (1 - true_labels) *
+                  log(1 - preds_update)
+              )
+
+              # check whether updated log loss is better than current best
+              if (updated_loglos < best_log_loss) {
+                best_log_loss <- updated_loglos
+                # model addition that best improves log loss
+                best_addition <- j
+              }
+
+              # reset weights
+              weights_ornstein[j] <- weights_ornstein[j] - 1L
+            } # end of loop over all models
+
+            # if we found an improvement (and we're below the cutoff number of
+            # iterations), then add the best model
+            if (sum(weights_ornstein) < 1000 && best_log_loss < c_log_loss) {
+
+              weights_ornstein[best_addition] <-
+                weights_ornstein[best_addition] + 1L
+              c_log_loss <- best_log_loss
+
+            } else {
+              # stop the while loop if no model addition improves log loss
+              keep_going <- FALSE
+            }
+          } # end of while loop
+
+          # normalize the weights
+          weights_ornstein <- weights_ornstein %>%
+            magrittr::divide_by(sum(weights_ornstein))
+          names(weights_ornstein) <- colnames(stack_predictions)
+
+          # evaluate based on test data
+          test_preds <- data_test %*% weights_ornstein
+          test_error <- log_loss_fun(cv_folds[[k]]$y, test_preds)
+
+          # store results
+          return(
+            list(
+              weights = weights_ornstein,
+              test_error = test_error
+            )
+          )
+        }
+
+        # De-register cluster
+        multicore(cores = cores, type = "close", cl = cl)
+
+        # all data
+        stack_predictions <- cv_folds %>%
           dplyr::bind_rows() %>%
-          dplyr::pull(id),
-        stack_of_stacks_ebma = as.numeric(final_prediction)
-      ) %>%
-        dplyr::arrange(id)
+          dplyr::select(-y, -!!rlang::sym(L2.unit), -id) %>%
+          as.matrix()
 
-      # merge predictions into stack_out
-      stack_out <- stack_out %>%
-        dplyr::left_join(stack_of_stacks_ebma, by = "id")
+        # 3rd round of stacking output
+        # weights
+        stack3_w <- do.call(rbind, k_weights)[, "weights"] %>%
+          dplyr::bind_rows()
+        # test error
+        stack3_e <- do.call(rbind, k_weights)[, "test_error"] %>%
+          unlist()
+        stack3_e <- 1 / stack3_e
+        stack3_e <- stack3_e / sum(stack3_e)
+        # genearte a weighted mean of stacking_weights based on test error
+        stack3_w <- apply(stack3_w, 2, function(x) {
+          weighted.mean(x = x, w = stack3_e)
+        })
 
-      # stacking weights container
-      stack_weights$stack_of_stacks_ebma <- stack3_w
+        # individual level predictions
+        final_prediction <- stack_predictions %*% stack3_w
+
+        # stck of stacks output
+        stack_of_stacks_ebma <- tibble::tibble(
+          id = cv_folds %>%
+            dplyr::bind_rows() %>%
+            dplyr::pull(id),
+          stack_of_stacks_ebma = as.numeric(final_prediction)
+        ) %>%
+          dplyr::arrange(id)
+
+        # merge predictions into stack_out
+        stack_out <- stack_out %>%
+          dplyr::left_join(stack_of_stacks_ebma, by = "id")
+
+        # stacking weights container
+        stack_weights$stack_of_stacks_ebma <- stack3_w
+      }
 
     } # end if binary_dv
 

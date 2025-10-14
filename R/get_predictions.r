@@ -523,6 +523,9 @@ get_predictions <- function(
       # fit knn model
       knn <- knn_classifier(
         y = y,
+        L1.x = L1.x,
+        L2.unit = knn.L2.unit,
+        L2.reg = knn.L2.reg,
         form = form_knn,
         data.train = if (dv_type == "binary") {
           data_train %>%

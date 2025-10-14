@@ -64,7 +64,7 @@ auto_MrP(
   svm.kernel = c("radial"),
   svm.gamma = NULL,
   svm.cost = NULL,
-  knn.k.max = NULL,
+  knn.k.min = NULL,
   knn.k = NULL,
   knn.kernel = c("optimal"),
   ebma.n.draws = 100,
@@ -113,7 +113,8 @@ to which an observation is allocated. The variable should contain integers
 running from \eqn{1} to \eqn{k + 1}, where \eqn{k} is the number of
 cross-validation folds. Value \eqn{k + 1} refers to the EBMA fold. Default
 is \code{NULL}. \emph{Note:} if \code{folds} is \code{NULL}, then
-\code{ebma.size}, \code{k.folds}, and \code{cv.sampling} must be specified.}
+\code{ebma.size}, \code{k.folds}, and \code{cv.sampling} must be specified.
+To skip EBMA and stacking, set \code{ebma.size = 0}.}
 
 \item{bin.proportion}{Proportion of ideal types. A character scalar
 containing the column name of the variable in \code{census} that indicates
@@ -362,16 +363,15 @@ maximum = 1e-1, and length = 20 that is equally spaced on the log-scale.}
 cost of constraints violation in SVM. Default is a sequence with minimum =
 0.5, maximum = 10, and length = 5 that is equally spaced on the log-scale.}
 
-\item{knn.k.max}{KNN maximum number of neighbors. An positive integer-valued
-scalar specifying the maximum number of neighbors to be considered in the
-KNN model if \code{knn.k} is \code{NULL}. If \code{knn.k.max} is specified
+\item{knn.k.min}{KNN minimum number of neighbors. An positive integer-valued
+scalar specifying the minimum number of neighbors to be considered in the
+KNN model if \code{knn.k} is \code{NULL}. If \code{knn.k.min} is specified
 and \code{knn.k} is \code{NULL}, then the number of neighbors considered is
-the sequence \code{1:knn.k.max}. Default is
-\code{max(20, sqrt(nrow(survey)))}.}
+the sequence \code{knn.k.min:sqrt(nrow(survey))}. Default is 5L.}
 
 \item{knn.k}{KNN number of neighbors. A \code{vector} of positive integers
 specifying the number of neighbors to be considered in the KNN model. If
-not \code{NULL}, \code{knn.k} takes precedence over \code{knn.k.max}.
+not \code{NULL}, \code{knn.k} takes precedence over \code{knn.k.min}.
 Default is \code{NULL}.}
 
 \item{knn.kernel}{KNN kernel. A character-valued scalar specifying the kernel

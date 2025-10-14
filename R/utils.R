@@ -17,7 +17,7 @@ error_checks <- function(
   lasso, pca, pca.deep, pca.deep.splines, gb, svm, knn, mrp,
   best.subset.L2.x, lasso.L2.x, deep.mrp, gb.L2.x, svm.L2.x, knn.L2.x, mrp.L2.x,
   gb.L2.unit, gb.L2.reg, knn.L2.unit, knn.L2.reg, lasso.lambda,
-  lasso.n.iter, knn.k.max, knn.k, knn.kernel, deep.splines, uncertainty,
+  lasso.n.iter, knn.k.min, knn.k, knn.kernel, deep.splines, uncertainty,
   boot.iter
 ) {
 
@@ -102,6 +102,7 @@ error_checks <- function(
 
   # Check if L2.reg is NULL
   if (!is.null(L2.reg)) {
+
     # Check if L2.reg is a character scalar
     if (!(is.character(L2.reg) & length(L2.reg) == 1)) {
       stop(paste("The argument 'L2.reg', specifying the geographic region,",
@@ -191,17 +192,6 @@ error_checks <- function(
                    " respondents to be allocated to the EBMA fold, must take a",
                    " number in the open unit interval.", sep = ""))
       }
-      # Check if ebma.size is 0
-      if (ebma.size == 0){
-        # Check if all classifiers are turned off and mrp is turned on
-        if (sum(isTRUE(best.subset), isTRUE(lasso), isTRUE(pca), isTRUE(gb),
-                isTRUE(svm),isTRUE(mrp)) > 1){
-          stop(paste("If ebma.size = 0, then only 1 classifier out of best.subset,",
-                     " lasso, pca, gb, svm, and mrp can be set to TRUE and all",
-                     " other classifiers must be set to FALSE. Try setting these",
-                     " explicitly.", sep = ""))
-        }
-       }
     }
 
     # Check if k.folds is NULL
@@ -731,14 +721,14 @@ error_checks <- function(
         )
       }
 
-      # Check if knn.k.max is NULL
-      if (!is.null(knn.k.max)) {
+      # Check if knn.k.min is NULL
+      if (!is.null(knn.k.min)) {
         if (!(
-          dplyr::near(knn.k.max, as.integer(knn.k.max)) &&
-            (length(knn.k.max) == 1) && (knn.k.max > 0)
+          dplyr::near(knn.k.min, as.integer(knn.k.min)) &&
+            (length(knn.k.min) == 1) && (knn.k.min > 0)
         )) {
           stop(
-            "'knn.k.max' specifies the maximum number of neighbors to be",
+            "'knn.k.min' specifies the minimum number of neighbors to be",
             " considered in the KNN model. It must be a positive",
             " integer-valued scalar."
           )
@@ -759,9 +749,9 @@ error_checks <- function(
           )
         }
 
-        if (!is.null(knn.k.max)) {
+        if (!is.null(knn.k.min)) {
           warning(
-            "The argument 'knn.k.max' will be ignored because 'knn.k' is",
+            "The argument 'knn.k.min' will be ignored because 'knn.k' is",
             " specified."
           )
         }
@@ -872,32 +862,6 @@ error_checks <- function(
       warning("boot.iter is ignored unless uncertainty = TRUE.")
     }
   }
-
-  # Check whether more than two classifiers are supplied
-  if (sum(best.subset, pca, lasso, gb, svm, knn, mrp, deep.mrp) > 1) {
-    # Check whether ebma.size = 0
-    if (ebma.size == 0) {
-      # classifier names
-      elements <- c(
-        best.subset = best.subset,
-        pca = pca,
-        lasso = lasso,
-        gb = gb,
-        svm = svm,
-        knn = knn,
-        mrp = mrp,
-        deep.mrp = deep.mrp
-      )
-      # keep the elements that are in use
-      true_elements <- names(elements)[elements]
-      stop(
-        "The following calssifiers are in use: ",
-        paste(true_elements, collapse = ", "),
-        ". With more than 1 classifier, EBMA will be executed and ebma.size",
-        " must be > 0."
-      )
-    }
-  }
 }
 
 
@@ -945,17 +909,20 @@ ebma_folding <- function(data, L2.unit, ebma.size) {
   data <- data %>%
     dplyr::filter(!(index %in% one_per_unit))
 
-  remainder <- sample(
-    data$index,
-    size = ebma.size - length(one_per_unit),
-    replace = FALSE
-  )
+  if (ebma.size - length(one_per_unit) > 0) {
+    remainder <- sample(
+      data$index,
+      size = ebma.size - length(one_per_unit),
+      replace = FALSE
+    )
 
-  ebma_remainder <- data %>%
-    dplyr::filter(index %in% remainder)
+    ebma_remainder <- data %>%
+      dplyr::filter(index %in% remainder)
 
-  ebma_fold <- ebma_fold %>%
-    dplyr::bind_rows(ebma_remainder)
+    ebma_fold <- ebma_fold %>%
+      dplyr::bind_rows(ebma_remainder)
+
+  }
 
   # Extract EBMA hold-out fold from survey sample
   cv_data <- data %>%
@@ -1746,7 +1713,9 @@ predict_glmmLasso <- function(
   } else {
     lasso_preds <- cbind(fixed_effects, ind_ranef, state_ranef)
   }
-  lasso_preds <- base::apply(X = lasso_preds, MARGIN = 1, FUN = sum)
+
+  lasso_preds <- data.matrix(as.data.frame(lasso_preds))
+  lasso_preds <- rowSums(lasso_preds)
 
   # binary DV through the link function
   if (type == "response") {

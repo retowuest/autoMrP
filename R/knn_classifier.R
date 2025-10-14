@@ -23,13 +23,36 @@
 #' @return The k-nearest neighbors model. A \code{\link[kknn]{kknn}} object.
 
 knn_classifier <- function(
-  y, form, data.train, data.valid, knn.k.value,
+  y, L1.x, L2.unit, L2.reg, form, data.train, data.valid, knn.k.value,
   knn.kernel = c(
     "rectangular", "triangular", "epanechnikov", "biweight", "triweight", "cos",
     "inv", "gaussian", "optimal"
   ),
   verbose = c(TRUE, FALSE), ...
 ) {
+
+  fac_vars <- unique(
+    c(as.character(L1.x), as.character(L2.unit), as.character(L2.reg))
+  )
+
+  preds <- all.vars(delete.response(terms(form)))
+  fac_vars <- intersect(fac_vars, preds)
+  fac_vars <- intersect(
+    fac_vars, intersect(names(data.train), names(data.valid))
+  )
+
+  data.train <- as.data.frame(data.train)
+  data.valid <- as.data.frame(data.valid)
+
+  for (v in fac_vars) {
+
+    tr_chr <- as.character(data.train[[v]])
+    te_chr <- as.character(data.valid[[v]])
+    lev <- union(sort(unique(tr_chr)), sort(unique(te_chr)))
+
+    data.train[[v]] <- factor(tr_chr, levels = lev)
+    data.valid[[v]] <- factor(te_chr, levels = lev)
+  }
 
   # Train and evaluate model using the supplied value of k
   if (isTRUE(verbose)) {

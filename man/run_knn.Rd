@@ -13,7 +13,7 @@ run_knn(
   L2.reg,
   loss.unit,
   loss.fun,
-  knn.k.max,
+  knn.k.min,
   knn.k,
   knn.kernel,
   data,
@@ -62,15 +62,15 @@ are ranked for each loss function and the parameter combination with the
 lowest rank sum is chosen. Ties are broken according to the order in the
 search grid.}
 
-\item{knn.k.max}{KNN maximum number of neighbors. An positive integer-valued
-scalar specifying the maximum number of neighbors to be considered in the
-KNN model if \code{knn.k} is \code{NULL}. If \code{knn.k.max} is specified
+\item{knn.k.min}{KNN minimum number of neighbors. An positive integer-valued
+scalar specifying the minimum number of neighbors to be considered in the
+KNN model if \code{knn.k} is \code{NULL}. If \code{knn.k.min} is specified
 and \code{knn.k} is \code{NULL}, then the number of neighbors considered is
-the sequence \code{1:knn.k.max}. Default is \code{11}.}
+the sequence \code{knn.k.min:sqrt(nrow(survey))}. Default is 5L.}
 
 \item{knn.k}{KNN number of neighbors. A \code{vector} of positive integers
 specifying the number of neighbors to be considered in the KNN model. If
-not \code{NULL}, \code{knn.k} takes precedence over \code{knn.k.max}.
+not \code{NULL}, \code{knn.k} takes precedence over \code{knn.k.min}.
 Default is \code{NULL}.}
 
 \item{knn.kernel}{KNN kernel. A character-valued scalar specifying the kernel

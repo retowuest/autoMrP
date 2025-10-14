@@ -36,6 +36,7 @@
 #'   cross-validation folds. Value \eqn{k + 1} refers to the EBMA fold. Default
 #'   is \code{NULL}. \emph{Note:} if \code{folds} is \code{NULL}, then
 #'   \code{ebma.size}, \code{k.folds}, and \code{cv.sampling} must be specified.
+#'   To skip EBMA and stacking, set \code{ebma.size = 0}.
 #' @param bin.proportion Proportion of ideal types. A character scalar
 #'   containing the column name of the variable in \code{census} that indicates
 #'   the proportion of individuals by ideal type and geographic unit. Default is
@@ -235,15 +236,14 @@
 #' @param svm.cost SVM cost parameter. A numeric vector whose values specify the
 #'   cost of constraints violation in SVM. Default is a sequence with minimum =
 #'   0.5, maximum = 10, and length = 5 that is equally spaced on the log-scale.
-#' @param knn.k.max KNN maximum number of neighbors. An positive integer-valued
-#'   scalar specifying the maximum number of neighbors to be considered in the
-#'   KNN model if \code{knn.k} is \code{NULL}. If \code{knn.k.max} is specified
+#' @param knn.k.min KNN minimum number of neighbors. An positive integer-valued
+#'   scalar specifying the minimum number of neighbors to be considered in the
+#'   KNN model if \code{knn.k} is \code{NULL}. If \code{knn.k.min} is specified
 #'   and \code{knn.k} is \code{NULL}, then the number of neighbors considered is
-#'   the sequence \code{1:knn.k.max}. Default is
-#'   \code{max(20, sqrt(nrow(survey)))}.
+#'   the sequence \code{knn.k.min:sqrt(nrow(survey))}. Default is 5L.
 #' @param knn.k KNN number of neighbors. A \code{vector} of positive integers
 #'   specifying the number of neighbors to be considered in the KNN model. If
-#'   not \code{NULL}, \code{knn.k} takes precedence over \code{knn.k.max}.
+#'   not \code{NULL}, \code{knn.k} takes precedence over \code{knn.k.min}.
 #'   Default is \code{NULL}.
 #' @param knn.kernel KNN kernel. A character-valued scalar specifying the kernel
 #'   to be used in the KNN model. The possible values are \code{rectangular}
@@ -387,7 +387,7 @@ auto_MrP <- function(
   gb.n.trees.init = 50, gb.n.trees.increase = 50,
   gb.n.trees.max = 1000, gb.n.minobsinnode = 20,
   svm.kernel = c("radial"), svm.gamma = NULL, svm.cost = NULL,
-  knn.k.max = NULL, knn.k = NULL, knn.kernel = c("optimal"),
+  knn.k.min = NULL, knn.k = NULL, knn.kernel = c("optimal"),
   ebma.n.draws = 100,
   ebma.tol = c(0.01, 0.005, 0.001, 0.0005, 0.0001, 0.00005, 0.00001),
   verbose = FALSE, uncertainty = FALSE, boot.iter = NULL
@@ -419,7 +419,7 @@ auto_MrP <- function(
     gb.shrinkage = c(0.04, 0.01, 0.008, 0.005, 0.001), gb.n.trees.init = 50,
     gb.n.trees.increase = 50, gb.n.trees.max = 1000, gb.n.minobsinnode = 20,
     svm.kernel = c("radial"), svm.gamma = NULL, svm.cost = NULL,
-    knn.k.max = NULL, knn.k = NULL, knn.kernel = c("optimal"),
+    knn.k.min = NULL, knn.k = NULL, knn.kernel = c("optimal"),
     ebma.n.draws = 100,
     ebma.tol = c(0.01, 0.005, 0.001, 0.0005, 0.0001, 0.00005, 0.00001),
     verbose = FALSE, uncertainty = FALSE, boot.iter = NULL
@@ -511,7 +511,7 @@ auto_MrP <- function(
     knn.L2.reg = knn.L2.reg,
     lasso.lambda = lasso.lambda,
     lasso.n.iter = lasso.n.iter,
-    knn.k.max = knn.k.max,
+    knn.k.min = knn.k.min,
     knn.k = knn.k,
     knn.kernel = knn.kernel,
     uncertainty = uncertainty,
@@ -576,9 +576,11 @@ auto_MrP <- function(
     pc_names <- colnames(pca_out$x)
 
     census <- census %>%
-      dplyr::left_join(unique(survey %>% dplyr::select(
-        all_of(L2.unit), all_of(pc_names)
-      )), by = L2.unit)
+      dplyr::left_join(unique(survey %>%
+        dplyr::select(
+          all_of(L2.unit), all_of(pc_names)
+        )
+      ), by = L2.unit)
   } else {
     pc_names <- pcs
   }
@@ -814,12 +816,11 @@ auto_MrP <- function(
     # Optimal individual classifiers ------------------------------------------
 
     ebma_out <- run_classifiers(
-      y = y, L1.x = L1.x, L2.x = L2.x, mrp.L2.x = mrp.L2.x,
-      L2.unit = L2.unit, L2.reg = L2.reg, pcs = pcs,
-      folds = folds, cv.folds = cv_folds, cv.data = cv_data,
-      ebma.fold = ebma_fold, census = census, k.folds = k.folds,
-      cv.sampling = cv.sampling, loss.unit = loss.unit, loss.fun = loss.fun,
-      best.subset = best.subset, lasso = lasso, pca = pca,
+      y = y, L1.x = L1.x, L2.x = L2.x, mrp.L2.x = mrp.L2.x, L2.unit = L2.unit,
+      L2.reg = L2.reg, pcs = pcs, folds = folds, cv.folds = cv_folds,
+      cv.data = cv_data, ebma.fold = ebma_fold, census = census,
+      k.folds = k.folds, cv.sampling = cv.sampling, loss.unit = loss.unit,
+      loss.fun = loss.fun, best.subset = best.subset, lasso = lasso, pca = pca,
       gb = gb, svm = svm, knn = knn, mrp = mrp, deep.mrp = deep.mrp,
       best.subset.deep = best.subset.deep,
       best.subset.deep.splines = best.subset.deep.splines,
@@ -838,8 +839,8 @@ auto_MrP <- function(
       gb.n.trees.max = gb.n.trees.max,
       gb.n.minobsinnode = gb.n.minobsinnode,
       svm.kernel = svm.kernel, svm.gamma = svm.gamma, svm.cost = svm.cost,
-      knn.k.max = knn.k.max, knn.k = knn.k, knn.kernel = knn.kernel,
-      ebma.tol = ebma.tol, ebma.n.draws = ebma.n.draws,
+      knn.k.min = knn.k.min, knn.k = knn.k, knn.kernel = knn.kernel,
+      ebma.size = ebma.size, ebma.tol = ebma.tol, ebma.n.draws = ebma.n.draws,
       cores = cores, verbose = verbose
     )
 

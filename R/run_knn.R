@@ -5,14 +5,9 @@
 #' best-performing model.
 #'
 #' @inheritParams auto_MrP
-#' @param knn.k.max KNN maximum number of neighbors. An positive integer-valued
-#'   scalar specifying the maximum number of neighbors to be considered in the
-#'   KNN model if \code{knn.k} is \code{NULL}. If \code{knn.k.max} is specified
-#'   and \code{knn.k} is \code{NULL}, then the number of neighbors considered is
-#'   the sequence \code{1:knn.k.max}. Default is \code{11}.
 #' @param knn.k KNN number of neighbors. A \code{vector} of positive integers
 #'   specifying the number of neighbors to be considered in the KNN model. If
-#'   not \code{NULL}, \code{knn.k} takes precedence over \code{knn.k.max}.
+#'   not \code{NULL}, \code{knn.k} takes precedence over \code{knn.k.min}.
 #'   Default is \code{NULL}.
 #' @param knn.kernel KNN kernel. A character-valued scalar specifying the kernel
 #'   to be used in the KNN model. The possible values are \code{rectangular}
@@ -27,7 +22,7 @@
 #' @return The tuned \code{knn.k} parameter. An integer-valued scalar.
 
 run_knn <- function(
-  y, L1.x, L2.x, L2.unit, L2.eval.unit, L2.reg, loss.unit, loss.fun, knn.k.max,
+  y, L1.x, L2.x, L2.unit, L2.eval.unit, L2.reg, loss.unit, loss.fun, knn.k.min,
   knn.k, knn.kernel, data, verbose, cores
 ) {
 
@@ -40,7 +35,7 @@ run_knn <- function(
 
   # ks search grid
   if (is.null(knn.k)) {
-    ks <- 1:knn.k.max
+    ks <- knn.k.min:sqrt(nrow(dplyr::bind_rows(data)))
   } else {
     ks <- sort(knn.k)
   }
@@ -90,6 +85,9 @@ run_knn <- function(
       # to make predictions for kth validation set
       model_ki <- knn_classifier(
         y = y,
+        L1.x = L1.x,
+        L2.unit = L2.unit,
+        L2.reg = L2.reg,
         form = form,
         data.train = data_train,
         data.valid = data_valid,

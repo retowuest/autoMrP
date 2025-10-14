@@ -31,11 +31,16 @@ apply_stack_weights <- function(
 
   } else {
 
+    if ("ebma" %in% colnames(ebma_out$classifiers)) {
+      ebma <- "ebma"
+    } else {
+      ebma <- NULL
+    }
+    drop_vars <- c(L2.unit, L1.x, "prop", ebma)
+
     # 1) non-negative least squares stack
     nnls_stack <- ebma_out$classifiers %>%
-      dplyr::select(
-        -dplyr::all_of(L2.unit), -dplyr::all_of(L1.x), -prop, -ebma
-      ) %>%
+      dplyr::select(-dplyr::all_of(drop_vars)) %>%
       as.matrix() %*% stack_out$stack_weights$stack_nnls
 
     # generate stack predictions
@@ -49,9 +54,7 @@ apply_stack_weights <- function(
 
     # 2) optim with constraints stack
     optim_stack <-  ebma_out$classifiers %>%
-      dplyr::select(
-        -dplyr::all_of(L2.unit), -dplyr::all_of(L1.x), -prop, -ebma
-      ) %>%
+      dplyr::select(-dplyr::all_of(drop_vars)) %>%
       as.matrix() %*% stack_out$stack_weights$stack_optim
 
     # add optim stack to stack predictions
@@ -60,9 +63,7 @@ apply_stack_weights <- function(
 
     # 3) quadratic programming stack
     qp_stack <- ebma_out$classifiers %>%
-      dplyr::select(
-        -dplyr::all_of(L2.unit), -dplyr::all_of(L1.x), -prop, -ebma
-      ) %>%
+      dplyr::select(-dplyr::all_of(drop_vars)) %>%
       as.matrix() %*% stack_out$stack_weights$stack_qp
 
     # add qp stack to stack predictions
@@ -71,9 +72,7 @@ apply_stack_weights <- function(
 
     # 4) ornstein stack
     ornstein_stack <- ebma_out$classifiers %>%
-      dplyr::select(
-        -dplyr::all_of(L2.unit), -dplyr::all_of(L1.x), -prop, -ebma
-      ) %>%
+      dplyr::select(-dplyr::all_of(drop_vars)) %>%
       as.matrix() %*% stack_out$stack_weights$stack_ornstein
 
     # add ornstein stack to stack predictions
@@ -93,26 +92,41 @@ apply_stack_weights <- function(
       dplyr::mutate(stack_of_stacks = as.numeric(stack_of_stacks))
 
     # 6) stack of stacks with ebma
-    stack_of_stacks_ebma <- as.matrix(
-      cbind(stacked_preds[, "stack_of_stacks"], ebma_out$ebma)
-    ) %*%
-      stack_out$stack_weights$stack_of_stacks_ebma
+    if (class(ebma_out$ebma) != "character") {
+      stack_of_stacks_ebma <- as.matrix(
+        cbind(stacked_preds[, "stack_of_stacks"], ebma_out$ebma)
+      ) %*%
+        stack_out$stack_weights$stack_of_stacks_ebma
+    } else {
+      stack_of_stacks_ebma <- NULL
+    }
 
     # add stack of stacks with ebma to stack predictions
-    stacked_preds <- stacked_preds %>%
-      dplyr::mutate(stack_of_stacks_ebma = as.numeric(stack_of_stacks_ebma))
+    if (!is.null(stack_of_stacks_ebma)) {
+      stacked_preds <- stacked_preds %>%
+        dplyr::mutate(stack_of_stacks_ebma = as.numeric(stack_of_stacks_ebma))
+    }
 
     # generate an object for individual level predicitions
-    individual_level_predictions <- preds_all %>%
-      dplyr::mutate(
-        ebma = ebma_out$individual_level_predictions %>%
-          dplyr::pull(var = ebma_preds)
-      ) %>%
-      dplyr::bind_cols(
-        stack_out$stack_preds %>%
-          dplyr::select(-id, -y, -dplyr::all_of(L2.unit))
-      ) %>%
-      dplyr::rename(!!rlang::sym(y) := y)
+    if (class(ebma_out$ebma) == "character") {
+      individual_level_predictions <- preds_all %>%
+        dplyr::bind_cols(
+          stack_out$stack_preds %>%
+            dplyr::select(-id, -y, -dplyr::all_of(L2.unit))
+        ) %>%
+        dplyr::rename(!!rlang::sym(y) := y)
+    } else {
+      individual_level_predictions <- preds_all %>%
+        dplyr::mutate(
+          ebma = ebma_out$individual_level_predictions %>%
+            dplyr::pull(var = ebma_preds)
+        ) %>%
+        dplyr::bind_cols(
+          stack_out$stack_preds %>%
+            dplyr::select(-id, -y, -dplyr::all_of(L2.unit))
+        ) %>%
+        dplyr::rename(!!rlang::sym(y) := y)
+    }
 
     # combine everything
     ebma_out <- list(
